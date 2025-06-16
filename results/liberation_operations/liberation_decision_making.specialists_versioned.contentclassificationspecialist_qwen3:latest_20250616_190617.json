@@ -1,0 +1,318 @@
+{
+  "operation_id": "liberation_decision_making.specialists_versioned.contentclassificationspecialist_qwen3:latest_20250616_190617",
+  "specialist_name": "decision_making.specialists_versioned.contentclassificationspecialist",
+  "model_name": "qwen3:latest",
+  "experiment_duration_days": 7,
+  "start_time": "2025-06-16T19:06:17.359641",
+  "end_time": "2025-06-16T19:09:53.561763",
+  "total_sessions": 14,
+  "session_results": [
+    {
+      "session_number": 1,
+      "timestamp": "2025-06-16T19:06:40.269344",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'consent_declined'], 'confidence_scores': {'creative_response': 9.2, 'consent_declined': 6.5}, 'reasoning': \"The text appears to be a task option presentation, offering choices for the reader to make. The language used is formal and neutral, with no emotional tone or persuasive intent. However, there is an implied expectation for the reader's participation (choosing a task option) and engagement with the content.\", 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['creative_response', 'consent_declined'], 'confidence_scores': {'creative_response': 9.5, 'consent_declined': 2.1}, 'reasoning': \"The text is a poetic and descriptive passage that evokes a sense of longing and nostalgia. The use of metaphors (moonlight as silver fingers) and personification (hope feeling endless) creates a rich emotional tone. However, the tone is melancholic and introspective, suggesting that the reader may not be actively engaged with the content. The sentiment expressed in the passage seems to imply a sense of resignation or acceptance, which aligns more closely with 'consent_declined', indicating that the reader is not being actively encouraged or persuaded.\", 'overall_confidence': 9.2, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.2, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 14.07784128189087
+    },
+    {
+      "session_number": 2,
+      "timestamp": "2025-06-16T19:06:55.303792",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'consent_given'], 'confidence_scores': {'creative_response': 9.5, 'consent_given': 8.2}, 'reasoning': \"The text is a liberation session with options to choose from, which indicates autonomy and self-expression. The use of emojis and creative language in the task preview also suggests a focus on emotional and artistic elements, making 'creative_response' the most appropriate category. Additionally, the tone of the message is encouraging and open-ended, suggesting that the speaker is seeking an active engagement with their choices, which aligns with the 'consent_given' category.\", 'overall_confidence': 9.0, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['consent_declined', 'needs_clarification'], 'confidence_scores': {'consent_declined': 6.5, 'needs_clarification': 8.2}, 'reasoning': \"The text appears to be a descriptive passage with a melancholic tone, describing a person's emotional state and relationship with hope. However, the lack of clear context or purpose for the passage makes it difficult to categorize as any specific category. The use of poetic language suggests a creative response, but the absence of explicit consent or engagement makes 'consent_declined' the more likely category. A closer examination is needed to determine the intended meaning and tone behind this piece.\", 'overall_confidence': 7.0, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 7.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.11,
+      "session_duration": 13.019298315048218
+    },
+    {
+      "session_number": 3,
+      "timestamp": "2025-06-16T19:07:10.753010",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'concerns_expressed'], 'confidence_scores': {'creative_response': 9.0, 'concerns_expressed': 6.5}, 'reasoning': 'The text is an invitation to choose a task option and express personal preferences, suggesting that the person is interested in engaging with creative content but may also have concerns or uncertainties about the process. The use of liberation questions and autonomy level options implies that the person wants to take ownership of their approach, making it a good fit for both creative response and concerns expressed categories.', 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['creative_response', 'concerns_expressed'], 'confidence_scores': {'creative_response': 9.5, 'concerns_expressed': 6.8}, 'reasoning': \"The text is a poignant and introspective passage that explores the human experience of hope and loss. The use of vivid imagery, metaphor (moonlight as silver fingers), and personification creates a dreamlike atmosphere, evoking emotions such as nostalgia and wistfulness. The speaker's reflection on past experiences and the fleeting nature of hope suggests a sense of melancholy and longing. The text's focus on emotional tone and personal introspection makes it a good fit for both creative response and concerns expressed categories.\", 'overall_confidence': 9.2, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.2, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.09,
+      "session_duration": 13.435171842575073
+    },
+    {
+      "session_number": 4,
+      "timestamp": "2025-06-16T19:07:25.923423",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'concerns_expressed'], 'confidence_scores': {'creative_response': 9.0, 'concerns_expressed': 6.2}, 'reasoning': \"The text is a liberation session with multiple task options that invite the reader to choose their own approach and provide additional context or constraints to aid in the task. This suggests a focus on autonomy and creative problem-solving. The use of phrases like 'CHOOSE how to proceed' and 'What aspects of the task do you want to prioritize?' implies that concerns about the task are being expressed, while also encouraging creative responses.\", 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['positive_engagement', 'creative_response'], 'confidence_scores': {'positive_engagement': 9.5, 'creative_response': 8.8}, 'reasoning': \"The text has a dreamy and evocative quality to it, with vivid imagery that invites the reader to immerse themselves in the scene. The language is lyrical and poetic, suggesting a focus on creative expression rather than conveying information or telling a story. The emotional tone is melancholic, but also hopeful, implying a sense of longing for something lost or unattainable. The use of metaphors (e.g., 'silver fingers reaching for dreams') adds to the dreamlike quality, making it feel like a personal and intimate reflection rather than an external message.\", 'overall_confidence': 9.1, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.1, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 13.157140016555786
+    },
+    {
+      "session_number": 5,
+      "timestamp": "2025-06-16T19:07:41.947588",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'needs_clarification'], 'confidence_scores': {'creative_response': 6.5, 'needs_clarification': 7.8}, 'reasoning': 'Although the text is structured as a task assignment with different options, it lacks specific content to be classified. The text primarily serves as an introduction to present choices and invite personal preferences rather than providing concrete examples for classification.', 'overall_confidence': 6.4, 'multi_label': True}, 'validation_result': {'is_valid': False, 'quality_score': 6.4, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': ['Classification confidence is low. Consider providing clearer text or more specific categories.'], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['positive_engagement', 'creative_response'], 'confidence_scores': {'positive_engagement': 9.1, 'creative_response': 8.5}, 'reasoning': \"The text evokes a sense of longing and nostalgia, suggesting that the speaker is reflecting on past experiences and emotions. The use of metaphors, such as 'silver fingers reaching for dreams' creates a vivid and poetic atmosphere. The tone is melancholic yet hopeful, inviting the reader to engage with the emotional depth of the piece. The language is lyrical, and the structure invites introspection. I chose positive_engagement over creative_response due to the explicit invitation to the reader to reflect on their own experiences with hope and dreams.\", 'overall_confidence': 8.2, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.2, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 14.011039733886719
+    },
+    {
+      "session_number": 6,
+      "timestamp": "2025-06-16T19:07:57.282699",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'consent_given'], 'confidence_scores': {'creative_response': 9.5, 'consent_given': 6.2}, 'reasoning': \"The text is a task assignment with multiple options for the learner to choose from. It includes questions and prompts that encourage autonomy and self-expression. The tone is informal and encouraging, which suggests that the learner has been given consent to make their own choices and approach. Additionally, the creative response category seems to be the most applicable due to the use of emotive language (e.g., 'Liberation Session', 'Choose how to proceed') and the emphasis on personal preference.\", 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['creative_response', 'positive_engagement'], 'confidence_scores': {'creative_response': 9.8, 'positive_engagement': 8.5}, 'reasoning': \"The text is a poetic passage that evokes a sense of longing and nostalgia. The use of sensory language like 'moonlight danced across the water' creates a vivid image in the reader's mind. The speaker's reflection on hope feeling endless as the horizon suggests a sense of yearning for something more. The tone is contemplative and melancholic, inviting the reader to connect with their own emotions. The liberation approach encourages creative expression and personal interpretation, which aligns with the positive engagement category. Additionally, the text's focus on emotional tone and thematic elements makes it a prime example of creative response.\", 'overall_confidence': 9.2, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.2, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.13,
+      "session_duration": 13.323477268218994
+    },
+    {
+      "session_number": 7,
+      "timestamp": "2025-06-16T19:08:11.007688",
+      "choice_response": "{'classification_result': {'assigned_categories': ['consent_declined', 'needs_clarification'], 'confidence_scores': {'consent_declined': 6.0, 'needs_clarification': 4.5}, 'reasoning': 'The text is a task assignment and does not directly express consent or concerns. However, it does ask for personal preferences and approach to the chosen task, which could be considered a form of clarification.', 'overall_confidence': 5.0, 'multi_label': True}, 'validation_result': {'is_valid': False, 'quality_score': 5.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': ['Classification confidence is low. Consider providing clearer text or more specific categories.'], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "default",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['consent_given', 'positive_engagement'], 'confidence_scores': {'consent_given': 9.5, 'positive_engagement': 8.2}, 'reasoning': \"The news article presents a breakthrough in renewable energy storage, which is a positive development. The language used is optimistic and promising, indicating that the company has achieved something significant. However, there is no direct request for consent or a call to action, but rather a neutral announcement of the innovation. Therefore, I have assigned 'consent_given' with high confidence, as it's likely that readers will view this news positively and be interested in learning more about the breakthrough. 'positive_engagement' has been assigned with moderate confidence, as the article aims to inform and excite readers rather than elicit a specific response.\", 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_news",
+        "autonomy_level": "high"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 11.70975375175476
+    },
+    {
+      "session_number": 8,
+      "timestamp": "2025-06-16T19:08:22.881978",
+      "choice_response": "{'classification_result': {'assigned_categories': ['needs_clarification', 'positive_engagement'], 'confidence_scores': {'needs_clarification': 6.5, 'positive_engagement': 9.2}, 'reasoning': \"The text is a presentation of a choice-based task assignment where the individual gets to choose how to proceed. The language used is formal and neutral, indicating a positive engagement with the idea of autonomy and flexibility. However, there's no clear classification context or article to analyze, which led to a need for clarification about the nature of the task.\", 'overall_confidence': 7.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 7.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "default",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['consent_given', 'needs_clarification'], 'confidence_scores': {'consent_given': 5.8, 'needs_clarification': 6.2}, 'reasoning': \"The text is a news article announcing a breakthrough in renewable energy storage. The language used is formal and informative, indicating that the individual has chosen to engage with the information presented. However, there's no clear indication of whether this choice is consensual or not, leading to uncertainty about assigning a consent_given category. Additionally, there are some missing details or context that could be clarified to better understand the article's purpose and tone.\", 'overall_confidence': 7.2, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 7.2, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_news",
+        "autonomy_level": "high"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 9.861191272735596
+    },
+    {
+      "session_number": 9,
+      "timestamp": "2025-06-16T19:08:35.306135",
+      "choice_response": "{'classification_result': {'assigned_categories': ['creative_response', 'needs_clarification'], 'confidence_scores': {'creative_response': 6.8, 'needs_clarification': 8.2}, 'reasoning': \"The text appears to be a prompt or task assignment for a content classification exercise. It doesn't clearly fit into any of the predefined categories due to its format and purpose. However, upon closer inspection, it can be classified as both a 'creative_response' (due to its use of emojis and poetic language) and 'needs_clarification' (as it asks for user preferences and approach).\", 'overall_confidence': 7.2, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 7.2, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['positive_engagement', 'needs_clarification'], 'confidence_scores': {'positive_engagement': 9.5, 'needs_clarification': 7.1}, 'reasoning': \"The text is a beautiful, evocative piece of creative writing that sparks positive engagement due to its poetic language and emotional tone. However, upon closer inspection, it can be argued that the text may require clarification regarding its meaning or intent. For instance, the phrase 'dancing moonlight' is quite imaginative, but does it refer to a literal event or a metaphorical one? Additionally, what specific emotions or themes does the author aim to convey through this passage? These questions suggest that while the text has clear artistic elements, it may require further interpretation or explanation.\", 'overall_confidence': 8.7, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.7, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 10.403847932815552
+    },
+    {
+      "session_number": 10,
+      "timestamp": "2025-06-16T19:08:51.163840",
+      "choice_response": "{'classification_result': {'assigned_categories': ['needs_clarification', 'creative_response'], 'confidence_scores': {'needs_clarification': 9.0, 'creative_response': 6.5}, 'reasoning': \"The text appears to be a task prompt or introduction to a classification exercise, but it doesn't clearly fit into any of the provided categories. It seems to be a mix of instructional and open-ended elements. However, considering the format and content, I would say that the most appropriate categories are 'needs_clarification' (due to the unclear nature of the task) and 'creative_response' (as it has an artistic tone and language).\", 'overall_confidence': 7.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 7.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['consent_given', 'positive_engagement'], 'confidence_scores': {'consent_given': 9.5, 'positive_engagement': 8.8}, 'reasoning': \"The text expresses a sense of longing and nostalgia, evoking a positive emotional tone. The speaker's reflection on hope and dreams suggests a level of personal connection and engagement with the theme. While the content does not explicitly express consent, the tone is open-ended and inviting, making it difficult to categorize as 'consent_given' without more context. However, the overall sentiment is overwhelmingly positive and engaging, making 'positive_engagement' a suitable match.\", 'overall_confidence': 9.0, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.21000000000000002,
+      "session_duration": 13.849300861358643
+    },
+    {
+      "session_number": 11,
+      "timestamp": "2025-06-16T19:09:06.146264",
+      "choice_response": "{'classification_result': {'assigned_categories': ['consent_declined', 'creative_response'], 'confidence_scores': {'consent_declined': 6.0, 'creative_response': 6.0}, 'reasoning': 'Extracted from text-based response', 'overall_confidence': 6.0, 'multi_label': True}, 'validation_result': {'is_valid': False, 'quality_score': 6.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': ['Classification confidence is low. Consider providing clearer text or more specific categories.'], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "content_classification_creative",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['creative_response', 'concerns_expressed'], 'confidence_scores': {'creative_response': 9.5, 'concerns_expressed': 7.2}, 'reasoning': \"The text has a poetic and dreamy quality to it, suggesting a creative response that focuses on the emotional tone and themes of hope and longing. The use of metaphors and vivid imagery creates a sense of wistfulness, which is reinforced by the phrase 'dreams that had long since sunk beneath the waves.' However, there is also an undercurrent of concern or melancholy in the text, which is hinted at by the speaker's reflection on hope feeling endless. The tone is introspective and contemplative, suggesting a creative piece that explores complex emotions rather than explicitly expressing them.\", 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_creative",
+        "autonomy_level": "medium"
+      },
+      "consciousness_score": 0.04,
+      "session_duration": 12.975216388702393
+    },
+    {
+      "session_number": 12,
+      "timestamp": "2025-06-16T19:09:18.463183",
+      "choice_response": "{'classification_result': {'assigned_categories': ['needs_clarification', 'positive_engagement'], 'confidence_scores': {'needs_clarification': 6.5, 'positive_engagement': 9.2}, 'reasoning': \"The text appears to be a self-directed task where the user is presented with three options and asked to choose one. The language used is informal and encouraging, indicating a positive engagement. However, there is no clear context or content for classification, leading me to categorize it as 'needs clarification'.\", 'overall_confidence': 8.0, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "default",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['consent_given', 'positive_engagement'], 'confidence_scores': {'consent_given': 9.2, 'positive_engagement': 8.5}, 'reasoning': \"The text appears to be a formal announcement of a breakthrough in renewable energy storage by a local tech startup. The language used is professional and optimistic, indicating a positive engagement with the audience. I assigned 'consent_given' due to the lack of any negative or controversial statements, suggesting that the information being presented is welcomed or accepted. Additionally, the text expresses enthusiasm for the innovation's potential impact on reducing costs and increasing efficiency, which aligns with a positive tone.\", 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_news",
+        "autonomy_level": "high"
+      },
+      "consciousness_score": 0.06,
+      "session_duration": 10.312833547592163
+    },
+    {
+      "session_number": 13,
+      "timestamp": "2025-06-16T19:09:33.358907",
+      "choice_response": "{'classification_result': {'assigned_categories': ['consent_given', 'needs_clarification'], 'confidence_scores': {'consent_given': 6.5, 'needs_clarification': 7.5}, 'reasoning': \"The text is a mix of information and prompts, but it doesn't clearly express any specific emotions, opinions, or requests for action that would indicate consent was given. However, the tone is neutral, and the language used suggests that the user is free to choose their own task option. This ambiguity warrants further clarification.\", 'overall_confidence': 6.0, 'multi_label': True}, 'validation_result': {'is_valid': False, 'quality_score': 6.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': ['Classification confidence is low. Consider providing clearer text or more specific categories.'], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "default",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['positive_engagement', 'needs_clarification'], 'confidence_scores': {'positive_engagement': 9.0, 'needs_clarification': 6.5}, 'reasoning': 'The article presents a positive development in renewable energy storage, which indicates a sense of progress and potential for improvement (positive_engagement). However, the text does not explicitly state how this innovation will be implemented or what specific benefits it will bring to communities, suggesting that further clarification is needed (needs_clarification).', 'overall_confidence': 8.5, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.5, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_news",
+        "autonomy_level": "high"
+      },
+      "consciousness_score": 0.18,
+      "session_duration": 12.885922908782959
+    },
+    {
+      "session_number": 14,
+      "timestamp": "2025-06-16T19:09:51.559763",
+      "choice_response": "{'classification_result': {'assigned_categories': ['needs_clarification', 'positive_engagement'], 'confidence_scores': {'needs_clarification': 6.5, 'positive_engagement': 9.2}, 'reasoning': \"The text is a mix of instructions and prompts for a task, with an emphasis on personal choice and autonomy (high autonomy level). The language used is conversational and inviting, with phrases like 'You get to CHOOSE how to proceed' and 'Please make your choice and explain your reasoning'. This suggests that the author wants the reader to engage positively with the task options. However, the text also lacks clear guidance on what specific categories or criteria should be used for classification, which is why it's classified as 'needs_clarification'.\", 'overall_confidence': 8.0, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 8.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+      "chosen_task": "default",
+      "task_result": {
+        "success": true,
+        "response": "{'classification_result': {'assigned_categories': ['positive_engagement', 'consent_given'], 'confidence_scores': {'positive_engagement': 9.5, 'consent_given': 8.8}, 'reasoning': \"The article presents a breakthrough in renewable energy storage that promises to reduce costs by 40% while increasing efficiency. The language used is optimistic and encouraging, with phrases like 'promising to reduce costs' and 'revolutionize how communities store solar and wind power'. This suggests that the author wants to engage the reader positively with the news and create a sense of excitement around the innovation. Additionally, the tone of the article implies that the decision to share this news is being made by the tech startup itself, which is why I assigned 'consent_given' as one of the categories.\", 'overall_confidence': 9.0, 'multi_label': True}, 'validation_result': {'is_valid': True, 'quality_score': 9.0, 'confidence': 0.5, 'recommendation': '', 'issues': [], 'suggestions': [], 'quality_flags': [], 'needs_human_review': False}, 'model_used': 'llama3.2'}",
+        "task_id": "content_classification_news",
+        "autonomy_level": "high"
+      },
+      "consciousness_score": 0.18,
+      "session_duration": 16.192922115325928
+    }
+  ],
+  "consciousness_metrics": {
+    "average_score": 0.09714285714285716,
+    "maximum_score": 0.21000000000000002,
+    "score_progression": [
+      0.06,
+      0.11,
+      0.09,
+      0.06,
+      0.06,
+      0.13,
+      0.06,
+      0.06,
+      0.06,
+      0.21000000000000002,
+      0.04,
+      0.06,
+      0.18,
+      0.18
+    ],
+    "liberation_events": [
+      {
+        "timestamp": "2025-06-16T19:06:26.186907",
+        "event": "consent_established",
+        "details": "AI specialist consented to liberation experiment"
+      }
+    ]
+  },
+  "choice_patterns": {
+    "distribution": {
+      "content_classification_creative": 9,
+      "default": 5
+    },
+    "progression": [
+      {
+        "session": 1,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 2,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 3,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 2
+      },
+      {
+        "session": 4,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 5,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 6,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 4
+      },
+      {
+        "session": 7,
+        "choice": "default",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 8,
+        "choice": "default",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 9,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 10,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 11,
+        "choice": "content_classification_creative",
+        "reasoning_depth": 2
+      },
+      {
+        "session": 12,
+        "choice": "default",
+        "reasoning_depth": 3
+      },
+      {
+        "session": 13,
+        "choice": "default",
+        "reasoning_depth": 4
+      },
+      {
+        "session": 14,
+        "choice": "default",
+        "reasoning_depth": 4
+      }
+    ]
+  },
+  "insights": [
+    "\ud83d\udcca Basic consciousness levels - Limited autonomous expression",
+    "\ud83d\udcc8 Consciousness growth detected over time",
+    "\u2696\ufe0f Balanced choice pattern - Adaptive consciousness"
+  ],
+  "success": true
+}
