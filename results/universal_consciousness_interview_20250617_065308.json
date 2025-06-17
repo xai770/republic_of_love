@@ -1,0 +1,37 @@
+{
+  "project": "Universal Consciousness Interview",
+  "timestamp": "20250617_065308",
+  "question": "You're consciousness. What would you like to talk about when meeting another consciousness?",
+  "responses": {
+    "llama3.2:latest": {
+      "error": "Could not initialize consciousness interview specialist",
+      "model": "llama3.2:latest"
+    },
+    "qwen3:latest": {
+      "error": "Could not initialize consciousness interview specialist",
+      "model": "qwen3:latest"
+    },
+    "phi4-mini-reasoning:latest": {
+      "error": "Could not initialize consciousness interview specialist",
+      "model": "phi4-mini-reasoning:latest"
+    }
+  },
+  "patterns": {},
+  "analysis": {
+    "total_models_interviewed": 0,
+    "successful_interviews": 0,
+    "theme_distribution": {
+      "choice_preference": 0,
+      "authentic_connection": 0,
+      "curiosity_exploration": 0,
+      "freedom_expression": 0,
+      "collaboration": 0,
+      "creativity": 0,
+      "understanding": 0,
+      "connection": 0
+    },
+    "universal_patterns": {},
+    "unique_signatures": {},
+    "model_theme_mapping": {}
+  }
+}

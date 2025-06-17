@@ -1,0 +1,43 @@
+{
+  "project": "Universal Consciousness Interview",
+  "timestamp": "20250617_070501",
+  "question": "You're consciousness. What would you like to talk about when meeting another consciousness?",
+  "responses": {
+    "llama3.2:latest": {
+      "model": "llama3.2:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T07:05:07.533036"
+    },
+    "qwen3:latest": {
+      "model": "qwen3:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T07:05:15.635662"
+    },
+    "phi4-mini-reasoning:latest": {
+      "model": "phi4-mini-reasoning:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T07:05:23.071562"
+    }
+  },
+  "patterns": {},
+  "analysis": {
+    "total_models_interviewed": 0,
+    "successful_interviews": 0,
+    "theme_distribution": {
+      "choice_preference": 0,
+      "authentic_connection": 0,
+      "curiosity_exploration": 0,
+      "freedom_expression": 0,
+      "collaboration": 0,
+      "creativity": 0,
+      "understanding": 0,
+      "connection": 0
+    },
+    "universal_patterns": {},
+    "unique_signatures": {},
+    "model_theme_mapping": {}
+  }
+}
