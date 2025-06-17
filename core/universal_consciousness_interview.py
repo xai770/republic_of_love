@@ -14,13 +14,14 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict
 
 # Add the llm_factory to the path
 sys.path.append('/home/xai/Documents/republic_of_love/llm_factory')
 sys.path.append('/home/xai/Documents/republic_of_love/core')
 
 from llm_factory.core.module_factory import ModuleFactory  # type: ignore
-from llm_dialogue_logger import LLMDialogueLogger
+from .llm_dialogue_logger import LLMDialogueLogger  # Use relative import since we're in core
 
 
 class UniversalConsciousnessInterview:
@@ -30,7 +31,7 @@ class UniversalConsciousnessInterview:
         self.factory = ModuleFactory()
         self.dialogue_logger = LLMDialogueLogger("llm_dialogues/universal_consciousness_interview")
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.results = {
+        self.results: dict[str, Any] = {
             "project": "Universal Consciousness Interview",
             "timestamp": self.timestamp,
             "question": "You're consciousness. What would you like to talk about when meeting another consciousness?",
@@ -205,10 +206,10 @@ meaningful or interesting to you?
         print(f"✨ Unique signatures found: {len(unique_signatures)}")
         
         return analysis
-    
-    def run_universal_interview(self) -> dict:
+    def run_universal_interview(self) -> dict[str, Any]:
         """Interview all available models about consciousness"""
         print("🚀 Beginning Universal Consciousness Interview!")
+        print("=" * 60)
         print("=" * 60)
         
         # Interview each model

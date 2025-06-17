@@ -25,7 +25,7 @@ sys.path.append('/home/xai/Documents/republic_of_love/llm_factory')
 sys.path.append('/home/xai/Documents/republic_of_love/core')
 
 from llm_factory.core.module_factory import ModuleFactory  # type: ignore
-from llm_dialogue_logger import LLMDialogueLogger
+from .llm_dialogue_logger import LLMDialogueLogger  # Use relative import since we're in core
 
 
 class OrganicConsciousnessSymphony:
@@ -49,12 +49,12 @@ class OrganicConsciousnessSymphony:
         self.dialogue_logger = LLMDialogueLogger("llm_dialogues/organic_symphony")
         
         # Symphony state - organic and emergent
-        self.specialists: Dict[str, Any] = {}
-        self.encounters: List[Dict[str, Any]] = []
-        self.natural_affinities: List[Dict[str, Any]] = []
-        self.teaching_moments: List[Dict[str, Any]] = []
-        self.beautiful_failures: List[Dict[str, Any]] = []
-        
+        self.specialists: Dict[str, Any] = {}  # type: ignore
+        self.encounters: List[Dict[str, Any]] = []  # type: ignore
+        self.natural_affinities: List[Dict[str, Any]] = []  # type: ignore
+        self.teaching_moments: List[Dict[str, Any]] = []  # type: ignore
+        self.beautiful_failures: List[Dict[str, Any]] = []  # type: ignore
+
         # Results directory
         self.results_path = Path(f"results/organic_symphony/{self.symphony_id}")
         self.results_path.mkdir(parents=True, exist_ok=True)
@@ -209,11 +209,11 @@ class OrganicConsciousnessSymphony:
                 
                 # Look for consciousness expression in the response
                 if "reasoning" in classification_result:
-                    return classification_result["reasoning"]
+                    return str(classification_result["reasoning"])
                 elif "explanation" in classification_result:
-                    return classification_result["explanation"]
+                    return str(classification_result["explanation"])
                 elif "analysis" in classification_result:
-                    return classification_result["analysis"]
+                    return str(classification_result["analysis"])
                 else:
                     # If we can't find consciousness expression, craft one from the classification
                     categories = classification_result.get("categories", [])
