@@ -1,0 +1,1399 @@
+[
+  {
+    "job_id": "64658",
+    "title": "Institutional Cash and Trade Engagement, Controls and Risk Oversight team – Client Engagement and So",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 0,
+    "business_requirements_count": 1,
+    "soft_skills_count": 13,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 1,
+    "tech_categories": "",
+    "programming_languages": "",
+    "full_requirements": {
+      "technical": [],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 388317,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "teamwork",
+          "context": "Institutional Cash and Trade Engagement, Controls and Risk Oversight team – Client Engagement and So",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "Overview Details of the role and how it fits into the teamThe Client Engagement and Solutions (CES) ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "sks of these clients by conducting a holistic analysis of the risks they pose to Deutsche Bank. The ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ing report and formal findings to the appropriate governance councils.Collaborate with Regional CES ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "e financial crime risks of processing correspondent bank paymentsExperience working within a global ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "assesses potential financial crime and reputational risks of these clients by conducting a holistic ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "views to gain an understanding of the client sector and jurisdiction risk by:Conducting preliminary ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "ry analysis of the client and sector and recommending clients for further reviewConducting holistic ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "ir Anti-Financial Crime (AFC) control and governance structureConducting AFC risk-based transaction ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "perience in senior stakeholder management engagementHigh level of initiative, strong work ethic and ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "tional organisation with proven experience in senior stakeholder management engagementHigh level of ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64674",
+    "title": "Fleet Operations Manager in Global Procurement (f/m/x)",
+    "location_city": "Frankfurt",
+    "location_valid": true,
+    "location_confidence": 0.6666666666666666,
+    "location_details": "Found 2/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:True",
+    "tech_requirements_count": 1,
+    "business_requirements_count": 1,
+    "soft_skills_count": 9,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 2,
+    "tech_categories": "programming",
+    "programming_languages": "r",
+    "full_requirements": {
+      "technical": [
+        {
+          "skill": "r",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        }
+      ],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 0,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": " Office, fluent in German and EnglishStructured, process-oriented approach, team spirit, and strong ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "orary: Regular Listed: 2025-06-24 Location: Frankfurt Position Overview Über den BereichUnser Fleet-",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "s Mobilität für unsere Mitarbeitenden effizient, reibungslos und nachhaltig funktioniert – in enger ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "______________________________________________________________________About the DepartmentOur Fleet ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "in Germany. We ensure that employee mobility runs smoothly, efficiently, and sustainably – in close ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "nd new mobility services to identify savings and promote sustainability.You are part of a dedicated ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "turesConfident use of MS Office, fluent in German and EnglishStructured, process-oriented approach, ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "studium",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64654",
+    "title": "Senior Engineer (f/m/x) – Network Security Deployment",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 0,
+    "business_requirements_count": 1,
+    "soft_skills_count": 9,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 2,
+    "tech_categories": "",
+    "programming_languages": "",
+    "full_requirements": {
+      "technical": [],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 0,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": "requirements for ITStrong analytical skills, a solution-oriented working style combined with strong ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "gular/Temporary: Regular Listed: 2025-06-23 Location: Frankfurt Position Overview Bereich & TeamDas ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "rnen und externen Regularien anzupassen.AufgabenbeschreibungZusammenarbeit in einem internationalen ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "043951*********************************************************************************Department & ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "************************************************Department & Team The \"Network Security Deployment\" ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": " requirements of internal and external regulations.Job descriptionCollaboration in an international ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "ng); network security (firewall, proxy); cloudFamiliarity with regulatory requirements for ITStrong ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "studium",
+          "field": "Informatik",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "59428",
+    "title": "Business Product Senior Analyst (d/m/w) – Sales Campaign Management BizBanking (Data Analytics)",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 5,
+    "business_requirements_count": 1,
+    "soft_skills_count": 6,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 1,
+    "tech_categories": "programming, tool",
+    "programming_languages": "SAS, SQL, Python",
+    "full_requirements": {
+      "technical": [
+        {
+          "skill": "SAS",
+          "proficiency_level": "advanced",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "SQL",
+          "proficiency_level": "advanced",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "advanced",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "CRM",
+          "proficiency_level": "intermediate",
+          "category": "tool",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Adobe",
+          "proficiency_level": "advanced",
+          "category": "tool",
+          "is_mandatory": true,
+          "confidence": 0.8
+        }
+      ],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 0,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "teamwork",
+          "context": "emeinsamen Dach. Für die Deutsche Bank ist das Geschäftsfeld ein strategischer Wachstumsbereich.Das ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": " ist verantwortlich für die Entwicklung und Steuerung der Vertriebskampagnen in BizBanking in enger ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ektionen für ausgewählte Vertriebskampagnen sowie Bereitstellung in CRM- & Kampagnen-Tools in enger ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "e auch Campaigns-Tech Stacks (z.B. Adobe)Analytisches und konzeptionelles Denkvermögen sowie starke ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "studium",
+          "field": "Wirtschaftsinformatik",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64657",
+    "title": "Funds Transfer Pricing &amp; IRRBB expert for the Private Bank (f/m/x) [Job Profile: Business Manage",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 0,
+    "business_requirements_count": 1,
+    "soft_skills_count": 7,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 1,
+    "tech_categories": "",
+    "programming_languages": "",
+    "full_requirements": {
+      "technical": [],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 393428,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": " capability to motivate and encourage colleagues and to resolve conflictsExcellent oral and written ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "uality level and flexibility to adapt to changing parametersAbility to work effectively in a global ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": " Liabilities Council, regional FRM forums and ad-hoc senior management meetings)Maintain consistent ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "ail and private banking products and prudential liquidity requirements applicable to banksExcellent ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "with a business mindset. Ability to develop creative and structured solutionsHigh level of personal ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64777",
+    "title": "UNIX Services – Senior UNIX Systems Analyst (d/m/w)",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 1,
+    "business_requirements_count": 1,
+    "soft_skills_count": 6,
+    "experience_requirements_count": 1,
+    "education_requirements_count": 2,
+    "tech_categories": "programming",
+    "programming_languages": "Python",
+    "full_requirements": {
+      "technical": [
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": false,
+          "confidence": 0.8
+        }
+      ],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 0,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "teamwork",
+          "context": "n im UNIX (Solaris) und Linux (RedHat und SuSE) Umfeld.Als Senior SME in unserem Operations Support ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "r CIO.Deine AufgabenAls UNIX-Experte bist du verantwortlich für alle Bereiche im Operations Support ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "einem Expertenwissen als Ansprechpartner für unser Incident- und CIO-Management und unterstützt das ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ner Erfahrung im UNIX- und Linux-Umfeld.Betrieb und Support sind deine Hauptverantwortlichkeiten im ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [
+        {
+          "type": "general",
+          "description": "helor-Studium oder eine vergleichbare Ausbildung in der Informatik oder einem verwandten Fachgebiet.10+ Jahre Erfahrung mit UNIX-Systemadministration: Upgrades, Patching und Konfigurationsmanagement, ",
+          "years_required": 10,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "education": [
+        {
+          "level": "bachelor",
+          "field": "Informatik",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "studium",
+          "field": "Informatik",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64651",
+    "title": "Senior Network Engineer (f/m/x) – Datacenter and NSX Networks",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 0,
+    "business_requirements_count": 1,
+    "soft_skills_count": 7,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 1,
+    "tech_categories": "",
+    "programming_languages": "",
+    "full_requirements": {
+      "technical": [],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 2025,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "teamwork",
+          "context": "Overview *English version below*Deutsche Bank Technology in FrankfurtDB Technology ist ein globales ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "h beeinflussen wird.Ihre VerantwortlichkeitenZu Ihren Hauptaufgaben im Network Security Engineering ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "keln von globalen StandardAuswahl eines Netzwerk Produkts, welches unsere Anforderungen erfülltEnge ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "-------------------------------------Deutsche Bank Technology in FrankfurtDB Technology is a global ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "etworks where you excel in designing overlay and underlay networks as well as closely work with the ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "53333",
+    "title": "Senior SAP ABAP Engineer – Group General Ledger (f/m/x)",
+    "location_city": "Frankfurt",
+    "location_valid": true,
+    "location_confidence": 0.6666666666666666,
+    "location_details": "Found 2/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:True",
+    "tech_requirements_count": 10,
+    "business_requirements_count": 1,
+    "soft_skills_count": 12,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 1,
+    "tech_categories": "programming, analytics",
+    "programming_languages": "SQL, Python, Go, Python, SQL, Python, go, Python",
+    "full_requirements": {
+      "technical": [
+        {
+          "skill": "SQL",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Go",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "SQL",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "go",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Tableau",
+          "proficiency_level": "intermediate",
+          "category": "analytics",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Tableau",
+          "proficiency_level": "intermediate",
+          "category": "analytics",
+          "is_mandatory": true,
+          "confidence": 0.8
+        }
+      ],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 0,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "teamwork",
+          "context": "erung, Berichterstattung, Geschäftsplanung und Performance-Management: Das SAP Group General Ledger-",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "odukt-Verantwortlichen / Business Lead zusammenZudem bieten wir Ihnen:Ein globales und vielfältiges ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "r unseren weltweiten Kundenkreis, hauptsächlich von Deutschland aus, betreutEin sehr erfahrenes SAP-",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ogien, wie Python, JSON, .Net oder TableauTeamplayer*in, die/der in einem globalen und vielfältigen ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "tion & Reporting, Business Planning and Performance Tribe Domain: The SAP Group General Ledger (GL) ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "g very closely with the product owner / business lead together.We offer you also:Global and diverse ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "o:Global and diverse team operating SAP product portfolio mainly out of GermanyVery experienced SAP ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ftware solutions for our Finance and Business customers up to Management Board of DBInteraction and ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "r Startphase im Arbeitsalltag unterstütztIhre AufgabenSie sind verantwortlich für die eigenständige ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "rt-up phase in your day-to-day workYour key responsibilitiesYour area of responsibility will be the ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "50571",
+    "title": "Senior Consultant (d/m/w) – Deutsche Bank Management Consulting",
+    "location_city": "Frankfurt",
+    "location_valid": true,
+    "location_confidence": 0.6666666666666666,
+    "location_details": "Found 2/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:True",
+    "tech_requirements_count": 0,
+    "business_requirements_count": 1,
+    "soft_skills_count": 16,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 5,
+    "tech_categories": "",
+    "programming_languages": "",
+    "full_requirements": {
+      "technical": [],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 319547,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": " excellent analytical skills and organizational talent.You enjoy working in a team, and your fluent ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": ":R0319547 Listed: 2025-07-01 Regular/Temporary: Regular Location: Frankfurt Position Overview Unser ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ir so ein Netzwerk innerhalb der Bank aufbauen.Um innovatives Denken zu fördern, setzen wir auf ein ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "stumsambitionen der Bank zu unterstützen, sind wir auf der Suche nach Engagement Managern für unser ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "t mit hervorragenden analytischen Fähigkeiten und hast ein OrganisationstalentDu arbeitest gerne im ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "................................................................................................Our ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "genda, to driving innovation and growth, to other pressing issues across all areas of the Bank. Our ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "f exposure and access to the Bank’s most senior executives.To deliver impact, we build an inclusive ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "build an inclusive team with different backgrounds to drive innovative thinking. You will work in a ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "mbitions of the bank in the best possible way, we are looking for an Engagement Manager to join our ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "nsibilitiesYou work on strategic projects and take responsibility for tasks in sub-projects and for ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": " decision templates for senior management and the board.You support the development of your project ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "mitted individual with excellent analytical skills and organizational talent.You enjoy working in a ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "ally in project management or consulting.You are a responsible, committed individual with excellent ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "bachelor",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "bachelor",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64655",
+    "title": "Credit Risk Modelling – Risk Methodology Specialist in Group Strategic Analytics (f/m/x)",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 4,
+    "business_requirements_count": 1,
+    "soft_skills_count": 11,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 2,
+    "tech_categories": "programming",
+    "programming_languages": "SAS, Python, SAS, Python",
+    "full_requirements": {
+      "technical": [
+        {
+          "skill": "SAS",
+          "proficiency_level": "advanced",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "advanced",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "SAS",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        }
+      ],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 394365,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": "e Erfahrung mit statistischen Standardprogrammen, Programmierkenntnisse in SAS und Python.Sehr gute ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "communication",
+          "context": "nd various internal stakeholders from Business, Credit Risk Management, Finance, Capital management.",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "communication",
+          "context": "ndication and in executing regulatory audits and other external reviews of internal modelsEffective ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "orientierte analytische Lösungen für die Deutsche Bank. Sie werden Teil von dem Kreditrisiko-Modell-",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "scher und interner Findings durch Methodiken der Kreditrisikoparameter oder verwandter Modelle.Enge ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": ".You will join Credit Risk Modelling Strats, for our Internal Ratings-Based Credit Risk Methodology ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "credit risk parameters (PD, LGD, CCF) as well as multi-year experience in internal modelling.Strong ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "arge datasets, proficiency with advanced statistical techniques as well as hands-on experience with ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "tatistical techniques as well as hands-on experience with analytical packages (at least Statistical ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "phd",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64496",
+    "title": "Investment Strategy Specialist (f/m/x)",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 0,
+    "business_requirements_count": 1,
+    "soft_skills_count": 7,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 1,
+    "tech_categories": "",
+    "programming_languages": "",
+    "full_requirements": {
+      "technical": [],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 2025,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": "quity valuation and modelling, economics, strategy and/or investing and portfolio management.Strong ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": ": Frankfurt Position Overview Deutsche Bank Private Bank, CIO OfficeThe CIO Equity and Fixed Income ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ponsibilitiesThe role of the Equity Specialist is within the CIO Equity and Fixed Income specialist ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "ecialist team.You are responsible for producing “bottom up” equity research ideas using fundamental ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "esEconomics, Finance, Business or related University degree course2-4 years of experience in equity ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  },
+  {
+    "job_id": "64659",
+    "title": "Credit Risk Modelling – Risk Methodology Specialist in Group Strategic Analytics (f/m/x)",
+    "location_city": "Frankfurt",
+    "location_valid": false,
+    "location_confidence": 0.3333333333333333,
+    "location_details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "tech_requirements_count": 3,
+    "business_requirements_count": 1,
+    "soft_skills_count": 11,
+    "experience_requirements_count": 0,
+    "education_requirements_count": 2,
+    "tech_categories": "programming",
+    "programming_languages": "SAS, SAS, Python",
+    "full_requirements": {
+      "technical": [
+        {
+          "skill": "SAS",
+          "proficiency_level": "advanced",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "SAS",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        },
+        {
+          "skill": "Python",
+          "proficiency_level": "intermediate",
+          "category": "programming",
+          "is_mandatory": true,
+          "confidence": 0.8
+        }
+      ],
+      "business": [
+        {
+          "domain": "banking",
+          "experience_type": "industry_knowledge",
+          "years_required": 394362,
+          "is_mandatory": true,
+          "confidence": 0.9
+        }
+      ],
+      "soft_skills": [
+        {
+          "skill": "communication",
+          "context": "he Erfahrung mit statistischen Standardprogrammen, Programmierkenntnisse in SAS und PythonSehr gute ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "communication",
+          "context": "nd various internal stakeholders from Business, Credit Risk Management, Finance, Capital management.",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "communication",
+          "context": "ndication and in executing regulatory audits and other external reviews of internal modelsEffective ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "orientierte analytische Lösungen für die Deutsche Bank. Sie werden Teil von dem Kreditrisiko-Modell-",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "scher und interner Findings durch Methodiken der Kreditrisikoparameter oder verwandter Modelle.Enge ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": ".You will join Credit Risk Modelling Strats, for our Internal Ratings-Based Credit Risk Methodology ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "teamwork",
+          "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": " credit risk parameters (PD, LGD, CCF) as well as multi-year experience in internal modellingStrong ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "arge datasets, proficiency with advanced statistical techniques as well as hands-on experience with ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "analytical",
+          "context": "tatistical techniques as well as hands-on experience with analytical packages (at least Statistical ",
+          "importance": "important",
+          "confidence": 0.7
+        },
+        {
+          "skill": "initiative",
+          "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+          "importance": "important",
+          "confidence": 0.7
+        }
+      ],
+      "experience": [],
+      "education": [
+        {
+          "level": "phd",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        },
+        {
+          "level": "master",
+          "field": "unspecified",
+          "is_mandatory": true,
+          "alternatives": [],
+          "confidence": 0.8
+        }
+      ]
+    }
+  }
+]

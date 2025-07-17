@@ -1,0 +1,582 @@
+{
+  "programming_languages": {
+    "javascript": {
+      "canonical": "JavaScript",
+      "category": "programming_language",
+      "aliases": ["js", "node.js", "nodejs"],
+      "popularity_rank": 1
+    },
+    "python": {
+      "canonical": "Python",
+      "category": "programming_language",
+      "aliases": ["py", "python3"],
+      "popularity_rank": 2
+    },
+    "typescript": {
+      "canonical": "TypeScript",
+      "category": "programming_language",
+      "aliases": ["ts"],
+      "popularity_rank": 3
+    },
+    "java": {
+      "canonical": "Java",
+      "category": "programming_language",
+      "aliases": ["jdk", "openjdk"],
+      "popularity_rank": 4
+    },
+    "c++": {
+      "canonical": "C++",
+      "category": "programming_language",
+      "aliases": ["cpp", "c plus plus"],
+      "popularity_rank": 5
+    },
+    "c#": {
+      "canonical": "C#",
+      "category": "programming_language",
+      "aliases": ["csharp", "c sharp"],
+      "popularity_rank": 6
+    },
+    "php": {
+      "canonical": "PHP",
+      "category": "programming_language",
+      "aliases": ["php7", "php8"],
+      "popularity_rank": 7
+    },
+    "go": {
+      "canonical": "Go",
+      "category": "programming_language",
+      "aliases": ["golang"],
+      "popularity_rank": 8
+    },
+    "rust": {
+      "canonical": "Rust",
+      "category": "programming_language",
+      "aliases": ["rustlang"],
+      "popularity_rank": 9
+    },
+    "kotlin": {
+      "canonical": "Kotlin",
+      "category": "programming_language",
+      "aliases": ["kt"],
+      "popularity_rank": 10
+    },
+    "swift": {
+      "canonical": "Swift",
+      "category": "programming_language",
+      "aliases": ["swift5"],
+      "popularity_rank": 11
+    },
+    "ruby": {
+      "canonical": "Ruby",
+      "category": "programming_language",
+      "aliases": ["rb"],
+      "popularity_rank": 12
+    },
+    "scala": {
+      "canonical": "Scala",
+      "category": "programming_language",
+      "aliases": ["scala2", "scala3"],
+      "popularity_rank": 13
+    },
+    "r": {
+      "canonical": "R",
+      "category": "programming_language",
+      "aliases": ["r-lang"],
+      "popularity_rank": 14
+    },
+    "matlab": {
+      "canonical": "MATLAB",
+      "category": "programming_language",
+      "aliases": ["matlab"],
+      "popularity_rank": 15
+    }
+  },
+  "frameworks": {
+    "react": {
+      "canonical": "React",
+      "category": "frontend_framework",
+      "language": "javascript",
+      "aliases": ["reactjs", "react.js"]
+    },
+    "vue": {
+      "canonical": "Vue.js",
+      "category": "frontend_framework",
+      "language": "javascript",
+      "aliases": ["vue.js", "vuejs"]
+    },
+    "angular": {
+      "canonical": "Angular",
+      "category": "frontend_framework",
+      "language": "typescript",
+      "aliases": ["angular2", "angularjs"]
+    },
+    "svelte": {
+      "canonical": "Svelte",
+      "category": "frontend_framework",
+      "language": "javascript",
+      "aliases": ["sveltekit"]
+    },
+    "node.js": {
+      "canonical": "Node.js",
+      "category": "backend_framework",
+      "language": "javascript",
+      "aliases": ["nodejs", "node"]
+    },
+    "express": {
+      "canonical": "Express.js",
+      "category": "backend_framework",
+      "language": "javascript",
+      "aliases": ["express.js", "expressjs"]
+    },
+    "nestjs": {
+      "canonical": "NestJS",
+      "category": "backend_framework",
+      "language": "typescript",
+      "aliases": ["nest.js", "nest"]
+    },
+    "fastify": {
+      "canonical": "Fastify",
+      "category": "backend_framework",
+      "language": "javascript",
+      "aliases": ["fastify.js"]
+    },
+    "django": {
+      "canonical": "Django",
+      "category": "backend_framework",
+      "language": "python",
+      "aliases": ["django-rest-framework", "drf"]
+    },
+    "flask": {
+      "canonical": "Flask",
+      "category": "backend_framework",
+      "language": "python",
+      "aliases": ["flask-restful"]
+    },
+    "fastapi": {
+      "canonical": "FastAPI",
+      "category": "backend_framework",
+      "language": "python",
+      "aliases": ["fast-api"]
+    },
+    "spring": {
+      "canonical": "Spring",
+      "category": "backend_framework",
+      "language": "java",
+      "aliases": ["spring-boot", "spring-framework"]
+    },
+    "laravel": {
+      "canonical": "Laravel",
+      "category": "backend_framework",
+      "language": "php",
+      "aliases": ["laravel-framework"]
+    },
+    "rails": {
+      "canonical": "Ruby on Rails",
+      "category": "backend_framework",
+      "language": "ruby",
+      "aliases": ["ruby-on-rails", "ror"]
+    },
+    "redux": {
+      "canonical": "Redux",
+      "category": "state_management",
+      "language": "javascript",
+      "aliases": ["react-redux"]
+    },
+    "next.js": {
+      "canonical": "Next.js",
+      "category": "full_stack_framework",
+      "language": "javascript",
+      "aliases": ["nextjs", "next"]
+    },
+    "nuxt": {
+      "canonical": "Nuxt.js",
+      "category": "full_stack_framework",
+      "language": "javascript",
+      "aliases": ["nuxt.js", "nuxtjs"]
+    }
+  },
+  "databases": {
+    "postgresql": {
+      "canonical": "PostgreSQL",
+      "category": "relational_database",
+      "aliases": ["postgres", "pg"]
+    },
+    "mysql": {
+      "canonical": "MySQL",
+      "category": "relational_database",
+      "aliases": ["mysql5", "mysql8"]
+    },
+    "sqlite": {
+      "canonical": "SQLite",
+      "category": "relational_database",
+      "aliases": ["sqlite3"]
+    },
+    "oracle": {
+      "canonical": "Oracle Database",
+      "category": "relational_database",
+      "aliases": ["oracle-db"]
+    },
+    "sql-server": {
+      "canonical": "Microsoft SQL Server",
+      "category": "relational_database",
+      "aliases": ["mssql", "sqlserver"]
+    },
+    "mongodb": {
+      "canonical": "MongoDB",
+      "category": "nosql_database",
+      "aliases": ["mongo"]
+    },
+    "cassandra": {
+      "canonical": "Apache Cassandra",
+      "category": "nosql_database",
+      "aliases": ["cassandra-db"]
+    },
+    "couchdb": {
+      "canonical": "CouchDB",
+      "category": "nosql_database",
+      "aliases": ["apache-couchdb"]
+    },
+    "dynamodb": {
+      "canonical": "Amazon DynamoDB",
+      "category": "nosql_database",
+      "aliases": ["aws-dynamodb"]
+    },
+    "redis": {
+      "canonical": "Redis",
+      "category": "cache_database",
+      "aliases": ["redis-cache"]
+    },
+    "memcached": {
+      "canonical": "Memcached",
+      "category": "cache_database",
+      "aliases": ["memcache"]
+    },
+    "elasticsearch": {
+      "canonical": "Elasticsearch",
+      "category": "search_database",
+      "aliases": ["elastic-search", "es"]
+    },
+    "solr": {
+      "canonical": "Apache Solr",
+      "category": "search_database",
+      "aliases": ["solr-search"]
+    },
+    "neo4j": {
+      "canonical": "Neo4j",
+      "category": "graph_database",
+      "aliases": ["neo4j-graph"]
+    }
+  },
+  "tools_and_platforms": {
+    "docker": {
+      "canonical": "Docker",
+      "category": "containerization",
+      "aliases": ["docker-compose", "dockerfile"]
+    },
+    "kubernetes": {
+      "canonical": "Kubernetes",
+      "category": "orchestration",
+      "aliases": ["k8s", "k8", "kube"]
+    },
+    "git": {
+      "canonical": "Git",
+      "category": "version_control",
+      "aliases": ["github", "gitlab", "bitbucket"]
+    },
+    "jenkins": {
+      "canonical": "Jenkins",
+      "category": "ci_cd",
+      "aliases": ["jenkins-ci"]
+    },
+    "gitlab-ci": {
+      "canonical": "GitLab CI",
+      "category": "ci_cd",
+      "aliases": ["gitlab-ci/cd"]
+    },
+    "github-actions": {
+      "canonical": "GitHub Actions",
+      "category": "ci_cd",
+      "aliases": ["gh-actions"]
+    },
+    "terraform": {
+      "canonical": "Terraform",
+      "category": "infrastructure_as_code",
+      "aliases": ["tf", "terraform-cloud"]
+    },
+    "ansible": {
+      "canonical": "Ansible",
+      "category": "configuration_management",
+      "aliases": ["ansible-playbook"]
+    },
+    "aws": {
+      "canonical": "Amazon Web Services",
+      "category": "cloud_platform",
+      "aliases": ["amazon-web-services", "aws-cloud"]
+    },
+    "azure": {
+      "canonical": "Microsoft Azure",
+      "category": "cloud_platform",
+      "aliases": ["azure-cloud"]
+    },
+    "gcp": {
+      "canonical": "Google Cloud Platform",
+      "category": "cloud_platform",
+      "aliases": ["google-cloud", "gcloud"]
+    },
+    "webpack": {
+      "canonical": "Webpack",
+      "category": "build_tool",
+      "aliases": ["webpack5"]
+    },
+    "vite": {
+      "canonical": "Vite",
+      "category": "build_tool",
+      "aliases": ["vite.js"]
+    },
+    "eslint": {
+      "canonical": "ESLint",
+      "category": "code_quality",
+      "aliases": ["eslint-config"]
+    },
+    "jest": {
+      "canonical": "Jest",
+      "category": "testing",
+      "aliases": ["jest-testing"]
+    },
+    "cypress": {
+      "canonical": "Cypress",
+      "category": "testing",
+      "aliases": ["cypress-testing"]
+    }
+  },
+  "education_degrees": {
+    "bachelor": {
+      "canonical": "Bachelor's Degree",
+      "level": "undergraduate",
+      "aliases": ["bs", "ba", "bachelor", "undergraduate", "bachelors"]
+    },
+    "master": {
+      "canonical": "Master's Degree",
+      "level": "graduate",
+      "aliases": ["ms", "ma", "master", "masters", "graduate"]
+    },
+    "phd": {
+      "canonical": "PhD",
+      "level": "doctorate",
+      "aliases": ["doctorate", "doctoral", "ph.d.", "doctor"]
+    },
+    "associate": {
+      "canonical": "Associate Degree",
+      "level": "associate",
+      "aliases": ["associates", "aa", "as", "associate"]
+    },
+    "diploma": {
+      "canonical": "Diploma",
+      "level": "diploma",
+      "aliases": ["high-school", "secondary"]
+    }
+  },
+  "education_fields": {
+    "computer-science": {
+      "canonical": "Computer Science",
+      "category": "technology",
+      "aliases": ["cs", "comp-sci", "computer-engineering"]
+    },
+    "software-engineering": {
+      "canonical": "Software Engineering",
+      "category": "technology",
+      "aliases": ["software-dev", "software-development"]
+    },
+    "information-technology": {
+      "canonical": "Information Technology",
+      "category": "technology",
+      "aliases": ["it", "information-systems", "mis"]
+    },
+    "electrical-engineering": {
+      "canonical": "Electrical Engineering",
+      "category": "engineering",
+      "aliases": ["ee", "electronics"]
+    },
+    "mathematics": {
+      "canonical": "Mathematics",
+      "category": "science",
+      "aliases": ["math", "applied-math", "statistics"]
+    },
+    "physics": {
+      "canonical": "Physics",
+      "category": "science",
+      "aliases": ["applied-physics"]
+    },
+    "data-science": {
+      "canonical": "Data Science",
+      "category": "technology",
+      "aliases": ["data-analytics", "analytics"]
+    },
+    "business": {
+      "canonical": "Business",
+      "category": "business",
+      "aliases": ["business-admin", "mba", "management"]
+    },
+    "economics": {
+      "canonical": "Economics",
+      "category": "business",
+      "aliases": ["econ", "finance"]
+    }
+  },
+  "soft_skills": {
+    "communication": {
+      "canonical": "Communication",
+      "category": "interpersonal",
+      "aliases": ["verbal-communication", "written-communication"]
+    },
+    "leadership": {
+      "canonical": "Leadership",
+      "category": "management",
+      "aliases": ["team-leadership", "project-leadership"]
+    },
+    "teamwork": {
+      "canonical": "Teamwork",
+      "category": "collaboration",
+      "aliases": ["collaboration", "team-collaboration"]
+    },
+    "problem-solving": {
+      "canonical": "Problem Solving",
+      "category": "analytical",
+      "aliases": ["analytical-thinking", "critical-thinking"]
+    },
+    "time-management": {
+      "canonical": "Time Management",
+      "category": "organizational",
+      "aliases": ["organization", "prioritization"]
+    },
+    "adaptability": {
+      "canonical": "Adaptability",
+      "category": "personal",
+      "aliases": ["flexibility", "change-management"]
+    },
+    "creativity": {
+      "canonical": "Creativity",
+      "category": "personal",
+      "aliases": ["innovation", "creative-thinking"]
+    },
+    "attention-to-detail": {
+      "canonical": "Attention to Detail",
+      "category": "quality",
+      "aliases": ["detail-oriented", "precision"]
+    },
+    "mentoring": {
+      "canonical": "Mentoring",
+      "category": "development",
+      "aliases": ["coaching", "knowledge-sharing"]
+    },
+    "project-management": {
+      "canonical": "Project Management",
+      "category": "management",
+      "aliases": ["project-coordination", "pm"]
+    }
+  },
+  "business_domains": {
+    "fintech": {
+      "canonical": "Financial Technology",
+      "category": "finance",
+      "aliases": ["financial-services", "banking", "payments"]
+    },
+    "healthtech": {
+      "canonical": "Healthcare Technology",
+      "category": "healthcare",
+      "aliases": ["medical-technology", "health-tech", "medtech"]
+    },
+    "edtech": {
+      "canonical": "Education Technology",
+      "category": "education",
+      "aliases": ["educational-technology", "e-learning"]
+    },
+    "ecommerce": {
+      "canonical": "E-commerce",
+      "category": "retail",
+      "aliases": ["online-retail", "e-commerce", "retail-tech"]
+    },
+    "saas": {
+      "canonical": "Software as a Service",
+      "category": "software",
+      "aliases": ["saas-platform", "cloud-software"]
+    },
+    "gaming": {
+      "canonical": "Gaming",
+      "category": "entertainment",
+      "aliases": ["game-development", "video-games"]
+    },
+    "adtech": {
+      "canonical": "Advertising Technology",
+      "category": "marketing",
+      "aliases": ["marketing-tech", "digital-advertising"]
+    },
+    "logistics": {
+      "canonical": "Logistics",
+      "category": "supply_chain",
+      "aliases": ["supply-chain", "transportation"]
+    },
+    "cybersecurity": {
+      "canonical": "Cybersecurity",
+      "category": "security",
+      "aliases": ["information-security", "infosec"]
+    },
+    "ai-ml": {
+      "canonical": "Artificial Intelligence & Machine Learning",
+      "category": "technology",
+      "aliases": ["artificial-intelligence", "machine-learning", "ai", "ml"]
+    }
+  },
+  "methodologies": {
+    "agile": {
+      "canonical": "Agile",
+      "category": "development_methodology",
+      "aliases": ["agile-development", "agile-methodology"]
+    },
+    "scrum": {
+      "canonical": "Scrum",
+      "category": "development_methodology",
+      "aliases": ["scrum-framework", "scrum-master"]
+    },
+    "kanban": {
+      "canonical": "Kanban",
+      "category": "development_methodology",
+      "aliases": ["kanban-board", "kanban-method"]
+    },
+    "devops": {
+      "canonical": "DevOps",
+      "category": "development_methodology",
+      "aliases": ["dev-ops", "continuous-integration"]
+    },
+    "tdd": {
+      "canonical": "Test-Driven Development",
+      "category": "development_methodology",
+      "aliases": ["test-driven-development", "tdd-methodology"]
+    },
+    "ci-cd": {
+      "canonical": "Continuous Integration/Continuous Deployment",
+      "category": "development_methodology",
+      "aliases": ["continuous-integration", "continuous-deployment", "ci/cd"]
+    },
+    "microservices": {
+      "canonical": "Microservices",
+      "category": "architecture_pattern",
+      "aliases": ["microservice-architecture", "service-oriented"]
+    },
+    "rest": {
+      "canonical": "REST",
+      "category": "api_design",
+      "aliases": ["restful", "rest-api", "restful-api"]
+    },
+    "graphql": {
+      "canonical": "GraphQL",
+      "category": "api_design",
+      "aliases": ["graph-ql", "graphql-api"]
+    },
+    "mvc": {
+      "canonical": "Model-View-Controller",
+      "category": "architecture_pattern",
+      "aliases": ["mvc-pattern", "model-view-controller"]
+    }
+  }
+}

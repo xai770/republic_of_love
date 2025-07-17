@@ -1,0 +1,182 @@
+{
+  "job_id": "59428",
+  "version": "2.0_enhanced",
+  "requirements": {
+    "technical": [
+      {
+        "skill": "SAS",
+        "proficiency_level": "advanced",
+        "category": "programming",
+        "is_mandatory": true,
+        "confidence": 0.8,
+        "context": "n und Erfahrungen im Umgang mit großen, teils unstrukturierten Datenpools auf unterschiedlichen Plat"
+      },
+      {
+        "skill": "SQL",
+        "proficiency_level": "advanced",
+        "category": "programming",
+        "is_mandatory": true,
+        "confidence": 0.8,
+        "context": " Erfahrungen im Umgang mit großen, teils unstrukturierten Datenpools auf unterschiedlichen Plattform"
+      },
+      {
+        "skill": "Python",
+        "proficiency_level": "advanced",
+        "category": "programming",
+        "is_mandatory": true,
+        "confidence": 0.8,
+        "context": "hrungen im Umgang mit großen, teils unstrukturierten Datenpools auf unterschiedlichen PlattformenBeh"
+      },
+      {
+        "skill": "CRM",
+        "proficiency_level": "intermediate",
+        "category": "tool",
+        "is_mandatory": true,
+        "confidence": 0.8,
+        "context": "iebs- und ProduktbereichenVerantwortliche Konzeption & Programmierung von Datenselektionen für ausge"
+      },
+      {
+        "skill": "Adobe",
+        "proficiency_level": "advanced",
+        "category": "tool",
+        "is_mandatory": true,
+        "confidence": 0.8,
+        "context": "hung von Programmiersprachen (u.a. SAS, SQL, Python) auf hohem Niveau und gute Kenntnis gängiger Ana"
+      }
+    ],
+    "business": [
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": "ensbank bündelt unser Angebot für unsere Geschäftskunden - vom selbständigen Freiberufler bis zum größeren Geschäftskunden - der drei Marken Deutsche "
+      },
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": "igen Freiberufler bis zum größeren Geschäftskunden - der drei Marken Deutsche Bank, Postbank und FYRST unter einem gemeinsamen Dach. Für die Deutsche "
+      },
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": " zentralen Bereichen.Ihre AufgabenMitgestaltung der vertrieblichen Wachstumsagenda für den stationären Vertrieb in BizBanking für die Marken Deutsche "
+      },
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": "ytischer Vertriebsimpulse sowie Verknüpfung mit digitalen Leads gemeinsam mit den relevanten StakeholdernIhre Fähigkeiten und ErfahrungenErfahrung im "
+      },
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": " Gesundheit.Körperlich fitMit Angeboten zur Aufrechterhaltung Ihrer persönlichen Gesundheit und einem förderlichen beruflichen Umfeld hilft Ihnen die "
+      },
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": "bspw. Teilzeit, Jobtandem, hybrides Arbeiten) sowie einer umfangreichen Kultur der Vielfalt, Chancengleichheit und Teilhabe.Finanziell abgesichertDie "
+      },
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9,
+        "context": "ve ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche "
+      }
+    ],
+    "soft_skills": [
+      {
+        "skill": "teamwork",
+        "context": "en Deutsche Bank, Postbank und FYRST unter einem gemeinsamen Dach. Für die Deutsche Bank ist das Ges",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "initiative",
+        "context": "veau und gute Kenntnis gängiger Analytics-Tools wie auch Campaigns-Tech Stacks (z.B. Adobe)Analytisc",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "leadership",
+        "context": "Business Product Senior Analyst (d/m/w) – Sales Campaign Management BizBanking (Data Analytics) Job ",
+        "importance": "important",
+        "confidence": 0.7
+      }
+    ],
+    "experience": [
+      {
+        "type": "senior_level",
+        "description": "Senior level experience required",
+        "years_required": 5,
+        "is_mandatory": true,
+        "confidence": 0.8
+      }
+    ],
+    "education": [
+      {
+        "level": "studium",
+        "field": "Wirtschaftsinformatik",
+        "is_mandatory": true,
+        "alternatives": [],
+        "confidence": 0.8
+      },
+      {
+        "level": "ba",
+        "field": "Wirtschaftsinformatik",
+        "is_mandatory": true,
+        "alternatives": [],
+        "confidence": 0.8
+      },
+      {
+        "level": "fh",
+        "field": "Wirtschaftsinformatik",
+        "is_mandatory": true,
+        "alternatives": [],
+        "confidence": 0.8
+      },
+      {
+        "level": "universität",
+        "field": "Wirtschaftsinformatik",
+        "is_mandatory": true,
+        "alternatives": [],
+        "confidence": 0.8
+      }
+    ]
+  },
+  "location_validation": {
+    "is_valid": true,
+    "confidence": 0.8,
+    "details": "Found 2/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:True",
+    "metadata_location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    }
+  },
+  "improvements": {
+    "german_patterns": true,
+    "soft_skills_deduplication": true,
+    "enhanced_experience_extraction": true,
+    "business_domain_detection": true
+  }
+}

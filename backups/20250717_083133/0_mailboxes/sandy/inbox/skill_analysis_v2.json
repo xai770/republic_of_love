@@ -1,0 +1,247 @@
+{
+  "metadata": {
+    "extraction_timestamp": "2025-07-15T05:43:39.480000",
+    "framework_version": "Gemma3n Strategic 5-Bucket Enhanced v2.0",
+    "extractor": "Enhanced Skill Extractor v2.0",
+    "total_skills": 22,
+    "enhancement_features": [
+      "Competency Levels",
+      "Experience Quantification",
+      "Synonym Mapping",
+      "Enhanced Criticality Context"
+    ]
+  },
+  "skill_analysis": {
+    "Technical Skills": [
+      {
+        "skill": "Content Strategy",
+        "competency_level": "Advanced",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Content Planning",
+          "Content Development"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "SEO Optimization",
+        "competency_level": "Advanced",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "SEO",
+          "Search Engine Optimization"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Analytics Tools",
+        "competency_level": "Intermediate",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Google Analytics",
+          "Data Analysis"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Digital Marketing",
+        "competency_level": "Intermediate",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Online Marketing",
+          "Digital Platforms"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "HTML",
+        "competency_level": "Beginner",
+        "experience_level": "0-2 years",
+        "synonyms": [
+          "Web Development"
+        ],
+        "criticality": "LOW"
+      }
+    ],
+    "Domain Expertise": [
+      {
+        "skill": "ETFs",
+        "competency_level": "Expert",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Exchange Traded Funds",
+          "Passive Investing"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "Passive Investing",
+        "competency_level": "Expert",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Indexing",
+          "Index Tracking"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "Asset Management",
+        "competency_level": "Intermediate",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Investment Management",
+          "Portfolio Management"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "EMEA Markets",
+        "competency_level": "Intermediate",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "European",
+          "Middle East",
+          "Africa"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Financial Journalism",
+        "competency_level": "Expert",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Finance Writing",
+          "Financial Reporting"
+        ],
+        "criticality": "HIGH"
+      }
+    ],
+    "Methodology & Frameworks": [
+      {
+        "skill": "Content Strategy Development",
+        "competency_level": "Advanced",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Strategic Planning",
+          "Roadmap Creation"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "SEO Principles",
+        "competency_level": "Advanced",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Keyword Research",
+          "Link Building"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "Data Analysis",
+        "competency_level": "Intermediate",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Data Interpretation",
+          "Reporting"
+        ],
+        "criticality": "MEDIUM"
+      }
+    ],
+    "Collaboration & Communication": [
+      {
+        "skill": "Stakeholder Communication",
+        "competency_level": "Advanced",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Client Communication",
+          "Internal Communication"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "Cross-functional Collaboration",
+        "competency_level": "Advanced",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Teamwork",
+          "Interdepartmental Coordination"
+        ],
+        "criticality": "HIGH"
+      },
+      {
+        "skill": "Presentation Skills",
+        "competency_level": "Intermediate",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Public Speaking",
+          "Report Delivery"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Written Communication",
+        "competency_level": "Advanced",
+        "experience_level": "5+ years",
+        "synonyms": [
+          "Report Writing",
+          "Content Creation"
+        ],
+        "criticality": "HIGH"
+      }
+    ],
+    "Experience & Qualifications": [
+      {
+        "skill": "Investment Writing",
+        "competency_level": "Required",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Financial Writing",
+          "Content Writing"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Financial Journalism",
+        "competency_level": "Required",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Finance Reporting",
+          "Business Journalism"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Content Strategy",
+        "competency_level": "Required",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "Content Planning",
+          "Editorial Planning"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "SEO Experience",
+        "competency_level": "Required",
+        "experience_level": "2-5 years",
+        "synonyms": [
+          "SEO Implementation",
+          "Keyword Optimization"
+        ],
+        "criticality": "MEDIUM"
+      },
+      {
+        "skill": "Bachelor's Degree",
+        "competency_level": "Required",
+        "experience_level": "Entry-level",
+        "synonyms": [
+          "University Degree",
+          "BS",
+          "BA"
+        ],
+        "criticality": "MEDIUM"
+      }
+    ]
+  }
+}

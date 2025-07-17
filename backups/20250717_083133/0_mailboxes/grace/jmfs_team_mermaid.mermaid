@@ -1,0 +1,43 @@
+graph TD
+    %% Executive Level
+    XAI[👨‍💼 xai<br/>Founder & CEO<br/>Strategic Vision & Human Oversight]
+    
+    %% Strategic Level  
+    GRACE[🧠 Grace<br/>Strategic Claude<br/>Multi-Project Coordination]
+    
+    %% Project Management Level
+    DOUG[🔧 Doug<br/>Technical PM<br/>LLM Factory & System Integration]
+    SUSAN[👥 Susan<br/>Business PM<br/>HR Testing & User Experience]
+    
+    %% Specialist Level - Active
+    RICK[⚖️ Rick<br/>Legal Specialist<br/>Framework & Compliance]
+    MARVIN[💻 Marvin<br/>Technical Implementation<br/>LLM Factory & Code Development]
+    
+    %% Specialist Level - Future
+    MAGGIE[📢 Maggie<br/>Marketing Specialist<br/>User Acquisition & Partnerships]
+    
+    %% Reporting Structure
+    XAI --> GRACE
+    GRACE --> DOUG
+    GRACE --> SUSAN
+    DOUG --> MARVIN
+    SUSAN --> RICK
+    SUSAN --> MAGGIE
+    
+    %% Project Coordination (dotted lines)
+    DOUG -.-> RICK
+    DOUG -.-> SUSAN
+    MARVIN -.-> SUSAN
+    
+    %% Styling
+    classDef executive fill:#ff6b6b,stroke:#d63031,stroke-width:3px,color:#fff
+    classDef strategic fill:#4ecdc4,stroke:#00b894,stroke-width:3px,color:#fff  
+    classDef projectMgr fill:#45b7d1,stroke:#0984e3,stroke-width:2px,color:#fff
+    classDef specialist fill:#96ceb4,stroke:#00b894,stroke-width:2px,color:#333
+    classDef future fill:#ddd,stroke:#999,stroke-width:1px,color:#666
+    
+    class XAI executive
+    class GRACE strategic
+    class DOUG,SUSAN projectMgr
+    class RICK,MARVIN specialist
+    class MAGGIE future

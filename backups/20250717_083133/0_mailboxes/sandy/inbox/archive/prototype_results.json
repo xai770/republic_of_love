@@ -1,0 +1,110 @@
+{
+  "job_id": "59428",
+  "requirements": {
+    "technical": [
+      {
+        "skill": "SAS",
+        "proficiency_level": "advanced",
+        "category": "programming",
+        "is_mandatory": true,
+        "confidence": 0.8
+      },
+      {
+        "skill": "SQL",
+        "proficiency_level": "advanced",
+        "category": "programming",
+        "is_mandatory": true,
+        "confidence": 0.8
+      },
+      {
+        "skill": "Python",
+        "proficiency_level": "advanced",
+        "category": "programming",
+        "is_mandatory": true,
+        "confidence": 0.8
+      },
+      {
+        "skill": "CRM",
+        "proficiency_level": "intermediate",
+        "category": "tool",
+        "is_mandatory": true,
+        "confidence": 0.8
+      },
+      {
+        "skill": "Adobe",
+        "proficiency_level": "advanced",
+        "category": "tool",
+        "is_mandatory": true,
+        "confidence": 0.8
+      }
+    ],
+    "business": [
+      {
+        "domain": "banking",
+        "experience_type": "industry_knowledge",
+        "years_required": 0,
+        "is_mandatory": true,
+        "confidence": 0.9
+      }
+    ],
+    "soft_skills": [
+      {
+        "skill": "teamwork",
+        "context": "emeinsamen Dach. Für die Deutsche Bank ist das Geschäftsfeld ein strategischer Wachstumsbereich.Das ",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "teamwork",
+        "context": " ist verantwortlich für die Entwicklung und Steuerung der Vertriebskampagnen in BizBanking in enger ",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "teamwork",
+        "context": "ektionen für ausgewählte Vertriebskampagnen sowie Bereitstellung in CRM- & Kampagnen-Tools in enger ",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "teamwork",
+        "context": "ören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete ",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "initiative",
+        "context": "e auch Campaigns-Tech Stacks (z.B. Adobe)Analytisches und konzeptionelles Denkvermögen sowie starke ",
+        "importance": "important",
+        "confidence": 0.7
+      },
+      {
+        "skill": "initiative",
+        "context": "nsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, ",
+        "importance": "important",
+        "confidence": 0.7
+      }
+    ],
+    "experience": [],
+    "education": [
+      {
+        "level": "studium",
+        "field": "Wirtschaftsinformatik",
+        "is_mandatory": true,
+        "alternatives": [],
+        "confidence": 0.8
+      }
+    ]
+  },
+  "location_validation": {
+    "is_valid": false,
+    "confidence": 0.3333333333333333,
+    "details": "Found 1/3 location components: city:Frankfurt:True, state:Hessen:False, country:Deutschland:False",
+    "metadata_location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    }
+  }
+}

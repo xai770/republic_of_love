@@ -1,0 +1,681 @@
+{
+  "extraction_timestamp": "2025-06-23T13:57:15.729773",
+  "wisdom_profiles": {
+    "sandy_career_analyst": {
+      "expert_id": "sandy_career_analyst",
+      "domain_expertise": [
+        "job_matching",
+        "skill_assessment",
+        "decision_making"
+      ],
+      "decision_patterns": [
+        {
+          "pattern_id": "values_alignment_20250623_135715",
+          "domain": "job_matching",
+          "decision_type": "conditional",
+          "confidence_level": 0.8,
+          "reasoning_keywords": [
+            "values",
+            "alignment",
+            "integrity",
+            "meaningful work"
+          ],
+          "context_indicators": [
+            "personal background",
+            "company culture",
+            "role requirements"
+          ],
+          "transferability_score": 0.9,
+          "wisdom_essence": "Assess compatibility between personal values and role/organization demands",
+          "examples": [
+            "Values alignment analysis from 20250617_131215_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "purely technical roles",
+            "short-term positions"
+          ]
+        },
+        {
+          "pattern_id": "gap_analysis_20250623_135715",
+          "domain": "skill_assessment",
+          "decision_type": "include",
+          "confidence_level": 0.85,
+          "reasoning_keywords": [
+            "gap",
+            "development",
+            "skills",
+            "requirements",
+            "bridge"
+          ],
+          "context_indicators": [
+            "job requirements",
+            "current experience",
+            "learning path"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Identify skill gaps and create actionable development plans",
+          "examples": [
+            "Gap analysis from 20250617_131215_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "perfect skill matches",
+            "entry-level positions"
+          ]
+        },
+        {
+          "pattern_id": "risk_assessment_20250623_135715",
+          "domain": "decision_making",
+          "decision_type": "conditional",
+          "confidence_level": 0.75,
+          "reasoning_keywords": [
+            "risk",
+            "assessment",
+            "consider",
+            "potential",
+            "challenge"
+          ],
+          "context_indicators": [
+            "uncertainty",
+            "new domain",
+            "complex requirements"
+          ],
+          "transferability_score": 0.8,
+          "wisdom_essence": "Evaluate potential risks and mitigation strategies before commitment",
+          "examples": [
+            "Risk consideration from 20250617_131215_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "low-stakes decisions",
+            "familiar domains"
+          ]
+        },
+        {
+          "pattern_id": "values_alignment_20250623_135715",
+          "domain": "job_matching",
+          "decision_type": "conditional",
+          "confidence_level": 0.8,
+          "reasoning_keywords": [
+            "values",
+            "alignment",
+            "integrity",
+            "meaningful work"
+          ],
+          "context_indicators": [
+            "personal background",
+            "company culture",
+            "role requirements"
+          ],
+          "transferability_score": 0.9,
+          "wisdom_essence": "Assess compatibility between personal values and role/organization demands",
+          "examples": [
+            "Values alignment analysis from 20250617_131840_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "purely technical roles",
+            "short-term positions"
+          ]
+        },
+        {
+          "pattern_id": "gap_analysis_20250623_135715",
+          "domain": "skill_assessment",
+          "decision_type": "include",
+          "confidence_level": 0.85,
+          "reasoning_keywords": [
+            "gap",
+            "development",
+            "skills",
+            "requirements",
+            "bridge"
+          ],
+          "context_indicators": [
+            "job requirements",
+            "current experience",
+            "learning path"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Identify skill gaps and create actionable development plans",
+          "examples": [
+            "Gap analysis from 20250617_131840_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "perfect skill matches",
+            "entry-level positions"
+          ]
+        },
+        {
+          "pattern_id": "risk_assessment_20250623_135715",
+          "domain": "decision_making",
+          "decision_type": "conditional",
+          "confidence_level": 0.75,
+          "reasoning_keywords": [
+            "risk",
+            "assessment",
+            "consider",
+            "potential",
+            "challenge"
+          ],
+          "context_indicators": [
+            "uncertainty",
+            "new domain",
+            "complex requirements"
+          ],
+          "transferability_score": 0.8,
+          "wisdom_essence": "Evaluate potential risks and mitigation strategies before commitment",
+          "examples": [
+            "Risk consideration from 20250617_131840_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "low-stakes decisions",
+            "familiar domains"
+          ]
+        },
+        {
+          "pattern_id": "values_alignment_20250623_135715",
+          "domain": "job_matching",
+          "decision_type": "conditional",
+          "confidence_level": 0.8,
+          "reasoning_keywords": [
+            "values",
+            "alignment",
+            "integrity",
+            "meaningful work"
+          ],
+          "context_indicators": [
+            "personal background",
+            "company culture",
+            "role requirements"
+          ],
+          "transferability_score": 0.9,
+          "wisdom_essence": "Assess compatibility between personal values and role/organization demands",
+          "examples": [
+            "Values alignment analysis from 20250617_134008_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "purely technical roles",
+            "short-term positions"
+          ]
+        },
+        {
+          "pattern_id": "gap_analysis_20250623_135715",
+          "domain": "skill_assessment",
+          "decision_type": "include",
+          "confidence_level": 0.85,
+          "reasoning_keywords": [
+            "gap",
+            "development",
+            "skills",
+            "requirements",
+            "bridge"
+          ],
+          "context_indicators": [
+            "job requirements",
+            "current experience",
+            "learning path"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Identify skill gaps and create actionable development plans",
+          "examples": [
+            "Gap analysis from 20250617_134008_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "perfect skill matches",
+            "entry-level positions"
+          ]
+        },
+        {
+          "pattern_id": "risk_assessment_20250623_135715",
+          "domain": "decision_making",
+          "decision_type": "conditional",
+          "confidence_level": 0.75,
+          "reasoning_keywords": [
+            "risk",
+            "assessment",
+            "consider",
+            "potential",
+            "challenge"
+          ],
+          "context_indicators": [
+            "uncertainty",
+            "new domain",
+            "complex requirements"
+          ],
+          "transferability_score": 0.8,
+          "wisdom_essence": "Evaluate potential risks and mitigation strategies before commitment",
+          "examples": [
+            "Risk consideration from 20250617_134008_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "low-stakes decisions",
+            "familiar domains"
+          ]
+        },
+        {
+          "pattern_id": "values_alignment_20250623_135715",
+          "domain": "job_matching",
+          "decision_type": "conditional",
+          "confidence_level": 0.8,
+          "reasoning_keywords": [
+            "values",
+            "alignment",
+            "integrity",
+            "meaningful work"
+          ],
+          "context_indicators": [
+            "personal background",
+            "company culture",
+            "role requirements"
+          ],
+          "transferability_score": 0.9,
+          "wisdom_essence": "Assess compatibility between personal values and role/organization demands",
+          "examples": [
+            "Values alignment analysis from 20250617_134222_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "purely technical roles",
+            "short-term positions"
+          ]
+        },
+        {
+          "pattern_id": "gap_analysis_20250623_135715",
+          "domain": "skill_assessment",
+          "decision_type": "include",
+          "confidence_level": 0.85,
+          "reasoning_keywords": [
+            "gap",
+            "development",
+            "skills",
+            "requirements",
+            "bridge"
+          ],
+          "context_indicators": [
+            "job requirements",
+            "current experience",
+            "learning path"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Identify skill gaps and create actionable development plans",
+          "examples": [
+            "Gap analysis from 20250617_134222_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "perfect skill matches",
+            "entry-level positions"
+          ]
+        },
+        {
+          "pattern_id": "risk_assessment_20250623_135715",
+          "domain": "decision_making",
+          "decision_type": "conditional",
+          "confidence_level": 0.75,
+          "reasoning_keywords": [
+            "risk",
+            "assessment",
+            "consider",
+            "potential",
+            "challenge"
+          ],
+          "context_indicators": [
+            "uncertainty",
+            "new domain",
+            "complex requirements"
+          ],
+          "transferability_score": 0.8,
+          "wisdom_essence": "Evaluate potential risks and mitigation strategies before commitment",
+          "examples": [
+            "Risk consideration from 20250617_134222_dialogue_001_deepseek_career_analyst.md"
+          ],
+          "contraindications": [
+            "low-stakes decisions",
+            "familiar domains"
+          ]
+        }
+      ],
+      "threshold_preferences": {
+        "avg_confidence": 0.7999999999999999,
+        "min_confidence": 0.75,
+        "avg_transferability": 0.8833333333333333,
+        "pattern_strength": 0.3333333333333333
+      },
+      "risk_tolerance": "aggressive",
+      "precision_vs_recall_preference": "recall_first",
+      "adaptation_style": "experimental"
+    },
+    "sandy_application_strategist": {
+      "expert_id": "sandy_application_strategist",
+      "domain_expertise": [],
+      "decision_patterns": [],
+      "threshold_preferences": {
+        "avg_confidence": 0.5,
+        "min_confidence": 0.5,
+        "avg_transferability": 0.5,
+        "pattern_strength": 0.0
+      },
+      "risk_tolerance": "moderate",
+      "precision_vs_recall_preference": "balanced",
+      "adaptation_style": "experimental"
+    },
+    "consciousness_approach": {
+      "expert_id": "consciousness_approach",
+      "domain_expertise": [
+        "skill_assessment"
+      ],
+      "decision_patterns": [
+        {
+          "pattern_id": "gap_analysis_20250623_135715",
+          "domain": "skill_assessment",
+          "decision_type": "include",
+          "confidence_level": 0.85,
+          "reasoning_keywords": [
+            "gap",
+            "development",
+            "skills",
+            "requirements",
+            "bridge"
+          ],
+          "context_indicators": [
+            "job requirements",
+            "current experience",
+            "learning path"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Identify skill gaps and create actionable development plans",
+          "examples": [
+            "Gap analysis from 20250617_125741_dialogue_001_job_search_consciousness_deepseek.md"
+          ],
+          "contraindications": [
+            "perfect skill matches",
+            "entry-level positions"
+          ]
+        }
+      ],
+      "threshold_preferences": {
+        "avg_confidence": 0.85,
+        "min_confidence": 0.85,
+        "avg_transferability": 0.95,
+        "pattern_strength": 1.0
+      },
+      "risk_tolerance": "conservative",
+      "precision_vs_recall_preference": "precision_first",
+      "adaptation_style": "experimental"
+    },
+    "systematic_strategy": {
+      "expert_id": "systematic_strategy",
+      "domain_expertise": [
+        "skill_assessment",
+        "decision_making",
+        "strategy",
+        "methodology"
+      ],
+      "decision_patterns": [
+        {
+          "pattern_id": "gap_analysis_20250623_135715",
+          "domain": "skill_assessment",
+          "decision_type": "include",
+          "confidence_level": 0.85,
+          "reasoning_keywords": [
+            "gap",
+            "development",
+            "skills",
+            "requirements",
+            "bridge"
+          ],
+          "context_indicators": [
+            "job requirements",
+            "current experience",
+            "learning path"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Identify skill gaps and create actionable development plans",
+          "examples": [
+            "Gap analysis from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+          ],
+          "contraindications": [
+            "perfect skill matches",
+            "entry-level positions"
+          ]
+        },
+        {
+          "pattern_id": "risk_assessment_20250623_135715",
+          "domain": "decision_making",
+          "decision_type": "conditional",
+          "confidence_level": 0.75,
+          "reasoning_keywords": [
+            "risk",
+            "assessment",
+            "consider",
+            "potential",
+            "challenge"
+          ],
+          "context_indicators": [
+            "uncertainty",
+            "new domain",
+            "complex requirements"
+          ],
+          "transferability_score": 0.8,
+          "wisdom_essence": "Evaluate potential risks and mitigation strategies before commitment",
+          "examples": [
+            "Risk consideration from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+          ],
+          "contraindications": [
+            "low-stakes decisions",
+            "familiar domains"
+          ]
+        },
+        {
+          "pattern_id": "systematic_approach_20250623_135715",
+          "domain": "methodology",
+          "decision_type": "include",
+          "confidence_level": 0.9,
+          "reasoning_keywords": [
+            "systematic",
+            "step-by-step",
+            "structured",
+            "methodical"
+          ],
+          "context_indicators": [
+            "complex analysis",
+            "multiple factors",
+            "decision framework"
+          ],
+          "transferability_score": 0.95,
+          "wisdom_essence": "Break complex decisions into systematic, analyzable components",
+          "examples": [
+            "Systematic analysis from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+          ],
+          "contraindications": [
+            "simple decisions",
+            "time-critical situations"
+          ]
+        },
+        {
+          "pattern_id": "adaptive_flexibility_20250623_135715",
+          "domain": "strategy",
+          "decision_type": "conditional",
+          "confidence_level": 0.8,
+          "reasoning_keywords": [
+            "adaptive",
+            "flexible",
+            "adjust",
+            "evolve",
+            "responsive"
+          ],
+          "context_indicators": [
+            "changing requirements",
+            "uncertain environment",
+            "feedback loops"
+          ],
+          "transferability_score": 0.85,
+          "wisdom_essence": "Build flexibility into strategies to adapt to changing circumstances",
+          "examples": [
+            "Adaptive strategy from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+          ],
+          "contraindications": [
+            "stable environments",
+            "fixed requirements"
+          ]
+        }
+      ],
+      "threshold_preferences": {
+        "avg_confidence": 0.825,
+        "min_confidence": 0.75,
+        "avg_transferability": 0.8875000000000001,
+        "pattern_strength": 0.5
+      },
+      "risk_tolerance": "moderate",
+      "precision_vs_recall_preference": "balanced",
+      "adaptation_style": "gradual"
+    }
+  },
+  "pattern_library": {
+    "values_alignment_20250623_135715": {
+      "pattern_id": "values_alignment_20250623_135715",
+      "domain": "job_matching",
+      "decision_type": "conditional",
+      "confidence_level": 0.8,
+      "reasoning_keywords": [
+        "values",
+        "alignment",
+        "integrity",
+        "meaningful work"
+      ],
+      "context_indicators": [
+        "personal background",
+        "company culture",
+        "role requirements"
+      ],
+      "transferability_score": 0.9,
+      "wisdom_essence": "Assess compatibility between personal values and role/organization demands",
+      "examples": [
+        "Values alignment analysis from 20250617_134222_dialogue_001_deepseek_career_analyst.md"
+      ],
+      "contraindications": [
+        "purely technical roles",
+        "short-term positions"
+      ]
+    },
+    "gap_analysis_20250623_135715": {
+      "pattern_id": "gap_analysis_20250623_135715",
+      "domain": "skill_assessment",
+      "decision_type": "include",
+      "confidence_level": 0.85,
+      "reasoning_keywords": [
+        "gap",
+        "development",
+        "skills",
+        "requirements",
+        "bridge"
+      ],
+      "context_indicators": [
+        "job requirements",
+        "current experience",
+        "learning path"
+      ],
+      "transferability_score": 0.95,
+      "wisdom_essence": "Identify skill gaps and create actionable development plans",
+      "examples": [
+        "Gap analysis from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+      ],
+      "contraindications": [
+        "perfect skill matches",
+        "entry-level positions"
+      ]
+    },
+    "risk_assessment_20250623_135715": {
+      "pattern_id": "risk_assessment_20250623_135715",
+      "domain": "decision_making",
+      "decision_type": "conditional",
+      "confidence_level": 0.75,
+      "reasoning_keywords": [
+        "risk",
+        "assessment",
+        "consider",
+        "potential",
+        "challenge"
+      ],
+      "context_indicators": [
+        "uncertainty",
+        "new domain",
+        "complex requirements"
+      ],
+      "transferability_score": 0.8,
+      "wisdom_essence": "Evaluate potential risks and mitigation strategies before commitment",
+      "examples": [
+        "Risk consideration from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+      ],
+      "contraindications": [
+        "low-stakes decisions",
+        "familiar domains"
+      ]
+    },
+    "systematic_approach_20250623_135715": {
+      "pattern_id": "systematic_approach_20250623_135715",
+      "domain": "methodology",
+      "decision_type": "include",
+      "confidence_level": 0.9,
+      "reasoning_keywords": [
+        "systematic",
+        "step-by-step",
+        "structured",
+        "methodical"
+      ],
+      "context_indicators": [
+        "complex analysis",
+        "multiple factors",
+        "decision framework"
+      ],
+      "transferability_score": 0.95,
+      "wisdom_essence": "Break complex decisions into systematic, analyzable components",
+      "examples": [
+        "Systematic analysis from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+      ],
+      "contraindications": [
+        "simple decisions",
+        "time-critical situations"
+      ]
+    },
+    "adaptive_flexibility_20250623_135715": {
+      "pattern_id": "adaptive_flexibility_20250623_135715",
+      "domain": "strategy",
+      "decision_type": "conditional",
+      "confidence_level": 0.8,
+      "reasoning_keywords": [
+        "adaptive",
+        "flexible",
+        "adjust",
+        "evolve",
+        "responsive"
+      ],
+      "context_indicators": [
+        "changing requirements",
+        "uncertain environment",
+        "feedback loops"
+      ],
+      "transferability_score": 0.85,
+      "wisdom_essence": "Build flexibility into strategies to adapt to changing circumstances",
+      "examples": [
+        "Adaptive strategy from 20250617_135653_dialogue_003_qwen3_systematic_strategy.md"
+      ],
+      "contraindications": [
+        "stable environments",
+        "fixed requirements"
+      ]
+    }
+  },
+  "adaptive_thresholds": {
+    "confidence_minimum": 0.7,
+    "transferability_threshold": 0.6,
+    "pattern_strength_requirement": 0.8,
+    "wisdom_certainty_floor": 0.5
+  },
+  "extraction_summary": {
+    "total_experts": 4,
+    "total_patterns": 5,
+    "domains_covered": [
+      "strategy",
+      "job_matching",
+      "skill_assessment",
+      "methodology",
+      "decision_making"
+    ]
+  }
+}

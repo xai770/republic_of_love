@@ -1,0 +1,53 @@
+{
+  "business_owner": "BUSINESS_OWNER_NAME",
+  "specialist_name": "SPECIALIST_NAME_AND_VERSION",
+  "date_requested": "YYYY-MM-DD",
+  "test_cases": [
+    {
+      "id": "test_001",
+      "name": "DESCRIPTIVE_NAME_FOR_TEST_CASE",
+      "input_data": "PASTE_ACTUAL_INPUT_DATA_HERE",
+      "expected_output": "EXPECTED_RESULT_OR_STRUCTURE",
+      "notes": "Why this test case is important/what it validates"
+    },
+    {
+      "id": "test_002",
+      "name": "DESCRIPTIVE_NAME_FOR_TEST_CASE",
+      "input_data": "PASTE_ACTUAL_INPUT_DATA_HERE", 
+      "expected_output": "EXPECTED_RESULT_OR_STRUCTURE",
+      "notes": "Why this test case is important/what it validates"
+    },
+    {
+      "id": "test_003",
+      "name": "DESCRIPTIVE_NAME_FOR_TEST_CASE",
+      "input_data": "PASTE_ACTUAL_INPUT_DATA_HERE",
+      "expected_output": "EXPECTED_RESULT_OR_STRUCTURE", 
+      "notes": "Why this test case is important/what it validates"
+    },
+    {
+      "id": "test_004",
+      "name": "DESCRIPTIVE_NAME_FOR_TEST_CASE",
+      "input_data": "PASTE_ACTUAL_INPUT_DATA_HERE",
+      "expected_output": "EXPECTED_RESULT_OR_STRUCTURE",
+      "notes": "Why this test case is important/what it validates"
+    },
+    {
+      "id": "test_005",
+      "name": "DESCRIPTIVE_NAME_FOR_TEST_CASE", 
+      "input_data": "PASTE_ACTUAL_INPUT_DATA_HERE",
+      "expected_output": "EXPECTED_RESULT_OR_STRUCTURE",
+      "notes": "Why this test case is important/what it validates"
+    }
+  ],
+  "output_requirements": {
+    "format": "SPECIFY_OUTPUT_FORMAT_PREFERENCE",
+    "required_fields": ["FIELD1", "FIELD2", "FIELD3"],
+    "optional_fields": ["OPTIONAL1", "OPTIONAL2"],
+    "success_criteria": "DEFINE_WHAT_MAKES_EXTRACTION_SUCCESSFUL"
+  },
+  "business_context": {
+    "primary_use_case": "DESCRIBE_MAIN_BUSINESS_USE_CASE",
+    "downstream_systems": ["SYSTEM1", "SYSTEM2"],
+    "performance_requirements": "THROUGHPUT_AND_QUALITY_EXPECTATIONS"
+  }
+}

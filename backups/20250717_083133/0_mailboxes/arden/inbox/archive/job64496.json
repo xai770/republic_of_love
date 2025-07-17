@@ -1,0 +1,118 @@
+{
+  "job_metadata": {
+    "job_id": "64496",
+    "version": "1.0",
+    "created_at": "2025-07-07T08:48:11.945316",
+    "last_modified": "2025-07-07T08:48:11.945316",
+    "source": "deutsche_bank_api",
+    "processor": "enhanced_job_fetcher_v6.1",
+    "status": "fetched"
+  },
+  "job_content": {
+    "title": "Investment Strategy Specialist (f/m/x)",
+    "description": "Investment Strategy Specialist (f/m/x) Job ID:R0387090 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-06-23 Location: Frankfurt Position Overview Deutsche Bank Private Bank, CIO OfficeThe CIO Equity and Fixed Income team researches and creates investment recommendations and ratings in single stocks and credit globally.Your key responsibilitiesThe role of the Equity Specialist is within the CIO Equity and Fixed Income specialist team.You are responsible for producing “bottom up” equity research ideas using fundamental analysis. You will write research reports and commentary on a regular basis and create investment recommendations and ratings.You will also present internally and externally equity research ideas on stocks, thematics, sectors, etc. to Investment managers, relationship managers and clients of the Private Bank.Your skills and experiencesEconomics, Finance, Business or related University degree course2-4 years of experience in equity analysis, corporate finance, equity valuation and modelling, economics, strategy and/or investing and portfolio management.Strong presentation skills to confidently present and debate ideas to internal teams, client coverage teams and clients directly, primarily in Germany.Bilingual in German and English.What we offerWe provide you with a comprehensive portfolio of benefits and offerings to support both, your private and professional needs.Emotionally and mentally balancedA positive mind helps us master the challenges of everyday life – both professionally and privately. We offer consultation in difficult life situations as well as mental health awareness trainings.Physically thrivingWe support you in staying physically fit through an offering to maintain personal health and a professional environment. You can benefit from health check-ups; vaccination drives as well as advice on healthy living and nutrition.Socially connectedNetworking opens up new perspectives, helps us thrive professionally and personally as well as strengthens our self-confidence and well-being. You can benefit from PME family service, FitnessCenter Job, flexible working (e.g parttime, hybrid working, job tandem) as well as an extensive culture of diversity, equity and inclusion.Financially secureWe provide you with financial security not only during your active career but also for the future. You can benefit from offerings such as pension plans, banking services, company bicycle or “Deutschlandticket”.Since our offerings slightly vary across locations, please contact your recruiter with specific questions.This job is available in full and parttime.In case of any recruitment related questions, please get in touch with Ahmet Deniz.Contact Ahmet Deniz: +49 69 910-45237 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.",
+    "requirements": [
+      "equity analysis"
+    ],
+    "location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    },
+    "employment_details": {
+      "type": "Unbefristet",
+      "schedule": "Vollzeit",
+      "career_level": "Assistant Vice President",
+      "salary_range": null,
+      "benefits": []
+    },
+    "organization": {
+      "name": "Deutsche Bank",
+      "division": "Frankfurt",
+      "division_id": 10032
+    },
+    "posting_details": {
+      "publication_date": "2025-06-23",
+      "position_uri": "/index.php?ac=jobad&id=64496",
+      "hiring_year": "2025"
+    }
+  },
+  "evaluation_results": {
+    "cv_to_role_match": null,
+    "match_confidence": null,
+    "evaluation_date": null,
+    "evaluator": null,
+    "domain_knowledge_assessment": null,
+    "decision": {
+      "apply": null,
+      "rationale": null,
+      "estimated_prep_time": null
+    },
+    "strengths": [],
+    "weaknesses": []
+  },
+  "processing_log": [
+    {
+      "timestamp": "2025-07-07T08:48:11.945316",
+      "action": "job_fetched",
+      "processor": "enhanced_job_fetcher_v6.1",
+      "status": "success",
+      "details": "Successfully fetched job 64496 from Deutsche Bank API"
+    },
+    {
+      "timestamp": "2025-07-07T08:48:11.945316",
+      "action": "description_enriched",
+      "processor": "web_scraper",
+      "status": "success",
+      "details": "Successfully fetched job description (3180 characters)"
+    }
+  ],
+  "raw_source_data": {
+    "api_response": {
+      "MatchedObjectId": "64496",
+      "MatchedObjectDescriptor": {
+        "PositionOfferingType": [
+          {
+            "Name": "Unbefristet"
+          }
+        ],
+        "PositionSchedule": [
+          {
+            "Name": "Vollzeit"
+          }
+        ],
+        "PublicationChannel": [
+          {
+            "StartDate": "2025-06-23"
+          }
+        ],
+        "PositionTitle": "Investment Strategy Specialist (f/m/x)",
+        "PositionLocation": [
+          {
+            "CityName": "Frankfurt",
+            "CountrySubDivisionName": "Hessen",
+            "CountryName": "Deutschland"
+          }
+        ],
+        "PositionURI": "/index.php?ac=jobad&id=64496",
+        "PositionID": "64496",
+        "OrganizationName": "Frankfurt",
+        "PositionHiringYear": "2025",
+        "UserArea": {
+          "ProDivision": 10032
+        },
+        "CareerLevel": [
+          {
+            "Name": "Assistant Vice President"
+          }
+        ],
+        "PublicationStartDate": "2025-06-23"
+      },
+      "RelevanceScore": 0,
+      "RelevanceRank": 27
+    },
+    "specialist_analysis": {},
+    "description_source": "web_scraping"
+  }
+}
