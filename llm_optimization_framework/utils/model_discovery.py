@@ -253,7 +253,26 @@ class ModelDiscovery:
         print(f"   • Average size: {avg_size:.1f}GB")
         print(f"   • Small models (<3GB): {small_models}")
         print(f"   • Large models (≥3GB): {len(models) - small_models}")
-
+    
+    def get_healthy_models(self, timeout: int = 30) -> List[str]:
+        """Get list of healthy model names by testing them"""
+        from .ollama_interface import OllamaInterface
+        
+        models = self.get_available_models()
+        ollama = OllamaInterface()
+        healthy_models = []
+        
+        print(f"Testing {len(models)} models for health...")
+        
+        for model_info in models:
+            health_result = ollama.test_model_health(model_info.full_name, timeout)
+            if health_result["healthy"]:
+                healthy_models.append(model_info.full_name)
+                print(f"  ✅ {model_info.full_name} ({health_result['duration']:.1f}s)")
+            else:
+                print(f"  ❌ {model_info.full_name} - {health_result.get('error', 'unhealthy')}")
+        
+        return healthy_models
 
 def get_available_model_names(include_tags: bool = True) -> List[str]:
     """Convenience function to get just model names"""
