@@ -1,0 +1,127 @@
+{
+  "suite_id": "3441e1cf",
+  "start_time": "2025-07-20T00:21:01.820061",
+  "models_tested": [
+    "gemma3n:latest",
+    "deepseek-r1:8b",
+    "llama3.2:latest",
+    "qwen2.5:7b"
+  ],
+  "test_cases": [
+    {
+      "task_description": "Skills extraction from job posting",
+      "job_title": "Software Engineer",
+      "job_description": "We are looking for a skilled software engineer with experience in Python, JavaScript, and cloud technologies. The ideal candidate should have strong problem-solving skills and be able to work in an agile environment. Requirements include 3+ years of experience, Bachelor's degree in Computer Science, and experience with AWS.",
+      "original_prompt": "Analyze this job posting and extract skills in exactly this JSON format:\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nPlease extract and categorize skills into:\n1. Technical Skills: Programming languages, software, tools, technologies\n2. Business Skills: Domain knowledge, processes, methodologies, business functions\n3. Soft Skills: Communication, leadership, teamwork, problem-solving abilities\n4. Experience Requirements: Years of experience, specific backgrounds, levels\n5. Education Requirements: Degrees, certifications, qualifications\n\nReturn ONLY a JSON object with these exact keys:\n{\n    \"technical_requirements\": \"skill1; skill2; skill3\",\n    \"business_requirements\": \"skill1; skill2; skill3\", \n    \"soft_skills\": \"skill1; skill2; skill3\",\n    \"experience_requirements\": \"req1; req2; req3\",\n    \"education_requirements\": \"req1; req2; req3\"\n}\n\nExtract real skills mentioned in the job description. Use semicolon separation. Be specific and accurate.",
+      "expected_output": {
+        "technical_requirements": "Python; JavaScript; AWS; Cloud technologies",
+        "business_requirements": "Agile methodology; Software development",
+        "soft_skills": "Problem-solving; Teamwork",
+        "experience_requirements": "3+ years software engineering experience",
+        "education_requirements": "Bachelor's degree in Computer Science"
+      },
+      "expected_format": "JSON with skills categories"
+    },
+    {
+      "task_description": "Concise description generation",
+      "job_title": "Data Analyst",
+      "job_description": "Join our team as a Data Analyst where you will be responsible for analyzing large datasets, creating reports, and providing insights to support business decisions. You will work closely with stakeholders to understand requirements and deliver actionable recommendations.",
+      "original_prompt": "Analyze this job posting and create a concise, professional summary that captures the key responsibilities and role overview.\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nInstructions:\n1. Create a 2-3 sentence summary of the main responsibilities\n2. Focus on what the person will actually DO in this role\n3. Include the most important aspects of the job\n4. Keep it professional and clear\n5. Return ONLY the summary text, no additional formatting\n\nSummary:",
+      "expected_output": "Analyzes large datasets and creates reports to provide actionable insights for business decisions. Works collaboratively with stakeholders to understand requirements and deliver data-driven recommendations.",
+      "expected_format": "2-3 sentence professional summary"
+    }
+  ],
+  "model_results": {
+    "gemma3n:latest": [
+      {
+        "best_score": 0.0,
+        "best_prompt": "Analyze this job posting and extract skills in exactly this JSON format:\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nPlease extract and categorize skills into:\n1. Technical Skills: Programming languages, software, tools, technologies\n2. Business Skills: Domain knowledge, processes, methodologies, business functions\n3. Soft Skills: Communication, leadership, teamwork, problem-solving abilities\n4. Experience Requirements: Years of experience, specific backgrounds, levels\n5. Education Requirements: Degrees, certifications, qualifications\n\nReturn ONLY a JSON object with these exact keys:\n{\n    \"technical_requirements\": \"skill1; skill2; skill3\",\n    \"business_requirements\": \"skill1; skill2; skill3\", \n    \"soft_skills\": \"skill1; skill2; skill3\",\n    \"experience_requirements\": \"req1; req2; req3\",\n    \"education_requirements\": \"req1; req2; req3\"\n}\n\nExtract real skills mentioned in the job description. Use semicolon separation. Be specific and accurate.",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:23:41.874308",
+        "optimization_successful": false
+      },
+      {
+        "best_score": 0.7,
+        "best_prompt": "Analyze this job posting and create a concise, professional summary that captures the key responsibilities and role overview.\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nInstructions:\n1. Create a 2-3 sentence summary of the main responsibilities\n2. Focus on what the person will actually DO in this role\n3. Include the most important aspects of the job\n4. Keep it professional and clear\n5. Return ONLY the summary text, no additional formatting\n\nSummary:",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:26:38.496124",
+        "optimization_successful": false
+      }
+    ],
+    "deepseek-r1:8b": [
+      {
+        "best_score": 0.0,
+        "best_prompt": "Analyze this job posting and extract skills in exactly this JSON format:\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nPlease extract and categorize skills into:\n1. Technical Skills: Programming languages, software, tools, technologies\n2. Business Skills: Domain knowledge, processes, methodologies, business functions\n3. Soft Skills: Communication, leadership, teamwork, problem-solving abilities\n4. Experience Requirements: Years of experience, specific backgrounds, levels\n5. Education Requirements: Degrees, certifications, qualifications\n\nReturn ONLY a JSON object with these exact keys:\n{\n    \"technical_requirements\": \"skill1; skill2; skill3\",\n    \"business_requirements\": \"skill1; skill2; skill3\", \n    \"soft_skills\": \"skill1; skill2; skill3\",\n    \"experience_requirements\": \"req1; req2; req3\",\n    \"education_requirements\": \"req1; req2; req3\"\n}\n\nExtract real skills mentioned in the job description. Use semicolon separation. Be specific and accurate.",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:31:18.353392",
+        "optimization_successful": false
+      },
+      {
+        "best_score": 0.2,
+        "best_prompt": "Analyze this job posting and create a concise, professional summary that captures the key responsibilities and role overview.\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nInstructions:\n1. Create a 2-3 sentence summary of the main responsibilities\n2. Focus on what the person will actually DO in this role\n3. Include the most important aspects of the job\n4. Keep it professional and clear\n5. Return ONLY the summary text, no additional formatting\n\nSummary:",
+        "total_iterations": 3,
+        "end_time": "2025-07-20T00:33:41.511009",
+        "optimization_successful": false
+      }
+    ],
+    "llama3.2:latest": [
+      {
+        "best_score": 0.0,
+        "best_prompt": "Analyze this job posting and extract skills in exactly this JSON format:\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nPlease extract and categorize skills into:\n1. Technical Skills: Programming languages, software, tools, technologies\n2. Business Skills: Domain knowledge, processes, methodologies, business functions\n3. Soft Skills: Communication, leadership, teamwork, problem-solving abilities\n4. Experience Requirements: Years of experience, specific backgrounds, levels\n5. Education Requirements: Degrees, certifications, qualifications\n\nReturn ONLY a JSON object with these exact keys:\n{\n    \"technical_requirements\": \"skill1; skill2; skill3\",\n    \"business_requirements\": \"skill1; skill2; skill3\", \n    \"soft_skills\": \"skill1; skill2; skill3\",\n    \"experience_requirements\": \"req1; req2; req3\",\n    \"education_requirements\": \"req1; req2; req3\"\n}\n\nExtract real skills mentioned in the job description. Use semicolon separation. Be specific and accurate.",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:34:30.566465",
+        "optimization_successful": false
+      },
+      {
+        "best_score": 0.7,
+        "best_prompt": "Analyze this job posting and create a concise, professional summary that captures the key responsibilities and role overview.\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nInstructions:\n1. Create a 2-3 sentence summary of the main responsibilities\n2. Focus on what the person will actually DO in this role\n3. Include the most important aspects of the job\n4. Keep it professional and clear\n5. Return ONLY the summary text, no additional formatting\n\nSummary:",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:35:15.436143",
+        "optimization_successful": false
+      }
+    ],
+    "qwen2.5:7b": [
+      {
+        "best_score": 0.0,
+        "best_prompt": "Analyze this job posting and extract skills in exactly this JSON format:\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nPlease extract and categorize skills into:\n1. Technical Skills: Programming languages, software, tools, technologies\n2. Business Skills: Domain knowledge, processes, methodologies, business functions\n3. Soft Skills: Communication, leadership, teamwork, problem-solving abilities\n4. Experience Requirements: Years of experience, specific backgrounds, levels\n5. Education Requirements: Degrees, certifications, qualifications\n\nReturn ONLY a JSON object with these exact keys:\n{\n    \"technical_requirements\": \"skill1; skill2; skill3\",\n    \"business_requirements\": \"skill1; skill2; skill3\", \n    \"soft_skills\": \"skill1; skill2; skill3\",\n    \"experience_requirements\": \"req1; req2; req3\",\n    \"education_requirements\": \"req1; req2; req3\"\n}\n\nExtract real skills mentioned in the job description. Use semicolon separation. Be specific and accurate.",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:39:51.743514",
+        "optimization_successful": false
+      },
+      {
+        "best_score": 0.7,
+        "best_prompt": "Analyze this job posting and create a concise, professional summary that captures the key responsibilities and role overview.\n\nJob Title: {job_title}\nJob Description: {job_description}\n\nInstructions:\n1. Create a 2-3 sentence summary of the main responsibilities\n2. Focus on what the person will actually DO in this role\n3. Include the most important aspects of the job\n4. Keep it professional and clear\n5. Return ONLY the summary text, no additional formatting\n\nSummary:",
+        "total_iterations": 5,
+        "end_time": "2025-07-20T00:41:12.533264",
+        "optimization_successful": false
+      }
+    ]
+  },
+  "summary": {
+    "best_model": "gemma3n:latest",
+    "best_average_score": 0.35,
+    "model_rankings": [
+      {
+        "model": "gemma3n:latest",
+        "average_score": 0.35,
+        "successful_optimizations": 0
+      },
+      {
+        "model": "llama3.2:latest",
+        "average_score": 0.35,
+        "successful_optimizations": 0
+      },
+      {
+        "model": "qwen2.5:7b",
+        "average_score": 0.35,
+        "successful_optimizations": 0
+      },
+      {
+        "model": "deepseek-r1:8b",
+        "average_score": 0.1,
+        "successful_optimizations": 0
+      }
+    ]
+  },
+  "end_time": "2025-07-20T00:41:12.541820"
+}

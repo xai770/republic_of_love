@@ -1,0 +1,10 @@
+{
+  "iteration": 4,
+  "prompt": "Extract relevant programming languages, software tools, technologies, domain knowledge, processes, methodologies, business functions, technical requirements (including years of experience and specific backgrounds), from this job posting. Use semicolon separation for programming languages and skills categories; use comma separation within each category where applicable. Ensure consistency in formatting by following the provided JSON structure: {\n    \"technical_skills\": \"\",\n    \"domain_knowledge\": \"\",\n    \"processes_and_methodologies\": \"\",\n    \"business_functions\": \"\",\n    \"experience_requirements\": \"\",\n    \"education_requirements\": \"\"\n}",
+  "full_prompt": "Extract relevant programming languages, software tools, technologies, domain knowledge, processes, methodologies, business functions, technical requirements (including years of experience and specific backgrounds), from this job posting. Use semicolon separation for programming languages and skills categories; use comma separation within each category where applicable. Ensure consistency in formatting by following the provided JSON structure: {\n    \"technical_skills\": \"\",\n    \"domain_knowledge\": \"\",\n    \"processes_and_methodologies\": \"\",\n    \"business_functions\": \"\",\n    \"experience_requirements\": \"\",\n    \"education_requirements\": \"\"\n}",
+  "output": "I'm happy to help you with extracting the relevant information from the job posting. However, I don't see a job posting provided. Please share the job posting, and I'll extract the required information in the specified format.\n\nOnce you provide the job posting, I'll assist you in breaking down the information into categories such as technical skills, domain knowledge, processes and methodologies, business functions, experience requirements, education requirements, and programming languages (in semicolon-separated format).",
+  "processing_time": 1.694976806640625,
+  "success": true,
+  "error_message": null,
+  "timestamp": "2025-07-20T00:34:14.022304"
+}
