@@ -1,0 +1,283 @@
+{
+  "phase": 2,
+  "timestamp": "2025-07-17T11:55:50.602403",
+  "interviewer_model": "gemma3:1b",
+  "candidate_models": [
+    "gemma2:latest",
+    "gemma3n:e2b",
+    "gemma3n:latest",
+    "qwen2.5vl:latest",
+    "dolphin3:8b"
+  ],
+  "scenarios": [
+    {
+      "name": "job_extraction_improvement",
+      "description": "Improve job requirement extraction accuracy",
+      "problem": "Current model scores 4.2/10 on technical requirement extraction",
+      "context": "Sandy pipeline needs better requirement parsing for job matching"
+    },
+    {
+      "name": "response_speed_optimization",
+      "description": "Reduce response time while maintaining quality",
+      "problem": "Model takes 45-60 seconds for complex analysis",
+      "context": "Real-time applications need sub-15 second responses"
+    },
+    {
+      "name": "prompt_engineering_breakthrough",
+      "description": "Design better prompts for specific tasks",
+      "problem": "Generic prompts yield inconsistent results across models",
+      "context": "Need model-specific optimization strategies"
+    }
+  ],
+  "conversations": [
+    {
+      "candidate_model": "gemma2:latest",
+      "scenario_name": "job_extraction_improvement",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/job_extraction_improvement_gemma2_latest.md",
+      "success_metrics": {
+        "total_duration": 56.72292757034302,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma2:latest",
+      "scenario_name": "response_speed_optimization",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/response_speed_optimization_gemma2_latest.md",
+      "success_metrics": {
+        "total_duration": 68.02985572814941,
+        "turns_completed": 3,
+        "optimizations_found": 0,
+        "interview_quality": 7.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 0,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma2:latest",
+      "scenario_name": "prompt_engineering_breakthrough",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/prompt_engineering_breakthrough_gemma2_latest.md",
+      "success_metrics": {
+        "total_duration": 61.55153703689575,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma3n:e2b",
+      "scenario_name": "job_extraction_improvement",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/job_extraction_improvement_gemma3n_e2b.md",
+      "success_metrics": {
+        "total_duration": 53.09982180595398,
+        "turns_completed": 3,
+        "optimizations_found": 2,
+        "interview_quality": 9.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 2,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma3n:e2b",
+      "scenario_name": "response_speed_optimization",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/response_speed_optimization_gemma3n_e2b.md",
+      "success_metrics": {
+        "total_duration": 52.81457281112671,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma3n:e2b",
+      "scenario_name": "prompt_engineering_breakthrough",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/prompt_engineering_breakthrough_gemma3n_e2b.md",
+      "success_metrics": {
+        "total_duration": 50.51605796813965,
+        "turns_completed": 3,
+        "optimizations_found": 2,
+        "interview_quality": 9.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 2,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma3n:latest",
+      "scenario_name": "job_extraction_improvement",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/job_extraction_improvement_gemma3n_latest.md",
+      "success_metrics": {
+        "total_duration": 92.54347395896912,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma3n:latest",
+      "scenario_name": "response_speed_optimization",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/response_speed_optimization_gemma3n_latest.md",
+      "success_metrics": {
+        "total_duration": 58.536147594451904,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "gemma3n:latest",
+      "scenario_name": "prompt_engineering_breakthrough",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/prompt_engineering_breakthrough_gemma3n_latest.md",
+      "success_metrics": {
+        "total_duration": 58.6641788482666,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "qwen2.5vl:latest",
+      "scenario_name": "job_extraction_improvement",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/job_extraction_improvement_qwen2.5vl_latest.md",
+      "success_metrics": {
+        "total_duration": 40.203144788742065,
+        "turns_completed": 3,
+        "optimizations_found": 2,
+        "interview_quality": 9.0,
+        "candidate_engagement": 8.0
+      },
+      "optimizations_found": 2,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "qwen2.5vl:latest",
+      "scenario_name": "response_speed_optimization",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/response_speed_optimization_qwen2.5vl_latest.md",
+      "success_metrics": {
+        "total_duration": 47.89312791824341,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "qwen2.5vl:latest",
+      "scenario_name": "prompt_engineering_breakthrough",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/prompt_engineering_breakthrough_qwen2.5vl_latest.md",
+      "success_metrics": {
+        "total_duration": 48.61387825012207,
+        "turns_completed": 3,
+        "optimizations_found": 0,
+        "interview_quality": 7.0,
+        "candidate_engagement": 7.0
+      },
+      "optimizations_found": 0,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "dolphin3:8b",
+      "scenario_name": "job_extraction_improvement",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/job_extraction_improvement_dolphin3_8b.md",
+      "success_metrics": {
+        "total_duration": 38.942652463912964,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 8.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "dolphin3:8b",
+      "scenario_name": "response_speed_optimization",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/response_speed_optimization_dolphin3_8b.md",
+      "success_metrics": {
+        "total_duration": 41.09956979751587,
+        "turns_completed": 3,
+        "optimizations_found": 0,
+        "interview_quality": 7.0,
+        "candidate_engagement": 8.0
+      },
+      "optimizations_found": 0,
+      "status": "completed"
+    },
+    {
+      "candidate_model": "dolphin3:8b",
+      "scenario_name": "prompt_engineering_breakthrough",
+      "conversation_file": "output/ai_to_ai_conversations/20250717_115338/prompt_engineering_breakthrough_dolphin3_8b.md",
+      "success_metrics": {
+        "total_duration": 36.75384736061096,
+        "turns_completed": 3,
+        "optimizations_found": 1,
+        "interview_quality": 8.0,
+        "candidate_engagement": 8.0
+      },
+      "optimizations_found": 1,
+      "status": "completed"
+    }
+  ],
+  "summary_metrics": {
+    "total_conversations": 15,
+    "total_optimizations_discovered": 15,
+    "average_interview_quality": 8.0,
+    "average_candidate_engagement": 7.266666666666667,
+    "success_rate": 1.0,
+    "model_performance": {
+      "gemma2:latest": {
+        "conversations": 3,
+        "total_optimizations": 2,
+        "avg_quality": 7.666666666666667,
+        "avg_engagement": 7.0
+      },
+      "gemma3n:e2b": {
+        "conversations": 3,
+        "total_optimizations": 5,
+        "avg_quality": 8.666666666666666,
+        "avg_engagement": 7.0
+      },
+      "gemma3n:latest": {
+        "conversations": 3,
+        "total_optimizations": 3,
+        "avg_quality": 8.0,
+        "avg_engagement": 7.0
+      },
+      "qwen2.5vl:latest": {
+        "conversations": 3,
+        "total_optimizations": 3,
+        "avg_quality": 8.0,
+        "avg_engagement": 7.333333333333333
+      },
+      "dolphin3:8b": {
+        "conversations": 3,
+        "total_optimizations": 2,
+        "avg_quality": 7.666666666666667,
+        "avg_engagement": 8.0
+      }
+    }
+  }
+}

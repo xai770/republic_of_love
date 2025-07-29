@@ -19,7 +19,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Add framework to path and import
-sys.path.insert(0, str(Path(__file__).parent.parent))  # Go up one level from scripts/
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # Go up to project root from archive/sandy_evaluation_versions_2025_07_17/
 
 from llm_optimization_framework.configs.settings import TemplateConfigs
 from llm_optimization_framework.utils.dialogue_parser import DialogueEntry
@@ -209,8 +209,8 @@ def main(max_jobs=10):
     archive_existing_results()
     
     # Setup paths relative to project root
-    project_root = Path(__file__).parent.parent
-    job_postings_dir = project_root / "sandy !!!DO NOT EDIT!!!!" / "data" / "postings"
+    project_root = Path(__file__).parent.parent.parent
+    job_postings_dir = project_root / "sandy_do_not_edit" / "data" / "postings"
     results_dir = project_root / "output" / "sandy_evaluation_results"
     results_dir.mkdir(parents=True, exist_ok=True)
     

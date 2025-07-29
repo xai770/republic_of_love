@@ -1,0 +1,17 @@
+task_id: test_embedded_prompt
+title: Test Embedded Prompt Template
+model_id: qwen3:latest
+prompt: 'This is an embedded prompt template.
+
+  It should be used when no V14 template exists.
+
+  Task: Generate test output.'
+temperature: 0.7
+max_tokens: 500
+format: markdown
+expected_behavior: ''
+qa_schema_id: qa_test_embedded_prompt_v1
+source_log_id: test_embedded_prompt
+blessed_by: Dexi
+blessed_on: '2025-07-27'
+version: 1

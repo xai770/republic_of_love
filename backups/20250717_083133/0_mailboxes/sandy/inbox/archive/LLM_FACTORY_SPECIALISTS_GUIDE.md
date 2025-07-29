@@ -1,1 +1,0 @@
-/home/xai/Documents/0_mailboxes/copilot@llm_factory/outbox/LLM_FACTORY_SPECIALISTS_GUIDE.md

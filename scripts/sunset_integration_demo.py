@@ -19,8 +19,7 @@ else:
     from llm_factory.core.ollama_client import OllamaClient
     from llm_factory.core.types import ModuleConfig
 
-# Note: Consciousness pipeline has been archived to archive/consciousness_experiments_2025_07_17/
-# from consciousness_pipeline import ConsciousnessPipelineAdapter
+from consciousness_pipeline import ConsciousnessPipelineAdapter
 
 def sunset_integration_demo():
     """Demo the consciousness pipeline for Project Sunset integration"""
