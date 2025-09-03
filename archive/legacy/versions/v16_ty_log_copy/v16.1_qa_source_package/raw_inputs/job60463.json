@@ -1,0 +1,116 @@
+{
+  "job_metadata": {
+    "job_id": "60463",
+    "version": "1.0",
+    "created_at": "2025-07-10T12:52:49.865521",
+    "last_modified": "2025-07-10T12:52:49.865521",
+    "source": "deutsche_bank_api",
+    "processor": "enhanced_job_fetcher_v6.1",
+    "status": "fetched"
+  },
+  "job_content": {
+    "title": "Sales &amp; Innovation Specialist - Risk Management Solutions (d/m/w)",
+    "description": "Sales & Innovation Specialist - Risk Management Solutions (d/m/w) Job ID:R0364013 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-02-18 Location: Frankfurt Position Overview Details zur Rolle und dem TeamInnerhalb der Corporate Bank steht der Bereich Risk Management Solutions (RMS) Commercial Clients (CC) sowohl für den strategischen Dialog mit unseren Firmenkunden als auch die Beratung selektiver Geschäftskunden im Bereich der Risikoabsicherung in Deutschland, Österreich und der Schweiz. Mit unseren Kapitalmarktspezialisten in verschiedenen Standorten Deutschlands sowie dem Zugang zu weltweiten Kapitalmarkt Ressourcen bieten wir unseren Kunden Lösungen im Bereich Währungs-, Zins- und Anlagemanagement aus einer Hand.Ihre AufgabenSie verfügen über weitreichende Produktkenntnisse in den Bereichen FX, Rates und InvestmentSolutions und treiben die stetige Weiterentwicklung des Bereichs RMS Commercial ClientsSie arbeiten daran neue Geschäftsfelder für den Bereich RMS Commercial Clients zu erschließenSie verantworten die optimale Ausschöpfung des Kundenwallets (Bestandskunden & Neukunden) durchEntwicklung umfangreicher Vertriebslösungen bzgl. der gesamten RMS-Produktpalette bestehend aus FXCash, einfachen derivativen sowie strukturierten Produkten für das Anlage-, Zins-, und Währungsmanagement über RMS CC hinwegSie sind verantwortlich für den strategischen Ausbau von RMS CC und sind die zentrale Schnittstelle zu Businesspartnern aus unterschiedlichen Bereichen (bspw. Investment Bank)Sie übernehmen definierte Einzelthemen sowie regionsübergreifende Sonderaufgaben, um die strategische Positionierung von RMS CC weiter auszubauen.Multiplikator von aktuellen Salesansätzen, um so den überregionalen Austausch zu fördernSie arbeiten daran aus der Verknüpfung von anderen Corporate Bank Einheiten mit RMS neue Geschäftsfelder zu erschließen bspw. im Bereich Zahlungsverkehrs-FXIhre Fähigkeiten und Erfahrungen Ausbildung zum/zur Bankkaufmann/-frau, weiterführende Qualifikation und/oder Studium wünschenswertMehrjährige Erfahrung in der Beratung anspruchsvoller und internationaler Kunden sowie im Vertrieb von DerivatenVerständnis von Daten und Analysefähigkeit mit dem Anspruch zur AutomatisierungInvestment-Affinität und weitreichende Kenntnisse der RMS-Produkte sowie der rechtlichen und regulatorischen Anforderungen (MiFID, WpHG)Erfahrungen im Bereich Platformsales oder Zahlungsverkehrs nahen FX von VorteilÜberzeugender Auftritt im Kundenkontakt auf allen EbenenÜberdurchschnittlich hohes Maß an Eigeninitiative, Leistungsorientierung und BelastbarkeitSehr gute Deutsch- und Englisch-Kenntnisse in Wort und SchriftWas wir Ihnen bietenWir bieten eine breite Palette von Leistungen, die all Ihre beruflichen und persönlichen Bedürfnisse abdecken.Emotional ausgeglichenEine positive Haltung hilft uns, die Herausforderungen des Alltags zu meistern – beruflich wie privat. Profitieren Sie von Angeboten wie Beratung in schwierigen Lebenssituationen und Angeboten zur Förderung mentaler Gesundheit.Körperlich fitMit Angeboten zur Aufrechterhaltung Ihrer persönlichen Gesundheit und einem förderlichen beruflichen Umfeld hilft Ihnen die Bank, körperlich fit zu bleiben. Profitieren Sie von Angeboten wie umfangreichen Check-up Untersuchungen, Impfangeboten und Beratung zur gesunden Lebensführung.Sozial vernetztDer Austausch mit anderen eröffnet uns neue Perspektiven, bringt uns beruflich wie persönlich voran und stärkt unser Selbstvertrauen und Wohlbefinden. Profitieren Sie von Angeboten wie Unterstützung durch den pme Familienservice, das FitnessCenter Job, flexible Arbeitszeitmodelle (bspw. Teilzeit, Jobtandem, hybrides Arbeiten) sowie einer umfangreichen Kultur der Vielfalt, Chancengleichheit und Teilhabe.Finanziell abgesichertDie Bank sichert Sie nicht nur während Ihrer aktiven Karriere, sondern auch für die Zukunft finanziell ab und unterstützt Ihre Flexibilität sowie Mobilität – egal ob privat oder beruflich. Profitieren Sie von Angeboten wie Beitragsplänen für Altersvorsorge, Bankdienstleistungen für Mitarbeiter*innen, Firmenfahrrad oder dem Deutschlandticket.Da die Benefits je nach Standort geringfügig variieren, gehen Sie bitte bei konkreten Fragen auf Ihren Recruiter zu.Die Stelle wird in Voll- und in Teilzeit angeboten.Bei Fragen zum Rekrutierungsprozess steht Ihnen Alexander Zimmermann gerne zur Verfügung.Kontakt Alexander Zimmermann: +49 151 70526360 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.",
+    "requirements": [],
+    "location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    },
+    "employment_details": {
+      "type": "Unbefristet",
+      "schedule": "Vollzeit",
+      "career_level": "Associate",
+      "salary_range": null,
+      "benefits": []
+    },
+    "organization": {
+      "name": "Deutsche Bank",
+      "division": "Frankfurt",
+      "division_id": 10050
+    },
+    "posting_details": {
+      "publication_date": "2025-02-18",
+      "position_uri": "/index.php?ac=jobad&id=60463",
+      "hiring_year": "2025"
+    }
+  },
+  "evaluation_results": {
+    "cv_to_role_match": null,
+    "match_confidence": null,
+    "evaluation_date": null,
+    "evaluator": null,
+    "domain_knowledge_assessment": null,
+    "decision": {
+      "apply": null,
+      "rationale": null,
+      "estimated_prep_time": null
+    },
+    "strengths": [],
+    "weaknesses": []
+  },
+  "processing_log": [
+    {
+      "timestamp": "2025-07-10T12:52:49.865521",
+      "action": "job_fetched",
+      "processor": "enhanced_job_fetcher_v6.1",
+      "status": "success",
+      "details": "Successfully fetched job 60463 from Deutsche Bank API"
+    },
+    {
+      "timestamp": "2025-07-10T12:52:49.865521",
+      "action": "description_enriched",
+      "processor": "web_scraper",
+      "status": "success",
+      "details": "Successfully fetched job description (4856 characters)"
+    }
+  ],
+  "raw_source_data": {
+    "api_response": {
+      "MatchedObjectId": "60463",
+      "MatchedObjectDescriptor": {
+        "PositionOfferingType": [
+          {
+            "Name": "Unbefristet"
+          }
+        ],
+        "PositionSchedule": [
+          {
+            "Name": "Vollzeit"
+          }
+        ],
+        "PublicationChannel": [
+          {
+            "StartDate": "2025-02-18"
+          }
+        ],
+        "PositionTitle": "Sales &amp; Innovation Specialist - Risk Management Solutions (d/m/w)",
+        "PositionLocation": [
+          {
+            "CityName": "Frankfurt",
+            "CountrySubDivisionName": "Hessen",
+            "CountryName": "Deutschland"
+          }
+        ],
+        "PositionURI": "/index.php?ac=jobad&id=60463",
+        "PositionID": "60463",
+        "OrganizationName": "Frankfurt",
+        "PositionHiringYear": "2025",
+        "UserArea": {
+          "ProDivision": 10050
+        },
+        "CareerLevel": [
+          {
+            "Name": "Associate"
+          }
+        ],
+        "PublicationStartDate": "2025-02-18"
+      },
+      "RelevanceScore": 0,
+      "RelevanceRank": 65
+    },
+    "specialist_analysis": {},
+    "description_source": "web_scraping"
+  }
+}

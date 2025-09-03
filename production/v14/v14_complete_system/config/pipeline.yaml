@@ -1,0 +1,36 @@
+# TY_EXTRACT V14 - Main Pipeline Configuration
+# External configuration for clean, trackable LLM processing
+
+# Pipeline Settings
+pipeline:
+  version: "14.0.0"
+  name: "ty_extract_v14"
+  max_jobs: 5
+  
+# Data Paths
+data:
+  input_dir: "data/postings"
+  output_dir: "output"
+  
+# LLM Configuration
+llm:
+  model_config: "config/models/gemma3_1b.yaml"
+  base_url: "http://localhost:11434"
+  timeout: 180
+  
+# Template Configuration
+templates:
+  skill_extraction: "config/templates/skill_extraction.md"
+  concise_description: "config/templates/concise_description.md"
+  
+# Report Generation
+reports:
+  generate_excel: true
+  generate_markdown: true
+  format_version: "enhanced_data_dictionary_v4.3"
+  
+# Logging
+logging:
+  level: "INFO"
+  track_config_hash: true
+  copy_config_to_output: true

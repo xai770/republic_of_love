@@ -1,0 +1,46 @@
+{
+  "mistral-nemo:12b": {
+    "total_attempts": 20,
+    "successes": 20,
+    "failures": 0,
+    "consecutive_failures": 0,
+    "avg_response_time": 58.687230587005615,
+    "error_types": {},
+    "last_success": "2025-07-31T15:56:19.897675",
+    "last_failure": null
+  },
+  "deepseek-r1:8b": {
+    "total_attempts": 20,
+    "successes": 15,
+    "failures": 5,
+    "consecutive_failures": 0,
+    "avg_response_time": 89.71648907661438,
+    "error_types": {
+      "Request timeout after 180s": 5
+    },
+    "last_success": "2025-07-31T15:58:15.066609",
+    "last_failure": "2025-07-31T15:54:49.249084"
+  },
+  "llama3.2:latest": {
+    "total_attempts": 20,
+    "successes": 19,
+    "failures": 1,
+    "consecutive_failures": 0,
+    "avg_response_time": 9.863316636336478,
+    "error_types": {
+      "Request timeout after 180s": 1
+    },
+    "last_success": "2025-07-31T15:58:25.138669",
+    "last_failure": "2025-07-31T14:58:29.691377"
+  },
+  "gemma3:4b": {
+    "total_attempts": 20,
+    "successes": 20,
+    "failures": 0,
+    "consecutive_failures": 0,
+    "avg_response_time": 16.5064790725708,
+    "error_types": {},
+    "last_success": "2025-07-31T15:58:41.323992",
+    "last_failure": null
+  }
+}

@@ -1,0 +1,32 @@
+Software Engineer - Full Stack Developer
+Company: InnovateTech Solutions
+Location: Berlin, Germany (Remote OK)
+
+About InnovateTech:
+We're revolutionizing the fintech space with cutting-edge AI solutions. Join our fast-growing team of 25+ engineers building the future of financial technology!
+
+The Role:
+As a Full Stack Developer, you'll be architecting scalable web applications, working with modern frameworks, and collaborating with our product team. You'll have ownership of features from concept to deployment and be part of our agile development process.
+
+What You'll Do:
+- Build responsive web applications using React, Node.js, and PostgreSQL
+- Design and implement RESTful APIs and microservices architecture
+- Collaborate with designers and product managers on user experience
+- Write clean, testable code with comprehensive documentation
+- Participate in code reviews and mentor junior developers
+- Deploy applications using Docker and AWS infrastructure
+
+What We're Looking For:
+- 3+ years experience with JavaScript, React, and Node.js
+- Experience with database design and SQL
+- Knowledge of Git, CI/CD pipelines, and agile methodologies
+- Strong problem-solving skills and attention to detail
+- Excellent communication skills in English
+- Bonus: Experience with TypeScript, GraphQL, or AWS
+
+What We Offer:
+- Competitive salary (€60k-€80k) plus equity
+- Flexible working hours and remote options
+- Learning budget (€2k annually)
+- Modern MacBook Pro and ergonomic workspace
+- Team events and quarterly off-sites

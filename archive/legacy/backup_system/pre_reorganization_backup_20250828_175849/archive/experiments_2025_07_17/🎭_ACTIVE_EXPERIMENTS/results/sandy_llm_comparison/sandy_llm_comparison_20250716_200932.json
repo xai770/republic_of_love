@@ -1,0 +1,533 @@
+{
+  "test_timestamp": "2025-07-16T19:08:08.337068",
+  "models_tested": [
+    "gemma3n:latest",
+    "gemma3n:e2b",
+    "gemma3:4b",
+    "gemma3:1b",
+    "qwen3:latest",
+    "qwen3:4b",
+    "qwen3:1.7b",
+    "qwen3:0.6b",
+    "qwen2.5vl:latest",
+    "deepseek-r1:8b",
+    "olmo2:latest",
+    "phi3:latest",
+    "phi3:3.8b",
+    "phi4-mini-reasoning:latest",
+    "mistral:latest",
+    "dolphin3:8b",
+    "dolphin3:latest",
+    "llama3.2:latest",
+    "codegemma:latest",
+    "codegemma:2b"
+  ],
+  "prompts_tested": [
+    "concise_step1",
+    "concise_step2",
+    "strategic_requirements",
+    "soft_skills_analysis"
+  ],
+  "model_results": {
+    "gemma3n:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 67.60685777664185,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 71.0786063671112,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 60.06874322891235,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 52.830724000930786,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "gemma3n:e2b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 29.912869691848755,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 20.550605297088623,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 1772.633201122284,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 6.263031005859375,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "gemma3:4b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 22.013877868652344,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 8.588009357452393,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 6.170543670654297,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 14.159767389297485,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "gemma3:1b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 7.157958030700684,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 7.9597249031066895,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 2.9884347915649414,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 1.5346612930297852,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "qwen3:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 61.454917907714844,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 85.49742913246155,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 53.15686798095703,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 54.58970284461975,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "qwen3:4b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 18.418282508850098,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 17.883653163909912,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 62.943140745162964,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 25.796310901641846,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "qwen3:1.7b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 11.82846212387085,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 18.374019145965576,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 8.613763093948364,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 15.48072075843811,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "qwen3:0.6b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 6.410595893859863,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 8.10851502418518,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 5.74989914894104,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 3.1090686321258545,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "qwen2.5vl:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 29.55914855003357,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 5.3043437004089355,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 14.903300762176514,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 6.103947877883911,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "deepseek-r1:8b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 55.548033714294434,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 41.00951957702637,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 32.418293952941895,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 39.97956705093384,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "olmo2:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 36.38114595413208,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 32.32114291191101,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 10.111864566802979,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 18.09766912460327,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "phi3:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 22.79931640625,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 56.84273648262024,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 15.534157514572144,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 10.178213357925415,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "phi3:3.8b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 11.765675783157349,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 9.706918716430664,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 10.194698095321655,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 113.04354977607727,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "phi4-mini-reasoning:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 43.088120460510254,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 36.71220803260803,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 143.0808732509613,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 23.012481212615967,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "mistral:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 26.597164154052734,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 25.619174003601074,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 9.846812725067139,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 6.976088285446167,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "dolphin3:8b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 17.68640685081482,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 6.854034662246704,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 4.301889657974243,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 12.470336437225342,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "dolphin3:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 12.947617530822754,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 14.429877996444702,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 6.181316614151001,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 7.311516761779785,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "llama3.2:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 10.053513050079346,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 3.6451711654663086,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 4.132966041564941,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 4.628642320632935,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "codegemma:latest": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 28.18243384361267,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 30.069363594055176,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 9.2138831615448,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 11.867283821105957,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    },
+    "codegemma:2b": {
+      "available": true,
+      "prompt_results": {
+        "concise_step1": {
+          "success": false,
+          "response_time": 2.8604016304016113,
+          "error": "Empty or no response"
+        },
+        "concise_step2": {
+          "success": false,
+          "response_time": 0.5061628818511963,
+          "error": "'str' object has no attribute 'get'"
+        },
+        "strategic_requirements": {
+          "success": false,
+          "response_time": 0.39424777030944824,
+          "error": "Empty or no response"
+        },
+        "soft_skills_analysis": {
+          "success": false,
+          "response_time": 0.38813209533691406,
+          "error": "'str' object has no attribute 'get'"
+        }
+      }
+    }
+  }
+}

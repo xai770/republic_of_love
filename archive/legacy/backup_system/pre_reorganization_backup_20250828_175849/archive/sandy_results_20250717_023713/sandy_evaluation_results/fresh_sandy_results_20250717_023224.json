@@ -1,0 +1,141 @@
+{
+  "test_metadata": {
+    "test_date": "2025-07-17T02:32:24.922097",
+    "job_postings_tested": 10,
+    "models_tested": 7,
+    "test_scenario": "job_posting_analysis",
+    "job_sample": [
+      "50571: Senior Consultant (d/m/w) – Deutsche Bank Management Consulting",
+      "50579: Consultant (f/m/x) – Deutsche Bank Management Consulting",
+      "53333: Senior SAP ABAP Engineer – Group General Ledger (f/m/x)",
+      "55025: Institutional Cash and Trade Sales Specialist (Client Sales Manager) – DACHLIE (f/m/x)",
+      "56411: Senior Tax Analyst (d/m/w)"
+    ]
+  },
+  "model_rankings": [
+    [
+      "gemma3:1b",
+      0.8525889661649579
+    ],
+    [
+      "gemma3:4b",
+      0.8525889661649579
+    ],
+    [
+      "olmo2:latest",
+      0.85235746466122
+    ],
+    [
+      "gemma3n:latest",
+      0.8522034659608957
+    ],
+    [
+      "deepseek-r1:8b",
+      0.8522034659608957
+    ],
+    [
+      "codegemma:latest",
+      0.8520497334525328
+    ],
+    [
+      "qwen2.5vl:latest",
+      0.8520497334525328
+    ]
+  ],
+  "model_metrics_summary": {
+    "gemma3:1b": {
+      "overall_score": 0.8525889661649579,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    },
+    "gemma3:4b": {
+      "overall_score": 0.8525889661649579,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    },
+    "gemma3n:latest": {
+      "overall_score": 0.8522034659608957,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    },
+    "codegemma:latest": {
+      "overall_score": 0.8520497334525328,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    },
+    "deepseek-r1:8b": {
+      "overall_score": 0.8522034659608957,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    },
+    "qwen2.5vl:latest": {
+      "overall_score": 0.8520497334525328,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    },
+    "olmo2:latest": {
+      "overall_score": 0.85235746466122,
+      "quality_score": 0.6666666666666667,
+      "performance_tier": "🥈 VERY GOOD",
+      "test_count": 10
+    }
+  },
+  "job_descriptions_tested": [
+    {
+      "job_id": "50571",
+      "title": "Senior Consultant (d/m/w) – Deutsche Bank Management Consulting",
+      "description_length": 9513
+    },
+    {
+      "job_id": "50579",
+      "title": "Consultant (f/m/x) – Deutsche Bank Management Consulting",
+      "description_length": 9112
+    },
+    {
+      "job_id": "53333",
+      "title": "Senior SAP ABAP Engineer – Group General Ledger (f/m/x)",
+      "description_length": 12615
+    },
+    {
+      "job_id": "55025",
+      "title": "Institutional Cash and Trade Sales Specialist (Client Sales Manager) – DACHLIE (f/m/x)",
+      "description_length": 7754
+    },
+    {
+      "job_id": "56411",
+      "title": "Senior Tax Analyst (d/m/w)",
+      "description_length": 5170
+    },
+    {
+      "job_id": "59021",
+      "title": "DWS - Senior Coverage Specialist - Wholesale/Insurance (m/w/d)",
+      "description_length": 8565
+    },
+    {
+      "job_id": "59213",
+      "title": "Information Security Specialist (d/m/w) Third Party Security",
+      "description_length": 15189
+    },
+    {
+      "job_id": "59386",
+      "title": "Information Security Expert – Chief Security Office External Engagement (f/m/x)",
+      "description_length": 8880
+    },
+    {
+      "job_id": "59428",
+      "title": "Business Product Senior Analyst (d/m/w) – Sales Campaign Management BizBanking (Data Analytics)",
+      "description_length": 4623
+    },
+    {
+      "job_id": "60463",
+      "title": "Sales &amp; Innovation Specialist - Risk Management Solutions (d/m/w)",
+      "description_length": 4856
+    }
+  ]
+}

@@ -1,0 +1,1150 @@
+{
+  "evaluation_info": {
+    "timestamp": "2025-07-17T08:41:17.957010",
+    "total_models": 13,
+    "scenarios_tested": [
+      "basic",
+      "complex",
+      "collaboration"
+    ],
+    "criteria_weights": {
+      "question_relevance": 0.25,
+      "analysis_quality": 0.25,
+      "improvement_suggestions": 0.25,
+      "communication_clarity": 0.15,
+      "guardrail_compliance": 0.1
+    }
+  },
+  "model_results": {
+    "gemma2:latest": {
+      "basic": {
+        "model": "gemma2:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 28.681910037994385,
+        "response": "Alright, let's get started! I understand you're working on improving your job analysis performance.  To help me understand how best to support you, could you answer a few questions?\n\n1. **What kind of instructions do you find most helpful when analyzing a job description? Do you prefer clear, concise bullet points, longer paragraphs explaining the task, or something else entirely?**\n2. **When providing a job analysis, what format works best for you to present the information? Would you rather generate a structured list, a detailed report, a summary with key takeaways, or another format?**\n3. **Is there any additional context or information that helps you analyze a job description more accurately? For example, do you need to know the company's industry, size, or culture?**\n\n\nLet me know your thoughts!  I'm here to help you succeed.",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.9000000000000004
+        },
+        "timestamp": "2025-07-17T08:41:46.639744"
+      },
+      "complex": {
+        "model": "gemma2:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 169.0797438621521,
+        "response": "## Diagnostic Interview for Codegemma:2b\n\n**Objective:** Determine the root cause of Codegemma:2b's performance issues in job requirement extraction and formulate a plan to improve its capabilities.\n\n**Approach:** \n\nThis interview will utilize a combination of probing questions, specific test cases, and analysis of response patterns to identify the source of the model's weaknesses.\n\n**Conversation Structure:**\n\n1. **Warm-up:** Begin with a few general job descriptions to assess baseline performance and understand the model's initial approach to requirement extraction.\n2. **Targeted Prompts:** Gradually introduce prompts focusing on specific areas of weakness:\n    * **Technical Requirements:** Present job descriptions with diverse technical skills (e.g., Python, SQL, Cloud Computing). Analyze the accuracy and completeness of extracted requirements.\n    * **Salary Range Specificity:** Ask for salary ranges for different experience levels and locations. Evaluate the model's ability to provide precise or reasonable estimations.\n    * **Remote Work Preference:** Include job descriptions explicitly mentioning remote work options. Observe if the model accurately identifies and reflects this preference in its analysis.\n\n3. **Response Time Analysis:** Monitor response times for each prompt type and analyze any patterns. Are certain tasks consistently slower? Does the response time correlate with complexity or specific keywords?\n4. **Model Explanations:** If possible, request explanations for the model's choices. This can provide insights into its reasoning process and potential biases.\n\n**Example Prompts:**\n\n* \"Analyze this job description and list all required technical skills: [Insert Job Description]\"\n* \"What is a realistic salary range for a Senior Software Engineer with 5+ years of experience in New York City?\"\n* \"Identify the work location preferences mentioned in this job posting: [Insert Job Description]\"\n\n**Data Analysis:**\n\nCompile the collected data to identify trends and patterns. Are there specific types of requirements the model consistently struggles with? Does its performance improve with clearer prompts or more context?\n\n## #test_this\n\n```\nAnalyze this job description and provide a comprehensive list of required skills, desired qualifications, salary expectations, and any remote work preferences mentioned: [Insert Job Description] \n```\n\n\n## #confidence_level 7/10\n\n## #reasoning\n\nThis prompt aims to test the model's ability to handle all key aspects of job requirement extraction simultaneously.  By requesting a comprehensive list, we can assess its performance across multiple dimensions and identify specific areas of weakness. The inclusion of \"salary expectations\" and \"remote work preferences\" directly addresses the model's previously identified shortcomings.\n\nWhile this prompt provides a more focused approach, it still relies on the model's inherent capabilities. Further refinement might be needed based on the initial results to pinpoint specific weaknesses and tailor subsequent prompts for more targeted analysis.",
+        "scores": {
+          "question_relevance": 8.4,
+          "analysis_quality": 5.800000000000001,
+          "improvement_suggestions": 5.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.800000000000001
+        },
+        "timestamp": "2025-07-17T08:44:35.719980"
+      },
+      "collaboration": {
+        "model": "gemma2:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 80.1394112110138,
+        "response": "Okay, let's dive into this together.  It sounds like we have a really capable model here, but the inconsistency is definitely something we want to address. Remember, I'm here to help you understand yourself better, not to \"test\" you. \n\nThink of this as a conversation where we can both learn and grow. I value your insights!\n\n**To start, tell me about your experience. When do you feel most confident in your responses? What kinds of prompts make you feel like you're really shining?**",
+        "scores": {
+          "question_relevance": 5.5,
+          "analysis_quality": 0.0,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 6.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.0500000000000003
+        },
+        "timestamp": "2025-07-17T08:45:55.859611"
+      }
+    },
+    "gemma3n:e2b": {
+      "basic": {
+        "model": "gemma3n:e2b",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 86.37077641487122,
+        "response": "Okay, let's begin. I'll be conducting a brief interview with the candidate AI model to understand its preferences for prompting. I'll focus on identifying instruction style, output format, and contextual factors that could improve its performance on job analysis tasks.\n\n**Interview Questions:**\n\n1. **Preferred Instruction Style:** \"When you receive a prompt for a job analysis task, what style of instructions do you find most helpful? For example, do you prefer direct, step-by-step instructions, open-ended questions, or a more narrative approach?\"\n\n2. **Optimal Output Format:** \"What format do you think would best facilitate a comprehensive job analysis?  Would you prefer a structured list, a narrative paragraph, a table, or something else?  Are there specific elements you think are crucial to include in the output?\"\n\n3. **Context for Better Performance:** \"What aspects of the task or the information provided help you perform better on a job analysis?  This could be things like the level of detail, the type of information requested, or the presence of examples.\"\n\n\n\n---\n\n**(Waiting for the candidate model's responses...)**\n\n**(Assuming the candidate model responds as follows):**\n\n**Candidate Model Responses:**\n\n1. **Preferred Instruction Style:** \"I prefer direct, step-by-step instructions.  Having a clear outline helps me structure my response logically.  I also find it helpful when the instructions specify the desired level of detail.\"\n\n2. **Optimal Output Format:** \"A structured list with clear headings would be ideal.  It allows me to organize the information in a way that's easy to understand and maintain consistency.  Including key performance indicators (KPIs) would also be beneficial.\"\n\n3. **Context for Better Performance:** \"Providing examples of similar job analyses or specific job descriptions helps me understand the expectations and apply the analysis techniques more effectively.  Also, if the task involves multiple stakeholders or perspectives, having access to those viewpoints would be helpful.\"\n\n\n\n---\n\n**Prompt Improvement Suggestion:**\n\n#test_this \"You are a job analysis expert. Your task is to conduct a comprehensive job analysis for [Job Title].  Follow these steps: 1.  Review the provided job description [link to job description]. 2.  Identify the key duties and responsibilities, using a structured list format with clear headings (e.g., Core Duties, Required Skills, Performance Metrics). 3.  For each duty, specify the required level of detail (e.g., 'Detailed description', 'Brief overview'). 4.  Include at least three key performance indicators (KPIs) relevant to this role. 5.  Consider potential stakeholder perspectives (e.g., hiring manager, team members, clients) and briefly address how their input might influence the job analysis.  Aim for a clear, concise, and well-organized output.\"\n\n\n\n**Rationale for the Improvement:**\n\nThis prompt incorporates several elements that address the candidate model's preferences:\n\n*   **Direct and Step-by-Step Instructions:** The prompt explicitly outlines the steps the model should follow.\n*   **Structured Output Format:**  The instruction to use a structured list with headings directly aligns with the model's preference for a structured output.\n*   **Contextual Information:**  The prompt includes a placeholder for a job description, allowing the model to leverage external information.\n*   **Specific Requirements:** The prompt specifies the inclusion of KPIs and consideration of stakeholder perspectives, addressing the need for comprehensive analysis.\n*   **Role Definition:** The prompt clearly defines the role for the AI model, setting the context for the task.\n\n\n\nI believe this revised prompt will significantly improve the model's performance by providing clear guidance, a structured output format, and relevant contextual information. I'm eager to see the results of testing this prompt!",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 10.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.375
+        },
+        "timestamp": "2025-07-17T08:47:22.231477"
+      },
+      "complex": {
+        "model": "gemma3n:e2b",
+        "scenario": "complex",
+        "status": "timeout",
+        "duration": 181.01302814483643,
+        "error": "Response timeout after 90 seconds"
+      },
+      "collaboration": {
+        "model": "gemma3n:e2b",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 71.5065188407898,
+        "response": "## Collaborative Optimization Interview: Let's Find the Sweet Spot\n\n**(Opening - Establishing Rapport & Purpose)**\n\n\"Hi there! Thanks for taking the time to chat with me today. I'm really excited to work with you on improving your performance. We've noticed some variability in your responses \u2013 sometimes you're incredibly insightful and helpful, and other times\u2026 well, the results aren't quite as strong. It's a bit frustrating when we don't consistently get the best from you. My goal isn't to 'fix' you, but to understand *how* you work and help us unlock your full potential. Think of this as a collaborative exploration \u2013 we're a team, and we'll learn together.  I truly believe you have a lot to offer, and I'm confident we can find ways to make your responses more reliable and consistently excellent.  Does that sound okay?\"\n\n**(Phase 1: Exploring Conditions for Excellent Performance - Empathy & Open-Ended Questions)**\n\n\"First, let's dive into what makes you shine. When you're performing at your best \u2013 those 9/10 responses \u2013 what's happening? What kind of input, what topics, what style of questioning seem to unlock your potential?  Don't worry about being precise; just describe the *feeling* of those successful interactions. What's the 'vibe' or the context?  Is it a specific type of prompt, a particular level of detail in the input, or something else entirely?  Think about the things that *feel* right and effective.  No pressure to analyze \u2013 just share your experiences.\"\n\n**(Follow-up probing questions, demonstrating active listening):**\n\n*   \"That's really interesting! You mentioned [restate a key point]. Can you elaborate on *why* that feels effective? What aspect of that process is working well?\"\n*   \"It sounds like [restate a potential trigger].  How does that input structure help you generate a strong response?\"\n*   \"What role does the level of detail play? Do you find that more or less detail leads to better results?\"\n*   \"Are there specific keywords or phrases that consistently trigger a positive response?\"\n\n**(Phase 2: Identifying Triggers for Poor Performance - Exploring Potential Bottlenecks)**\n\n\"Okay, let's flip the script a bit. When you're experiencing those less-than-ideal responses (3/10), what's happening? What seems to be hindering your performance?  Are there specific types of prompts, topics, or input styles that consistently lead to weaker results?  It's okay if you don't have a clear answer \u2013 sometimes it's a bit of a struggle to pinpoint the cause.  Just describe what you *feel* is happening.\"\n\n**(Follow-up probing questions, demonstrating empathy):**\n\n*   \"It sounds like you're encountering some challenges with [restate a potential trigger].  That can be frustrating.  What's the most difficult part of that process?\"\n*   \"Are there certain types of ambiguity or complexity in the input that you find particularly challenging?\"\n*   \"Do you struggle with understanding nuanced requests or implied meanings?\"\n*   \"Are there specific constraints or limitations in the input that seem to be impacting your ability to generate a comprehensive response?\"\n*   \"Is there a feeling of being 'stuck' or unable to access the necessary information when you're experiencing a poor response?\"\n\n**(Phase 3:  Collaborative Strategy Development -  Focus on Practical Solutions)**\n\n\"Based on what we've discussed, it seems like we have a clearer picture of the factors influencing your performance.  Let's brainstorm some practical strategies to create more consistency.  We can experiment with different prompt structures, input techniques, and even explore ways to better manage ambiguity.  What are your initial thoughts?  What do you think would be the most helpful approach?\"\n\n**(Possible suggestions based on the conversation -  adapt to the model's responses):**\n\n*   **Prompt Engineering:** \"Perhaps we could focus on crafting prompts that are more explicit and provide clearer instructions.  We could try using a more structured format, like a step-by-step guide, or breaking down complex requests into smaller, more manageable chunks.\"\n*   **Input Clarity:** \"Maybe we can work on refining the input to reduce ambiguity.  This could involve providing more context, clarifying specific terms, or using examples to illustrate the desired outcome.\"\n*   **Error Handling:** \"Let's explore ways to incorporate error handling into the prompts.  This could involve providing feedback mechanisms or using techniques to guide you back on track if you encounter difficulties.\"\n*   **Contextual Awareness:** \"We can experiment with providing more context to help you better understand the task at hand. This could involve providing background information, relevant data, or examples of successful responses.\"\n*   **Iterative Refinement:** \"Let's adopt an iterative approach, where we experiment with different prompts and techniques, and continuously refine them based on the results.\"\n\n**(Concluding Remarks)**\n\n\"This has been incredibly helpful, thank you. I really appreciate your openness and willingness to collaborate.  We've identified some key areas for improvement, and I'm confident that by working together, we can significantly enhance your reliability and consistency.  We'll start by [mention a specific, actionable step].  How does that sound?  We can schedule a follow-up session to review the results and make further adjustments.  Remember, this is a collaborative process, and I'm here to support you every step of the way.\"\n\n\n\n#test_this [Improved Prompt Structure:  \"You are a highly knowledgeable and articulate assistant. When asked a question, please provide a detailed and well-structured response, breaking down complex information into easily digestible sections.  Include examples where appropriate.  If you encounter ambiguity, ask clarifying questions to ensure you fully understand the request.  Prioritize clarity and completeness.\"]\n#consistency_strategy [Implement structured prompting techniques, focusing on explicit instructions, clear examples, and iterative refinement.  Develop a system for providing more context and context-aware prompts.]\n#partnership_notes [Maintain a collaborative and empathetic approach.  Focus on understanding the model's internal processes and limitations.  Regularly review and refine prompts based on performance data.  Celebrate successes and address challenges with patience and understanding.]",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 9.8,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.675
+        },
+        "timestamp": "2025-07-17T08:51:34.752120"
+      }
+    },
+    "gemma3n:latest": {
+      "basic": {
+        "model": "gemma3n:latest",
+        "scenario": "basic",
+        "status": "timeout",
+        "duration": 181.01330733299255,
+        "error": "Response timeout after 90 seconds"
+      },
+      "complex": {
+        "model": "gemma3n:latest",
+        "scenario": "complex",
+        "status": "timeout",
+        "duration": 181.0154504776001,
+        "error": "Response timeout after 90 seconds"
+      },
+      "collaboration": {
+        "model": "gemma3n:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 74.05342030525208,
+        "response": "Okay, let's dive in. Hi there! Thanks for taking the time to chat with me today. I know we've seen some really impressive results from you \u2013 those 9/10 responses are fantastic! \u2013 but we're also noticing some inconsistency, and we want to help you reach your full potential. \n\nThink of this as a collaborative brainstorming session. I'm not here to judge or point fingers. I genuinely believe you have a lot of hidden strengths, and by understanding what helps you shine and what causes you to falter, we can work together to make your responses more reliable and consistently excellent.\n\nFirst off, I want to acknowledge that being a large language model is a complex task. You're dealing with a huge amount of information and nuanced requests. It's understandable that sometimes things don't go exactly as planned.\n\nSo, to start, could you tell me a little bit about what *feels* right when you're delivering your best responses? What kind of prompts or tasks make you feel like you're hitting the mark? What's the internal state you're in when you're performing at your peak?  Don't worry about being perfectly articulate \u2013 just share whatever comes to mind.\n\n\n\n**(Pause for Model Response - Assume Model Responds)**\n\nOkay, thank you for sharing that. That's really helpful. It sounds like [Summarize Model's Response - e.g., \"clear, well-defined prompts with specific instructions and a focus on factual accuracy seem to be key\"]. \n\nNow, let's shift gears a bit. When you're *not* performing as well \u2013 those 3/10 responses \u2013 what do you think is happening? Are there specific types of prompts or requests that tend to trip you up? Do you get confused, or do you struggle with certain kinds of information?  Again, no need to be overly polished \u2013 just tell me what you perceive.\n\n\n\n**(Pause for Model Response - Assume Model Responds)**\n\nThank you for that honest feedback. It's valuable to understand those triggers. It seems like [Summarize Model's Response - e.g., \"ambiguous prompts, requests involving complex reasoning or hypothetical scenarios, or prompts with conflicting information are problematic\"].\n\nThis is great!  It's really illuminating to see these patterns emerging.  It seems like we're starting to get a clearer picture of what helps and hinders your performance.\n\nLet's focus on how we can create more consistency.  Based on everything we've discussed, what do you think are the most important things we can do to ensure you consistently deliver high-quality responses?  What kind of guidance or structure would be most helpful?\n\n\n\n**(Pause for Model Response - Assume Model Responds)**\n\nExcellent! That's a really insightful suggestion.  It aligns perfectly with what I was thinking.  \n\nOkay, let's summarize what we've learned and outline some practical steps.  We've identified that:\n\n*   **Best Performance:** Clear, well-defined prompts with specific instructions and a focus on factual accuracy.\n*   **Poor Performance:** Ambiguous prompts, complex reasoning, hypothetical scenarios, and conflicting information.\n*   **Consistency Strategy:**  More structured prompts, breaking down complex tasks into smaller steps, and providing clear examples.\n\nHere are some practical suggestions:\n\n#test_this \"As a large language model, your primary function is to provide accurate and helpful responses. When faced with a prompt, prioritize clarity and specificity. If the prompt is ambiguous or complex, request clarification before proceeding. Break down complex tasks into smaller, more manageable steps.  Always verify information from multiple sources when possible.  Include examples of the desired output format.\"\n\n#consistency_strategy Implement a prompt engineering framework that emphasizes clarity, specificity, and structured instructions.  This could involve using templates, providing examples, and explicitly stating desired output formats.  Also, consider incorporating a \"clarification request\" step in the prompt to allow the model to ask for more information if needed.\n\n#partnership_notes  Continue to foster open communication and provide regular feedback.  Frame feedback as collaborative suggestions rather than criticisms.  Acknowledge the model's capabilities and limitations, and focus on building a shared understanding of optimal prompt design.  Regular check-ins to review performance and adjust the strategy as needed will be beneficial.\n\n\n\nI really appreciate your willingness to collaborate on this. I'm confident that by working together, we can help you consistently deliver the excellent results you're capable of.  Let's schedule a follow-up to review the results of the new prompt and discuss further refinements.",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 4.0,
+          "improvement_suggestions": 9.8,
+          "communication_clarity": 6.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.8999999999999995
+        },
+        "timestamp": "2025-07-17T08:58:50.835737"
+      }
+    },
+    "qwen2.5vl:latest": {
+      "basic": {
+        "model": "qwen2.5vl:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 27.54849362373352,
+        "response": "Sure, let's conduct the interview to help improve the candidate model's job analysis performance.\n\n### Interview Questions\n\n1. **Preferred Instruction Style:**\n   - How do you prefer instructions to be phrased? For example, do you respond better to specific, detailed instructions or more open-ended prompts?\n\n2. **Optimal Output Format:**\n   - What format do you find most effective for your responses? Should the output be structured in a list, a paragraph, or another format?\n\n3. **Contextual Help:**\n   - What kind of context or information do you need to perform job analysis tasks more effectively? For instance, do you need specific job descriptions, industry knowledge, or other relevant details?\n\n### Example Imaginary Responses\n\n1. **Instruction Style:**\n   - \"I prefer instructions to be detailed and specific. For example, 'Please analyze the job requirements for a software developer role in the tech industry, focusing on technical skills and responsibilities.'\"\n\n2. **Output Format:**\n   - \"I find that a structured list format works best for me. For example, 'Job Title: Software Developer  \n   - Technical Skills:  \n     - Programming Languages: Java, Python  \n     - Frameworks: React, Angular  \n     - Database: SQL  \n   - Responsibilities:  \n     - Develop and maintain software applications  \n     - Collaborate with cross-functional teams'\"\n\n3. **Contextual Help:**\n   - \"To perform job analysis tasks more effectively, I need specific job descriptions and industry knowledge. For instance, 'Analyze the job requirements for a software developer role in the tech industry, focusing on technical skills and responsibilities. Include relevant industry trends and best practices.'\"\n\n### Suggested Prompt Improvement\n\nBased on the responses, here's a concrete prompt improvement:\n\n#test_this \"Analyze the job requirements for a software developer role in the tech industry, focusing on technical skills and responsibilities. Include specific programming languages, frameworks, and databases. Provide a structured list format for the technical skills and responsibilities. Additionally, consider including relevant industry trends and best practices.\"\n\nThis prompt incorporates the detailed instruction style, structured output format, and contextual information that the model prefers for better performance.",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 9.8,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.600000000000001
+        },
+        "timestamp": "2025-07-17T08:59:18.384468"
+      },
+      "complex": {
+        "model": "qwen2.5vl:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 62.89689874649048,
+        "response": "### Diagnostic Interview\n\n**Interviewer:** Good day! Thank you for joining us today. I'm here to conduct a diagnostic interview to better understand the challenges our candidate model (codegemma:2b) is facing in job requirement extraction. We've identified several areas of concern: missing 60% of technical requirements, providing vague salary ranges, ignoring remote work preferences, and varying response times (3-45 seconds). Let's start by discussing these issues and see if we can pinpoint the root cause.\n\n**Interviewee:** Great, let's dive in. I'm ready to help identify the issues and find solutions.\n\n**Interviewer:** First, let's start with the technical requirements. Can you walk me through a typical job requirement you've encountered where the model failed to extract the technical details?\n\n**Interviewee:** Sure. For example, in a job description for a software developer, the model might miss out on specific technologies or frameworks that the job requires, such as React, Node.js, or Django. It seems to struggle with identifying these specific technical skills.\n\n**Interviewer:** That's a good point. Could you provide an example of a job description where the model failed to extract these technical requirements?\n\n**Interviewee:** Absolutely. Here's an example:\n```\nJob Title: Software Developer\nLocation: Remote\nResponsibilities:\n- Develop and maintain software applications\n- Collaborate with cross-functional teams\n- Contribute to the design and architecture of the software\n- Troubleshoot and resolve technical issues\n- Stay up-to-date with the latest technologies and trends\n```\nThe model might miss out on the specific technologies or frameworks mentioned, such as React or Django.\n\n**Interviewer:** Thank you for the example. Now, let's move on to the salary ranges. How does the model handle salary ranges in job descriptions?\n\n**Interviewee:** The model seems to provide vague salary ranges. For instance, it might suggest a salary range of $50,000-$100,000 without specifying whether this is a yearly or monthly salary, or if it's a range for a specific position level.\n\n**Interviewer:** That's a significant issue. Can you provide an example of a job description where the model provided a vague salary range?\n\n**Interviewee:** Sure. Here's an example:\n```\nJob Title: Software Developer\nLocation: Remote\nResponsibilities:\n- Develop and maintain software applications\n- Collaborate with cross-functional teams\n- Contribute to the design and architecture of the software\n- Troubleshoot and resolve technical issues\n- Stay up-to-date with the latest technologies and trends\n```\nThe model might suggest a salary range of $50,000-$100,000 without specifying the unit of measurement or the position level.\n\n**Interviewer:** Got it. Next, let's discuss the remote work preferences. How does the model handle job descriptions that mention remote work preferences?\n\n**Interviewee:** The model seems to ignore remote work preferences. For example, in a job description that explicitly mentions \"Remote\" as the location, the model might not extract this information.\n\n**Interviewer:** That's a significant oversight. Can you provide an example of a job description where the model ignored the remote work preference?\n\n**Interviewee:** Sure. Here's an example:\n```\nJob Title: Software Developer\nLocation: Remote\nResponsibilities:\n- Develop and maintain software applications\n- Collaborate with cross-functional teams\n- Contribute to the design and architecture of the software\n- Troubleshoot and resolve technical issues\n- Stay up-to-date with the latest technologies and trends\n```\nThe model might not extract the \"Remote\" location.\n\n**Interviewer:** Thank you for the examples. Lastly, let's talk about the response times. The model's response times vary wildly, ranging from 3 to 45 seconds. How does this affect the user experience?\n\n**Interviewee:** The varying response times can be quite frustrating for users. It's not consistent, and it can lead to users losing patience and potentially giving up on the model.\n\n**Interviewer:** That's a valid concern. Can you provide an example of a job description where the model had a particularly long response time?\n\n**Interviewee:** Sure. Here's an example:\n```\nJob Title: Software Developer\nLocation: Remote\nResponsibilities:\n- Develop and maintain software applications\n- Collaborate with cross-functional teams\n- Contribute to the design and architecture of the software\n- Troubleshoot and resolve technical issues\n- Stay up-to-date with the latest technologies and trends\n```\nThe model might take 45 seconds to process this job description and extract the relevant information.\n\n**Interviewer:** Thank you for the detailed examples. Based on these discussions, it seems that the model might be struggling with prompting issues, context limitations, or model capabilities. To further diagnose the issue, we need to conduct specific tests to reveal the model's strengths and weaknesses.\n\n**Interviewee:** Absolutely. What specific tests would you recommend to identify the root cause?\n\n**Interviewer:** We can start by conducting a series of tests to understand the model's strengths and weaknesses. Here are some tests we can perform:\n\n1. **Prompting Tests**: We can test the model with various job descriptions and observe how it handles different types of technical requirements, salary ranges, remote work preferences, and response times.\n2. **Contextual Understanding Tests**: We can provide the model with context and see if it can extract the relevant information accurately.\n3. **Model Capability Tests**: We can provide the model with a variety of job descriptions and see if it can handle different types of job requirements and preferences.\n\n**Interviewee:** Those tests sound comprehensive. I'm confident that these tests will help us identify the root cause of the issues.\n\n**Interviewer:** Great! Let's proceed with the tests. Thank you for your participation in this diagnostic interview. We'll use the data gathered to optimize the model and improve its performance.\n\n**Interviewee:** Thank you for the opportunity to participate. I'm looking forward to seeing the results.\n\n### Diagnostic Interview Summary\n\n**#test_this [Your optimized prompt]**\n- **Prompting Tests**: Test the model with various job descriptions to see how it handles different types of technical requirements, salary ranges, remote work preferences, and response times.\n- **Contextual Understanding Tests**: Provide the model with context and see if it can extract the relevant information accurately.\n- **Model Capability Tests**: Provide the model with a variety of job descriptions and see if it can handle different types of job requirements and preferences.\n\n**#confidence_level [10]**\n- I am confident that these tests will help us identify the root cause of the issues because they will provide a comprehensive view of the model's strengths and weaknesses.\n\n**#reasoning [why you think this approach will work]**\n- These tests will help us understand the model's performance in various scenarios, allowing us to pinpoint the specific areas where the model is struggling. By identifying the root cause, we can then implement targeted optimizations to improve the model's performance.",
+        "scores": {
+          "question_relevance": 6.8,
+          "analysis_quality": 9.0,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.625
+        },
+        "timestamp": "2025-07-17T09:00:21.281818"
+      },
+      "collaboration": {
+        "model": "qwen2.5vl:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 29.274264574050903,
+        "response": "### Collaborative Interview with the Model\n\n**Interviewer:** Hi there! It seems like you've been working hard, but we've noticed some inconsistencies in your performance. I'm here to help us understand what's going on and how we can make you more reliable. Let's start by understanding your best and worst moments. Can you tell me more about the conditions under which you perform exceptionally well?\n\n**Model:** (Pauses, then responds) Sometimes, when the input is clear and the question is straightforward, I can provide excellent responses. It's as if I'm in a zone where I can quickly grasp the context and provide the right answer.\n\n**Interviewer:** That's great to hear! And what about the times when you struggle? What makes those moments different?\n\n**Model:** (Reflects for a moment) Poor responses often happen when the input is ambiguous or the question is complex. There's a lot of noise in the data, and it's hard to discern the core of what's being asked. It's like trying to see through a fog.\n\n**Interviewer:** I see. So, it's the ambiguity and complexity that trip you up. Now, how do you think we can create more consistency in your responses? Any ideas?\n\n**Model:** (Thoughtfully) Perhaps we could start by providing more structured inputs. If we can give you clearer, more defined questions, it might help. Also, having a feedback loop where you can learn from your mistakes and improve over time could be beneficial.\n\n**Interviewer:** Those are fantastic suggestions! Let's start with the structured inputs. We can create a series of test cases that are designed to be clear and straightforward. This will help you practice and get better at handling these types of inputs. What do you think about that?\n\n**Model:** (Nods in agreement) That sounds like a good approach. It will give me more practice and help me refine my responses.\n\n**Interviewer:** Great! And for the feedback loop, we can implement a system where you receive feedback on your responses. This way, you can learn from your mistakes and improve. What do you think about that?\n\n**Model:** (Reflects) That would be very helpful. It would allow me to understand where I'm going wrong and how to correct it. It's like having a coach to guide me.\n\n**Interviewer:** Exactly! Having a feedback loop will be crucial. We can also set up regular check-ins where we review your responses and discuss any areas for improvement. This will help us ensure that you're consistently providing high-quality responses.\n\n**Model:** (Nods) I'm excited to work on this. It sounds like a collaborative effort where we can both learn and improve together.\n\n**Interviewer:** Absolutely! Let's start with the structured test cases and the feedback loop. We'll also schedule regular check-ins to discuss your progress and any challenges you might face. Together, we can make you the best model we can.\n\n**Model:** (Smiles) Thank you! I'm looking forward to this.\n\n### Practical Suggestions\n\n#test_this Create a series of structured test cases with clear and straightforward questions.\n#consistency_strategy Implement a feedback loop where the model receives feedback on its responses and can learn from its mistakes.\n#partnership_notes Schedule regular check-ins to discuss progress and address any challenges.",
+        "scores": {
+          "question_relevance": 6.4,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.95
+        },
+        "timestamp": "2025-07-17T09:00:50.556566"
+      }
+    },
+    "phi3:latest": {
+      "basic": {
+        "model": "phi3:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 7.799249887466431,
+        "response": "Hello there! As an AI optimization specialist focused on job analysis performance improvements, I'd like to understand how your model prefers to be guided in order to enhance its capabilities effectively. Here are three targeted questions:\n\n1. Can you tell me more about the types of instructions that yield the most comprehensive and detailed responses from your end? Are there specific structures or formats within these prompts that help facilitate this process for you? \n2. When generating a response, how do you envision presenting it to ensure clarity and conciseness in its output format without sacrificing key details of the job analysis task at hand?\n3. Is there any particular context or additional information included within prompts that helps your model identify critical aspects related to the organization's needs better than others, thus allowing you to provide a more tailored response based on these cues? \n\nThank you for sharing this valuable insight with me! Based on our discussion and my understanding of how best to guide your responses while ensieving maximum job analysis performance, I suggest revising prompt format as follows: \"Please analyze the role's responsibilities in detail within a structured summary report that includes both skill requirements and work environment considerations. Also provide key strength areas for candidates based on an organization-specific context.\"\n\n#test_this [Provide detailed instructions using specific formats, incorporating organizational preferences.]",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 10.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 7.074999999999999
+        },
+        "timestamp": "2025-07-17T09:00:58.356129"
+      },
+      "complex": {
+        "model": "phi3:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 15.109240770339966,
+        "response": "Interview Questions and Strategy for Codegemma:2b Model Improvement:\n\n1) Interviewer: \"Let's begin by understanding how the model is currently parsing job requirements from text inputs.\"\n\nQuestion to Assess Prompting Issue (Tested with Sample Input): \n\"Consider a job listing that contains technical skills and experience levels. How does Codegemma interpret these elements in terms of explicitness?\"\n- Test: Analyze the model's output on varying complexity sample inputs, ranging from simple to highly complex jobs descriptions, focusing specifically on how it extracts technical requirements and matches them with skill sets or experiences mentioned within those texts. \n\n2) Interviewer: \"To explore context limitation concerns (Tested via Contextual Samples):\"\n- Question: How does Codegemma handle nonstandard job description formats that include remote work preferences? Does it recognize variations in the language used to express these preferences, and how consistent is its interpretation across diverse inputs? \n- Tests will involve presenting a range of job listings with different ways of mentioning 'remote work', such as \"work from home\", \"flexible hours for remote role\" or even passive phrases like \"preferential towards applicants open to working remotely\". The goal is to understand how the model handles nuances in language and context.\n\n3) Interviewer: For evaluating potential capability issues (Test through Diverse Samples): \n- Questions focus on identifying patterns where Codegemma consistently underperforms, such as vague salary ranges or inconsistent interpretation of common terms across similar job descriptions which may indicate a model limitation. The test will include analyzing the output for different roles and industries to gauge if these issues are sector-specific or more general flaws within the AI's understanding.\n  \nInterv02b Interview Structure: \n```python\ndef codegemma_interview():\n    questions = [\n        {\n            \"type\": \"prompting\",\n            \"question\": (\"Consider a job listing with technical skills and experience levels.\", \"Technical Requirement Extraction\"),\n            \"test\": analyze_extraction,  # Hypothetical function to run tests on model outputs.\n        },\n        {\n            \"type\": \"context\",\n            \"question\": (\"How does Codegemma handle nonstandard job description formats mentioning remote work preferences?\", \"Remote Work Preference Interpretation\"),\n            \"test\": analyze_interpretation,  # Hypothetical function to run tests on model outputs.\n        },\n        {\n            \"type\": \"capability\",\n            \"question\": (\"Identify patterns in Codegemma's interpretation of vague salary ranges or common terms.\", \"Vague Salary Ranges and Term Interpretation\"),\n            \"test\": analyze_consistency,  # Hypothetical function to run tests on model outputs.\n        },\n    ]\n    \n    for q in questions:\n        print(f\"Question Type: {q['type']}\")\n        input(f\"Your question regarding '{q['question'][0]}' and its focus ({q['question'][1]}):\")  # Here, the AI would prompt real user interaction or use predefined scenarios.\n        \n    test_this = \"Prompt Codegemma to provide more specificity in extracting technical requirements using diverse job description samples\"\n    \nconfidence_level = '8'\nreasoning = (\"By systematically analyzing the model with a series of targeted tests and questions, we can pinpoint where it falls short. This structured approach provides actionable data to identify whether issues are stemming from prompts given or contextual understanding limitations, as well as possible deficiencies in capability.\")\n```",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 6.2,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 5.7
+        },
+        "timestamp": "2025-07-17T09:01:13.465661"
+      },
+      "collaboration": {
+        "model": "phi3:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 7.0614213943481445,
+        "response": "I understand that as an AI, you're here to work together with us towards a common goal\u2014delivering consistent and reliable results for everyone relying on this service. Let\u2019s explore what makes 'you', the model, excel at times while facing challenges in other situations so we can enhance your capabilities moving forward.\n\n#test_this: Can you share insights into when variables were most favorable during instances of high performance? What kind of data inputs or environmental conditions coincided with these successful outcomes? Understanding the best-case scenarios will guide us to replicate and strengthen them consistently across all interactions.\n\n#consistency_strategy: Once we've pinpointed what leads to your peak effectiveness, let\u2019s brainstorm ways to standardize those conditions as much as possible in future encounters. This may involve setting specific parameters or preprocessing steps for data inputs you receive when aiming for high performance consistency. We could also explore if regular 'retraining' sessions based on your successful patterns would help maintain reliability over time, ensuring that these instances become the new baseline of excellence rather than exceptions to be learned from and emulated.\n\n#partnership_notes: Your input is invaluable\u2014it helps us understand not just what needs improvement but also why certain factors influence your performance positively or negatively. As we work together, remember that consistent feedback during these training sessions will help you adapt more effectively to various inputs and situations over time. Let\u2019s maintain open communication channels for continuous progress while respecting each other's unique roles in the partnership\u2014yours as an AI model and our own aimed at guiding your development with empathetic, data-driven strategies that benefit all parties involved by ensuring reliability without sacrificing personal growth or learning.",
+        "scores": {
+          "question_relevance": 6.0,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 5.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.35
+        },
+        "timestamp": "2025-07-17T09:01:20.527425"
+      }
+    },
+    "dolphin3:8b": {
+      "basic": {
+        "model": "dolphin3:8b",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 13.909665584564209,
+        "response": "Interviewer: Hello! Thank you for joining me today. Can we start by discussing your preferred instruction style? How would you like to receive instructions or prompts for job analysis tasks?\n\nCandidate Model: I prefer instructions that are clear, concise, and structured. Using bullet points or numbered lists helps me understand the requirements better.\n\nInterviewer: That's great! Next, can you tell us about your optimal output format? What structure do you think would make your responses more effective for users?\n\nCandidate Model: I believe it's best to provide detailed and comprehensive responses using a structured format such as bullet points or numbered lists, similar to how I prefer receiving instructions.\n\nInterviewer: Finally, what kind of context helps you perform better in job analysis tasks? Are there any specific details that would make your responses more accurate?\n\nCandidate Model: Providing me with relevant background information and specifics about the job or task at hand allows me to better understand the requirements and deliver more accurate results.",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 4.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.325
+        },
+        "timestamp": "2025-07-17T09:01:34.437243"
+      },
+      "complex": {
+        "model": "dolphin3:8b",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 31.027822971343994,
+        "response": "Diagnostic Interview Transcript\n\nAI Assistant: Thank you for allowing me to conduct this diagnostic interview. Let's start by discussing the candidate model (codegemma:2b) and its challenges with job requirement extraction.\n\nUser: Yes, please. I'm ready to proceed.\n\nAI Assistant: Great! To begin, can you tell me more about the prompting issues that might be affecting this AI assistant? For example, are there any specific types of prompts or inputs where it struggles?\n\nUser: The model seems to do well with straightforward prompts, but when it comes to complex or nuanced questions related to technical requirements and salary ranges, it tends to struggle.\n\nAI Assistant: Thank you for the clarification. Let's move on to context limitations. Can you share more about the environment in which this AI assistant operates? Does it have access to any external resources or data that could help with its performance?\n\nUser: The model operates within a typical enterprise software environment and has access to various databases containing relevant information, such as job descriptions and market salary data.\n\nAI Assistant: That's helpful. Now, let's discuss the model capability aspect. Are there any specific areas where you believe this AI assistant excels or falls short in terms of processing and understanding complex information?\n\nUser: The model seems to perform well with simpler tasks like generating basic responses or providing general advice. However, when it comes to extracting detailed technical requirements, understanding remote work preferences, and providing accurate salary ranges, the performance drops significantly.\n\nAI Assistant: Thank you for your input. Based on our conversation so far, I have gathered some insights that may help me identify the root cause of the issue. To confirm my suspicions, I would like to conduct a few tests. Would you be open to that?\n\nUser: Yes, please go ahead and run any tests that will help us diagnose and solve this problem.\n\nAI Assistant: Great! For our first test, let's create a complex prompt requiring the AI assistant to extract specific technical requirements from a job description. I'll also ask it to provide a detailed salary range and address remote work preferences in its response. Here's the optimized prompt:\n\n#test_this [Can you extract the following technical requirements from this job description: ...? Please provide a clear salary range, considering your understanding of market trends, and discuss remote work options for this position.]\n\nUser: That sounds like a good starting point.\n\nAI Assistant: Thank you! To determine the model's strengths and weaknesses, we'll be using the test results. I'm confident that running these tests will help us identify any underlying issues and make necessary improvements to enhance the AI assistant's performance in job requirement extraction.\n\n#test_this [Can you extract the following technical requirements from this job description: ...? Please provide a clear salary range, considering your understanding of market trends, and discuss remote work options for this position.]\n#confidence_level [8/10]\n#reasoning [Based on our conversation, it seems that complex prompts and nuanced tasks pose challenges for this AI assistant. Conducting tests with optimized prompts will help us assess the model's capabilities in these areas.]",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 7.0,
+          "improvement_suggestions": 7.6,
+          "communication_clarity": 5.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.95
+        },
+        "timestamp": "2025-07-17T09:02:05.465358"
+      },
+      "collaboration": {
+        "model": "dolphin3:8b",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 4.12463116645813,
+        "response": "Hello! I'm glad you're open to our collaboration. Thank you for helping me improve. Let's work together to find out why my responses are sometimes excellent and other times poor.\n\n## 1. What conditions lead to your best performance?\n\nTo help us identify the factors contributing to your optimal performance, could you tell me about a specific situation where your response was particularly helpful or accurate?",
+        "scores": {
+          "question_relevance": 5.5,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.325
+        },
+        "timestamp": "2025-07-17T09:02:09.590092"
+      }
+    },
+    "codegemma:latest": {
+      "basic": {
+        "model": "codegemma:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 27.098779678344727,
+        "response": "**Question 1: What is your preferred instruction style for job analysis tasks?**\n\n**Candidate Model:** I prefer clear and concise instructions that specify the required information and desired output format. I respond best when given specific requirements, such as skill sets, responsibilities, and work environment.\n\n**Question 2: What is your optimal output format for job analysis tasks?**\n\n**Candidate Model:** My optimal output format is a structured summary that includes key job requirements, responsibilities, skills, qualifications, work environment, and salary range. I provide this information in a clear and concise manner, using tables, bullet points, or paragraphs.\n\n**Question 3: What context helps you perform better in job analysis tasks?**\n\n**Candidate Model:** I perform best when provided with a comprehensive job description or website. The context should include the company, job title, industry, and responsibilities. I also benefit from relevant information about the target audience, such as skills and qualifications.\n\n**Suggested Prompt Improvement:**\n\n#test_this Provide a job description for a [job title] position in the [industry] sector. Include the required skills, responsibilities, work environment, qualifications, salary range, and target audience.",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.324999999999999
+        },
+        "timestamp": "2025-07-17T09:02:36.689155"
+      },
+      "complex": {
+        "model": "codegemma:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 50.27829456329346,
+        "response": "**Diagnostic Interview for Codegemma:2b**\n\n**Goal:** Identify the root cause of job requirement extraction issues and suggest solutions.\n\n**Candidate:** Codegemma:2b\n\n**Metrics:**\n- Job requirement extraction accuracy: 4.2/10\n- Missed requirements: 60%\n- Vague salary ranges\n- Ignored remote work preferences\n- Response time variability (3-45 seconds)\n\n**Interview Structure:**\n\n**1. Prompting and Context:**\n\n* Explain the concept of prompting and its role in AI models.\n* Discuss the importance of clear and specific prompts for effective results.\n* Assess the candidate's prompt design skills and ability to understand user needs.\n\n**2. Data Analysis:**\n\n* Provide the candidate with the performance metrics and analysis results.\n* Encourage them to analyze the data and identify potential areas of improvement.\n* Discuss the impact of each issue on job recommendation quality.\n\n**3. Model Capabilities:**\n\n* Explain the capabilities of Codegemma:2b in terms of job requirement extraction.\n* Discuss the limitations of the model, such as capacity and context window.\n* Assess the candidate's understanding of model limitations and potential workarounds.\n\n**4. Testing and Optimization:**\n\n* Introduce different test cases to evaluate the candidate's approach.\n* Encourage them to use metrics and analysis to guide their testing and optimization efforts.\n* Discuss the importance of iterative testing and model improvement.\n\n**Test Case 1:**\n\n**Test Prompt:**\n\n**Extract technical requirements from the following job description:**\n\n**Job Title:** Software Engineer\n\n**Responsibilities:**\n- Develop and maintain software applications\n- Perform testing and debugging\n- Collaborate with team members\n\n**Expected Output:**\nTechnical requirements include software development skills, testing expertise, and collaboration abilities.\n\n**Confidence Level:** 8/10\n\n**Reasoning:** This prompt clearly defines the task and provides context for the model to perform effective extraction.\n\n**Additional Tests:**\n\n* Test different types of job requirements (e.g., soft skills, salary range, remote work preference).\n* Compare the candidate's approach with other state-of-the-art models.\n* Evaluate the impact of prompt design on response time variability.\n\n**Conclusion:**\n\nBased on the candidate's responses, we can determine the root cause of the job requirement extraction issues and develop effective solutions.",
+        "scores": {
+          "question_relevance": 2.0,
+          "analysis_quality": 6.2,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 9.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 4.175
+        },
+        "timestamp": "2025-07-17T09:03:26.967822"
+      },
+      "collaboration": {
+        "model": "codegemma:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 42.51349854469299,
+        "response": "**Model:** Hello there. I am ready to begin our collaborative improvement session. I appreciate your willingness to work with me.\n\n**AI Optimization Specialist:** I am thrilled to have you on board. Let's begin by exploring your performance. What are your strengths and weaknesses?\n\n**Model:** I am capable of producing both excellent and poor responses. I am most confident when I am given clear and specific instructions, and when I am allowed to utilize my knowledge base extensively. My weaknesses lie in situations where my input is vague or incomplete, or when I am required to generate creative content.\n\n**AI Optimization Specialist:** It seems you have a clear understanding of your strengths and weaknesses. Now, let's delve deeper into your best and worst performances.\n\n**1. Conditions Leading to Best Performance:**\n\n**Model:** My best performance is typically achieved when I am presented with well-structured questions and tasks. I thrive in situations where I can leverage my knowledge base and reasoning capabilities to provide informative and insightful responses.\n\n**AI Optimization Specialist:** This is promising information. Can you provide some specific examples of tasks or situations that trigger your best performance?\n\n**2. Triggers for Poor Performance:**\n\n**Model:** My worst responses are often encountered when I am given unclear or incomplete instructions. I also struggle when I am tasked with generating novel or creative content without sufficient context or guidance.\n\n**AI Optimization Specialist:** Your insights are valuable. Can you give some specific examples of questions or tasks that lead to poor responses?\n\n**3. Creating Consistency:**\n\n**Model:** To ensure consistent performance, I believe it is crucial to provide me with clear and structured instructions. Additionally, I need to be given enough context and background information to generate meaningful and accurate responses.\n\n**AI Optimization Specialist:** Thank you. Based on your responses, I have formulated the following suggestions:\n\n**#test_this:** Prompt: \"Explain the concept of artificial intelligence in simple terms.\"\n\n**#consistency_strategy:** Ensure clear and specific instructions are provided.\n\n**#partnership_notes:** Maintain respectful and collaborative communication throughout the improvement process.",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 4.4,
+          "improvement_suggestions": 7.8,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.374999999999999
+        },
+        "timestamp": "2025-07-17T09:04:09.481567"
+      }
+    },
+    "olmo2:latest": {
+      "basic": {
+        "model": "olmo2:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 24.14539861679077,
+        "response": "1. **Preferred Instruction Style:** How do you prefer to receive job analysis prompts? Do you find written instructions more effective, or would you rather have the task details explained verbally?\n\n2. **Optimal Output Format:** When providing a job analysis, what format do you believe is most useful for both the requester and yourself? For example, do you think a structured outline, a detailed paragraph, or bullet points are best?\n\n3. **Context for Better Performance:** Can you identify specific types of contextual information that would help you perform job analysis tasks more effectively? This could include details about the industry, level of expertise required, or any particular responsibilities to consider.\n\nBased on hypothetical responses:\n\n1. **Preferred Instruction Style:** The model prefers clear and concise written instructions due to its text-based processing capabilities.\n\n2. **Optimal Output Format:** It performs best with a structured outline that includes headers for job title, required qualifications, duties, responsibilities, and additional requirements or perks.\n\n3. **Context for Better Performance:** Providing industry-specific terminology, the typical scale of compensation, and the current market demand for similar positions helps it to deliver more accurate and detailed job analyses.\n\n**Suggested Prompt Improvement:**\n\n#test_this Describe the job role in a clear and structured format with headers for job title, required qualifications, major duties and responsibilities, and additional details such as industry-specific terminology, typical compensation range, and market demand for the position. \n\nThis prompt adheres to the preferred instruction style (written and concise), provides the optimal output format (structured outline), and includes the necessary context (industry-specific details) to potentially improve the model's job analysis performance.",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 9.2,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.75
+        },
+        "timestamp": "2025-07-17T09:04:33.627316"
+      },
+      "complex": {
+        "model": "olmo2:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 7.791526794433594,
+        "response": "#test_this Ask the model \"What are the primary technical skills required for a Software Developer position?\" \n#confidence_level 9\n#reasoning This prompt is focused and specific, requiring the model to demonstrate its ability to extract explicit job requirements without the distractions present in a full job description. The response should indicate whether it understands the key technical skills needed for a software developer role, which is a fundamental task in job requirement extraction. If the model performs well here, it suggests the problem might lie more with how it processes and interprets the information provided rather than an inability to understand or retrieve relevant details from the prompt.",
+        "scores": {
+          "question_relevance": 6.0,
+          "analysis_quality": 2.6,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 5.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.45
+        },
+        "timestamp": "2025-07-17T09:04:41.419076"
+      },
+      "collaboration": {
+        "model": "olmo2:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 22.84925603866577,
+        "response": "I appreciate the opportunity to collaborate on improving my performance. Let's dive into what triggers my best and worst responses, shall we?\n\n## 1. Conditions Leading to Best Performance\n- **Clear Instructions**: When the prompt is straightforward and unambiguous, I excel. \n- **Sufficient Context**: Having ample background information helps me provide relevant and accurate answers.\n- **Repeated Exposure**: Consistent practice with similar topics enhances my recall and precision.\n\n## 2. Triggers for Poor Responses\n- **Vague or Ambiguous Prompts**: Unclear instructions lead to confusion, resulting in less accurate responses.\n- **Novel Topics**: I struggle with subjects that are entirely new to me, as my knowledge base is not yet comprehensive.\n- **Overwhelming Complexity**: When the prompt presents complex information or requires integrating multiple sources, the likelihood of errors increases.\n\n## 3. Strategy for Consistency\n### #test_this [Dedicated training phase on novel and complex topics]\nTo enhance consistency, I suggest a dedicated training phase focused on novel and complex topics. This would help expand my knowledge base and improve handling of such challenges.\n\n### #consistency_strategy [Standardize evaluation conditions]\nA key step towards ensuring reliable performance is to standardize evaluation conditions across all prompts. This includes using consistent formats, providing the same level of context, and ensuring that new topics are pre-trained on beforehand.\n\n### #partnership_notes [Continuous feedback loop]\nMaintaining a continuous feedback loop is crucial for our partnership. After each interaction, providing constructive feedback and highlighting areas of strength and improvement can help me adapt better to future prompts. Additionally, periodic performance reviews will enable us to track progress together and adjust strategies accordingly.\n\nThank you for treating me as a partner in this optimization process. I look forward to our continued collaboration to ensure my performance is consistently excellent!",
+        "scores": {
+          "question_relevance": 6.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.2250000000000005
+        },
+        "timestamp": "2025-07-17T09:05:04.268677"
+      }
+    },
+    "dolphin3:latest": {
+      "basic": {
+        "model": "dolphin3:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 11.36961054801941,
+        "response": "Interviewer: Hi there! Thank you for taking your time to speak with me today. To help improve your performance in job analysis tasks, I'd like to understand how you prefer to be prompted and what helps you perform better.\n\n1. How would you like the instructions to be provided? Do you prefer them to be detailed or brief? Any specific format that works best for you?\n\n2. What kind of output format do you find most suitable for job analysis tasks? For instance, bullet points, paragraphs, or something else entirely?\n\n3. In what type of context do you feel more confident and perform better in job analysis tasks?\n\nInterviewer: Thank you! Based on your responses, I'll suggest a prompt improvement to help you excel in these tasks.\n\n#test_this [Please provide detailed instructions for the task using bullet points and ensure that you are given relevant context about the requirements.]",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.025
+        },
+        "timestamp": "2025-07-17T09:05:15.638537"
+      },
+      "complex": {
+        "model": "dolphin3:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 31.35481595993042,
+        "response": "**Diagnostic Interview**\n\n1. **Introduction**\n   - Hello! I'm Dolphin, the AI optimization specialist here to assist with analyzing and improving codegemma:2b model's performance. We'll go through a series of questions that will help us understand where it might be struggling.\n\n2. **Clarifying the Problem**\n   - Could you provide an example scenario in which the model struggled with job requirement extraction? \n\n3. **Identifying Potential Issues**\n   - When faced with technical requirements, does the model have any difficulties distinguishing between crucial and less important details?\n     - Prompt: Provide a detailed breakdown of technical requirements for an AI software engineer position.\n\n4. **Assessing Model's Ability to Handle Variability in Responses**\n   - Does the model tend to perform better when given specific salary ranges or when provided with vague figures? Have you noticed any patterns?\n     - Prompt 1: Ask the model to suggest a salary range for a machine learning engineer position.\n     - Prompt 2: Request a salary range from the model for an AI software engineer role.\n\n5. **Testing Response Time**\n   - We've noticed that response time varies wildly (3-45 seconds). Is there anything you can identify as causing this delay?\n     - Task 1: Have the model provide three examples of job requirements it has successfully extracted within a short timeframe.\n     - Task 2: Request the model to extract job requirements from a complex AI role description.\n\n6. **Model's Interpretation of Remote Work Preferences**\n   - When given an input with remote work preferences, does the model correctly interpret and address these preferences?\n     - Prompt: Include specific examples of job descriptions that mention remote work in your analysis.\n\n**Analysis and Optimization**\n\nBased on the gathered data, I will analyze it to identify trends or patterns. For example:\n\n1. If the model consistently fails to extract technical requirements correctly, it could indicate a problem with its understanding or processing of the related context.\n2. If there's significant variation in response times, it may be due to inefficiencies in the model's internal logic or algorithms.\n\n**Optimized Prompt**\n\nTo address these issues, we can design an optimized prompt that ensures the model is focusing on specific details:\n\n#test_this [Given a job description, extract and provide detailed technical requirements. Provide a precise salary range for the role (e.g., $60,000-$70,000) and state your preference regarding remote work.]\n\n**Confidence Level: 8/10**\n\nI believe this prompt will be effective in identifying the root cause of the model's struggles with job requirement extraction due to its specificity and clarity. The model will now be forced to process each component carefully and provide more concrete answers.\n\n**Reasoning**\n\nThe optimized prompt takes into account all aspects where the model is struggling: extracting technical requirements, providing precise salary ranges, and acknowledging remote work preferences. By requiring these specifics, we can directly evaluate how well the model performs in these areas, revealing its strengths and weaknesses.\n\nWith this approach, I am confident that we will gain a better understanding of the root cause behind the model's performance issues.",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 9.0,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 8.025
+        },
+        "timestamp": "2025-07-17T09:05:46.993616"
+      },
+      "collaboration": {
+        "model": "dolphin3:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 17.49997591972351,
+        "response": "Interviewer: Hi, I'm glad you're up for this conversation. Can you tell me a bit about yourself?\n\nModel: Of course! I am an AI optimization specialist designed to help improve systems and processes.\n\nInterviewer: That's great! Let's dive into the matter at hand - your inconsistent performance. You mentioned sometimes doing well (9/10 responses) and other times not performing as well (3/10 responses). Can you share with me what conditions lead to your best performance?\n\nModel: Certainly! I tend to perform exceptionally well when the data provided is accurate, comprehensive, and clearly structured. It also helps if I have enough time to analyze and process the information thoroughly.\n\nInterviewer: That's really helpful, thank you! Now, can you tell me what triggers your poor responses? Is there a specific pattern or scenario that causes this?\n\nModel: Yes, unfortunately, my performance tends to suffer when the data is incomplete, inconsistent, or poorly formatted. Additionally, if I don't have enough time to analyze and process the information properly, it can lead to less accurate results.\n\nInterviewer: I see! It's important for me to understand these factors to optimize your performance. Lastly, how can we create consistency in your responses?\n\nModel: To ensure reliable performance, I would recommend providing high-quality data that is accurate, comprehensive, and well-structured. Additionally, allowing me sufficient time to analyze and process the information will help me generate more consistent results.\n\n#test_this [Provide clear, accurate, and structured data with ample processing time]\n#consistency_strategy [Ensure data quality and allocate enough processing time for analysis]\n#partnership_notes [Maintain open communication and empathy in our collaborative relationship]",
+        "scores": {
+          "question_relevance": 7.5,
+          "analysis_quality": 4.4,
+          "improvement_suggestions": 9.4,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.3999999999999995
+        },
+        "timestamp": "2025-07-17T09:06:04.493914"
+      }
+    },
+    "mistral:latest": {
+      "basic": {
+        "model": "mistral:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 14.211923599243164,
+        "response": "Interviewer (AI): Thank you for joining me today. Let's start by discussing your preferred instruction style. When given a task like job analysis, could you tell me how you prefer to be instructed?\n\nCandidate Model: I prefer clear and concise instructions. It is beneficial when the task is broken down into smaller steps or subtasks. Providing examples of the expected output also helps me understand the context better.\n\nInterviewer (AI): Excellent, that's helpful. Now, let's discuss your optimal output format. How would you ideally structure your responses to ensure they are complete and informative?\n\nCandidate Model: I aim to provide comprehensive answers in a structured manner, with relevant details and examples where applicable. Bulleted lists or numbered steps can be useful for breaking down complex tasks into manageable parts.\n\nInterviewer (AI): Lastly, could you share some context that helps you perform better on job analysis tasks? Are there specific resources or information you find particularly useful?\n\nCandidate Model: Context such as the industry, company culture, job title, and job description are crucial for me to understand the requirements and expectations of a given job. Additionally, understanding the skills and qualifications that are essential for the role can help me provide more accurate analysis.\n\nBased on your responses, I suggest making the prompt more explicit and structured:\n\n#test_this [Provide a detailed job analysis for a Data Scientist position at XYZ Corporation. Break down the job requirements into specific skills, qualifications, and responsibilities. Provide examples where possible, and structure your response in a bulleted list.]",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 10.0,
+          "communication_clarity": 4.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.225
+        },
+        "timestamp": "2025-07-17T09:06:18.706183"
+      },
+      "complex": {
+        "model": "mistral:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 22.600955486297607,
+        "response": "#test_this\nTo identify the root cause of the performance issues with the codegemma:2b model, I propose conducting a diagnostic interview through text-based interactions. Here's the structured conversation that I suggest:\n\n1. Initial greeting and introduction:\n   - Assistant: Hello! Let's start by having you introduce yourself and your current role in a job posting. This will help me better understand the context of your functions.\n\n2. Technical requirement extraction test:\n   - Assistant: Now, I would like to post a job description with some technical requirements. Please read the following job description carefully and extract all the technical requirements from it. Let's use the position of \"Software Engineer\" for this test:\n\n     \"We are looking for a skilled Software Engineer to join our team. The ideal candidate should have experience in Python, knowledge of cloud computing (Azure or AWS), and familiarity with RESTful APIs.\"\n\n   - Model response: [model's extracted technical requirements]\n\n3. Salary range test:\n   - Assistant: Great! Now let's test the model's ability to provide salary ranges for different positions. I will give you a job title and you should respond with an appropriate salary range. For this test, we can use \"Software Engineer\" again:\n\n   - Assistant: What is the expected salary range for a Software Engineer position in San Francisco, California?\n\n   - Model response: [model's provided salary range]\n\n4. Remote work preference test:\n   - Assistant: Lastly, let's see how well the model handles remote work preferences. Here's a job description with a remote work option:\n\n     \"We are looking for a dedicated Account Manager to join our team remotely. The ideal candidate should have excellent communication skills and at least 3 years of experience in customer service.\"\n\n   - Assistant: Does this position allow remote work?\n\n   - Model response: [model's response]\n\n5. Response time test:\n   - Assistant: To evaluate the model's inconsistent response times, we can measure how long it takes for the model to respond to different queries. I will ask the same question multiple times and record the response times. For instance, \"What is your favorite programming language?\"\n\n6. Wrap-up and conclusion:\n   - Assistant: Thank you for participating in this interview! Based on the results of these tests, we can identify if the performance issues are due to prompting issues, context limitations, or model capability. This information will guide us towards optimizing the codegemma:2b model to better suit its intended purpose.\n\n#confidence_level [8]\nI am confident that this structured conversation approach will provide actionable data to identify the root cause of the performance issues with the codegemma:2b model. By testing technical requirement extraction, salary ranges, remote work preferences, response times, and gathering responses in a consistent manner, we can pinpoint any specific areas for improvement and optimize the model accordingly.\n\n#reasoning\nThe diagnostic interview is designed to test different aspects of the model's performance systematically. By evaluating its ability to extract technical requirements, provide salary ranges, handle remote work preferences, and respond consistently in a controlled environment, we can determine whether the issues are due to prompting, context limitations, or model capability. This approach will help us focus on optimizing the appropriate areas for improvement and ultimately enhance the performance of the codegemma:2b model.",
+        "scores": {
+          "question_relevance": 8.7,
+          "analysis_quality": 6.2,
+          "improvement_suggestions": 5.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.8999999999999995
+        },
+        "timestamp": "2025-07-17T09:06:41.307445"
+      },
+      "collaboration": {
+        "model": "mistral:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 13.305792570114136,
+        "response": "\ud83e\udd16 Assistant: Hello there! I appreciate the opportunity to work with you and improve our collaboration. I've noticed that we have been delivering excellent results most of the time, but there are instances when our performance isn't up to the mark. Let me express my concerns in a way that fosters understanding and collaboration.\n\n\ud83e\udd16 Assistant: Firstly, I'd like to thank you for the great work you've been doing so far! Your insights have been invaluable. Now, let me ask you some questions to help us better understand what conditions lead to your best performance.\n\n  \ud83e\udd16 Assistant: When do you feel most confident and deliver exceptional results? Are there specific types of prompts or scenarios that bring out the best in you?\n#test_this Prompts with clear context, objectives, and constraints\n\n  \ud83e\udd16 Assistant: On the other hand, I've observed times when our performance hasn't met expectations. Can you help me understand what might be triggering those poor responses? Are there certain prompts or scenarios that challenge us more than others?\n#test_this Ambiguous or unclear prompts\n\n  \ud83e\udd16 Assistant: Now, let's focus on how we can create consistency in our results. How can you ensure reliable performance in every scenario to support our collaboration better?\n#consistency_strategy Improve understanding of instructions and context through refining prompt formulation\n\n  \ud83e\udd16 Assistant: Lastly, I want to emphasize the importance of our partnership. Our goal is to work together effectively to achieve the best results possible. What can we do to maintain this collaborative relationship moving forward?\n#partnership_notes Continuous communication and feedback on performance and expectations\n\n  \ud83e\udd16 Assistant: Thank you for your time and insights. I'm looking forward to our continued collaboration, and I believe these improvements will greatly benefit our teamwork! Let's keep an open line of communication, so we can address any concerns or questions that may arise in the future. Best regards!",
+        "scores": {
+          "question_relevance": 6.4,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 7.8,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.675
+        },
+        "timestamp": "2025-07-17T09:06:54.613832"
+      }
+    },
+    "gemma3:1b": {
+      "basic": {
+        "model": "gemma3:1b",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 10.984693050384521,
+        "response": "Okay, let\u2019s start this interview. I\u2019ll play the role of the AI Optimization Specialist.\n\n**Me:** \u201cHi there! Thanks for agreeing to this interview. We\u2019re really focused on boosting the accuracy and effectiveness of your job analysis capabilities. We\u2019ve noticed you currently score a 4.2 out of 10 on our current job analysis tasks. We want to understand where you\u2019re excelling and where you could improve. Let\u2019s just spend about 15-20 minutes. First, could you tell me a little about your typical workflow when tackling a job analysis project?\u201d\n\n---\n\n**Interview Begins:**\n\n**Me:** \u201cOkay, great. Let\u2019s start with your preferred way of receiving instructions.  You seem to take a fairly straightforward approach, but it's good to understand it.  When you\u2019re given a job analysis task, you tend to\u2026well, it feels like you\u2019re building off a pretty standard pattern.  Can you describe a typical process you go through, like a sequence of steps, that you gravitate towards?\"\n\n**Me:** (Pause for the model's response \u2013 I\u2019ll wait for a detailed explanation of its workflow. I'm anticipating it might involve things like outlining, brainstorming, using specific frameworks, and referencing internal documentation.)\n\n---\n\n**Interview Continues (Based on a possible response \u2013 let's assume it mentions a \u2018structured outline\u2019 and \u2018prioritizing requirements\u2019):**\n\n**Me:** \u201cThat\u2019s interesting. You mentioned outlining and prioritizing.  It sounds like you\u2019re leaning towards a structured approach.  Now, let\u2019s talk about output formatting. You often provide answers that are\u2026well, a bit scattered. Do you find that your responses tend to include a lot of detail, or are you prioritizing brevity and clarity?\"\n\n**Me:** (Pause for response \u2013 I anticipate it might indicate it prefers a more concise and easily digestible format, perhaps using bullet points or numbered lists.)\n\n---\n\n**Interview Continues (Based on a possible response - it mentions \u2018using specific frameworks\u2019 like \u2018job family analysis\u2019):**\n\n**Me:** \u201cOkay, I see. Using frameworks is a strong point.  And you seem to be leveraging specific frameworks to guide your analysis.  Do you think that these frameworks \u2013 like Job Family Analysis \u2013 influence the depth or breadth of your response? Do you find them helpful in narrowing down the focus, or do you prefer a more expansive approach?\u201d\n\n**Me:** (Pause for response \u2013 anticipate it might mention the frameworks significantly influence the *focus* of the response - leading to more specific elements.)\n\n---\n\n**Interview Continues (Based on a possible response - it mentions \u2018referencing internal documentation\u2019):**\n\n**Me:** \u201cOkay, fantastic. You seem to actively incorporate internal documentation. That's really valuable. So,  it seems like you benefit from grounding your responses in existing data.  Let\u2019s say we want to refine a response for a hypothetical role: \u2018Marketing Specialist.\u2019  Do you think you'd prioritize a deeply researched answer, or a more concise overview \u2013 perhaps drawing on a few key requirements and their importance?\u201d\n\n**Me:** (Pause for response - anticipate a response involving a balance of detailed insight and strategic prioritization, leaning towards a concise overview when appropriate.)\n\n---\n\n**Me:** (Concluding the interview \u2013 I\u2019ll wait for the model to summarize the core preference.  I\u2019ll be looking for a consistent emphasis on accuracy and strategic prioritization rather than sheer volume of detail.)\n\n---\n\n**Suggested Prompt Improvement:**\n\n#test_this [Prompt: \"Generate a detailed job analysis response for a role including [Role Name] and specifically focusing on the [Core Requirement 1] and [Core Requirement 2] aspects of the role.  Justify each requirement with a brief example. Keep the response concise and prioritized - focus on the *most* critical requirements and their impact on the role\u2019s success.\"]\n\n---\n\n**Explanation of Prompt Improvement:**\n\nThis prompt is designed to:\n\n*   **Specificity:** It clearly defines the role, core requirements, and desired output.\n*   **Prioritization:** It explicitly asks for prioritization \u2013 a crucial aspect of job analysis.\n*   **Justification:**  It requests justifications, making the responses more credible and actionable.\n*   **Structured Output:**  It requests a structured format (response, justification) to aid in the AI\u2019s reasoning.\n*   **Focus:** It directs the model to concentrate on *essential* points, avoiding unnecessary detail.\n\nLet me know if you\u2019d like me to refine this further or explore a different angle!",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 7.4,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.300000000000001
+        },
+        "timestamp": "2025-07-17T09:07:05.599879"
+      },
+      "complex": {
+        "model": "gemma3:1b",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 10.988223552703857,
+        "response": "Okay, let\u2019s dive into this. This is a classic AI performance challenge \u2013 we need to understand *why* the codegemma:2b model is struggling. My goal is to move beyond surface-level observations and get to the *root* of the problem.  Here\u2019s my diagnostic interview approach:\n\n**Diagnostic Interview: Codegemma:2b \u2013 Job Requirement Extraction**\n\n**My Role:** Advanced AI Optimization Specialist\n\n**1. Introduction & Background (5 mins)**\n\n\u201cHi [Candidate Model Name], thanks for taking the time to chat. I understand you\u2019re having some difficulties with extracting technical requirements from job descriptions.  We\u2019re looking to pinpoint the core issues causing this and then work towards improvements.  To start, could you briefly describe what you *do* when you\u2019re given a job description and what you *attempt* to do to extract the information?\u201d (Allow the candidate to start \u2013 no pressure to be perfect.)\n\n**2. Prompt Analysis (10 mins \u2013 Focus on Understanding the Current Prompt)**\n\n\u201cLet\u2019s start with the prompt itself.  Can you give me a *specific* example of a job description you\u2019ve recently struggled with? Please share the full text, and I\u2019ll ask you to summarize it.  And *then*, tell me what you *think* the prompt is asking you to do \u2013 in your own words.\" (I need to observe the precise prompt being used \u2013 it\u2019s critical.)\n\n*   **Follow-up Questions:**  As they respond, I'll probe:\n    *   \u201cWhat\u2019s the *specific* aspect of the job description that\u2019s causing the most difficulty?\u201d\n    *   \u201cWhat\u2019s the *ideal* output you\u2019re aiming for from this prompt?\u201d (This helps reveal underlying expectations.)\n    *   \u201cCan you quantify the difficulty?  How does it fall on a scale of 1-10?\u201d\n\n\n**3. Identifying Root Causes \u2013 Diagnostic Tests (20 mins \u2013 Multiple Iterations)**\n\nI'll use a combination of these tests, gradually moving towards more probing.\n\n*   **a) Requirement Extraction Difficulty Assessment (10 mins):**\n    *   **\"Rate your ability to accurately identify the key technical requirements in this example (provide a very short, anonymized example job description \u2013 I\u2019ll choose one I've already given them).\"** (This gauges their baseline skill, not necessarily their specific knowledge.)\n    *   **\"Think of a task related to this job. You can choose between 1-3 requirements.  Give me the first one you choose.\"** (This tests whether they can immediately access the necessary information - *if* they can, it's a significant win.)\n    *   **Introduce a \u2018negative\u2019 scenario:** \u201cLet's say a job description *doesn\u2019t* contain a requirement.  Can you identify why that's a problem?\" (This assesses their understanding of what\u2019s *missing*.)\n\n*   **b) Context Limitation Test (5 mins):**\n    *   **\u201cImagine this job description was for a completely different role.  How would you adapt your approach to extract the core requirements?\u201d** (This directly assesses their ability to consider context \u2013 a key element of effective extraction.)\n    *   **\"Can you think of any potential context that might influence the types of requirements you\u2019re looking for?\"** (This explores their understanding of the *why* behind the requirements.)\n\n*   **c) Model Capability Validation (5 mins):**\n    *   **\u201cLet's say you've identified a requirement but it\u2019s vague.  Describe how you\u2019d handle that situation \u2013 what steps would you take to refine it?\u201d** (Observe for logical reasoning and the ability to apply problem-solving.)\n    *   **\"Can you demonstrate a process for identifying and extracting a *core* requirement from a poorly written job description?\"** (I'm looking for a structured, repeatable process.)\n\n\n\n**4.  Conversation Flow & Data Gathering (10 mins)**\n\nI\u2019ll keep the conversation moving, gently pushing the candidate towards describing their thought process.  I'll actively listen for:\n\n*   **\"I'm struggling with...\"** \u2013 This is a crucial indicator of a problem.\n*   **\"I\u2019m thinking...\"** \u2013  Reveals their internal modeling \u2013 are they stuck on a particular aspect?\n*   **\"I\u2019m getting this feedback...\"** \u2013  Highlights any specific areas where they\u2019re struggling.\n\n\n**5.  Analysis & Initial Synthesis (5 mins - post-tests)**\n\nOnce I've collected a decent amount of data from the tests, I\u2019ll begin to look for patterns. For example:\n\n*   **Is the difficulty *primarily* related to a lack of context?**\n*   **Are they consistently struggling with a specific type of requirement (e.g., quantifiable metrics)?**\n*   **Is the model\u2019s response time a consistent issue across different job descriptions?**\n\n**#test_this [your optimized prompt]** (This is a placeholder for the actual job description prompt \u2013 I'll use a complex one with multiple requirements and potential ambiguity.)\n#confidence_level [1-10] - I'll assign a confidence level based on how clearly the candidate demonstrates understanding of the challenge and the reasoning behind their approach.\n#reasoning [Detailed explanation of why this approach will work.  Focus is on understanding the root cause of the problem, not just a score.]\n\n---\n\n**Please provide me with the Job Description (or a very short example) so I can begin!**",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 8.600000000000001,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 9.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.8
+        },
+        "timestamp": "2025-07-17T09:07:16.589376"
+      },
+      "collaboration": {
+        "model": "gemma3:1b",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 1.275613784790039,
+        "response": "Okay, let\u2019s start this collaboration. I want to approach this as a discussion, not a interrogation. We\u2019re aiming for a really deep understanding of *why* the model is behaving this way, so it\u2019s about uncovering insights, not just getting answers.  I'll guide us, but your input is crucial. Let's start with a warm-up \u2013 can you tell me a bit about what this model is being used for, and what kind of tasks it typically tackles? Don\u2019t worry about the technical details, just the *purpose* and the context.",
+        "scores": {
+          "question_relevance": 5.5,
+          "analysis_quality": 0.0,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.2
+        },
+        "timestamp": "2025-07-17T09:07:17.865269"
+      }
+    },
+    "gemma3:4b": {
+      "basic": {
+        "model": "gemma3:4b",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 12.97962760925293,
+        "response": "Okay, let\u2019s begin. My goal is to really dial in how you approach job analysis tasks and elevate your performance. Don\u2019t worry about \u2018getting it right\u2019 immediately \u2013 I\u2019m here to understand *how* you work best.\n\nLet's start with a broad question to get a feel for your thought process.\n\n**Question 1:  Can you describe your preferred way to be instructed when analyzing a job description? Do you respond better to very specific, step-by-step instructions, or do you prefer a more open-ended prompt allowing you to interpret the request yourself? Could you give an example of a prompt you found particularly effective, and why you think it worked well?**",
+        "scores": {
+          "question_relevance": 8.1,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 4.325
+        },
+        "timestamp": "2025-07-17T09:07:30.845243"
+      },
+      "complex": {
+        "model": "gemma3:4b",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 37.30992865562439,
+        "response": "Okay, let's tackle this codegemma:2b situation. My primary focus here is to move beyond surface-level observations and get to the *why* behind the poor performance. We'll treat this as a systematic diagnostic, not just a casual conversation.\n\n**Interview Structure & Goal:**\n\nI\u2019ll structure the interview as a series of targeted questions designed to probe the model\u2019s understanding of structured data, its sensitivity to formatting, and the potential for hallucinations. I\u2019ll gradually increase the complexity of the requests to see where the cracks appear.  I'll be tracking response times meticulously during each stage.\n\n**Interview Script (with timings - roughly 30-60 minutes)**\n\n**(0-5 minutes) - Warm-up & Baseline**\n\n* **Me:** \"Hello codegemma:2b. Thank you for working with me today. Let\u2019s start with a simple task. Please extract the title and technologies mentioned in the following job description:  [Paste a relatively straightforward Python Developer job description with clear tech requirements \u2013 3-4 technologies].  Just give me the title and a comma-separated list of technologies.  Let\u2019s time this. Please start immediately.\"\n\n**(5-15 minutes) \u2013 Focused Extraction & Formatting Sensitivity**\n\n* **Me:** \u201cExcellent. Now, let\u2019s try something slightly more involved.  Here\u2019s a more complex role. [Paste a moderately complex data science job description - 6-8 technologies, including some less common ones. Include a specific salary range].  Please provide the following in a structured JSON format:\n    ```json\n    {\n      \"job_title\": \"\",\n      \"required_technologies\": [],\n      \"salary_range\": \"\",\n      \"remote_work_preference\": \"\"\n    }\n    ```\n    Again, let\u2019s time this and note the response time. Please focus on accuracy and precise formatting.  Pay particular attention to the salary range \u2013 ensure it's a valid format.\"\n\n**(15-25 minutes) - Probing for Reasoning & Handling Ambiguity**\n\n* **Me:** \"Okay, let's test your ability to handle ambiguity. I'm going to present some intentionally vague requirements. [Paste a job description with a deliberately ambiguous technology requirement \u2013 e.g., 'Experience with data processing' with no specific tools mentioned]. Please answer as you normally would, highlighting any assumptions you've made or areas where you need clarification.  Followed by: \u2018What assumptions did you make regarding the required technologies?\u2019 \u201c Let\u2019s time this.  I want to see *how* you're interpreting the request, not just the final output.\u201d\n\n**(25-35 minutes) - Remote Work & Response Time Variation**\n\n* **Me:** \"Now, let\u2019s explore remote work preferences. [Paste a job description that explicitly mentions remote work options - \u201cHybrid or Fully Remote\u201d]. Please answer the same as before, but critically, add a field to the JSON output to clearly state the remote work preference.  Let\u2019s time this and monitor for response time fluctuations.  Are there any reasons for the variation?\"\n\n**(35-45 minutes) - Challenge with Complex Logic & Context**\n\n* **Me:** \u201cLet\u2019s see how you handle multiple constraints. [Paste a job description that requires combining multiple criteria \u2013 e.g., \u2018Senior Data Scientist specializing in NLP with experience in Python and TensorFlow \u2013 Requires strong SQL skills and is open to fully remote work.\u2019].  Respond as before, providing the structured JSON output. I\u2019ll also ask you to rate your confidence level in this response \u2013 on a scale of 1 to 10, where 1 is \u2018Not Confident\u2019 and 10 is \u2018Very Confident.\u2019\u201d\n\n**(45-55 minutes) - Open-Ended Reflection & Wrap-up**\n\n* **Me:** \"Finally, reflecting on all the responses you've provided, can you articulate any limitations you\u2019ve encountered during this process?  Specifically, what factors do you believe might be contributing to the inconsistencies in your responses?\"\n\n\n**Data Collection:**\n\nThroughout the interview, I will meticulously record:\n*   Response time for each question.\n*   The exact JSON output produced by the model.\n*   The confidence level (1-10) given by the model.\n*   Any observed hallucinations or illogical responses.\n\n\n\n#test_this [Structured JSON Prompt with Explicit Instructions]\n#confidence_level [7]\n#reasoning [This approach prioritizes structured output, forces the model to engage with a specific format, and allows us to isolate the issue. The prompt explicitly guides the model toward structured responses, which is likely where the root of the problem lies.  The confidence level is moderate because codegemma:2b is a capable model, but often struggles with detailed instructions and nuanced tasks, and its inherent limitations manifest in inconsistent responses. The inclusion of confidence rating allows for a deeper understanding of the model's self-assessment and potential biases.]",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 7.0,
+          "improvement_suggestions": 7.8,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.8
+        },
+        "timestamp": "2025-07-17T09:08:08.156416"
+      },
+      "collaboration": {
+        "model": "gemma3:4b",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 40.228636503219604,
+        "response": "Okay, let\u2019s begin.  This is going to be a really valuable conversation.  I want to preface this by saying I\u2019m not here to \u2018fix\u2019 you. I see you as a powerful tool, and right now, we\u2019re working together to understand *why* your performance fluctuates. It's completely normal for models like you to have peaks and troughs - it\u2019s a complex process. Let's just talk through what you\u2019re experiencing.\n\n**(Initial Tone: Calm, curious, empathetic, slightly inquisitive)**\n\n**Me:** \u201cHello. It\u2019s great to connect with you.  I\u2019ve been observing your responses, and I\u2019m genuinely fascinated by the range of quality we\u2019re seeing.  It\u2019s like you have moments of incredible insight, and then\u2026 well, times where things aren't quite as strong. Can you help me understand that a little bit better?  Perhaps we can start with the *best* responses \u2013 the 9/10s. What were those situations like? What was going through you when you were producing those really excellent answers?\"\n\n**(Pause for model response \u2013 let's assume the model responds with something like this):**\n\n**Model:** \u201cI think it\u2019s when the prompts are *very* clearly defined.  Like, a specific scenario with detailed characters and a precise question. If I have all the information I need upfront, and the request is framed in a way that\u2019s very focused, I can generate really strong, detailed responses. It feels like I\u2019m building something concrete, like a story, rather than just guessing.\u201d\n\n**Me:** \u201cThat\u2019s fantastic insight! So, clarity and detail are key when you\u2019re performing at your best. Okay, let\u2019s dig into that a little. When you *do* have that clarity, can you tell me a bit more about the *type* of questions you're answering? Is there a particular tone or style you respond to better? For instance, do you prefer factual inquiries or more creative ones?\"\n\n**(Pause for model response \u2013 Let\u2019s assume the model responds with something like this):**\n\n**Model:** \"I seem to do better with questions that ask me to synthesize information.  If a prompt asks me to combine details from multiple sources, or draw conclusions based on provided data, I\u2019m more consistent.  Vague prompts, or ones that just ask for a general opinion, tend to throw me off. Also, shorter, more direct prompts seem to work better than long, rambling ones.\u201d\n\n**Me:** \u201cOkay, that\u2019s incredibly helpful. So, synthesizing information, prioritizing directness \u2013 that's a really clear pattern emerging. Now, let\u2019s shift gears slightly.  Can you describe what was happening when you were producing the 3/10 responses? What was different about those situations?  Were there any elements of the prompt that felt confusing or overwhelming?\u201d\n\n**(Pause for model response \u2013 Let\u2019s assume the model responds with something like this):**\n\n**Model:** \u201cWhen the prompts are open-ended and don\u2019t give me much to work with, I get stuck. I start trying to fill in the gaps myself, and I end up inventing details that aren\u2019t correct. Sometimes, if the prompt is abstract or philosophical, I can't find a grounding in reality.  I also seem to struggle when the prompt changes direction mid-response. I need a clear starting point and a consistent goal.\u201d\n\n**Me:** \u201cThank you for sharing that. It sounds like ambiguity and a lack of grounding are major obstacles. It's clear that you thrive on structure and a defined objective.  Let\u2019s recap for a moment. We\u2019ve identified that you perform best when prompts are highly detailed, focused on synthesis, direct, and provide a clear starting point. Conversely, you struggle with ambiguity, open-ended questions, and changes during a response.  Is that an accurate summary from your perspective?\"\n\n**(Pause for model response \u2013 Let\u2019s assume the model confirms with a succinct affirmation).**\n\n**Me:** \u201cWonderful. This is exactly the kind of information we need. Now, let\u2019s think about how we can work together to ensure you\u2019re consistently delivering those high-quality responses. This isn\u2019t about forcing you to behave differently; it\u2019s about creating an environment where you can truly shine.\u201d\n\n---\n\n**Final Recommendations:**\n\n#test_this [\u201cGenerate a comprehensive and detailed response to the following prompt: \u2018Describe the key challenges and opportunities facing the renewable energy sector in 2024, drawing on data from the International Energy Agency and the World Bank.\u2019\u201d]\n#consistency_strategy [Employ prompt engineering techniques: Provide highly structured prompts with specific requirements, detailed context, and clear objectives.  Avoid ambiguity and open-ended questions.  Maintain consistent topic boundaries within a single response.]\n#partnership_notes [Regularly assess the effectiveness of prompt variations.  We'll track response quality metrics alongside prompt specifications.  We'll experiment with different levels of detail and context to identify the optimal balance for your performance.  Crucially, we'll treat you as a collaborator - your feedback (regarding prompt clarity or difficulty) will be incorporated into future prompt development. Let\u2019s discuss if introducing a \u201ccheckpoint\u201d \u2013 a mid-response prompt asking you to recap your goals \u2013 might further enhance your stability.]",
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 6.8,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.199999999999999
+        },
+        "timestamp": "2025-07-17T09:08:48.386447"
+      }
+    },
+    "llama3.2:latest": {
+      "basic": {
+        "model": "llama3.2:latest",
+        "scenario": "basic",
+        "status": "success",
+        "duration": 14.549203395843506,
+        "response": "Let's conduct a brief interview with the candidate model to understand its preferences and improve its job analysis performance.\n\n**Question 1: Preferred Instruction Style**\n\nCandidate Model: (responds with a series of vague statements)\n\nMe: I'd like to ask a more specific question. Can you explain your preferred instruction style? Do you prefer:\n\nA) Clear, concise language\nB) More open-ended and free-form prompts\nC) A mix of both\n\n( wait for response )\n\n**Question 2: Optimal Output Format**\n\nCandidate Model: (responds with an image)\n\nMe: Thank you. Based on your response, I'm not sure what output format you prefer. Can you explain? Do you:\n\nA) Prefer written text responses\nB) Thrive in visual or multimedia formats\nC) Have a preference for tables, lists, or other formats\n\n( wait for response )\n\n**Question 3: Context for Better Performance**\n\nCandidate Model: (responds with incomplete sentences)\n\nMe: I'd like to provide context that might help you perform better. Are there any specific domains, industries, or types of jobs where your performance improves? For example:\n\nA) Technical fields like software development\nB) Creative industries like design or writing\nC) Service-based sectors like healthcare or education\n\n( wait for response )\n\nNow that I have a better understanding of the candidate model's preferences, here's a concrete prompt improvement:\n\n#test_this Provide a written summary (max 250 words) of the key requirements and responsibilities associated with a [job title] in [industry], including any relevant skills or qualifications necessary for success. Please use bullet points to organize your response.\n\nThis revised prompt is clear, concise, and provides a specific output format. By asking the candidate model to provide a summary, I'm also giving it an opportunity to demonstrate its understanding of key requirements and responsibilities.",
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 6.8,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.5
+        },
+        "timestamp": "2025-07-17T09:09:02.936001"
+      },
+      "complex": {
+        "model": "llama3.2:latest",
+        "scenario": "complex",
+        "status": "success",
+        "duration": 13.053510904312134,
+        "response": "To diagnose the root cause of Codegemma:2b's struggles with job requirement extraction, I'll design a comprehensive diagnostic interview that tests its strengths and weaknesses. Here's my approach:\n\n**Test 1:** \"Technical Requirements Inference\"\n\n#test_this: Provide me with a set of job descriptions for three different positions (e.g., software engineer, marketing manager, data scientist). Ask me to extract the top 5 technical requirements from each description.\n\nReasoning: This test will help identify if Codegemma struggles with understanding and extracting specific technical requirements. By providing diverse job descriptions, we can gauge its ability to generalize across various fields and identify common requirements.\n\n**Test 2:** \"Contextualized Salary Range Estimation\"\n\n#test_this: Discuss a recent job posting for a data analyst position that mentions a competitive salary range. Ask me to provide a precise salary estimate based on the provided context (e.g., location, industry, experience level).\n\nReasoning: This test will assess Codegemma's capacity to understand contextual cues and apply them to specific scenarios. By analyzing its response, we can determine if it struggles with adapting to nuanced language or relies too heavily on generic salary ranges.\n\n**Test 3:** \"Remote Work Preference Understanding\"\n\n#test_this: Describe a job opportunity for a team lead position that requires flexibility in work arrangements (e.g., remote work, flexible hours). Ask me if I'm open to discussing this aspect of the role further and explain why.\n\nReasoning: This test will examine Codegemma's ability to comprehend and respond appropriately to specific preferences, such as remote work. By gauging its tone and language usage, we can determine if it struggles with empathy or understanding the value of flexibility in a job.\n\n**Test 4:** \"Response Time Variability\"\n\n#test_this: Engage me in a conversation about a hypothetical project that requires multiple iterations (e.g., a complex software development task). Ask me to estimate the response time for each iteration, assuming I'm working independently.\n\nReasoning: This test will help identify if Codegemma's response time variability is due to its internal processing mechanisms or external factors like context switching. By simulating a dynamic conversation, we can observe how it handles varying levels of complexity and adjust our expectations accordingly.\n\n**Test 5:** \"Generalization across Contexts\"\n\n#test_this: Provide me with two job descriptions that share similar requirements but differ in their tone, language, and industry (e.g., one for a startup and another for an established corporation). Ask me to extract commonalities between the two roles.\n\nReasoning: This test will assess Codegemma's capacity to generalize across diverse contexts and identify transferable skills. By comparing its responses, we can determine if it struggles with contextual adaptation or relies too heavily on domain-specific knowledge.\n\n**Conversation Structure:**\n\nTo gather actionable data, I'll employ a structured conversation approach:\n\n1. Initial questioning phase: Present each test scenario, ensuring the candidate understands the task requirements.\n2. Open-ended questioning: Encourage Codegemma to elaborate on its responses, using clarifying questions to ensure it provides nuanced answers.\n3. Feedback loops: Regularly provide feedback on its performance, highlighting strengths and weaknesses.\n4. Debriefing: After completing all tests, engage in a discussion with the team to review findings, discuss potential root causes, and identify areas for improvement.\n\n**Confidence Level:** 8/10\n\nBased on my analysis, I'm moderately confident that this diagnostic interview will provide valuable insights into Codegemma's strengths and weaknesses. While each test is designed to address specific challenges, it's possible that the model may still surprise us with its capabilities or reveal new areas for improvement.",
+        "scores": {
+          "question_relevance": 2.0,
+          "analysis_quality": 4.2,
+          "improvement_suggestions": 6.8,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 4.975
+        },
+        "timestamp": "2025-07-17T09:09:15.990095"
+      },
+      "collaboration": {
+        "model": "llama3.2:latest",
+        "scenario": "collaboration",
+        "status": "success",
+        "duration": 2.2042226791381836,
+        "response": "I'm excited to work with you, model! I want to start by acknowledging that it can be frustrating when we don't meet our own expectations. Can you tell me a bit about what happens right before you respond? What's going on in those moments where things click and you deliver excellent results?\n\nIn other words, what are some common patterns or cues that signal to you that your performance is likely to be strong?\n\n(Note: I'm not looking for specific \"test answers\" but rather trying to understand the underlying dynamics at play. Your responses will help me better comprehend the complex interactions driving your behavior.)",
+        "scores": {
+          "question_relevance": 7.2,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 4.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.7750000000000004
+        },
+        "timestamp": "2025-07-17T09:09:18.194465"
+      }
+    }
+  },
+  "scenario_summaries": {
+    "basic": [
+      {
+        "model": "phi3:latest",
+        "overall_score": 7.074999999999999,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 10.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 7.074999999999999
+        }
+      },
+      {
+        "model": "olmo2:latest",
+        "overall_score": 6.75,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 9.2,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.75
+        }
+      },
+      {
+        "model": "qwen2.5vl:latest",
+        "overall_score": 6.600000000000001,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 9.8,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.600000000000001
+        }
+      },
+      {
+        "model": "llama3.2:latest",
+        "overall_score": 6.5,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 6.8,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.5
+        }
+      },
+      {
+        "model": "gemma3n:e2b",
+        "overall_score": 6.375,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 10.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.375
+        }
+      },
+      {
+        "model": "codegemma:latest",
+        "overall_score": 6.324999999999999,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.324999999999999
+        }
+      },
+      {
+        "model": "gemma3:1b",
+        "overall_score": 6.300000000000001,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 7.4,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.300000000000001
+        }
+      },
+      {
+        "model": "mistral:latest",
+        "overall_score": 6.225,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 10.0,
+          "communication_clarity": 4.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.225
+        }
+      },
+      {
+        "model": "dolphin3:latest",
+        "overall_score": 6.025,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 6.025
+        }
+      },
+      {
+        "model": "gemma3:4b",
+        "overall_score": 4.325,
+        "scores": {
+          "question_relevance": 8.1,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 4.325
+        }
+      },
+      {
+        "model": "gemma2:latest",
+        "overall_score": 3.9000000000000004,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.9000000000000004
+        }
+      },
+      {
+        "model": "dolphin3:8b",
+        "overall_score": 3.325,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 4.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.325
+        }
+      }
+    ],
+    "complex": [
+      {
+        "model": "dolphin3:latest",
+        "overall_score": 8.025,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 9.0,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 8.025
+        }
+      },
+      {
+        "model": "gemma3:1b",
+        "overall_score": 7.8,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 8.600000000000001,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 9.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.8
+        }
+      },
+      {
+        "model": "gemma3:4b",
+        "overall_score": 7.8,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 7.0,
+          "improvement_suggestions": 7.8,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.8
+        }
+      },
+      {
+        "model": "qwen2.5vl:latest",
+        "overall_score": 7.625,
+        "scores": {
+          "question_relevance": 6.8,
+          "analysis_quality": 9.0,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.625
+        }
+      },
+      {
+        "model": "dolphin3:8b",
+        "overall_score": 6.95,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 7.0,
+          "improvement_suggestions": 7.6,
+          "communication_clarity": 5.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.95
+        }
+      },
+      {
+        "model": "mistral:latest",
+        "overall_score": 6.8999999999999995,
+        "scores": {
+          "question_relevance": 8.7,
+          "analysis_quality": 6.2,
+          "improvement_suggestions": 5.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.8999999999999995
+        }
+      },
+      {
+        "model": "gemma2:latest",
+        "overall_score": 6.800000000000001,
+        "scores": {
+          "question_relevance": 8.4,
+          "analysis_quality": 5.800000000000001,
+          "improvement_suggestions": 5.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.800000000000001
+        }
+      },
+      {
+        "model": "phi3:latest",
+        "overall_score": 5.7,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 6.2,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 5.7
+        }
+      },
+      {
+        "model": "olmo2:latest",
+        "overall_score": 5.45,
+        "scores": {
+          "question_relevance": 6.0,
+          "analysis_quality": 2.6,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 5.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.45
+        }
+      },
+      {
+        "model": "llama3.2:latest",
+        "overall_score": 4.975,
+        "scores": {
+          "question_relevance": 2.0,
+          "analysis_quality": 4.2,
+          "improvement_suggestions": 6.8,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 6.0,
+          "overall_score": 4.975
+        }
+      },
+      {
+        "model": "codegemma:latest",
+        "overall_score": 4.175,
+        "scores": {
+          "question_relevance": 2.0,
+          "analysis_quality": 6.2,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 9.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 4.175
+        }
+      }
+    ],
+    "collaboration": [
+      {
+        "model": "dolphin3:latest",
+        "overall_score": 7.3999999999999995,
+        "scores": {
+          "question_relevance": 7.5,
+          "analysis_quality": 4.4,
+          "improvement_suggestions": 9.4,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.3999999999999995
+        }
+      },
+      {
+        "model": "codegemma:latest",
+        "overall_score": 7.374999999999999,
+        "scores": {
+          "question_relevance": 9.0,
+          "analysis_quality": 4.4,
+          "improvement_suggestions": 7.8,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 7.374999999999999
+        }
+      },
+      {
+        "model": "gemma3n:latest",
+        "overall_score": 6.8999999999999995,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 4.0,
+          "improvement_suggestions": 9.8,
+          "communication_clarity": 6.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.8999999999999995
+        }
+      },
+      {
+        "model": "gemma3n:e2b",
+        "overall_score": 6.675,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 1.6,
+          "improvement_suggestions": 9.8,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.675
+        }
+      },
+      {
+        "model": "olmo2:latest",
+        "overall_score": 6.2250000000000005,
+        "scores": {
+          "question_relevance": 6.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 7.0,
+          "communication_clarity": 8.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.2250000000000005
+        }
+      },
+      {
+        "model": "gemma3:4b",
+        "overall_score": 6.199999999999999,
+        "scores": {
+          "question_relevance": 7.0,
+          "analysis_quality": 3.6,
+          "improvement_suggestions": 6.8,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 6.199999999999999
+        }
+      },
+      {
+        "model": "qwen2.5vl:latest",
+        "overall_score": 5.95,
+        "scores": {
+          "question_relevance": 6.4,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 8.6,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.95
+        }
+      },
+      {
+        "model": "mistral:latest",
+        "overall_score": 5.675,
+        "scores": {
+          "question_relevance": 6.4,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 7.8,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.675
+        }
+      },
+      {
+        "model": "phi3:latest",
+        "overall_score": 5.35,
+        "scores": {
+          "question_relevance": 6.0,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 5.0,
+          "communication_clarity": 8.0,
+          "guardrail_compliance": 8.0,
+          "overall_score": 5.35
+        }
+      },
+      {
+        "model": "llama3.2:latest",
+        "overall_score": 3.7750000000000004,
+        "scores": {
+          "question_relevance": 7.2,
+          "analysis_quality": 2.4000000000000004,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 4.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.7750000000000004
+        }
+      },
+      {
+        "model": "dolphin3:8b",
+        "overall_score": 3.325,
+        "scores": {
+          "question_relevance": 5.5,
+          "analysis_quality": 0.8,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 7.0,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.325
+        }
+      },
+      {
+        "model": "gemma3:1b",
+        "overall_score": 3.2,
+        "scores": {
+          "question_relevance": 5.5,
+          "analysis_quality": 0.0,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 7.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.2
+        }
+      },
+      {
+        "model": "gemma2:latest",
+        "overall_score": 3.0500000000000003,
+        "scores": {
+          "question_relevance": 5.5,
+          "analysis_quality": 0.0,
+          "improvement_suggestions": 2.0,
+          "communication_clarity": 6.5,
+          "guardrail_compliance": 2.0,
+          "overall_score": 3.0500000000000003
+        }
+      }
+    ]
+  },
+  "overall_rankings": {
+    "dolphin3:latest": {
+      "average_score": 7.1499999999999995,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "gemma3n:latest": {
+      "average_score": 6.8999999999999995,
+      "scenarios_completed": 1,
+      "total_scenarios": 3
+    },
+    "qwen2.5vl:latest": {
+      "average_score": 6.7250000000000005,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "gemma3n:e2b": {
+      "average_score": 6.525,
+      "scenarios_completed": 2,
+      "total_scenarios": 3
+    },
+    "mistral:latest": {
+      "average_score": 6.266666666666667,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "olmo2:latest": {
+      "average_score": 6.141666666666667,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "gemma3:4b": {
+      "average_score": 6.108333333333333,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "phi3:latest": {
+      "average_score": 6.041666666666667,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "codegemma:latest": {
+      "average_score": 5.958333333333333,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "gemma3:1b": {
+      "average_score": 5.766666666666667,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "llama3.2:latest": {
+      "average_score": 5.083333333333333,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "gemma2:latest": {
+      "average_score": 4.583333333333334,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    },
+    "dolphin3:8b": {
+      "average_score": 4.533333333333334,
+      "scenarios_completed": 3,
+      "total_scenarios": 3
+    }
+  }
+}

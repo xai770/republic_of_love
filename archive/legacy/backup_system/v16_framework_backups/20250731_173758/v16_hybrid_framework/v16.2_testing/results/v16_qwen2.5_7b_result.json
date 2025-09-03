@@ -1,0 +1,10 @@
+{
+  "model": "qwen2.5:7b",
+  "timestamp": "2025-07-31T09:04:24.395725",
+  "success": true,
+  "total_time": 15.377704381942749,
+  "prompt_length": 6128,
+  "response": "## Program Manager - Climate Action Initiatives\n\n### Your Tasks\n* **Project Management:** Design and implement climate action programs across 15+ countries\n* **Stakeholder Collaboration:** Manage relationships with government partners, NGOs, and international organizations\n* **Budget Oversight:** Oversee project budgets ranging from \u20ac500K to \u20ac5M annually\n* **Community Engagement:** Coordinate with local communities and stakeholders on program implementation\n* **Grant Acquisition:** Develop grant proposals and secure funding from foundations and government sources\n* **Impact Evaluation:** Monitor and evaluate program effectiveness using impact measurement frameworks\n\n### Your Profile\n* **Education & Experience:** Master's degree in Environmental Science, International Development; 7+ years of experience in international development sector\n* **Technical Skills:** PMP certification preferred; proficiency in GIS software and data analysis tools; experience with monitoring & evaluation frameworks (LogFrame, Theory of Change)\n* **Language Skills:** Excellent English required; German, French, or Spanish valued\n* **Other:** Strong project management skills; cross-cultural communication and team leadership abilities; public speaking and presentation skills for international audiences",
+  "response_length": 1295,
+  "llm_time": 15.377431869506836
+}

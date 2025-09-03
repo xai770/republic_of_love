@@ -1,0 +1,264 @@
+[
+  {
+    "model": "gemma3:1b",
+    "temperature": 0.1,
+    "test_type": "skill_extraction",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "duration": 1.295828104019165,
+    "success": true,
+    "response_length": 21,
+    "quality_score": 8.8,
+    "error_message": null,
+    "response_data": {
+      "technical": [
+        "E-invoicing",
+        "Reconciliation",
+        "Data Processing",
+        "Process Documentation",
+        "System Administration"
+      ],
+      "business": [
+        "E-invoicing",
+        "Value Stream Management",
+        "Financial Reporting",
+        "Contract Management",
+        "Revenue Management",
+        "Functional Role, Business Analyst, E-invoicing",
+        "Reconciliations, Process Documentation, Change Management, Data Processing, System Administration",
+        "Business Analysis",
+        "Finance",
+        "Accounting"
+      ],
+      "soft": [
+        "Communication",
+        "Problem-solving",
+        "Collaboration",
+        "Analysis",
+        "Process Improvement",
+        "Leadership"
+      ],
+      "experience": [],
+      "education": [],
+      "total_count": 21
+    }
+  },
+  {
+    "model": "gemma3:1b",
+    "temperature": 0.1,
+    "test_type": "concise_description",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "duration": 1.8846509456634521,
+    "success": true,
+    "response_length": 503,
+    "quality_score": 6.666666666666667,
+    "error_message": null,
+    "response_data": {
+      "description": "Here’s a concise summary of the job posting:\n\n**We are seeking a dynamic Business Analyst (m/w/d) to join our team in Frankfurt, contributing to the strategic leadership of our E-invoicing program – “Investors for a new now.”** As a key member of the Investment Operations team, you’ll be responsible for overseeing the entire invoice verification process, ensuring accuracy and efficiency across global Vendors and services.  You’ll collaborate closely with various departments, including PWC, SimCo..."
+    }
+  },
+  {
+    "model": "qwen3:0.6b",
+    "temperature": 0.1,
+    "test_type": "skill_extraction",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "duration": 7.27940821647644,
+    "success": true,
+    "response_length": 91,
+    "quality_score": 10.0,
+    "error_message": null,
+    "response_data": {
+      "technical": [
+        "Technical",
+        "Business",
+        "Soft Skills",
+        "Experience",
+        "and Education. Let me go through the job description step by step",
+        "The job mentions programming languages",
+        "software tools",
+        "technologies",
+        "and methodologies. For example",
+        "SAP integration",
+        "VPS",
+        "and maybe some technical terms like SCD",
+        "SAP4",
+        "etc. So I should note those. Also",
+        "the role involves using specific tools",
+        "so technical skills here would include those",
+        "programming languages",
+        "software tools",
+        "technologies. Business: domain knowledge",
+        "business processes",
+        "functional areas. Soft Skills: communication",
+        "leadership",
+        "problem-solving. Experience: years of experience",
+        "specific role backgrounds",
+        "seniority. Education: none",
+        "programming languages",
+        "software tools",
+        "technologies. Business Skills: domain knowledge",
+        "business processes",
+        "functional areas. Soft Skills: communication",
+        "leadership",
+        "problem-solving. Experience: years of experience",
+        "specific role backgrounds",
+        "seniority. Education: none",
+        "with specific",
+        "cover all the",
+        "</think>",
+        "Programming languages (e.g",
+        "Python",
+        "Java)",
+        "Technologies (e.g",
+        "ERP systems",
+        "invoice verification tools)"
+      ],
+      "business": [
+        "Business Analyst (E-invoicing) (m/w/d). The description mentions that the role is part of a global company",
+        "focusing on global invoicing",
+        "and involves processes like invoice verification",
+        "SAP integration",
+        "and collaboration with various departments",
+        "The job talks about business processes",
+        "industry expertise",
+        "and functional areas. The role is in global invoicing",
+        "which relates to business processes. Also",
+        "the need to lead programs and create future plans",
+        "which ties into business skills. So Business Skills would include domain knowledge",
+        "business processes",
+        "and functional areas",
+        "Domain knowledge (global invoicing",
+        "finance",
+        "investment)",
+        "Business processes (invoice validation",
+        "revenue management)",
+        "invoicing)"
+      ],
+      "soft": [
+        "The job emphasizes communication",
+        "leadership",
+        "problem-solving",
+        "and interpersonal skills. The team collaboration with various departments and the need to work with different stakeholders suggest soft skills like communication and leadership. Also",
+        "the importance of working with others and solving problems",
+        "so soft skills here would be communication",
+        "leadership",
+        "problem-solving",
+        "Software tools (e.g",
+        "SAP",
+        "VPS",
+        "SAP4",
+        "SAPR3)",
+        "functional teams)",
+        "Leadership (leading change initiatives)",
+        "solving (process optimization)"
+      ],
+      "experience": [
+        "The job mentions experience in global invoicing",
+        "working with different departments",
+        "and collaboration. So Experience Requirements would be years of experience",
+        "specific role backgrounds",
+        "and seniority. The user needs to specify experience",
+        "so I'll include those",
+        "global invoicing and ERP systems",
+        "Years of",
+        "SAP integration and invoice validation",
+        "invoicing roles"
+      ],
+      "education": [
+        "The job doesn't mention specific education requirements",
+        "so leave that blank",
+        "None specified"
+      ],
+      "total_count": 91
+    }
+  },
+  {
+    "model": "qwen3:0.6b",
+    "temperature": 0.1,
+    "test_type": "concise_description",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "duration": 2.727957248687744,
+    "success": true,
+    "response_length": 503,
+    "quality_score": 6.0,
+    "error_message": null,
+    "response_data": {
+      "description": "<think>\nOkay, let's start by understanding the user's request. They want a concise, professional summary for a job posting. The job title is DWS - Business Analyst (E-invoicing) (m/w/d), and they provided a detailed job description. The user wants a brief overview in 2-3 sentences that includes the main role, essential requirements, and what makes the position attractive.\n\nFirst, I need to extract the key points from the job description. The main role is as a Business Analyst for E-invoicing, wi..."
+    }
+  },
+  {
+    "model": "llama3.2:1b",
+    "temperature": 0.1,
+    "test_type": "skill_extraction",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "duration": 5.3899009227752686,
+    "success": true,
+    "response_length": 38,
+    "quality_score": 10.0,
+    "error_message": null,
+    "response_data": {
+      "technical": [
+        "Programming languages (none explicitly mentioned)",
+        "Technologies (e.g",
+        "invoice verification",
+        "financial systems)",
+        "Technical methodologies (e.g",
+        "process documentation)"
+      ],
+      "business": [
+        "invoicing",
+        "finance",
+        "accounting)",
+        "Business processes (recurring transactions",
+        "change initiatives)",
+        "Industry expertise (global markets",
+        "investment operations)",
+        "invoicing)",
+        "Degrees (e.g",
+        "Bachelor's or Master's in Business Administration",
+        "Finance)",
+        "Certifications (e.g",
+        "SAP certification)",
+        "Training (e.g",
+        "invoice verification training)"
+      ],
+      "soft": [
+        "Software tools (e.g",
+        "VPS",
+        "SimCorp Dimension",
+        "SAPR3/SAP4Hanadie)",
+        "Communication (team collaboration",
+        "stakeholder management)",
+        "Leadership (project leadership",
+        "team management)",
+        "solving (analytical skills",
+        "issue resolution)",
+        "Interpersonal skills (client communication",
+        "conflict resolution)"
+      ],
+      "experience": [
+        "None specified"
+      ],
+      "education": [
+        "Academic qualifications (e.g",
+        "university degree)",
+        "Note that some categories have no clear skills mentioned in the job description. In those cases",
+        "I've left them blank or written \"None specified\" to reflect the lack of information"
+      ],
+      "total_count": 38
+    }
+  },
+  {
+    "model": "llama3.2:1b",
+    "temperature": 0.1,
+    "test_type": "concise_description",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "duration": 2.4556949138641357,
+    "success": true,
+    "response_length": 503,
+    "quality_score": 6.333333333333333,
+    "error_message": null,
+    "response_data": {
+      "description": "Here is a concise, professional summary for the job posting:\n\nWe are seeking an experienced Business Analyst (E-invoicing) to join our Global Invoice Verification Team in Frankfurt. As a key member of our Investment Operations Division, you will play a critical role in verifying global vendor invoices and managing revenue across various stakeholders. This is an exciting opportunity to work with a leading investment firm, leveraging your analytical skills and experience to drive business growth.\n..."
+    }
+  }
+]

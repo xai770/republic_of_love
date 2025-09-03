@@ -1,0 +1,45 @@
+{
+  "title": "ty_extract_report - Business Analyst (E-invoicing)",
+  "metadata": {
+    "generated_by": "Arden",
+    "prompt_version": "v1",
+    "empathy_enabled": true,
+    "timestamp": "2025-07-22T17:48:46.880555",
+    "qa_flags": [],
+    "llm_used": "llm_stub",
+    "output_hash": ""
+  },
+  "sections": [
+    {
+      "name": "Overview",
+      "prompt": "Summarize the topic and extraction goals.",
+      "content": "Based on the extraction data provided, this appears to be a professional position for Untitled Position at Unknown Company. \n\nThe role involves No requirements specified and represents a low confidence extraction. This overview synthesizes the key elements from the source data while maintaining empathy for the job seeker's perspective.",
+      "metadata": {}
+    },
+    {
+      "name": "Key Claims",
+      "prompt": "List key statements extracted from the input, formatted and numbered.",
+      "content": "The following key claims have been extracted from the source data:\n\n1. Position Title: Untitled Position\n2. Company: Unknown Company\n3. Primary Requirements: No requirements specified\n4. Confidence Level: 0%\n5. Data Quality: Limited\n\nEach claim reflects careful analysis of the source material with respect for accuracy and context.",
+      "metadata": {}
+    },
+    {
+      "name": "Validation Results",
+      "prompt": "For each claim, assess consistency, context, and clarity.",
+      "content": "Assessment of extracted claims:\n\n✓ Title consistency: Missing or unclear\n✓ Company verification: Not specified  \n✓ Requirements clarity: Limited\n✓ Overall data integrity: Low\n\nThe validation process considered context, consistency, and clarity while maintaining empathetic awareness of the importance of accurate job information.",
+      "metadata": {}
+    },
+    {
+      "name": "Narrative Commentary",
+      "prompt": "Write a short paragraph about the relevance and limitations of the extraction.",
+      "content": "This extraction represents a job posting with limited information that needs careful review. The data quality suggests limited reliability - additional research recommended before application, which is important for job seekers relying on this information.\n\nFrom a holistic perspective, this posting provides data that may be useful but requires careful interpretation and should be considered within the broader context of career exploration. The extraction process honored both precision and the human element of job searching.",
+      "metadata": {}
+    },
+    {
+      "name": "Metrics",
+      "prompt": "Summarize confidence, quality flags, and other internal metrics.",
+      "content": "Extraction Performance Summary:\n\n• Confidence Score: 0%\n• Processing Quality: D\n• Data Completeness: 0%\n• QA Flags: 0\n• Empathy Level: Standard\n\nThese metrics provide transparency while maintaining focus on serving job seekers with reliable, compassionate information.",
+      "metadata": {}
+    }
+  ],
+  "template_name": "job_report"
+}

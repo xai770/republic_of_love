@@ -1,0 +1,10 @@
+{
+  "evaluation_info": {
+    "timestamp": "test_run",
+    "total_models": 2,
+    "scenarios_tested": [
+      "basic"
+    ]
+  },
+  "model_results": {}
+}

@@ -1,0 +1,25 @@
+{
+  "title": "ty_extract_report - {{topic}}",
+  "sections": [
+    {
+      "name": "Overview",
+      "prompt": "Summarize the topic and extraction goals."
+    },
+    {
+      "name": "Key Claims",
+      "prompt": "List key statements extracted from the input, formatted and numbered."
+    },
+    {
+      "name": "Validation Results",
+      "prompt": "For each claim, assess consistency, context, and clarity."
+    },
+    {
+      "name": "Narrative Commentary",
+      "prompt": "Write a short paragraph about the relevance and limitations of the extraction."
+    },
+    {
+      "name": "Metrics",
+      "prompt": "Summarize confidence, quality flags, and other internal metrics."
+    }
+  ]
+}

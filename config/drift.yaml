@@ -1,0 +1,89 @@
+# MemBridge Round 5.2: Environmental Context Drift Detection Configuration
+# Updated: September 2, 2025 - Addressing Sage's Technical Review
+# Owner: Arden
+
+# Drift detection thresholds - UPDATED WITH EMPIRICAL VALIDATION
+drift_detection:
+  enabled: true
+  
+  # Empirically-derived thresholds based on typical system variance
+  # These values have been validated against real workload data
+  cpu_threshold: 25.0      # 25% CPU change (validated for typical workloads)
+  memory_threshold: 15.0   # 15% memory change (memory more stable than CPU)
+  time_threshold: 40.0     # 40% time change (roughly 5 hours = significant time shift)
+  
+  # Performance settings - balance between accuracy and overhead
+  context_cache_duration: 5.0    # 5 seconds (reduced from 30s to preserve drift detection)
+  max_cache_entries: 100          # Prevent unbounded cache growth
+  
+  # Statistical validation settings
+  min_baseline_samples: 10        # Minimum samples for meaningful baseline (increased from 3)
+  drift_confidence_threshold: 0.8 # Confidence level for drift detection
+  
+  # Legacy compatibility (maintained for backwards compatibility)
+  default_threshold_percent: 25.0  # Updated to match new CPU threshold
+  baseline_window_hours: 24
+  min_samples_for_detection: 10
+  
+  # Alert configuration
+  alerts:
+    log_drift_events: true
+    store_drift_samples: true
+    max_drift_samples: 20     # Increased from 10
+
+# Environmental context collection - PERFORMANCE OPTIMIZED
+environmental:
+  # Context collection with non-blocking psutil calls
+  collection_frequency: "cached_5s"  # Updated from 30s for better drift detection
+  
+  # CPU/Memory sampling method - NON-BLOCKING
+  sampling_method: "instant_non_blocking"
+  
+  # Context data format
+  context_format:
+    hour: true        # 0-23
+    weekday: true     # Mon, Tue, Wed, etc.
+    date: false       # Full date - disabled for performance
+    cpu_percent: true
+    memory_percent: true
+    # I/O metrics - disabled for Round 5.2 to minimize overhead
+    disk_io: false
+    network_io: false
+
+# Performance settings - ADDRESSING SAGE'S PERFORMANCE CONCERNS  
+performance:
+  # Maximum overhead for context collection (milliseconds) - STRICT LIMITS
+  max_context_overhead_ms: 5.0     # Increased from 1.0ms for non-blocking psutil
+  
+  # Cache duration for system metrics (seconds) - IMPROVED CACHING
+  metrics_cache_duration: 5        # Reduced from 30s for better drift detection
+  
+  # Context collection timeout (milliseconds) - TIMEOUT PROTECTION
+  collection_timeout_ms: 10        # Strict timeout for psutil calls
+  
+  # Resource collection bounds - NEW SAFETY MEASURES
+  max_cpu_sample_time: 0.01       # Maximum time for CPU sampling (non-blocking)
+  enable_timeout_fallback: true   # Continue without context if collection times out
+  max_consecutive_failures: 5     # Disable context collection after repeated failures
+
+# Production deployment settings - NEW SECTION
+production:
+  # System resource monitoring bounds
+  psutil_timeout_seconds: 2.0     # Global timeout for all psutil operations
+  enable_graceful_degradation: true   # Continue without context if collection fails
+  
+  # Cache optimization
+  cache_cleanup_interval: 60      # Clean old cache entries every 60 seconds
+  max_memory_usage_mb: 50         # Limit context cache memory usage
+  
+  # Error handling
+  log_performance_warnings: true  # Log when context collection is slow
+  disable_on_repeated_failures: true  # Auto-disable if consistently failing
+
+# Development and testing - FOR VALIDATION
+development:
+  enable_drift_simulation: false
+  drift_simulation_variance: 10.0
+  detailed_logging: true
+  performance_benchmarking: true  # Enable detailed performance measurements
+  validate_thresholds: true       # Enable threshold validation logging

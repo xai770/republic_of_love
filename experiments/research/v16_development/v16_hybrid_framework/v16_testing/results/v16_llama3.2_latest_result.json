@@ -1,0 +1,10 @@
+{
+  "model": "llama3.2:latest",
+  "timestamp": "2025-07-31T07:47:32.264680",
+  "success": true,
+  "total_time": 9.341511249542236,
+  "prompt_length": 12279,
+  "response": "Here is the extracted and restructured job posting in the specified format:\n\n## Business Analyst (E-invoicing) - Requirements & Responsibilities\n\n### Your Tasks\n* **Process Management:** Implement E-invoicing processes and ensure BAU-implementation.\n* **Global Invoice Verification:** Centralize invoice verification and ensure compliance with legal frameworks and contracts.\n* **Rechnungsinformationen \u00dcberpr\u00fcfung:** Verify invoice information for accuracy and correctness.\n* **Geb\u00fchrentransaktionen \u00dcberwachung:** Monitor fee transactions to ensure timely and accurate payments.\n* **Abrechnungsdiskrepanzen Analyse:** Analyze cash breaks and identify areas for improvement.\n\n### Your Profile\n* **Education & Experience:** Bachelor's degree in economics or a related field, with experience in operations in asset management.\n* **Technical Skills:** Proficiency in SimCorp Dimension, SAP, and Excel.\n* **Language Skills:** Fluent German and English, with optional proficiency in French.\n* **Other:** Strong analytical and problem-solving skills, excellent communication and teamwork abilities, and the ability to work independently.",
+  "response_length": 1132,
+  "llm_time": 9.341015338897705
+}

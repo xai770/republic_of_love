@@ -1,0 +1,116 @@
+{
+  "job_metadata": {
+    "job_id": "63629",
+    "version": "1.0",
+    "created_at": "2025-07-10T12:18:00.961280",
+    "last_modified": "2025-07-10T12:18:00.961280",
+    "source": "deutsche_bank_api",
+    "processor": "enhanced_job_fetcher_v6.1",
+    "status": "fetched"
+  },
+  "job_content": {
+    "title": "Intern DWS Communications Germany",
+    "description": "Intern DWS Communications Germany Job ID:R0391304 Full/Part-Time: Full-time Regular/Temporary: Temporary Listed: 2025-05-22 Location: Frankfurt Position Overview About DWS At DWS, we’re capturing the opportunities of tomorrow. You can be part of a leading, client-committed, global Asset Manager, making an impact on individuals, communities, and the world. Today, markets still face a whole new set of pressures – but also a whole lot of opportunity too. Opportunity to innovate differently. Opportunity to invest responsibly. And opportunity to make change. This is needed more than ever as we currently experience high interest rates, a once-in-a-lifetime health crisis, a shift in global demographics – and politics – as well as advances in digitalization and economies moving towards a more sustainable future. While there is always uncertainty in markets, one thing remains clear: there is always a new situation that requires the right investment answers. We call it the new now. About the Internship The DWS Internship is an opportunity to gain a wide range of practical experience. Individual projects, participation in speaker sessions and networking events will all be part of the internship. Whilst you can expect a high learning curve from our Internship, you will benefit from the support of your managers and mentors along with unparalleled exposure to the world of Asset Management. This internship is an ideal way to determine whether a career in Financial Services & Asset Management meets your personal aspirations. Subject to performance, successful interns may be offered a place on the DWS Graduate P.A.C.E. program the following year. About the Owned Channels & Social Media TeamThe team Owned Channels & Social Media in the department Communications, Brand & CSR is responsible for the company homepages and the creation of visual formats such as video. As our DWS Intern you will: Support on the maintenance of the company homepages in regard to new contentsWork in the CMS to build new pagesHelp on SEO optimizationSupport video productionWork on social media postsWe’re looking for: Driven and committed interns A team player with a curious mind Someone with a keen interest in financial services but no experience is requiredAdvanced German language skills Basic knowledge on marketing, communication or digital mediaYou are enrolled in your penultimate or last year of study, or on a gap year in between your Bachelor and Master’s degree. Invest in your future. Click to apply. Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.",
+    "requirements": [],
+    "location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    },
+    "employment_details": {
+      "type": "Befristet",
+      "schedule": "Vollzeit",
+      "career_level": "Not Applicable",
+      "salary_range": null,
+      "benefits": []
+    },
+    "organization": {
+      "name": "Deutsche Bank",
+      "division": "Frankfurt",
+      "division_id": 4
+    },
+    "posting_details": {
+      "publication_date": "2025-05-22",
+      "position_uri": "/index.php?ac=jobad&id=63629",
+      "hiring_year": "2025"
+    }
+  },
+  "evaluation_results": {
+    "cv_to_role_match": null,
+    "match_confidence": null,
+    "evaluation_date": null,
+    "evaluator": null,
+    "domain_knowledge_assessment": null,
+    "decision": {
+      "apply": null,
+      "rationale": null,
+      "estimated_prep_time": null
+    },
+    "strengths": [],
+    "weaknesses": []
+  },
+  "processing_log": [
+    {
+      "timestamp": "2025-07-10T12:18:00.961280",
+      "action": "job_fetched",
+      "processor": "enhanced_job_fetcher_v6.1",
+      "status": "success",
+      "details": "Successfully fetched job 63629 from Deutsche Bank API"
+    },
+    {
+      "timestamp": "2025-07-10T12:18:00.961280",
+      "action": "description_enriched",
+      "processor": "web_scraper",
+      "status": "success",
+      "details": "Successfully fetched job description (2942 characters)"
+    }
+  ],
+  "raw_source_data": {
+    "api_response": {
+      "MatchedObjectId": "63629",
+      "MatchedObjectDescriptor": {
+        "PositionOfferingType": [
+          {
+            "Name": "Befristet"
+          }
+        ],
+        "PositionSchedule": [
+          {
+            "Name": "Vollzeit"
+          }
+        ],
+        "PublicationChannel": [
+          {
+            "StartDate": "2025-05-22"
+          }
+        ],
+        "PositionTitle": "Intern DWS Communications Germany",
+        "PositionLocation": [
+          {
+            "CityName": "Frankfurt",
+            "CountrySubDivisionName": "Hessen",
+            "CountryName": "Deutschland"
+          }
+        ],
+        "PositionURI": "/index.php?ac=jobad&id=63629",
+        "PositionID": "63629",
+        "OrganizationName": "Frankfurt",
+        "PositionHiringYear": "2025",
+        "UserArea": {
+          "ProDivision": 4
+        },
+        "CareerLevel": [
+          {
+            "Name": "Not Applicable"
+          }
+        ],
+        "PublicationStartDate": "2025-05-22"
+      },
+      "RelevanceScore": 0,
+      "RelevanceRank": 53
+    },
+    "specialist_analysis": {},
+    "description_source": "web_scraping"
+  }
+}

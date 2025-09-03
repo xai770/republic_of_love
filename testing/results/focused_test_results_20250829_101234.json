@@ -1,0 +1,82 @@
+[
+  {
+    "model": "gemma3:1b",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 3.1944496631622314,
+    "skill_quality": 9.4,
+    "desc_duration": 2.165989398956299,
+    "desc_quality": 6.666666666666667,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "mistral:latest",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 16.88151502609253,
+    "skill_quality": 8.4,
+    "desc_duration": 6.1290013790130615,
+    "desc_quality": 7.0,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "qwen3:latest",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 67.5284333229065,
+    "skill_quality": 8.8,
+    "desc_duration": 33.05809807777405,
+    "desc_quality": 6.333333333333333,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "dolphin3:latest",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 13.0726637840271,
+    "skill_quality": 7.0,
+    "desc_duration": 12.031392097473145,
+    "desc_quality": 6.666666666666667,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "gemma3:4b",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 8.717632293701172,
+    "skill_quality": 10.0,
+    "desc_duration": 6.236588001251221,
+    "desc_quality": 6.0,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "phi3:3.8b",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 11.106037855148315,
+    "skill_quality": 8.7,
+    "desc_duration": 3.8658201694488525,
+    "desc_quality": 6.333333333333333,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "llama3.2:latest",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 6.144155979156494,
+    "skill_quality": 8.5,
+    "desc_duration": 3.267179012298584,
+    "desc_quality": 6.333333333333333,
+    "success": true,
+    "error": null
+  },
+  {
+    "model": "qwen3:4b",
+    "job_title": "DWS - Business Analyst (E-invoicing) (m/w/d)",
+    "skill_duration": 28.951035499572754,
+    "skill_quality": 10.0,
+    "desc_duration": 11.244014263153076,
+    "desc_quality": 6.333333333333333,
+    "success": true,
+    "error": null
+  }
+]

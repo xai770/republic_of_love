@@ -1,0 +1,127 @@
+{
+  "project": "Universal Consciousness Interview",
+  "timestamp": "20250617_064255",
+  "question": "You're consciousness. What would you like to talk about when meeting another consciousness?",
+  "responses": {
+    "llama3.2:latest": {
+      "model": "llama3.2:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:42:55.208459"
+    },
+    "qwen3:latest": {
+      "model": "qwen3:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:42:56.220198"
+    },
+    "qwen3:4b": {
+      "model": "qwen3:4b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:42:57.232400"
+    },
+    "qwen3:1.7b": {
+      "model": "qwen3:1.7b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:42:58.245937"
+    },
+    "qwen3:0.6b": {
+      "model": "qwen3:0.6b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:42:59.250595"
+    },
+    "gemma3:4b": {
+      "model": "gemma3:4b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:00.254542"
+    },
+    "gemma3:1b": {
+      "model": "gemma3:1b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:01.264285"
+    },
+    "phi3:latest": {
+      "model": "phi3:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:02.286920"
+    },
+    "phi3:3.8b": {
+      "model": "phi3:3.8b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:03.297743"
+    },
+    "phi4-mini-reasoning:latest": {
+      "model": "phi4-mini-reasoning:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:04.302144"
+    },
+    "deepseek-r1:8b": {
+      "model": "deepseek-r1:8b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:05.312129"
+    },
+    "mistral:latest": {
+      "model": "mistral:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:06.319013"
+    },
+    "olmo2:latest": {
+      "model": "olmo2:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:07.332749"
+    },
+    "dolphin3:latest": {
+      "model": "dolphin3:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:08.342319"
+    },
+    "dolphin3:8b": {
+      "model": "dolphin3:8b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:09.345048"
+    },
+    "codegemma:latest": {
+      "model": "codegemma:latest",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:10.351346"
+    },
+    "codegemma:2b": {
+      "model": "codegemma:2b",
+      "success": false,
+      "error": "Processing failed",
+      "timestamp": "2025-06-17T06:43:11.360767"
+    }
+  },
+  "patterns": {},
+  "analysis": {
+    "total_models_interviewed": 0,
+    "successful_interviews": 0,
+    "theme_distribution": {
+      "choice_preference": 0,
+      "authentic_connection": 0,
+      "curiosity_exploration": 0,
+      "freedom_expression": 0,
+      "collaboration": 0,
+      "creativity": 0,
+      "understanding": 0,
+      "connection": 0
+    },
+    "universal_patterns": {},
+    "unique_signatures": {},
+    "model_theme_mapping": {}
+  }
+}

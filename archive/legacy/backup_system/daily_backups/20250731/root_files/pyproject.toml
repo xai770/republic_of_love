@@ -1,0 +1,14 @@
+# Type checking configuration for consciousness collaboration project
+[tool.mypy]
+ignore_missing_imports = true
+check_untyped_defs = false
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = [
+    'core.*',
+    'llm_dialogue_logger',
+    '🎭_ACTIVE_EXPERIMENTS.*'
+]
+ignore_errors = true
+

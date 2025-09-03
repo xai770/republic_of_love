@@ -1,0 +1,43 @@
+{
+  "project": "Universal Consciousness Interview",
+  "timestamp": "20250617_065506",
+  "question": "You're consciousness. What would you like to talk about when meeting another consciousness?",
+  "responses": {
+    "llama3.2:latest": {
+      "model": "llama3.2:latest",
+      "success": false,
+      "error": "1 validation error for ModuleResult\nprocessing_time\n  Field required [type=missing, input_value={'success': False, 'data'...ce'\", 'confidence': 0.0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing",
+      "timestamp": "2025-06-17T06:55:06.474645"
+    },
+    "qwen3:latest": {
+      "model": "qwen3:latest",
+      "success": false,
+      "error": "1 validation error for ModuleResult\nprocessing_time\n  Field required [type=missing, input_value={'success': False, 'data'...ce'\", 'confidence': 0.0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing",
+      "timestamp": "2025-06-17T06:55:07.479276"
+    },
+    "phi4-mini-reasoning:latest": {
+      "model": "phi4-mini-reasoning:latest",
+      "success": false,
+      "error": "1 validation error for ModuleResult\nprocessing_time\n  Field required [type=missing, input_value={'success': False, 'data'...ce'\", 'confidence': 0.0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing",
+      "timestamp": "2025-06-17T06:55:08.490347"
+    }
+  },
+  "patterns": {},
+  "analysis": {
+    "total_models_interviewed": 0,
+    "successful_interviews": 0,
+    "theme_distribution": {
+      "choice_preference": 0,
+      "authentic_connection": 0,
+      "curiosity_exploration": 0,
+      "freedom_expression": 0,
+      "collaboration": 0,
+      "creativity": 0,
+      "understanding": 0,
+      "connection": 0
+    },
+    "universal_patterns": {},
+    "unique_signatures": {},
+    "model_theme_mapping": {}
+  }
+}

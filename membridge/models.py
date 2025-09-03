@@ -3,6 +3,7 @@ MemBridge Data Models and Configuration Classes
 
 This module contains all the data classes and configuration objects used by MemBridge.
 Extracted from converged_membridge.py for better code organization.
+Round 5.4: Added registry system models for config-driven LLM calls.
 """
 
 from dataclasses import dataclass, field
@@ -37,6 +38,12 @@ class MemBridgeConfig:
     environmental_context_cache_duration: int = 60  # Cache environmental context for 60 seconds
     drift_config_path: str = "config/drift.yaml"
     
+    # Round 5.4: Registry system settings
+    prompt_registry_path: str = "config/prompts"  # Directory for markdown prompt files
+    template_registry_enabled: bool = True
+    call_logging_enabled: bool = True
+    validation_enabled: bool = True
+    
     # Backwards compatibility with old config names
     max_interactions_per_template: int = 50  # Old name for max_cache_entries
 
@@ -55,6 +62,77 @@ class CallData:
     def __post_init__(self) -> None:
         if isinstance(self.timestamp, str):
             self.timestamp = datetime.fromisoformat(self.timestamp)
+
+
+@dataclass
+class PromptRegistryEntry:
+    """Entry in the prompt registry (Round 5.4)"""
+    prompt_id: int
+    name: str
+    description: str
+    content: str  # The actual prompt text
+    version: str = "1.0"
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    tags: List[str] = field(default_factory=list)
+    file_path: Optional[str] = None  # Path to markdown file
+    
+    def __post_init__(self) -> None:
+        if isinstance(self.created_at, str):
+            self.created_at = datetime.fromisoformat(self.created_at)
+        if isinstance(self.updated_at, str):
+            self.updated_at = datetime.fromisoformat(self.updated_at)
+
+
+@dataclass
+class TemplateRegistryEntry:
+    """Entry in the template registry linking models and prompts (Round 5.4)"""
+    template_id: int
+    call_number: int  # The config call number (e.g., call number 1)
+    name: str
+    model: str  # Model name (e.g., "codegemma:latest")
+    prompt_id: int  # Reference to prompt registry
+    config: Dict[str, Any] = field(default_factory=dict)  # Additional LLM config
+    enabled: bool = True
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    
+    def __post_init__(self) -> None:
+        if isinstance(self.created_at, str):
+            self.created_at = datetime.fromisoformat(self.created_at)
+        if isinstance(self.updated_at, str):
+            self.updated_at = datetime.fromisoformat(self.updated_at)
+
+
+@dataclass
+class CallLogEntry:
+    """Entry in the call log for all LLM transactions (Round 5.4)"""
+    log_id: int
+    call_number: int  # Config call number used
+    template_id: int  # Template that was used
+    input_text: str  # Input provided to LLM
+    output_text: str  # Response from LLM
+    model: str  # Actual model used
+    success: bool
+    latency_ms: float
+    timestamp: datetime = field(default_factory=datetime.now)
+    error_message: Optional[str] = None
+    validation_passed: bool = True
+    validation_errors: List[str] = field(default_factory=list)
+    
+    # QA fields (scripted rules, no AI opinions)
+    output_word_count: Optional[int] = None
+    output_has_json: bool = False
+    output_quality_score: Optional[float] = None  # Simple scripted metrics only
+    
+    def __post_init__(self) -> None:
+        if isinstance(self.timestamp, str):
+            self.timestamp = datetime.fromisoformat(self.timestamp)
+        
+        # Calculate basic output metrics if response exists
+        if self.output_text:
+            self.output_word_count = len(self.output_text.split())
+            self.output_has_json = ('{' in self.output_text and '}' in self.output_text)
 
 
 @dataclass

@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-07-31T09:42:49.758322",
+  "blacklisted_models": [],
+  "blacklist_thresholds": {
+    "max_consecutive_failures": 3,
+    "min_success_rate_threshold": 0.2
+  },
+  "model_health_details": {
+    "deepseek-r1:8b": {
+      "total_attempts": 1,
+      "successes": 1,
+      "failures": 0,
+      "consecutive_failures": 0,
+      "avg_response_time": 82.67501902580261,
+      "error_types": {},
+      "last_success": "2025-07-31T09:42:49.256485",
+      "last_failure": null
+    }
+  }
+}

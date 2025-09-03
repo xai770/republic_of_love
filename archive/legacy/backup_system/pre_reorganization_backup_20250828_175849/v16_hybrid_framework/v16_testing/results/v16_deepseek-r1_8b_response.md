@@ -1,0 +1,37 @@
+# V16 Hybrid Template Result - deepseek-r1:8b
+
+**Timestamp:** 2025-07-31T07:46:06.273082
+**Total Time:** 64.7s
+**LLM Time:** 64.7s
+**Response Length:** 3425 chars
+
+## Extracted Job Description
+
+<think>
+Okay, the user wants me to extract and restructure a job posting for Business Analyst (E-invoicing) at DWS into a clean CV-ready format. They've provided quite detailed guidelines about how this should be structured - with categories like "Your Tasks" and "Your Profile," using action verbs, being concise yet comprehensive.
+
+Looking at the original job posting content from DWS, I can see it's very descriptive but somewhat lengthy and repetitive. The user wants me to condense all these responsibilities into just 6 bullet points maximum while maintaining professionalism and clarity. They also want specific categorization of tasks with clear action verbs.
+
+The "Your Profile" section needs to capture education requirements (probably a business-related degree), experience level, technical skills like knowledge of SimCorp Dimension or SAP systems mentioned in the posting, language proficiency especially German and English since they're highlighted as important, and other soft skills valued by DWS such as adaptability, communication abilities, customer focus, etc.
+
+I need to be careful not to lose any essential information while making it more concise. The original listing emphasizes operational experience, financial accounting knowledge, MS Office skills (especially Excel), bilingual capabilities in German/English, and collaborative traits - all of which should make it into the profile section.
+
+For the tasks section, I can group similar responsibilities under clear categories like Process Management, Compliance & Validation, Collaboration & Reporting, etc. Each bullet point needs to start with a strong action verb and be limited to 15-20 words maximum while still conveying measurable outcomes and value creation.
+
+The user seems to want something that's not just a summary but truly CV-ready - meaning it should highlight the candidate's qualifications effectively for recruitment purposes. I'll need to balance being specific enough to show expertise without being so detailed that it becomes overwhelming or too technical.
+</think>
+Okay, here is the extracted and restructured information based on your guidelines:
+
+## Business Analyst (E-invoicing) Requirements & Responsibilities
+
+### Your Tasks
+* **Process Management:** Ensure smooth execution of recurring e-invoicing processes within defined timeframes.
+* **Compliance & Validation:** Verify invoice data accuracy against legal agreements, manage SLAs/KPIs for transactions, and monitor timely payments.
+* **Collaboration & Reporting:** Collaborate with internal/external stakeholders (Finance, Legal, Clients), document processes, standardize methods, and deliver financial reports/reconciliations.
+* **System Configuration Analysis:** Critically assess new contract templates or system configurations for operational feasibility and impact.
+
+### Your Profile
+* **Education & Experience:** Business-related degree required; proven experience in Operations within Asset Management essential.
+* **Technical Skills:** Proficiency with MS Office (esp. Excel); strong preference/knowledge of Fonds/Finanzbuchhaltung, SimCorp Dimension, Aladdin or SAP systems.
+* **Language Skills:** Fluent German and English (written and spoken), very good French is advantageous.
+* **Other:** High adaptability to new ways; solution-oriented, service-focused communication skills; proactive customer focus with ability to collaborate effectively in teams.

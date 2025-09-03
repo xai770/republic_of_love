@@ -16,6 +16,7 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -27,8 +28,18 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.venv/
 
-# IDE
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Linting
+.ruff_cache/
+.pylint.d/
+
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -44,16 +55,43 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Project specific
+# Logs
 *.log
-.mypy_cache/
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Local config overrides
+local_config.py
+.env
+.env.local
+
+# Build artifacts (if any)
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
 .pytest_cache/
 
-# Sensitive data
-*.key
-*.secret
-config_local.yaml
+# Documentation builds
+docs/_build/
 
-# Large data files
-*.json.backup
-*.tar.gz.backup
+# Project-specific
+artifacts/tmp/
+production/*/tmp/
+experiments/*/tmp/
