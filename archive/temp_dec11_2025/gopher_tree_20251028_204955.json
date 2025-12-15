@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_204955",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/NETWORK_ENGINEERING_TECHNOLOGIES",
+    "ROOT/SECURITY_EXPERTISE",
+    "ROOT/INNOVATION_AND_TECHNOLOGY_LEADERSHIP"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

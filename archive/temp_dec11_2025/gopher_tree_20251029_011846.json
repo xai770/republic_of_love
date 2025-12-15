@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251029_011846",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/DIGITAL_MARKETING_STRATEGY",
+    "ROOT/SALES_STRATEGIES",
+    "ROOT/LEADERSHIP_AND_MOTIVATION"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

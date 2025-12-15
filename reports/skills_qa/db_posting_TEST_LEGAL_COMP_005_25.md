@@ -1,0 +1,111 @@
+# Skills Extraction QA Report
+
+**Generated:** 2025-11-05 17:02:50  
+**Postings Analyzed:** 1  
+**Database:** turing
+
+---
+
+## Summary
+
+- **Total postings:** 1
+- **Total skills extracted:** 19
+- **Average skills per posting:** 19.0
+- **Postings with warnings:** 1
+
+---
+
+## Posting #25: Senior Legal Compliance Officer
+
+### 📋 Metadata
+
+- **Company:** Global Financial Services
+- **Posting ID:** 25
+- **Skills Count:** 19
+
+### 📝 Original Job Description
+
+```
+
+Senior Legal Compliance Officer
+
+Global financial services firm seeks compliance expert to ensure regulatory adherence across 
+all operations and manage vendor contract compliance.
+
+REQUIRED QUALIFICATIONS (Essential):
+- 8+ years legal compliance experience (financial services)
+- Deep knowledge of financial regulations (SOX, GDPR, etc.)
+- Contract management and negotiation expertise
+- Experience with compliance audits
+- JD or equivalent legal qualification
+
+CRITICAL QUALIFICATIONS:
+- Vendor contract management and governance
+- Risk assessment and mitigation
+- Policy development and implementation
+- Experience with compliance software/systems
+- Strong analytical and communication skills
+
+PREFERRED QUALIFICATIONS:
+- Technology contract experience (SaaS, licensing)
+- Project management skills
+- Experience with international regulations
+- Proficiency with MS Office (Excel for analysis)
+- Bar admission (any state)
+
+RESPONSIBILITIES:
+- Manage compliance program across organization
+- Negotiate and review vendor contracts
+- Conduct compliance audits and assessments
+- Develop policies and training programs
+- Liaise with regulators and auditors
+
+Salary: $150,000 - $190,000
+Location: Boston, MA (Hybrid)
+
+```
+
+*(1,214 characters)*
+
+### 🎯 Extracted Skills (19 total)
+
+| # | Skill | Importance | Proficiency | Years | Reasoning |
+|---|-------|------------|-------------|-------|-----------|
+| 1 | 8+ years legal compliance experience (financial services) | essential | expert | unknown | Core requirement for the role. |
+| 2 | Deep knowledge of financial regulations (SOX, GDPR, etc.) | essential | expert | unknown | Required to ensure compliance with complex regulations. |
+| 3 | Contract management and negotiation expertise | essential | advanced | unknown | Key for managing vendor contracts effectively. |
+| 4 | Experience with compliance audits | essential | advanced | unknown | Essential for conducting thorough compliance checks. |
+| 5 | Vendor contract management and governance | critical | advanced | unknown | Central to the role's responsibilities. |
+| 6 | Risk assessment and mitigation | critical | advanced | unknown | Important for identifying and managing potential compliance risks. |
+| 7 | Policy development and implementation | critical | advanced | unknown | Critical for creating and enforcing company policies. |
+| 8 | Experience with compliance software/systems | critical | intermediate | unknown | Required to effectively use technology in the role. |
+| 9 | Strong analytical skills | critical | advanced | unknown | Needed for analyzing data and making informed decisions. |
+| 10 | Strong communication skills | unknown | advanced | unknown | Required for effective liaison with stakeholders. |
+| 11 | Vendor contract management and governance | critical | advanced | unknown | Repetition indicates high importance. |
+| 12 | Risk assessment and mitigation | critical | advanced | unknown | Repetition emphasizes its critical nature. |
+| 13 | Policy development and implementation | critical | advanced | unknown | Repetition underscores its importance. |
+| 14 | Experience with compliance software/systems | critical | intermediate | unknown | Repetition highlights the need for this skill. |
+| 15 | Technology contract experience (SaaS, licensing) | important | beginner | unknown | While preferred, it is not a core requirement and may be learned on the job. |
+| 16 | Project management skills | important | intermediate | unknown | Helpful but not required for all aspects of the role. |
+| 17 | Experience with international regulations | important | beginner | unknown | Beneficial for some roles, especially in a global firm. |
+| 18 | Proficiency with MS Office (Excel for analysis) | preferred | intermediate | unknown | Aids in data analysis but not critical for the role. |
+| 19 | Bar admission (any state) | preferred | beginner | unknown | Nice to have, may be required depending on jurisdiction |
+
+### 🎯 Profile Match: Gershon Pollatschek
+
+❌ **No skill overlap** - Your profile doesn't match any required skills
+
+### 🔍 Quality Assessment
+
+✅ **Skill count**: 19 (healthy range)
+✅ **Importance distribution**: {'essential': 4, 'critical': 9, 'unknown': 1, 'important': 3, 'preferred': 2}
+✅ **All skills have detailed reasoning**
+⚠️  **Generic skills without context**: Strong communication skills
+⚠️  **No extraction metadata** - cannot trace back to workflow
+
+---
+
+
+## End of Report
+
+Generated by `tools/generate_skills_qa_report.py`

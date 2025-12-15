@@ -1,0 +1,116 @@
+{
+  "job_metadata": {
+    "job_id": "62118",
+    "version": "1.0",
+    "created_at": "2025-07-06T18:49:52.565078",
+    "last_modified": "2025-07-06T18:49:52.565078",
+    "source": "deutsche_bank_api",
+    "processor": "enhanced_job_fetcher_v6.1",
+    "status": "fetched"
+  },
+  "job_content": {
+    "title": "Tax Specialist (d/m/w) Tax Controversy – CFO",
+    "description": "Tax Specialist (d/m/w) Tax Controversy – CFO Job ID:R0380583 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-06-30 Location: Frankfurt Position Overview Über den BereichDie Position ist im Team Tax Controversy Germany angesiedelt. Das Team Tax Controversy verantwortet die Außenprüfung sowie Einspruchs- und Klageverfahren vor den Finanzgerichten.Zur Verstärkung unseres Teams suchen wir einen Spezialisten (m/w/d) mit breit gefächerten und idealerweise bankenspezifischen Kenntnissen im Steuerrecht. Gemeinsam im Team mit erfahrenen Steuerspezialisten beantworten Sie die Anfragen der Außenprüfung in Abstimmung mit anderen Fachbereichen und unterstützen im Rahmen von vorgerichtlichen sowie gerichtlichen Rechtsbehelfsverfahren.Ihre AufgabenIm Rahmen der Außenprüfung sind Sie für die Beantwortung von Prüfungsanfragen verantwortlich.Sie stehen hierzu in engem fachlichem Austausch mit anderen Teams innerhalb und außerhalb der Group Tax und üben somit eine Schnittstellenfunktion aus.Sie erstellen die Prüfungsantworten und stimmen diese im Team sowie mit ihrem Teamleiter ab.Weiterhin sind Sie für die Überprüfung von Feststellungen der Außenprüfung verantwortlich.Im Rahmen von Einspruchsverfahren sind Sie für die Erstellung von Einspruchsbegründungen sowie der hierfür vorbereitenden rechtlichen Recherchen und Analysen verantwortlich.Im Rahmen von Klageverfahren arbeiten Sie zusammen mit ihrem Teamleiter und externen Beratern an den Schriftsätzen im Klageverfahren.Hierbei stehen Sie stets im Austausch mit Ihren Teamkollegen, ihrem Teamleiter sowie den weiteren Geschäftsbereichen.Ihre Fähigkeiten und ErfahrungenSie verfügen über einen betriebswirtschaftlichen oder juristischen Studienabschluss mit Schwerpunkt Steuern oder über ein Studium zum Diplom-Finanzwirt oder eine vergleichbare Qualifikation mit steuerrechtlichem Inhalt im deutschen Steuerrecht.Sie haben das Steuerberaterexamen erfolgreich abgelegt und Sie besitzen mehrjährige Berufserfahrung in einem Konzern oder einer international ausgerichteten Steuerberatungsgesellschaft oder Rechtsanwaltskanzlei.Als echter Teamplayer haben Sie Freude an der Kommunikation mit anderen Teams und Fachbereichen, zeigen Verantwortungsbewusstsein sowie eine selbständige und lösungsorientierte Arbeitsweise, mit guter Laune auch unter hohem Zeitdruck.Sehr gute Deutsch - und Englischkenntnisse in Wort und Schrift sind erforderlich zur Kommunikation mit unseren ausländischen Kollegen.Was wir Ihnen bietenWir bieten eine breite Palette von Leistungen, die all Ihre beruflichen und persönlichen Bedürfnisse abdecken.Emotional ausgeglichenEine positive Haltung hilft uns, die Herausforderungen des Alltags zu meistern – beruflich wie privat. Profitieren Sie von Angeboten wie Beratung in schwierigen Lebenssituationen und Angeboten zur Förderung mentaler Gesundheit.Körperlich fitMit Angeboten zur Aufrechterhaltung Ihrer persönlichen Gesundheit und einem förderlichen beruflichen Umfeld hilft Ihnen die Bank, körperlich fit zu bleiben. Profitieren Sie von Angeboten wie umfangreichen Check-up Untersuchungen, Impfangeboten und Beratung zur gesunden Lebensführung.Sozial vernetztDer Austausch mit anderen eröffnet uns neue Perspektiven, bringt uns beruflich wie persönlich voran und stärkt unser Selbstvertrauen und Wohlbefinden. Profitieren Sie von Angeboten wie Unterstützung durch den pme Familienservice, das FitnessCenter Job, flexible Arbeitszeitmodelle (bspw. Teilzeit, Jobtandem, hybrides Arbeiten) sowie einer umfangreichen Kultur der Vielfalt, Chancengleichheit und Teilhabe.Finanziell abgesichertDie Bank sichert Sie nicht nur während Ihrer aktiven Karriere, sondern auch für die Zukunft finanziell ab und unterstützt Ihre Flexibilität sowie Mobilität – egal ob privat oder beruflich. Profitieren Sie von Angeboten wie Beitragsplänen für Altersvorsorge, Bankdienstleistungen für Mitarbeiter*innen, Firmenfahrrad oder dem Deutschlandticket.Da die Benefits je nach Standort geringfügig variieren, gehen Sie bitte bei konkreten Fragen auf Ihre Recruiterin zu.Die Stelle wird in Voll- und in Teilzeit angeboten.Bei Fragen zum Rekrutierungsprozess steht Ihnen Evangelia Tseliou gerne zur Verfügung.Kontakt Evangelia Tseliou: +49 69 91045463 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.",
+    "requirements": [],
+    "location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    },
+    "employment_details": {
+      "type": "Unbefristet",
+      "schedule": "Vollzeit",
+      "career_level": "Assistant Vice President",
+      "salary_range": null,
+      "benefits": []
+    },
+    "organization": {
+      "name": "Deutsche Bank",
+      "division": "Frankfurt",
+      "division_id": 8
+    },
+    "posting_details": {
+      "publication_date": "2025-06-30",
+      "position_uri": "/index.php?ac=jobad&id=62118",
+      "hiring_year": "2025"
+    }
+  },
+  "evaluation_results": {
+    "cv_to_role_match": null,
+    "match_confidence": null,
+    "evaluation_date": null,
+    "evaluator": null,
+    "domain_knowledge_assessment": null,
+    "decision": {
+      "apply": null,
+      "rationale": null,
+      "estimated_prep_time": null
+    },
+    "strengths": [],
+    "weaknesses": []
+  },
+  "processing_log": [
+    {
+      "timestamp": "2025-07-06T18:49:52.565078",
+      "action": "job_fetched",
+      "processor": "enhanced_job_fetcher_v6.1",
+      "status": "success",
+      "details": "Successfully fetched job 62118 from Deutsche Bank API"
+    },
+    {
+      "timestamp": "2025-07-06T18:49:52.565078",
+      "action": "description_enriched",
+      "processor": "web_scraper",
+      "status": "success",
+      "details": "Successfully fetched job description (4660 characters)"
+    }
+  ],
+  "raw_source_data": {
+    "api_response": {
+      "MatchedObjectId": "62118",
+      "MatchedObjectDescriptor": {
+        "PositionOfferingType": [
+          {
+            "Name": "Unbefristet"
+          }
+        ],
+        "PositionSchedule": [
+          {
+            "Name": "Vollzeit"
+          }
+        ],
+        "PublicationChannel": [
+          {
+            "StartDate": "2025-06-30"
+          }
+        ],
+        "PositionTitle": "Tax Specialist (d/m/w) Tax Controversy – CFO",
+        "PositionLocation": [
+          {
+            "CityName": "Frankfurt",
+            "CountrySubDivisionName": "Hessen",
+            "CountryName": "Deutschland"
+          }
+        ],
+        "PositionURI": "/index.php?ac=jobad&id=62118",
+        "PositionID": "62118",
+        "OrganizationName": "Frankfurt",
+        "PositionHiringYear": "2025",
+        "UserArea": {
+          "ProDivision": 8
+        },
+        "CareerLevel": [
+          {
+            "Name": "Assistant Vice President"
+          }
+        ],
+        "PublicationStartDate": "2025-06-30"
+      },
+      "RelevanceScore": 0,
+      "RelevanceRank": 14
+    },
+    "specialist_analysis": {},
+    "description_source": "web_scraping"
+  }
+}

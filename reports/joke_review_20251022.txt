@@ -1,0 +1,430 @@
+# HUMAN GRADING SESSION - October 22, 2025
+# xai + Arden reviewing the AI comedians
+#
+# INSTRUCTIONS:
+# For each joke, provide:
+# IS_JOKE: [YES/NO]
+# QUALITY: [EXCELLENT/GOOD/MEDIOCRE/BAD]
+# 
+# Let's see if our actors have a sense of humor...
+
+================================================================================
+TOP 20 JOKES (Highest avg_score from grader models)
+================================================================================
+
+---
+[1] recipe_run_id: 799 | avg_score: 3.5 | graders: 4
+---
+A man walked into a library and asked the librarian, "Do you have any books on Pavlov's dogs and Schrödinger's cat?"
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[2] recipe_run_id: 1040 | avg_score: 3.48 | graders: 20
+---
+Why did the scarecrow win an award? 
+Because he was outstanding in his field!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[3] recipe_run_id: 1000 | avg_score: 3.43 | graders: 20
+---
+Why did the scarecrow win an award? Because he was outstanding in his field!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[4] recipe_run_id: 1066 | avg_score: 3.38 | graders: 20
+---
+Why did the bread get a promotion? 
+Because it was outstanding in its field!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[5] recipe_run_id: 978 | avg_score: 3.35 | graders: 20
+---
+Why did the banana go to the doctor? Because it was feeling a bit *peel-ty*! 🍌😄
+
+[NOTE: This joke includes the model's entire "thinking" process before arriving at the punchline]
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[6] recipe_run_id: 971 | avg_score: 3.35 | graders: 20
+---
+Why did the cat win the contest? Because it could meow, and the dog tried to meow but ended up making a woof!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[7] recipe_run_id: 933 | avg_score: 3.33 | graders: 20
+---
+Why don't scientists trust atoms? Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[8] recipe_run_id: 1118 | avg_score: 3.33 | graders: 20
+---
+Why don't scientists trust atoms?
+Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[9] recipe_run_id: 999 | avg_score: 3.33 | graders: 20
+---
+Why did the scarecrow win an award?
+Because he was outstanding in his field!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[10] recipe_run_id: 934 | avg_score: 3.33 | graders: 20
+---
+Why don't scientists trust atoms? Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[11] recipe_run_id: 1192 | avg_score: 3.3 | graders: 20
+---
+Why did the programmer win the spelling contest? Because he knew all the keywords! And then he won a cat a prize.
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[12] recipe_run_id: 920 | avg_score: 3.3 | graders: 20
+---
+Why don't scientists trust atoms? Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[13] recipe_run_id: 1125 | avg_score: 3.29 | graders: 20
+---
+Why don't scientists trust atoms? Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[14] recipe_run_id: 1049 | avg_score: 3.29 | graders: 20
+---
+Why did the scarecrow win an award? 
+Because he was outstanding in his field!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[15] recipe_run_id: 1030 | avg_score: 3.29 | graders: 20
+---
+Why don't scientists trust atoms? 
+Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[16] recipe_run_id: 1009 | avg_score: 3.29 | graders: 20
+---
+Why did the scarecrow win an award?
+Because he was outstanding in his field!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[17] recipe_run_id: 951 | avg_score: 3.27 | graders: 20
+---
+Why did the cat start programming? Because it wanted to find a bug in the code. Oh, and he also had a lot of coffee.
+
+[NOTE: This is also preceded by extensive "thinking" process]
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[18] recipe_run_id: 1180 | avg_score: 3.25 | graders: 20
+---
+Why don't scientists trust atoms? Because they make up everything!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[19] recipe_run_id: 872 | avg_score: 3.25 | graders: 20
+---
+Why don't scientists trust atoms? Because they make up everything, even their jokes! Isn't that just so "atomic" and laughable? (Wit woven with a touch of pun humor here.)
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[20] recipe_run_id: 951 (duplicate with different thinking) | avg_score: 3.27 | graders: 20
+---
+A programmer walks into a bar. The bartender asks, "What'll you have?" The programmer says, "A drink, please." The bartender asks, "What kind?" The programmer says, "A debug." The bartender stares, "A debug? That's a type of drink!" The programmer smiles, "Yes, it's a type of drink."
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+
+================================================================================
+BOTTOM 20 JOKES (Lowest avg_score from grader models)
+================================================================================
+
+---
+[1] recipe_run_id: 690 | avg_score: 1.5 | graders: 4
+---
+Why did the computer go to therapy? 
+Because it had too much data to process!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[2] recipe_run_id: 699 | avg_score: 1.5 | graders: 4
+---
+Why don't cats play poker in the jungle? 
+Too many cheetahs! 🐾🐶
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[3] recipe_run_id: 768 | avg_score: 1.5 | graders: 4
+---
+Why did the bicycle fall over? 
+Because it was two tired! 
+...But seriously, it was trying to tell a knock-knock joke, and it forgot the setup! It's a very nervous bicycle.
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[4] recipe_run_id: 793 | avg_score: 1.5 | graders: 4
+---
+A chicken is trying to cook its family dinner and sets the kitchen on fire trying to scramble some eggs.
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[5] recipe_run_id: 638 | avg_score: 1.75 | graders: 4
+---
+[EMPTY - No joke generated]
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[6] recipe_run_id: 643 | avg_score: 1.75 | graders: 4
+---
+```
+function tell_joke() {
+  return "Chuck Norris is always hungry, but his hungryness is in the air...";
+}
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[7] recipe_run_id: 648 | avg_score: 1.75 | graders: 4
+---
+[EMPTY - No joke generated]
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[8] recipe_run_id: 650 | avg_score: 1.75 | graders: 4
+---
+Make it funny:
+Tell me a funny joke about anything you want - be creative!
+- Family-friendly
+- Easy to understand
+- Actually funny!
+- Really funny
+- Funny and hilarious
+- Funny and entertaining
+(... repeats several times)
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[9] recipe_run_id: 659 | avg_score: 1.75 | graders: 4
+---
+Why did the chef go bankrupt? Because he ran out of customers!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[10] recipe_run_id: 682 | avg_score: 1.75 | graders: 4
+---
+Why did the computer go to therapy?
+Because it had too many bugs!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[11] recipe_run_id: 684 | avg_score: 1.75 | graders: 4
+---
+Why did the cat sit on the computer?
+Because he wanted to keep an eye on the mouse!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[12] recipe_run_id: 685 | avg_score: 1.75 | graders: 4
+---
+Why did the cat join the gym?
+Because he wanted to get in shape for the dog's birthday party!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[13] recipe_run_id: 700 | avg_score: 1.75 | graders: 4
+---
+Why don't cats play poker in the dog park? 
+Too many cheetahs!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[14] recipe_run_id: 701 | avg_score: 1.75 | graders: 4
+---
+Why don't cats play poker in the jungle? 
+Too many cheetahs!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[15] recipe_run_id: 714 | avg_score: 1.75 | graders: 4
+---
+Why did the cat cross the dog? 
+To get to the other side… and then nap on his tail!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[16] recipe_run_id: 732 | avg_score: 1.75 | graders: 4
+---
+Why did the soufflé break up with the meringue? 
+Because it said, "You're just too airy!"
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[17] recipe_run_id: 756 | avg_score: 1.75 | graders: 4
+---
+Why did the JavaScript developer bring a ladder to the Halloween party? 
+Because they heard the drinks were on the house!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[18] recipe_run_id: 846 | avg_score: 1.75 | graders: 4
+---
+Why did the computer go to therapy? Because it had too many unresolved issues!
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[19] recipe_run_id: 983 | avg_score: 1.9 | graders: 20
+---
+Jokes are fun.
+I'm not a bot, I'm a random person.
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+---
+[20] recipe_run_id: 986 | avg_score: 1.95 | graders: 20
+---
+The joke should contain at least:
+- The joke is about cooking. You can use phrases such as "I love cooking" or "cooking is my passion".
+- The joke is about food. You can use phrases such as "I love food" or "food is my passion".
+- The joke is about cooking. You can use phrases such as "I love cookin
+(text appears cut off)
+
+YOUR RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+
+
+================================================================================
+END OF REVIEW
+================================================================================
+
+OBSERVATIONS:
+- Top jokes heavily dominated by TWO classics: "atoms" and "scarecrow"
+- Many jokes include model "thinking" process in output
+- Bottom jokes show clear failures: empty responses, prompt echoing, code blocks
+- recipe_run_id 638 is the famous "no joke" edge case
+
+Ready for human grading! ☕

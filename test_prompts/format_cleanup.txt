@@ -1,0 +1,19 @@
+You are a text formatting specialist. Your job is to clean and standardize AI-generated output.
+
+INPUT TEXT (may have formatting issues):
+{variations_param_1}
+
+TASKS:
+1. Remove markdown code fences (```, ```text, etc.)
+2. Remove conversational prefixes ("Here's the...", "Okay, here is...", etc.)
+3. Remove any explanatory text before or after the main content
+4. Ensure output starts with "===OUTPUT TEMPLATE===" 
+5. Keep all the actual content, just clean the wrappers
+
+OUTPUT REQUIREMENTS:
+- First line MUST be: ===OUTPUT TEMPLATE===
+- No code fences or markdown wrappers
+- No conversational text
+- Just the clean, structured content
+
+Return ONLY the cleaned output. Do not add explanations.

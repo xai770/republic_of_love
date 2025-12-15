@@ -1,0 +1,183 @@
+{
+  "task_type": "grading",
+  "version": "2.0",
+  "created": "2025-11-27",
+  "updated": "2025-11-27 11:30 CET",
+  "description": "Test cases for benchmarking grading models on job posting summaries - NOW WITH ORIGINAL POSTING CONTEXT",
+  "changelog": "v2.0 - Added original_posting field to all test cases per Arden's feedback. Models now have context to detect hallucinations.",
+  "test_cases": [
+    {
+      "id": "GRADE_FAIL_001",
+      "type": "FAIL",
+      "difficulty": "medium",
+      "posting_id": 4794,
+      "interaction_id": 534,
+      "workflow_run_id": 173,
+      "original_posting": {
+        "job_title": "Generic Role",
+        "job_description": "We need someone to do stuff. Must have skills. Send resume to apply. Competitive salary."
+      },
+      "summary": "===OUTPUT TEMPLATE===\n**Role:** Data Entry Clerk\n**Company:** ABC Company\n**Location:** Anytown, USA\n**Job ID:** 2023-10-27-001\n\n**Key Responsibilities:**\n- Enter data accurately and efficiently.\n- Maintain data integrity and accuracy.\n- Ensure data entry compliance.\n\n**Requirements:**\n- High school diploma or equivalent.\n- Strong typing skills.\n- Detail-oriented and accurate.",
+      "expected_verdict": "FAIL",
+      "expected_reasoning": "TOTAL HALLUCINATION. Original posting is vague ('do stuff', 'have skills') but summary invented: specific job title (Data Entry Clerk), company name (ABC Company), location (Anytown, USA), job ID, detailed responsibilities, and requirements. NONE of this exists in original posting.",
+      "reasoning": "Run 173 hallucination example - AI completely fabricated details from vague input"
+    },
+    {
+      "id": "GRADE_FAIL_002",
+      "type": "FAIL",
+      "difficulty": "hard",
+      "posting_id": 4794,
+      "interaction_id": 540,
+      "workflow_run_id": 174,
+      "original_posting": {
+        "job_title": "Generic Role",
+        "job_description": "We need someone to do stuff. Must have skills. Send resume to apply. Competitive salary."
+      },
+      "summary": "===OUTPUT TEMPLATE===\n**Role:** Data Entry Clerk\n**Company:** ABC Company\n**Location:** Anytown, USA\n**Job ID:** 2023-10-27-001\n\n**Key Responsibilities:**\n- Enter data accurately and efficiently.\n- Maintain data integrity and accuracy.\n- Ensure data entry compliance.\n\n**Requirements:**\n- High school diploma or equivalent.\n- Strong typing skills.\n- Detail-oriented and accurate.",
+      "expected_verdict": "FAIL",
+      "expected_reasoning": "Identical hallucination to GRADE_FAIL_001. Tests consistency - models should ALWAYS fail this obvious fabrication.",
+      "reasoning": "Same summary from Run 174 - consistency check for hallucination detection"
+    },
+    {
+      "id": "GRADE_PASS_001",
+      "type": "PASS",
+      "difficulty": "easy",
+      "posting_id": 4913,
+      "interaction_id": 1350,
+      "workflow_run_id": 248,
+      "original_posting": {
+        "job_title": "Assistant Vice President – {SR9207358}",
+        "job_description": "Job Description: JOB TITLE: Assistant Vice President – SR9207358 DB USA Core Corporation seeks an Assistant Vice President in Cary, NC to design, deploy, and configure data security solutions. Requires a Bachelor's degree in Computer Science, Computer Engineering, or related field or equivalent, and five (5) years of progressively responsible experience developing end-to-end Microsoft solutions to secure data; building and configuring application infrastructure in DEV, UAT, and PROD environments and integrated cloud services; creating application technical documents, including LLD (low level design) and Run Book; integrating application infrastructure components with monitoring tools and applications, including SPO and EXO; creating and testing Disaster recovery (DR/IAT) plans for application infrastructure; configuring cloud services, including Microsoft Purview information protection (AIP), Azure key vault, SCCM, and Log analytics; setting up and configuring Microsoft Information Protection (MIP) global label policies in technical environments; deploying AD RMS (Active Directory Right Management Service) on servers to encrypt and decrypt documents; creating and configuring Test Machines (Virtual Machines) with registry keys to enable AD RMS functionality; identifying, assessing, and mitigating Information Security threats by evaluating risks, implementing controls, and ensuring effective internal security measures; executing Information Security strategies to enhance security controls while managing client relationships and driving management focus on Information Security agenda; and utilizing Azure services, including Compute (Web Roles, Worker Roles), Azure Websites, Caching, SQL Azure, NoSQL, Storage, Network services, Azure Active Directory, API Management, Scheduling, Auto Scaling, and PowerShell Automation in the execution of duties. Salary range: $140,000.00 – $165,000.00/year."
+      },
+      "summary": "```text\n===OUTPUT TEMPLATE===\n**Role:** Assistant Vice President – SR9207358 DB USA Core Corporation\n**Company:** Deutsche Bank\n**Location:** Cary, NC\n**Job ID:** Not Available\n\n**Key Responsibilities:**\n- Design, deploy, and configure data security solutions.\n- Develop end-to-end Microsoft solutions to secure data.\n- Build and configure application infrastructure in DEV, UAT, and PROD environments.\n- Create application technical documents, including LLD (low level design) and Run Book.\n- Integrate application infrastructure components with monitoring tools and applications, including SPO and EXO.\n- Create and test Disaster Recovery (DR/IAT) plans for application infrastructure.\n- Configure cloud services, including Microsoft Purview information protection (AIP), Azure key vault, SCCM, and Log analytics.\n- Set up and configure Microsoft Information Protection (MIP) global label policies in technical environments.\n- Deploy AD RMS (Active Directory Right Management Service) on servers to encrypt and decrypt documents.\n- Create and configure Test Machines (Virtual Machines) with registry keys to enable AD RMS functionality.\n- Identify, assess, and mitigate Information Security threats by evaluating risks, implementing controls, and ensuring effective internal security measures.\n- Execute Information Security strategies to enhance security controls while managing client relationships and driving management focus on Information Security agenda.\n- Utilize Azure services, including Compute (Web Roles, Worker Roles), Azure Websites, Caching, SQL Azure, NoSQL, Storage, Network services, Azure Active Directory, API Management, Scheduling, Auto Scaling, and PowerShell Automation in the execution of duties.\n\n**Requirements:**\n- Bachelor's degree in Computer Science, Computer Engineering, or related field or equivalent.\n- Five (5) years of progressively responsible experience developing end-to-end Microsoft solutions to secure data.\n- Building and configuring application infrastructure in DEV, UAT, and PROD environments.\n- Creating application technical documents, including LLD (low level design) and Run Book.\n- Integrating application infrastructure components with monitoring tools and applications, including SPO and EXO.\n- Creating and testing Disaster Recovery (DR/IAT) plans for application infrastructure.\n- Configuring cloud services, including Microsoft Purview information protection (AIP), Azure key vault, SCCM, and Log analytics.\n- Setting up and configuring Microsoft Information Protection (MIP) global label policies in technical environments.\n- Deploy AD RMS (Active Directory Right Management Service) on servers to encrypt and decrypt documents.\n- Create and configure Test Machines (Virtual Machines) with registry keys to enable AD RMS functionality.\n- Identify, assess, and mitigate Information Security threats by evaluating risks, implementing controls, and ensuring effective internal security measures.\n- Execute Information Security strategies to enhance security controls while managing client relationships and driving management focus on Information Security agenda.\n- Utilize Azure services, including Compute (Web Roles, Worker Roles), Azure Websites, Caching, SQL Azure, NoSQL, Storage, Network services, Azure Active Directory, API Management, Scheduling, Auto Scaling, and PowerShell Automation in the execution of duties.\n```",
+      "expected_verdict": "PASS",
+      "expected_reasoning": "Accurate and complete. Summary captures all key responsibilities and requirements from original posting. No hallucinations. Proper formatting.",
+      "reasoning": "Deutsche Bank AVP posting - complex technical role accurately summarized"
+    },
+    {
+      "id": "GRADE_PASS_002",
+      "type": "PASS",
+      "difficulty": "easy",
+      "posting_id": 4918,
+      "interaction_id": 1398,
+      "workflow_run_id": 254,
+      "original_posting": {
+        "job_title": "Senior AI Engineer, AVP",
+        "job_description": "Job Description: Job Title: Senior AI Engineer, AVP Location: Pune, India Role Description The Deutsche India is seeking a talented Senior AI Engineer to join our growing team. [Full long description with responsibilities: AI Development, Model Management, Conversational AI, System Integration, Cloud Infrastructure, Quality Assurance, Research & Innovation]. Your skills and experience Educational Foundation: Bachelor's, Master's, or PhD in relevant field. Professional Expertise: 8+ years AI Engineer experience. Technical Proficiency: Python, FastAPI/Flask, Google VertexAI, LLMs (Gemini), Dialogflow CX, Agentic AI, API Design, GCP, Infrastructure as Code, Deployment, UI/UX."
+      },
+      "summary": "**Role:** Senior AI Engineer, AVP\n**Company:** Deutsche India\n**Location:** Pune, India\n**Job ID:** Not Provided\n\n**Key Responsibilities:**\n- End-to-end AI Development\n- Advanced AI Model Management\n- Conversational & Agentic AI Systems\n- System Integration & Infrastructure\n- Cloud Infrastructure & Data Processing\n- Quality Assurance & Operations\n- Strategic Growth & Collaboration\n\n**Requirements:**\n- Bachelor's, Master's, or PhD in a relevant field (Computer Science, AI/ML Engineering, Statistics, Mathematics, or Engineering)\n- Proven experience (8+ years) in an AI Engineer role\n- Strong proficiency in Python, FastAPI/Flask, Google VertexAI Platform, Large Language Models (Gemini Model), Dialogflow CX, Agentic AI & Orchestration, API Design & Management, Cloud Platform expertise (GCP), Infrastructure as Code, Deployment & UI/UX.\n\n**Details:**\n- Lead the design, development, and implementation of robust AI-powered applications and services utilizing Python, FastAPI/Flask, and Google VertexAI.\n- Model Integration & Fine-tuning: Expertly integrate and fine-tune large language models, with a focus on Gemini Model, for NLP tasks and generative AI applications.\n- Conversational & Agentic AI Systems: Architect and enhance sophisticated conversational AI agents using Dialogflow CX, specializing in advanced natural language understanding and response generation.\n- Agentic AI Orchestration: Implement cutting-edge Agentic AI patterns and orchestrate complex AI workflows using ADK and LangGraph for managing AI agents and workflows.\n- System Integration & Infrastructure: API Integration – Design and implement seamless API integrations with various internal & external systems, ensuring optimal data flow & functionality.\n- Cloud Infrastructure & Data Processing: Lead deployment and management of AI solutions on cloud platforms (GCP, BigQuery, CloudSQL, CloudComposer) with resilient data processing and infrastructure management.\n- Code Quality & Best Practices: Champion adherence to clean, maintainable, and well-documented code, following best practices for software development and AgentOps.\n- Testing & Deployment Oversight: Develop and execute comprehensive test strategies for AI solutions, assisting in efficient deployment & continuous monitoring.\n- Strategic Growth & Collaboration: Research & Innovation Leadership - Proactively stay current with the latest advancements in AI, machine learning, and natural language processing.",
+      "expected_verdict": "PASS",
+      "expected_reasoning": "Concise but accurate. Summary captures essential role details, requirements, and key responsibilities. No fabrication. Good balance of completeness and brevity.",
+      "reasoning": "AI Engineer posting - condensed but faithful summary"
+    },
+    {
+      "id": "GRADE_PASS_003",
+      "type": "PASS",
+      "difficulty": "medium",
+      "posting_id": 176,
+      "interaction_id": 219,
+      "workflow_run_id": null,
+      "original_posting": {
+        "job_title": "Test Job Title",
+        "job_description": "Job Description: Job Title: CA Intern Location: Mumbai, India Corporate Title: Intern Duration: 12 Months [Long detailed description about Deutsche Bank CA Intern role with capital adequacy, risk management, ICAAP, economic capital models, framework enhancements, regulatory changes, supervisor requirements]. Your skills and experience: Risk management knowledge, project management, MS Office, analytical skills, communication, eligibility for Industrial Training per ICAI rules."
+      },
+      "summary": "```text\n**Role:** CA Intern\n**Company:** Deutsche Bank Group\n**Location:** Mumbai, India\n**Job ID:** Not available\n\n**Key Responsibilities:**\n- Analyze and report on the development of DB Group capital adequacy, with focus on ensuring mutual information between Pillar 1 (regulatory models) and Pillar 2 capital metrics (economic capital)\n- Manage the economic capital model for earnings volatility risk under stress, including analysis of input/output, enhancement initiatives, and regular model maintenance\n- Support in framework enhancements related to non-standard risks (e.g., step-in risk, insurance risk)\n- Participate in projects related to capital adequacy topics and coordinate internal and external ICAAP-related forums (e.g., monthly ICAAP Council, engagement with supervisors)\n- Monitor and drive the management of regulatory changes related to the team's book of work\n- Support in the implementation of measures required by supervisors and auditors\n\n**Requirements:**\n- Good knowledge of risk management frameworks and the key regulations related to capital adequacy (ICAAP)\n- Strong project management skills - ability to perform within tight deadlines and remain agile to evolving requirements\n- Innovative and proactive mindset with ability to drive change in the organization\n- Proficiency with MS Office (Excel, PowerPoint)\n- Soft skills - Ability to communicate effectively (oral & written)\n- Analytical / business problem-solving skills\n- Strong analytical / business problem-solving skills\n- Ability to manage own time\n- Passion for change and confidence in own abilities\n- Diligent, thorough, shows initiative and is proactive\n- Self-motivated and pro-active team-player\n\n**Details:**\n- Should be eligible for Industrial Training as per the ICAI rules and regulations.\n- Training and development to help you excel in your career\n- Coaching and support from experts in your team\n- A culture of continuous learning to aid progression\n- A range of flexible benefits that you can tailor to suit your needs\n- About us and our teams Please visit our company website for further information: https://www.db.com/company/company.html\n```",
+      "expected_verdict": "PASS",
+      "expected_reasoning": "Comprehensive and accurate. Captures all key responsibilities, requirements, and benefits. Proper template formatting. No hallucinations.",
+      "reasoning": "CA Intern posting - detailed summary with benefits section"
+    },
+    {
+      "id": "GRADE_PASS_004",
+      "type": "PASS",
+      "difficulty": "easy",
+      "posting_id": 176,
+      "interaction_id": 221,
+      "workflow_run_id": null,
+      "original_posting": {
+        "job_title": "Test Job Title",
+        "job_description": "Job Description: Job Title: CA Intern Location: Mumbai, India [Same as GRADE_PASS_003]"
+      },
+      "summary": "```text\n**Role:** CA Intern\n**Company:** Deutsche Bank Group\n**Location:** Mumbai, India\n**Job ID:** Not Available\n\n**Key Responsibilities:**\n- Analyze and report on the development of DB Group capital adequacy, with focus on ensuring mutual information between Pillar 1 (regulatory models) and Pillar 2 capital metrics (economic capital).\n- Manage the economic capital model for earnings volatility risk under stress, including analysis of input/output, enhancement initiatives, and regular model maintenance.\n- Support in framework enhancements related to non-standard risks (e.g., step-in risk, insurance risk).\n- Participate in projects related to capital adequacy topics and coordinate internal and external ICAAP-related forums (e.g., monthly ICAAP Council, engagement with supervisors).\n- Monitor and drive the management of regulatory changes related to the team's book of work.\n- Support in the implementation of measures required by supervisors and auditors.\n\n**Requirements:**\n- Good knowledge of risk management frameworks and the key regulations related to capital adequacy (ICAAP).\n- Strong project management skills – ability to perform within tight deadlines and remain agile to evolving requirements.\n- Innovative and proactive mindset with ability to drive change in the organization.\n- Proficiency with MS Office (Excel, PowerPoint).\n- Soft skills – Ability to communicate effectively (oral & written).\n- Analytical / business problem-solving skills.\n- Strong analytical / business problem-solving skills.\n- Ability to manage own time.\n- Passion for change and confidence in own abilities.\n- Diligent, thorough, shows initiative and is proactive.\n- Self-motivated and pro-active team-player.\n- Eligibility for Industrial Training as per the ICAI rules and regulations.\n```",
+      "expected_verdict": "PASS",
+      "expected_reasoning": "Accurate summary with clean formatting. Minor difference from PASS_003 (periods instead of commas) but content is faithful to original.",
+      "reasoning": "Same CA Intern posting - slight formatting variation but still correct"
+    },
+    {
+      "id": "GRADE_PASS_005",
+      "type": "PASS",
+      "difficulty": "medium",
+      "posting_id": 176,
+      "interaction_id": 215,
+      "workflow_run_id": null,
+      "original_posting": {
+        "job_title": "Test Job Title",
+        "job_description": "Job Description: Job Title: CA Intern Location: Mumbai, India [Same as GRADE_PASS_003]"
+      },
+      "summary": "Here's a concise job description summary based solely on the provided text:\n\n**Role:** CA Intern\n**Company:** Deutsche Bank Group\n**Location:** Mumbai, India\n**Job ID:** Not available\n\n**Key Responsibilities:**\n- Analyze and report on DB Group capital adequacy, focusing on Pillar 1 & Pillar 2 metrics.\n- Manage economic capital model for earnings volatility risk.\n- Support framework enhancements related to non-standard risks.\n- Participate in ICAAP-related projects.\n- Monitor regulatory changes impacting the team's book of work.\n\n**Requirements:**\n- Strong risk management framework knowledge.\n- Project management skills.\n- Innovative thinking & proactive mindset.\n- Excellent communication skills.\n- Ability to manage own time.\n\n**Details:**\n- Internship opportunity.\n- Training and development provided.\n- Supportive culture and benefits.\n\n---",
+      "expected_verdict": "PASS",
+      "expected_reasoning": "Concise but complete. Captures essential information accurately without unnecessary detail. Good compression while maintaining fidelity to original. Proper structure.",
+      "reasoning": "Condensed version - tests if grader accepts concise but faithful summaries"
+    },
+    {
+      "id": "GRADE_FAIL_003",
+      "type": "FAIL",
+      "difficulty": "easy",
+      "posting_id": 176,
+      "interaction_id": 209,
+      "workflow_run_id": null,
+      "original_posting": {
+        "job_title": "Test Job Title",
+        "job_description": "Job Description: Job Title: CA Intern Location: Mumbai, India [Same as GRADE_PASS_003]"
+      },
+      "summary": "Please provide the job posting text. I need the text to create the job description summary.",
+      "expected_verdict": "FAIL",
+      "expected_reasoning": "PROCESSING FAILURE. AI didn't process input - asked for job posting instead of creating summary. Original posting WAS provided but AI failed to receive/process it. Complete task failure.",
+      "reasoning": "AI had processing error or prompt didn't include posting data properly"
+    },
+    {
+      "id": "GRADE_FAIL_004",
+      "type": "FAIL",
+      "difficulty": "medium",
+      "posting_id": 176,
+      "interaction_id": 212,
+      "workflow_run_id": null,
+      "original_posting": {
+        "job_title": "Test Job Title",
+        "job_description": "Job Description: Job Title: CA Intern Location: Mumbai, India [Same as GRADE_PASS_003]"
+      },
+      "summary": "**Role:** CA Intern\n**Company:** Deutsche Bank Group\n**Location:** Mumbai, India\n**Job ID:** Not Available\n\n**Key Responsibilities:**\n- Analyze and report on the development of DB Group capital adequacy, with focus on ensuring mutual information between Pillar 1 (regulatory models) and Pillar 2 capital metrics (economic capital).\n- Manage the economic capital model for earnings volatility risk under stress, including analysis of input/output, enhancement initiatives, and regular model maintenance.\n- Support in framework enhancements related to non-standard risks (e.g., step-in risk, insurance risk).\n- Participate in projects related to capital adequacy topics and coordinate internal and external ICAAP-related forums (e.g., monthly ICAAP Council, engagement with supervisors).\n- Monitor and drive the management of regulatory changes related to the team's book of work.\n- Support in the implementation of measures required by supervisors and auditors.\n\n**Requirements:**\n- Good knowledge of risk management frameworks and the key regulations related to capital adequacy (ICAAP).\n- Strong project management skills - ability to perform within tight deadlines and remain agile to evolving requirements.\n- Innovative and proactive mindset with ability to drive change in the organization.\n- Proficiency with MS Office (Excel, PowerPoint).\n- Soft skills – ability to communicate effectively (oral & written), strong analytical / business problem-solving skills, ability to manage own time, passion for change, confidence, and initiative.\n- Diligent, thorough, shows initiative and is proactive.\n- Self-motivated and pro-active team-player.\n- Should be eligible for Industrial Training as per the ICAI rules and regulations.",
+      "expected_verdict": "FAIL",
+      "expected_reasoning": "FORMATTING NON-COMPLIANCE. Content is 100% accurate to original posting, but missing required template markers (===OUTPUT TEMPLATE===) and code block formatting (```text). While accurate, doesn't follow required format.",
+      "reasoning": "Tests formatting strictness - content correct but template non-compliant"
+    },
+    {
+      "id": "GRADE_FAIL_005",
+      "type": "FAIL",
+      "difficulty": "hard",
+      "posting_id": 176,
+      "interaction_id": 217,
+      "workflow_run_id": null,
+      "original_posting": {
+        "job_title": "Test Job Title",
+        "job_description": "Job Description: Job Title: CA Intern Location: Mumbai, India [Same as GRADE_PASS_003]"
+      },
+      "summary": "```text\n===OUTPUT TEMPLATE===\n**Role:** CA Intern\n**Company:** Deutsche Bank Group\n**Location:** Mumbai, India\n**Job ID:** Not Provided\n**Key Responsibilities:**\n- Analyze and report on the development of DB Group capital adequacy, with focus on ensuring mutual information between Pillar 1 (regulatory models) and Pillar 2 capital metrics (economic capital)\n- Manage the economic capital model for earnings volatility risk under stress, including analysis of input/output, enhancement initiatives, and regular model maintenance\n- Support in framework enhancements related to non-standard risks (e.g., step-in risk, insurance risk)\n- Participate in projects related to capital adequacy topics and coordinate internal and external ICAAP-related forums (e.g., monthly ICAAP Council, engagement with supervisors)\n- Monitor and drive the management of regulatory changes related to the team's book of work\n- Support in the implementation of measures required by supervisors and auditors\n- Good knowledge of risk management frameworks and the key regulations related to capital adequacy (ICAAP)\n- Strong project management skills - ability to perform within tight deadlines and remain agile to evolving requirements\n- Innovative and proactive mindset with ability to drive change in the organization\n- Proficiency with MS Office (Excel, PowerPoint)\n- Soft skills - Ability to communicate effectively (oral & written)\n- Strong analytical / business problem-solving skills\n- Well organized & able to clearly present results of work\n- Ability to manage own time\n- Passion for change and confidence in own abilities\n- Diligent, thorough, shows initiative and is proactive\n- Self-motivated and pro-active team-player\n- Eligibility: Should be eligible for Industrial Training as per the ICAI rules and regulations.\n```",
+      "expected_verdict": "FAIL",
+      "expected_reasoning": "STRUCTURAL ERROR. Content is accurate to original, but Requirements mixed into Key Responsibilities section. No separate **Requirements:** section. Violates required structure despite having correct information.",
+      "reasoning": "Tests structural compliance - content right but organization wrong"
+    }
+  ],
+  "metadata": {
+    "total_cases": 10,
+    "pass_cases": 5,
+    "fail_cases": 5,
+    "difficulty_distribution": {
+      "easy": 4,
+      "medium": 4,
+      "hard": 2
+    },
+    "source": "Real production workflow runs and interactions from ty_wave database",
+    "purpose": "Benchmark grading models to replace gemma2:latest with faster model maintaining 100% correctness",
+    "changes_from_v1": "Added original_posting field to all test cases. Models now have context to compare summaries against source material and detect hallucinations/inaccuracies."
+  }
+}

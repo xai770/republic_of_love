@@ -1,0 +1,12 @@
+[theme]
+# Custom theme to override Streamlit's default selection color
+primaryColor = "#1e90ff"  # Dodger blue
+backgroundColor = "#0e1117"  # Dark background
+secondaryBackgroundColor = "#262730"  # Slightly lighter
+textColor = "#fafafa"  # Light text
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+fastReruns = true

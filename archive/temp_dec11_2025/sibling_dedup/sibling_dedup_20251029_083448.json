@@ -1,0 +1,292 @@
+{
+  "timestamp": "20251029_083448",
+  "model": "qwen2.5:7b",
+  "parents_processed": 57,
+  "results": [
+    {
+      "parent": "Finance",
+      "merged": 1,
+      "children_moved": 0
+    },
+    {
+      "parent": "Business Skills",
+      "merged": 1,
+      "children_moved": 1
+    },
+    {
+      "parent": "Technical Skills",
+      "merged": 4,
+      "children_moved": 12
+    },
+    {
+      "parent": "Technical",
+      "merged": 1,
+      "children_moved": 1
+    },
+    {
+      "parent": "Communication",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Soft Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Programming",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Leadership",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Sales",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Database",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Industry Knowledge",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Operations Management",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Risk Management Skills",
+      "merged": 2,
+      "children_moved": 1
+    },
+    {
+      "parent": "Soft Skills",
+      "merged": 2,
+      "children_moved": 2
+    },
+    {
+      "parent": "Communication Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Financial Concepts And Analysis",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "It Security",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Marketing",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Cloud",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Financial Mgmt",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "It Infrastructure",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Leadership And Management Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Project Management",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Customer Relationship Management",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Regulatory Compliance",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Risk Assessment and Mitigation",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Security",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Standards",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Strategic Thinking",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Analytics",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Law",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Legal And Regulatory",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Problem_Solving",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Software Engineering",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Written Communication",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Compliance And Regulatory Knowledge",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Database Management",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Leadership Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Marketing And Sales Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Networking",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Operations",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Security And ",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Strategic Planning",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "System Administration",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Audit And Compliance",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Business Strategy",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Data Analysis",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Development Tools And Techniques",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Domain",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Interpersonal Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Networking",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Planning And Organizational Skills",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Planning And Organizing",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Risk Management Tools And Techniques",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Software Development",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Team Management",
+      "merged": 0,
+      "children_moved": 0
+    },
+    {
+      "parent": "Writing Skills",
+      "merged": 0,
+      "children_moved": 0
+    }
+  ]
+}

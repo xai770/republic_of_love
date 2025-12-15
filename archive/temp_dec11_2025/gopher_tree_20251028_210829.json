@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_210829",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/LOGISTIC_MANAGEMENT",
+    "ROOT/PROCUREMENT_AND_SOURCING",
+    "ROOT/STRATEGIC_PLANNING"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

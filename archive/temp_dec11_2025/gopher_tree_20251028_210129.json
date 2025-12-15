@@ -1,0 +1,17 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_210129",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/TECHNICAL_SKILLS",
+    "ROOT/DOMAIN_KNOWLEDGE",
+    "ROOT/BUSINESS_ANALYSIS/MARKET_ANALYSIS",
+    "ROOT/BUSINESS_ANALYSIS/FINANCIAL_ANALYSIS",
+    "ROOT/BUSINESS_ANALYSIS/STRATEGIC_PLANNING"
+  ],
+  "stats": {
+    "nodes_explored": 7,
+    "leaf_nodes": 5,
+    "max_depth": 6
+  }
+}

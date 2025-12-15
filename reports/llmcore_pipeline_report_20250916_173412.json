@@ -1,0 +1,243 @@
+{
+  "pipeline_run": {
+    "timestamp": "2025-09-16T17:34:12.558661",
+    "results": [
+      {
+        "type": "job_posting_validation",
+        "models_tested": [
+          "llama3.2:1b",
+          "gemma3:1b",
+          "llama3.2:latest"
+        ],
+        "postings_tested": 5,
+        "tests_completed": 0,
+        "summary": {
+          "total_tests": 60,
+          "completed": 60,
+          "failed": 0,
+          "success_rate": 100.0,
+          "avg_latency": 9.764870882034302,
+          "per_model": [
+            {
+              "model": "llama3.2:latest",
+              "completed": 20,
+              "total": 20,
+              "success_rate": 100.0,
+              "avg_latency": 9.122662138938903
+            },
+            {
+              "model": "llama3.2:1b",
+              "completed": 20,
+              "total": 20,
+              "success_rate": 100.0,
+              "avg_latency": 12.198744249343871
+            },
+            {
+              "model": "gemma3:1b",
+              "completed": 20,
+              "total": 20,
+              "success_rate": 100.0,
+              "avg_latency": 7.973206257820129
+            }
+          ]
+        },
+        "timestamp": "2025-09-16T17:34:12.550002"
+      },
+      {
+        "comparison": {
+          "overall": {
+            "canonical": {
+              "total": 24,
+              "completed": 24,
+              "success_rate": 100.0,
+              "avg_latency": 10.895305226246515
+            },
+            "job_posting": {
+              "total": 20,
+              "completed": 20,
+              "success_rate": 100.0,
+              "avg_latency": 7.973206257820129
+            },
+            "success_rate_diff": 0.0,
+            "latency_diff": -2.9220989684263863
+          },
+          "per_model": {
+            "llama3.2:1b": {
+              "canonical": {
+                "total": 24,
+                "completed": 24,
+                "success_rate": 100.0,
+                "avg_latency": 9.33476925889651
+              },
+              "job_posting": {
+                "total": 20,
+                "completed": 20,
+                "success_rate": 100.0,
+                "avg_latency": 12.198744249343871
+              },
+              "success_rate_diff": 0.0,
+              "latency_diff": 2.863974990447362
+            },
+            "gemma3:1b": {
+              "canonical": {
+                "total": 24,
+                "completed": 24,
+                "success_rate": 100.0,
+                "avg_latency": 10.895305226246515
+              },
+              "job_posting": {
+                "total": 20,
+                "completed": 20,
+                "success_rate": 100.0,
+                "avg_latency": 7.973206257820129
+              },
+              "success_rate_diff": 0.0,
+              "latency_diff": -2.9220989684263863
+            },
+            "llama3.2:latest": {
+              "canonical": {
+                "total": 24,
+                "completed": 24,
+                "success_rate": 100.0,
+                "avg_latency": 14.3568876683712
+              },
+              "job_posting": {
+                "total": 20,
+                "completed": 20,
+                "success_rate": 100.0,
+                "avg_latency": 9.122662138938903
+              },
+              "success_rate_diff": 0.0,
+              "latency_diff": -5.2342255294322975
+            }
+          }
+        },
+        "quality": {
+          "samples": [
+            {
+              "job_id": "64651",
+              "model": "gemma3:1b",
+              "response_length": 2808,
+              "has_json_marker": true,
+              "has_json_structure": true,
+              "latency": 8.319764375686646
+            },
+            {
+              "job_id": "64726",
+              "model": "llama3.2:1b",
+              "response_length": 1669,
+              "has_json_marker": true,
+              "has_json_structure": true,
+              "latency": 11.492186546325684
+            },
+            {
+              "job_id": "64640",
+              "model": "llama3.2:1b",
+              "response_length": 2014,
+              "has_json_marker": true,
+              "has_json_structure": true,
+              "latency": 12.621245861053467
+            },
+            {
+              "job_id": "61951",
+              "model": "llama3.2:latest",
+              "response_length": 1713,
+              "has_json_marker": true,
+              "has_json_structure": true,
+              "latency": 9.688912630081177
+            },
+            {
+              "job_id": "60463",
+              "model": "gemma3:1b",
+              "response_length": 2637,
+              "has_json_marker": true,
+              "has_json_structure": true,
+              "latency": 7.600986480712891
+            }
+          ],
+          "length_stats": {
+            "gemma3:1b": {
+              "avg_length": 2858.45,
+              "min_length": 1989,
+              "max_length": 3736
+            },
+            "llama3.2:1b": {
+              "avg_length": 1994.7,
+              "min_length": 1533,
+              "max_length": 2580
+            },
+            "llama3.2:latest": {
+              "avg_length": 1886.2,
+              "min_length": 1450,
+              "max_length": 2408
+            }
+          }
+        },
+        "readiness": {
+          "llama3.2:1b": {
+            "score": 95,
+            "classification": "PRODUCTION_READY",
+            "risk_level": "Low",
+            "criteria": {
+              "job_success_rate": 100.0,
+              "canonical_success_rate": 100.0,
+              "avg_latency": 12.198744249343871,
+              "success_rate_consistency": 0.0,
+              "latency_consistency": 2.863974990447362
+            },
+            "reasons": [
+              "Excellent job posting success rate (100.0%)",
+              "Consistent success rate (\u00b10.0%)",
+              "Good response time (12.2s)",
+              "Strong canonical baseline (100.0%)"
+            ]
+          },
+          "gemma3:1b": {
+            "score": 100,
+            "classification": "PRODUCTION_READY",
+            "risk_level": "Low",
+            "criteria": {
+              "job_success_rate": 100.0,
+              "canonical_success_rate": 100.0,
+              "avg_latency": 7.973206257820129,
+              "success_rate_consistency": 0.0,
+              "latency_consistency": 2.9220989684263863
+            },
+            "reasons": [
+              "Excellent job posting success rate (100.0%)",
+              "Consistent success rate (\u00b10.0%)",
+              "Fast response time (8.0s)",
+              "Strong canonical baseline (100.0%)"
+            ]
+          },
+          "llama3.2:latest": {
+            "score": 100,
+            "classification": "PRODUCTION_READY",
+            "risk_level": "Low",
+            "criteria": {
+              "job_success_rate": 100.0,
+              "canonical_success_rate": 100.0,
+              "avg_latency": 9.122662138938903,
+              "success_rate_consistency": 0.0,
+              "latency_consistency": 5.2342255294322975
+            },
+            "reasons": [
+              "Excellent job posting success rate (100.0%)",
+              "Consistent success rate (\u00b10.0%)",
+              "Fast response time (9.1s)",
+              "Strong canonical baseline (100.0%)"
+            ]
+          }
+        },
+        "generated_at": "2025-09-16T17:34:12.558626"
+      }
+    ],
+    "summary": {
+      "job_posting": {
+        "completed": 0,
+        "postings_tested": 5,
+        "success_rate": 100.0
+      }
+    }
+  }
+}

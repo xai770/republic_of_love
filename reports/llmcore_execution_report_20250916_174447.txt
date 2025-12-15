@@ -1,0 +1,275 @@
+================================================================================
+🏆 LLMCore Execution Report
+================================================================================
+Generated: 2025-09-16 17:44:47
+
+📊 EXECUTION OVERVIEW
+----------------------------------------
+Total Tests Defined: 192
+Completed Tests: 174
+Pending Tests: 0
+Failed Tests: 18
+Success Rate: 90.63%
+Average Latency: 30.93s
+
+🤖 MODEL PERFORMANCE
+----------------------------------------
+Model                Tests    Success  Rate     Avg Lat    Min      Max     
+--------------------------------------------------------------------------------
+llama3.2:1b          24       24       100.0   % 9.33      s 2.5     s 17.76   s
+gemma3:1b            24       24       100.0   % 10.9      s 2.49    s 16.31   s
+llama3.2:latest      24       24       100.0   % 14.36     s 4.62    s 28.69   s
+phi3:latest          24       24       100.0   % 28.82     s 6.09    s 58.26   s
+mistral:latest       24       24       100.0   % 31.44     s 8.95    s 81.69   s
+dolphin3:latest      24       24       100.0   % 39.58     s 9.2     s 83.29   s
+dolphin3:8b          24       24       100.0   % 42.33     s 10.88   s 93.1    s
+deepseek-r1:8b       24       6        25.0    % 189.79    s 41.54   s 293.53  s
+
+📋 CANONICAL PERFORMANCE
+----------------------------------------
+Canonical       Description                    Tests    Success  Rate     Avg Lat   
+--------------------------------------------------------------------------------
+ce_clean_extract_gemma3_1b                                1        1        100.0   % 2.49      s
+ce_clean_extract_llama3_2_1b                                1        1        100.0   % 2.5       s
+ot_output_template_gemma3_1b                                1        1        100.0   % 3.16      s
+ld_learn_classify_llama3_2_1b                                1        1        100.0   % 4.29      s
+ce_clean_extract_llama3_2_latest                                1        1        100.0   % 4.62      s
+ot_output_template_llama3_2_1b                                1        1        100.0   % 4.62      s
+ld_learn_classify_gemma3_1b                                1        1        100.0   % 4.83      s
+ot_output_template_llama3_2_latest                                1        1        100.0   % 5.47      s
+mt_memory_track_context_llama3_2_1b                                1        1        100.0   % 5.58      s
+ce_clean_extract_phi3_latest                                1        1        100.0   % 6.09      s
+ld_learn_classify_llama3_2_latest                                1        1        100.0   % 6.14      s
+ot_output_template_phi3_latest                                1        1        100.0   % 6.42      s
+kv_vocabularies_gemma3_1b                                1        1        100.0   % 6.73      s
+ri_reason_induce_llama3_2_1b                                1        1        100.0   % 7.15      s
+ra_reason_abduce_llama3_2_1b                                1        1        100.0   % 7.99      s
+ps_plan_strategy_llama3_2_1b Tests the LLM's ability to e.. 1        1        100.0   % 8.08      s
+rw_reason_what_if_llama3_2_1b                                1        1        100.0   % 8.44      s
+lf_memory_keep_focus_llama3_2_1b Tests the LLM's ability to m.. 1        1        100.0   % 8.6       s
+kr_know_implicit_requirements_gemma3_1b                                1        1        100.0   % 8.62      s
+gv_group_validate_llama3_2_1b                                1        1        100.0   % 8.66      s
+lf_memory_keep_focus_gemma3_1b Tests the LLM's ability to m.. 1        1        100.0   % 8.85      s
+ms_memory_maintain_state_llama3_2_1b Tests the LLM's ability to t.. 1        1        100.0   % 8.89      s
+ce_clean_extract_mistral_latest                                1        1        100.0   % 8.95      s
+ce_clean_extract_dolphin3_latest                                1        1        100.0   % 9.2       s
+rb_reason_cost_benefits_llama3_2_1b                                1        1        100.0   % 9.25      s
+kv_vocabularies_llama3_2_1b                                1        1        100.0   % 9.27      s
+la_learn_accept_reject_llama3_2_1b                                1        1        100.0   % 9.57      s
+ra_reason_abduce_gemma3_1b                                1        1        100.0   % 9.91      s
+kr_know_implicit_requirements_llama3_2_latest                                1        1        100.0   % 9.93      s
+mt_memory_track_context_llama3_2_latest                                1        1        100.0   % 9.96      s
+rc_reason_common_sense_llama3_2_1b Tests the LLM's ability to f.. 1        1        100.0   % 10.17     s
+kr_know_implicit_requirements_llama3_2_1b                                1        1        100.0   % 10.19     s
+rr_reason_recognize_intent_llama3_2_1b Tests the LLM's ability to u.. 1        1        100.0   % 10.55     s
+ms_memory_maintain_state_gemma3_1b Tests the LLM's ability to t.. 1        1        100.0   % 10.65     s
+ce_clean_extract_dolphin3_8b                                1        1        100.0   % 10.88     s
+pt_plan_split_task_llama3_2_1b                                1        1        100.0   % 10.89     s
+gr_group_rank_llama3_2_1b                                1        1        100.0   % 11.03     s
+rd_reason_deduce_llama3_2_1b                                1        1        100.0   % 11.1      s
+ld_learn_classify_mistral_latest                                1        1        100.0   % 11.29     s
+ot_output_template_mistral_latest                                1        1        100.0   % 11.37     s
+oc_combine_outputs_gemma3_1b Tests the LLM's ability to s.. 1        1        100.0   % 11.39     s
+la_learn_accept_reject_gemma3_1b                                1        1        100.0   % 11.42     s
+ps_plan_strategy_gemma3_1b Tests the LLM's ability to e.. 1        1        100.0   % 11.48     s
+fp_fulfill_prioritize_llama3_2_1b                                1        1        100.0   % 11.5      s
+ri_reason_induce_llama3_2_latest                                1        1        100.0   % 11.59     s
+rb_reason_cost_benefits_gemma3_1b                                1        1        100.0   % 11.73     s
+ps_plan_strategy_llama3_2_latest Tests the LLM's ability to e.. 1        1        100.0   % 11.76     s
+ri_reason_induce_gemma3_1b                                1        1        100.0   % 11.95     s
+li_learn_integrate_llama3_2_1b Tests the LLM's ability to t.. 1        1        100.0   % 11.98     s
+mt_memory_track_context_gemma3_1b                                1        1        100.0   % 11.99     s
+rw_reason_what_if_gemma3_1b                                1        1        100.0   % 12.16     s
+gv_group_validate_llama3_2_latest                                1        1        100.0   % 12.26     s
+ms_memory_maintain_state_llama3_2_latest Tests the LLM's ability to t.. 1        1        100.0   % 12.26     s
+oc_combine_outputs_llama3_2_latest Tests the LLM's ability to s.. 1        1        100.0   % 12.26     s
+ot_output_template_dolphin3_latest                                1        1        100.0   % 12.38     s
+rr_reason_recognize_intent_gemma3_1b Tests the LLM's ability to u.. 1        1        100.0   % 12.79     s
+gr_group_rank_gemma3_1b                                1        1        100.0   % 12.82     s
+rw_reason_what_if_llama3_2_latest                                1        1        100.0   % 12.85     s
+rd_reason_deduce_gemma3_1b                                1        1        100.0   % 13.02     s
+rd_reason_deduce_llama3_2_latest                                1        1        100.0   % 13.05     s
+fp_fulfill_prioritize_gemma3_1b                                1        1        100.0   % 13.22     s
+pt_plan_split_task_gemma3_1b                                1        1        100.0   % 13.47     s
+ot_output_template_dolphin3_8b                                1        1        100.0   % 13.54     s
+la_learn_accept_reject_phi3_latest                                1        1        100.0   % 13.68     s
+ra_reason_abduce_llama3_2_latest                                1        1        100.0   % 14.01     s
+gv_group_validate_gemma3_1b                                1        1        100.0   % 14.02     s
+li_learn_integrate_gemma3_1b Tests the LLM's ability to t.. 1        1        100.0   % 14.03     s
+rc_reason_common_sense_gemma3_1b Tests the LLM's ability to f.. 1        1        100.0   % 14.47     s
+ld_learn_classify_phi3_latest                                1        1        100.0   % 14.54     s
+rr_reason_recognize_intent_llama3_2_latest Tests the LLM's ability to u.. 1        1        100.0   % 14.82     s
+la_learn_accept_reject_llama3_2_latest                                1        1        100.0   % 15.49     s
+ca_clean_audit_llama3_2_latest                                1        1        100.0   % 15.69     s
+ra_reason_abduce_dolphin3_latest                                1        1        100.0   % 15.7      s
+kv_vocabularies_llama3_2_latest                                1        1        100.0   % 15.76     s
+oc_combine_outputs_llama3_2_1b Tests the LLM's ability to s.. 1        1        100.0   % 15.95     s
+ca_clean_audit_gemma3_1b                                1        1        100.0   % 16.31     s
+kr_know_implicit_requirements_phi3_latest                                1        1        100.0   % 16.6      s
+ms_memory_maintain_state_mistral_latest Tests the LLM's ability to t.. 1        1        100.0   % 16.76     s
+rc_reason_common_sense_llama3_2_latest Tests the LLM's ability to f.. 1        1        100.0   % 17.33     s
+li_learn_integrate_llama3_2_latest Tests the LLM's ability to t.. 1        1        100.0   % 17.37     s
+ld_learn_classify_dolphin3_latest                                1        1        100.0   % 17.54     s
+kv_vocabularies_phi3_latest                                1        1        100.0   % 17.59     s
+ca_clean_audit_llama3_2_1b                                1        1        100.0   % 17.76     s
+gr_group_rank_llama3_2_latest                                1        1        100.0   % 18.11     s
+fp_fulfill_prioritize_llama3_2_latest                                1        1        100.0   % 18.27     s
+rw_reason_what_if_mistral_latest                                1        1        100.0   % 19.37     s
+ra_reason_abduce_dolphin3_8b                                1        1        100.0   % 20.43     s
+rb_reason_cost_benefits_llama3_2_latest                                1        1        100.0   % 20.85     s
+ld_learn_classify_dolphin3_8b                                1        1        100.0   % 21.16     s
+ps_plan_strategy_phi3_latest Tests the LLM's ability to e.. 1        1        100.0   % 21.4      s
+oc_combine_outputs_mistral_latest Tests the LLM's ability to s.. 1        1        100.0   % 23.13     s
+lf_memory_keep_focus_phi3_latest Tests the LLM's ability to m.. 1        1        100.0   % 23.29     s
+ra_reason_abduce_phi3_latest                                1        1        100.0   % 23.67     s
+ri_reason_induce_phi3_latest                                1        1        100.0   % 24.7      s
+rw_reason_what_if_phi3_latest                                1        1        100.0   % 24.75     s
+rr_reason_recognize_intent_phi3_latest Tests the LLM's ability to u.. 1        1        100.0   % 24.93     s
+kr_know_implicit_requirements_mistral_latest                                1        1        100.0   % 25.17     s
+lf_memory_keep_focus_mistral_latest Tests the LLM's ability to m.. 1        1        100.0   % 25.23     s
+gv_group_validate_mistral_latest                                1        1        100.0   % 25.36     s
+kv_vocabularies_mistral_latest                                1        1        100.0   % 25.96     s
+rd_reason_deduce_mistral_latest                                1        1        100.0   % 26.0      s
+fp_fulfill_prioritize_phi3_latest                                1        1        100.0   % 26.02     s
+pt_plan_split_task_llama3_2_latest                                1        1        100.0   % 26.02     s
+li_learn_integrate_phi3_latest Tests the LLM's ability to t.. 1        1        100.0   % 27.01     s
+ri_reason_induce_mistral_latest                                1        1        100.0   % 27.11     s
+mt_memory_track_context_mistral_latest                                1        1        100.0   % 27.5      s
+kr_know_implicit_requirements_dolphin3_8b                                1        1        100.0   % 27.84     s
+rw_reason_what_if_dolphin3_latest                                1        1        100.0   % 27.85     s
+mt_memory_track_context_dolphin3_8b                                1        1        100.0   % 27.97     s
+lf_memory_keep_focus_llama3_2_latest Tests the LLM's ability to m.. 1        1        100.0   % 28.69     s
+ri_reason_induce_dolphin3_8b                                1        1        100.0   % 29.14     s
+mt_memory_track_context_dolphin3_latest                                1        1        100.0   % 29.2      s
+la_learn_accept_reject_dolphin3_8b                                1        1        100.0   % 29.8      s
+ms_memory_maintain_state_dolphin3_latest Tests the LLM's ability to t.. 1        1        100.0   % 30.8      s
+ps_plan_strategy_mistral_latest Tests the LLM's ability to e.. 1        1        100.0   % 31.3      s
+gv_group_validate_dolphin3_latest                                1        1        100.0   % 31.76     s
+oc_combine_outputs_phi3_latest Tests the LLM's ability to s.. 1        1        100.0   % 31.89     s
+rw_reason_what_if_dolphin3_8b                                1        1        100.0   % 32.36     s
+gr_group_rank_dolphin3_8b                                1        1        100.0   % 32.81     s
+kv_vocabularies_dolphin3_latest                                1        1        100.0   % 34.12     s
+li_learn_integrate_mistral_latest Tests the LLM's ability to t.. 1        1        100.0   % 34.46     s
+la_learn_accept_reject_mistral_latest                                1        1        100.0   % 35.03     s
+rr_reason_recognize_intent_mistral_latest Tests the LLM's ability to u.. 1        1        100.0   % 35.15     s
+ca_clean_audit_mistral_latest                                1        1        100.0   % 35.24     s
+ri_reason_induce_dolphin3_latest                                1        1        100.0   % 35.78     s
+ca_clean_audit_phi3_latest                                1        1        100.0   % 35.95     s
+gr_group_rank_phi3_latest                                1        1        100.0   % 36.95     s
+rb_reason_cost_benefits_phi3_latest                                1        1        100.0   % 37.03     s
+la_learn_accept_reject_dolphin3_latest                                1        1        100.0   % 37.1      s
+fp_fulfill_prioritize_dolphin3_8b                                1        1        100.0   % 37.14     s
+rd_reason_deduce_phi3_latest                                1        1        100.0   % 37.69     s
+rr_reason_recognize_intent_dolphin3_latest Tests the LLM's ability to u.. 1        1        100.0   % 38.18     s
+rb_reason_cost_benefits_dolphin3_latest                                1        1        100.0   % 38.5      s
+rd_reason_deduce_dolphin3_8b                                1        1        100.0   % 38.6      s
+rb_reason_cost_benefits_mistral_latest                                1        1        100.0   % 38.89     s
+gv_group_validate_dolphin3_8b                                1        1        100.0   % 39.63     s
+fp_fulfill_prioritize_mistral_latest                                1        1        100.0   % 39.69     s
+gr_group_rank_mistral_latest                                1        1        100.0   % 40.31     s
+ps_plan_strategy_dolphin3_latest Tests the LLM's ability to e.. 1        1        100.0   % 40.52     s
+ce_clean_extract_deepseek-r1_8b                                1        1        100.0   % 41.54     s
+lf_memory_keep_focus_dolphin3_8b Tests the LLM's ability to m.. 1        1        100.0   % 42.1      s
+oc_combine_outputs_dolphin3_8b Tests the LLM's ability to s.. 1        1        100.0   % 42.39     s
+pt_plan_split_task_phi3_latest                                1        1        100.0   % 42.98     s
+kr_know_implicit_requirements_dolphin3_latest                                1        1        100.0   % 44.04     s
+fp_fulfill_prioritize_dolphin3_latest                                1        1        100.0   % 44.63     s
+mt_memory_track_context_phi3_latest                                1        1        100.0   % 44.67     s
+lf_memory_keep_focus_dolphin3_latest Tests the LLM's ability to m.. 1        1        100.0   % 44.79     s
+oc_combine_outputs_dolphin3_latest Tests the LLM's ability to s.. 1        1        100.0   % 45.11     s
+gr_group_rank_dolphin3_latest                                1        1        100.0   % 45.52     s
+rc_reason_common_sense_phi3_latest Tests the LLM's ability to f.. 1        1        100.0   % 45.55     s
+ms_memory_maintain_state_dolphin3_8b Tests the LLM's ability to t.. 1        1        100.0   % 46.4      s
+ra_reason_abduce_mistral_latest                                1        1        100.0   % 46.56     s
+gv_group_validate_phi3_latest                                1        1        100.0   % 50.16     s
+ot_output_template_deepseek-r1_8b                                1        1        100.0   % 50.42     s
+kv_vocabularies_dolphin3_8b                                1        1        100.0   % 51.77     s
+ps_plan_strategy_dolphin3_8b Tests the LLM's ability to e.. 1        1        100.0   % 51.95     s
+pt_plan_split_task_dolphin3_latest                                1        1        100.0   % 52.2      s
+rd_reason_deduce_dolphin3_latest                                1        1        100.0   % 52.61     s
+rr_reason_recognize_intent_dolphin3_8b Tests the LLM's ability to u.. 1        1        100.0   % 52.67     s
+ms_memory_maintain_state_phi3_latest Tests the LLM's ability to t.. 1        1        100.0   % 58.26     s
+rb_reason_cost_benefits_dolphin3_8b                                1        1        100.0   % 58.48     s
+ca_clean_audit_dolphin3_8b                                1        1        100.0   % 61.14     s
+pt_plan_split_task_mistral_latest                                1        1        100.0   % 63.12     s
+li_learn_integrate_dolphin3_8b Tests the LLM's ability to t.. 1        1        100.0   % 64.67     s
+ca_clean_audit_dolphin3_latest                                1        1        100.0   % 66.65     s
+li_learn_integrate_dolphin3_latest Tests the LLM's ability to t.. 1        1        100.0   % 72.53     s
+rc_reason_common_sense_mistral_latest Tests the LLM's ability to f.. 1        1        100.0   % 81.69     s
+rc_reason_common_sense_dolphin3_latest Tests the LLM's ability to f.. 1        1        100.0   % 83.29     s
+rc_reason_common_sense_dolphin3_8b Tests the LLM's ability to f.. 1        1        100.0   % 90.02     s
+pt_plan_split_task_dolphin3_8b                                1        1        100.0   % 93.1      s
+rc_reason_common_sense_deepseek-r1_8b Tests the LLM's ability to f.. 1        1        100.0   % 237.84    s
+rb_reason_cost_benefits_deepseek-r1_8b                                1        1        100.0   % 251.93    s
+ps_plan_strategy_deepseek-r1_8b Tests the LLM's ability to e.. 1        1        100.0   % 263.49    s
+pt_plan_split_task_deepseek-r1_8b                                1        1        100.0   % 293.53    s
+ca_clean_audit_deepseek-r1_8b                                1        0        0.0     % 0         s
+fp_fulfill_prioritize_deepseek-r1_8b                                1        0        0.0     % 0         s
+gr_group_rank_deepseek-r1_8b                                1        0        0.0     % 0         s
+gv_group_validate_deepseek-r1_8b                                1        0        0.0     % 0         s
+kr_know_implicit_requirements_deepseek-r1_8b                                1        0        0.0     % 0         s
+kv_vocabularies_deepseek-r1_8b                                1        0        0.0     % 0         s
+la_learn_accept_reject_deepseek-r1_8b                                1        0        0.0     % 0         s
+ld_learn_classify_deepseek-r1_8b                                1        0        0.0     % 0         s
+lf_memory_keep_focus_deepseek-r1_8b Tests the LLM's ability to m.. 1        0        0.0     % 0         s
+li_learn_integrate_deepseek-r1_8b Tests the LLM's ability to t.. 1        0        0.0     % 0         s
+ms_memory_maintain_state_deepseek-r1_8b Tests the LLM's ability to t.. 1        0        0.0     % 0         s
+mt_memory_track_context_deepseek-r1_8b                                1        0        0.0     % 0         s
+oc_combine_outputs_deepseek-r1_8b Tests the LLM's ability to s.. 1        0        0.0     % 0         s
+ra_reason_abduce_deepseek-r1_8b                                1        0        0.0     % 0         s
+rd_reason_deduce_deepseek-r1_8b                                1        0        0.0     % 0         s
+ri_reason_induce_deepseek-r1_8b                                1        0        0.0     % 0         s
+rr_reason_recognize_intent_deepseek-r1_8b Tests the LLM's ability to u.. 1        0        0.0     % 0         s
+rw_reason_what_if_deepseek-r1_8b                                1        0        0.0     % 0         s
+
+🎯 PERFORMANCE RANKING
+----------------------------------------
+Model                Rating       Success Rate Avg Latency  Tests   
+----------------------------------------------------------------------
+llama3.2:1b          EXCELLENT    100.0       % 9.33        s 24      
+gemma3:1b            EXCELLENT    100.0       % 10.9        s 24      
+llama3.2:latest      EXCELLENT    100.0       % 14.36       s 24      
+phi3:latest          GOOD         100.0       % 28.82       s 24      
+mistral:latest       FAIR         100.0       % 31.44       s 24      
+dolphin3:latest      FAIR         100.0       % 39.58       s 24      
+dolphin3:8b          FAIR         100.0       % 42.33       s 24      
+deepseek-r1:8b       POOR         25.0        % 189.79      s 24      
+
+❌ FAILURE ANALYSIS
+----------------------------------------
+• ca_clean_audit_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• fp_fulfill_prioritize_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• gr_group_rank_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• gv_group_validate_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• kr_know_implicit_requirements_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• kv_vocabularies_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• la_learn_accept_reject_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• ld_learn_classify_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• lf_memory_keep_focus_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• li_learn_integrate_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• ms_memory_maintain_state_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• mt_memory_track_context_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• oc_combine_outputs_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 60s
+• ra_reason_abduce_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 300s
+• rd_reason_deduce_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 300s
+• ri_reason_induce_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 300s
+• rr_reason_recognize_intent_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 300s
+• rw_reason_what_if_deepseek-r1_8b / deepseek-r1:8b: failed
+  Notes: Timeout after 300s

@@ -1,0 +1,19 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_211553",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/LEADERSHIP",
+    "ROOT/STRATEGIC_PLANNING/STRATEGIC_THINKING",
+    "ROOT/STRATEGIC_PLANNING/RISK_MANAGEMENT",
+    "ROOT/STRATEGIC_PLANNING/MARKET_ANALYSIS",
+    "ROOT/REGULATORY_COMPLIANCE/REGULATORY_AWARENESS",
+    "ROOT/REGULATORY_COMPLIANCE/COMPLIANCE_MONITORING",
+    "ROOT/REGULATORY_COMPLIANCE/RISK_ASSESSMENT"
+  ],
+  "stats": {
+    "nodes_explored": 10,
+    "leaf_nodes": 7,
+    "max_depth": 6
+  }
+}

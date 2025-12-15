@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251029_011410",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/FINANCIAL_ANALYSIS",
+    "ROOT/STRATEGIC_THINKING",
+    "ROOT/MODEL_DEVELOPMENT"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

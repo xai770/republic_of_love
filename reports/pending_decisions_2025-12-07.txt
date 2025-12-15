@@ -1,0 +1,32 @@
+ decision_id |                          skill                           |     proposed_parent      | confidence 
+-------------+----------------------------------------------------------+--------------------------+------------
+         512 | multilevelcoordination                                   | business_operations      |       0.75
+         432 | BUSINESS_CONTINUITY_(EN:_BUSINESS_CONTINUITY_MANAGEMENT) | business_operations      |       0.75
+         320 | internal_operations                                      | business_operations      |       0.75
+         327 | internal_processes_and_controls                          | business_operations      |       0.75
+         420 | bankingandfinanceoperations                              | business_operations      |       0.70
+         364 | risk_evaluation                                          | compliance_and_risk      |       0.75
+         442 | cybersecurityframeworks                                  | compliance_and_risk      |       0.75
+         366 | risk_mitigation_strategies                               | compliance_and_risk      |       0.75
+         446 | DATA_PROTECTION                                          | compliance_and_risk      |       0.75
+         443 | cybersecurityguidelines                                  | compliance_and_risk      |       0.75
+         363 | resources_allocation                                     | compliance_and_risk      |       0.50
+         422 | BOARDLEVELEXPERIENCE                                     | corporate_culture        |       0.70
+         377 | market_analysis_and_risk_assessment                      | data_and_analytics       |       0.75
+         295 | SELF_MOTIVATION                                          | people_and_communication |       0.75
+         430 | professional_development                                 | people_and_communication |       0.75
+         439 | criticalthinking                                         | people_and_communication |       0.75
+         605 | Conflict Resolution                                      | people_and_communication |       0.75
+         535 | ROLE_AWARENESS                                           | people_and_communication |       0.70
+         413 | time_management                                          | people_and_communication |       0.70
+         464 | EMOTIONALLY_BALANCED                                     | people_and_communication |       0.70
+         392 | testing_and_qa                                           | project_and_product      |       0.75
+         448 | DATASERVICESPROFICIENCY                                  | specialized_knowledge    |       0.75
+         429 | corporate_social_responsibility_(csr)                    | specialized_knowledge    |       0.75
+         437 | corporate_finance_&_accounting                           | specialized_knowledge    |       0.75
+         505 | POSITION_SPECIFIC_SKILLS                                 | specialized_knowledge    |       0.70
+         536 | sac_bi                                                   | specialized_knowledge    |       0.65
+         521 | production_support                                       | technology               |       0.75
+         303 | technical_specialization                                 | technology               |       0.75
+(28 rows)
+

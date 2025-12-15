@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_204731",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/FINANCIAL_DOMAIN_KNOWLEDGE",
+    "ROOT/STRATEGIC_BENEFIT_CONSULTING",
+    "ROOT/LEADERSHIP_AND_TEAMS_MANAGEMENT"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

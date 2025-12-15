@@ -1,0 +1,17 @@
+## Processing Instructions
+Analyze the career profile below and extract ALL skills - both explicitly stated AND implicitly demonstrated.
+
+For each skill, format your response as:
+[SKILL: skill_name | EVIDENCE: quote from profile | CONFIDENCE: high/medium/low | CATEGORY: technical/business/creative/interpersonal]
+
+Example for implicit inference:
+Input: "Managed software licenses for 80,000 users"
+Output: [SKILL: SQL | EVIDENCE: Managing licenses for over 80k users requires database queries | CONFIDENCE: high | CATEGORY: technical]
+
+Include skills that are IMPLIED by the work described, even if not explicitly stated.
+
+## Processing Payload
+{career_profile_text}
+
+## QA Check
+Submit ONLY skill entries in the format shown above. Each skill on a new line starting with [SKILL: and ending with ]. Do not add commentary, explanations, or summaries. Just the bracketed skill entries.

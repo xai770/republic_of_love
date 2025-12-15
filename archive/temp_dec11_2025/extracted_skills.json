@@ -1,0 +1,80 @@
+[
+  {
+    "skill": "SQL",
+    "years": 15,
+    "level": "expert",
+    "evidence": "Used for database management and analysis in multiple roles including Deutsche Bank AG, Novartis, and Self-Employed projects."
+  },
+  {
+    "skill": "Python",
+    "years": 7,
+    "level": "advanced",
+    "evidence": "Developed automated applications using Python as evidenced by the Contract Compliance project at Deutsche Bank."
+  },
+  {
+    "skill": "Java",
+    "years": 8,
+    "level": "intermediate",
+    "evidence": "Used in development of backend solutions for various projects including Novartis and Deutsche Bank."
+  },
+  {
+    "skill": "JavaScript",
+    "years": 5,
+    "level": "proficient",
+    "evidence": "Developed frontend solutions as part of backend/frontend applications at Deutsche Bank."
+  },
+  {
+    "skill": "Machine Learning",
+    "years": 6,
+    "level": "intermediate",
+    "evidence": "Worked on generating ontologies and key phrase prediction using machine learning in self-employed projects."
+  },
+  {
+    "skill": "Agile Methodology",
+    "years": 10,
+    "level": "advanced",
+    "evidence": "Managed multiple software development projects with Agile methodologies including Deutsche Bank AG and Novartis roles."
+  },
+  {
+    "skill": "KPI Reporting",
+    "years": 8,
+    "level": "expert",
+    "evidence": "Provided automated KPI reporting on involved processes at Deutsche Bank and Novartis."
+  },
+  {
+    "skill": "Contract Management",
+    "years": 15,
+    "level": "expert",
+    "evidence": "Managed and negotiated multiple contracts in various roles including Global Sourcing IT Change Management and Governance, Software Licenses and Services Vendor Manager, and Global Lead, Software License Management."
+  },
+  {
+    "skill": "Negotiation",
+    "years": 15,
+    "level": "expert",
+    "evidence": "Responsible for negotiating major deals and agreements with vendors in roles including Global Sourcing IT Change Management and Governance, and Global Lead, Software License Management."
+  },
+  {
+    "skill": "Leadership",
+    "years": 10,
+    "level": "advanced",
+    "evidence": "Led multiple teams as Team Lead Proof of Entitlement/Contractual Provisions Management, Project lead Contract Compliance/Tech Lead, and Global Sourcing IT Change Management and Governance."
+  },
+  {
+    "skill": "Communication",
+    "years": 15,
+    "level": "expert",
+    "evidence": "Regularly communicated with stakeholders in roles including Financial Planning and Governance - Software License Management, and Global Lead, Mobile Telecom Demand Management."
+  },
+  {
+    "skill": "Teamwork",
+    "years": 15,
+    "level": "advanced",
+    "evidence": "Collaborated on multiple projects as a team member or leader, including Deutsche Bank AG, Novartis, and Self-Employed roles."
+  },
+  {
+    "skill": "Project Management",
+    "years": 10,
+    "level": "advanced",
+    "evidence": "Managed end-to-end project lifecycles in various roles such as Global Sourcing IT Change Management and Governance, Software Licenses and Services Vendor Manager, and Software Category Manager."
+  }
+]

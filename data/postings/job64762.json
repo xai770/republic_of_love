@@ -1,0 +1,116 @@
+{
+  "job_metadata": {
+    "job_id": "64762",
+    "version": "1.0",
+    "created_at": "2025-07-06T18:49:58.154736",
+    "last_modified": "2025-07-06T18:49:58.154736",
+    "source": "deutsche_bank_api",
+    "processor": "enhanced_job_fetcher_v6.1",
+    "status": "fetched"
+  },
+  "job_content": {
+    "title": "IT Application Owner (m/w/d) – Bulk Payments Tribe",
+    "description": "IT Application Owner (m/w/d) – Bulk Payments Tribe Job ID:R0382627 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-06-26 Location: Frankfurt Position Overview Über den BereichDer Bulk Payments Tribe liefert die technologischen Lösungen für den Massenzahlungsverkehr in der Bank. Dazu gehört beispielsweise der SEPA Zahlungsverkehr mit dem wir mehr als 90% des gesamten Zahlungsverkehrsvolumens der Deutschen Bank abdecken. Der Tribe zeichnet sich durch eine enge Zusammenarbeit der IT mit den Kollegen der Unternehmensbank aus. Unsere Aufgabe ist die Integration, Weiterentwicklung und Anwendungsentwicklung der Zahlungsverkehrssysteme.Ihre AufgabenAls Senior Engineer ist es ihre Aufgabe die Rolle des IT Application Owners zu füllen.Koordination von Anwendungs- und Infrastruktur-UpdatesAnsprechpartner für IT Risk and Security Controls Themen und für Group Audit und andere IT Governance TeamsSicherstellung der Compliance der Anwendungen im Bereich Bulk PaymentsUnterstützung als SRE bei der Anwenudungsintegration und CI/CD PipelineIhre Fähigkeiten und ErfahrungenHochschulabschluss in Informatik oder Wirtschaftsinformatik oder vergleichbarer AbschlussKenntnisse im Zahlungsverkehr von VorteilMehrjährige Erfahrung als ITAO – idealerweise für eine kritische AnwendungTiefes Verständnis des SDLC-ZyklusWas wir Ihnen bietenWir bieten eine breite Palette von Leistungen, die all Ihre beruflichen und persönlichen Bedürfnisse abdecken.Emotional ausgeglichenEine positive Haltung hilft uns, die Herausforderungen des Alltags zu meistern – beruflich wie privat. Profitieren Sie von Angeboten wie Beratung in schwierigen Lebenssituationen und Angeboten zur Förderung mentaler Gesundheit.Körperlich fitMit Angeboten zur Aufrechterhaltung Ihrer persönlichen Gesundheit und einem förderlichen beruflichen Umfeld hilft Ihnen die Bank, körperlich fit zu bleiben. Profitieren Sie von Angeboten wie umfangreichen Check-up Untersuchungen, Impfangeboten und Beratung zur gesunden Lebensführung.Sozial vernetztDer Austausch mit anderen eröffnet uns neue Perspektiven, bringt uns beruflich wie persönlich voran und stärkt unser Selbstvertrauen und Wohlbefinden. Profitieren Sie von Angeboten wie Unterstützung durch den pme Familienservice, das FitnessCenter Job, flexible Arbeitszeitmodelle (bspw. Teilzeit, Jobtandem, hybrides Arbeiten) sowie einer umfangreichen Kultur der Vielfalt, Chancengleichheit und Teilhabe.Finanziell abgesichertDie Bank sichert Sie nicht nur während Ihrer aktiven Karriere, sondern auch für die Zukunft finanziell ab und unterstützt Ihre Flexibilität sowie Mobilität – egal ob privat oder beruflich. Profitieren Sie von Angeboten wie Beitragsplänen für Altersvorsorge, Bankdienstleistungen für Mitarbeiter*innen, Firmenfahrrad oder dem Deutschlandticket.Da die Benefits je nach Standort geringfügig variieren, gehen Sie bitte bei konkreten Fragen auf Ihren Recruiter/ Ihre Recruiterin zu.Bei Fragen zum Rekrutierungsprozess steht Ihnen Anna Martinez gerne zur Verfügung.Kontakt Anna Martinez: +49 170 766 10 24 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.",
+    "requirements": [],
+    "location": {
+      "city": "Frankfurt",
+      "state": "Hessen",
+      "country": "Deutschland",
+      "remote_options": false
+    },
+    "employment_details": {
+      "type": "Unbefristet",
+      "schedule": "Vollzeit",
+      "career_level": "Assistant Vice President",
+      "salary_range": null,
+      "benefits": []
+    },
+    "organization": {
+      "name": "Deutsche Bank",
+      "division": "Frankfurt",
+      "division_id": 10052
+    },
+    "posting_details": {
+      "publication_date": "2025-06-26",
+      "position_uri": "/index.php?ac=jobad&id=64762",
+      "hiring_year": "2025"
+    }
+  },
+  "evaluation_results": {
+    "cv_to_role_match": null,
+    "match_confidence": null,
+    "evaluation_date": null,
+    "evaluator": null,
+    "domain_knowledge_assessment": null,
+    "decision": {
+      "apply": null,
+      "rationale": null,
+      "estimated_prep_time": null
+    },
+    "strengths": [],
+    "weaknesses": []
+  },
+  "processing_log": [
+    {
+      "timestamp": "2025-07-06T18:49:58.154736",
+      "action": "job_fetched",
+      "processor": "enhanced_job_fetcher_v6.1",
+      "status": "success",
+      "details": "Successfully fetched job 64762 from Deutsche Bank API"
+    },
+    {
+      "timestamp": "2025-07-06T18:49:58.154736",
+      "action": "description_enriched",
+      "processor": "web_scraper",
+      "status": "success",
+      "details": "Successfully fetched job description (3480 characters)"
+    }
+  ],
+  "raw_source_data": {
+    "api_response": {
+      "MatchedObjectId": "64762",
+      "MatchedObjectDescriptor": {
+        "PositionOfferingType": [
+          {
+            "Name": "Unbefristet"
+          }
+        ],
+        "PositionSchedule": [
+          {
+            "Name": "Vollzeit"
+          }
+        ],
+        "PublicationChannel": [
+          {
+            "StartDate": "2025-06-26"
+          }
+        ],
+        "PositionTitle": "IT Application Owner (m/w/d) – Bulk Payments Tribe",
+        "PositionLocation": [
+          {
+            "CityName": "Frankfurt",
+            "CountrySubDivisionName": "Hessen",
+            "CountryName": "Deutschland"
+          }
+        ],
+        "PositionURI": "/index.php?ac=jobad&id=64762",
+        "PositionID": "64762",
+        "OrganizationName": "Frankfurt",
+        "PositionHiringYear": "2025",
+        "UserArea": {
+          "ProDivision": 10052
+        },
+        "CareerLevel": [
+          {
+            "Name": "Assistant Vice President"
+          }
+        ],
+        "PublicationStartDate": "2025-06-26"
+      },
+      "RelevanceScore": 0,
+      "RelevanceRank": 16
+    },
+    "specialist_analysis": {},
+    "description_source": "web_scraping"
+  }
+}

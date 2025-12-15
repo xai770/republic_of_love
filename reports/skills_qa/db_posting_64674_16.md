@@ -1,0 +1,85 @@
+# Skills Extraction QA Report
+
+**Generated:** 2025-11-05 17:02:50  
+**Postings Analyzed:** 1  
+**Database:** turing
+
+---
+
+## Summary
+
+- **Total postings:** 1
+- **Total skills extracted:** 6
+- **Average skills per posting:** 6.0
+- **Postings with warnings:** 1
+
+---
+
+## Posting #16: Fleet Operations Manager in Global Procurement (f/m/x)
+
+### 📋 Metadata
+
+- **Company:** Deutsche Bank
+- **Posting ID:** 16
+- **Extracted by:** qwen2.5:7b (Actor 45)
+- **Workflow:** Fake Job Detector (ID: 1124)
+- **Workflow Run:** 999
+- **Extraction Time:** 31.4 seconds
+- **Extracted:** 2025-11-03 12:27:37.652621
+- **Skills Count:** 6
+
+### 📝 Original Job Description
+
+```
+Fleet Operations Manager in Global Procurement (f/m/x) Job ID:R0393530 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-06-24 Location: Frankfurt Position Overview Über den BereichUnser Fleet-Team ist Teil der zentralen Unternehmensinfrastruktur und verantwortet das operative Firmenwagenprogramm in Deutschland. Wir sorgen dafür, dass Mobilität für unsere Mitarbeitenden effizient, reibungslos und nachhaltig funktioniert – in enger Zusammenarbeit mit internen Stakeholdern und externen Dienstleistern.Ihre AufgabenSie übernehmen die Verantwortung für alle operativen Aufgaben rund um das Firmenwagenprogramm und stellen die Einhaltung der Firmenwagenrichtlinie sicher.Sie unterstützen die Einkaufsleitung Fuhrpark bei der Entwicklung und Umsetzung einer zukunftsorientierten Flottenstrategie.Sie begleiten Vertragsverhandlungen mit Lieferanten und betreuen strategische Partnerschaften mit Dienstleistern, Herstellern und Leasinggesellschaften.Sie sind erste*r Ansprechpartner*in für Lieferanten sowie für Mitarbeitende bei Eskalationen oder rechtlichen Fragen.Sie analysieren Markttrends und neue Mobilitätsangebote mit Blick auf Einsparpotenziale und Nachhaltigkeit.Sie sind Teil eines engagierten Teams, das kontinuierlich Prozesse optimiert und die Zufriedenheit der Mitarbeitenden im Blick behält.Ihre Fähigkeiten und ErfahrungenAbgeschlossene kaufmännische oder technische Ausbildung bzw. Studium, idealerweise in der Automobilbranchemehrjährige Berufserfahrung im Fuhrparkmanagement, vorzugsweise im KonzernumfeldFundierte Kenntnisse gesetzlicher Anforderungen und betrieblicher Risiken im FlottenbetriebVerständnis für Fahrzeugsysteme, Flottenprozesse und KostenstrukturenSicherer Umgang mit MS Office, sehr gute Deutsch- und EnglischkenntnisseStrukturierte, prozessorientierte Arbeitsweise, Teamfähigkeit und KommunikationsstärkeWas wir Ihnen bietenWir bieten eine breite Palette von Leistungen, die all Ihre beruflichen und persönlichen Bedürfnisse abdecken.Emotional ausgeglichenEine positive Haltung hilft uns, die Herausforderungen des Alltags zu meistern – beruflich wie privat. Profitieren Sie von Angeboten wie Beratung in schwierigen Lebenssituationen und Angeboten zur Förderung mentaler Gesundheit.Körperlich fitMit Angeboten zur Aufrechterhaltung Ihrer persönlichen Gesundheit und einem förderlichen beruflichen Umfeld hilft Ihnen die Bank, körperlich fit zu bleiben. Profitieren Sie von Angeboten wie umfangreichen Check-up Untersuchungen, Impfangeboten und Beratung zur gesunden Lebensführung.Sozial vernetztDer Austausch mit anderen eröffnet uns neue Perspektiven, bringt uns beruflich wie persönlich voran und stärkt unser Selbstvertrauen und Wohlbefinden. Profitieren Sie von Angeboten wie Unterstützung durch den pme Familienservice, das FitnessCenter Job, flexible Arbeitszeitmodelle (bspw. Teilzeit, Jobtandem, hybrides Arbeiten) sowie einer umfangreichen Kultur der Vielfalt, Chancengleichheit und Teilhabe.Finanziell abgesichertDie Bank sichert Sie nicht nur während Ihrer aktiven Karriere, sondern auch für die Zukunft finanziell ab und unterstützt Ihre Flexibilität sowie Mobilität – egal ob privat oder beruflich. Profitieren Sie von Angeboten wie Beitragsplänen für Altersvorsorge, Bankdienstleistungen für Mitarbeiter*innen, Firmenfahrrad oder dem Deutschlandticket.Da die Benefits je nach Standort geringfügig variieren, gehen Sie bitte bei konkreten Fragen auf Ihren Recruiter / Ihre Recruiterin zu.Die Stelle wird in Voll- und in Teilzeit angeboten.Bei Fragen zum Rekrutierungsprozess steht Ihnen Christin Bode gerne zur Verfügung.Kontakt Christin Bode: +49 30-3407 4860______________________________________________________________________________About the DepartmentOur Fleet team is part of the Infrastructure function and is responsible for the operational company car program in Germany. We ensure that employee mobility runs smoothly, efficiently, and sustainably – in close collaboration with internal stakeholders and external service providers.Your ResponsibilitiesYou manage all operational tasks related to the company car program and ensure compliance with the company car policy.You support the fleet purchasing lead in developing and implementing a future-oriented fleet strategy.You assist in negotiating supplier contracts and maintaining strategic partnerships with service providers, manufacturers, and leasing companies.You act as the main contact for suppliers and employees, especially in case of escalations or legal questions.You analyze market trends and new mobility services to identify savings and promote sustainability.You are part of a dedicated team that continuously improves processes and focuses on employee satisfaction.Your Skills and ExperienceCompleted commercial or technical training or studies, preferably in the automotive industryseveral years of experience in fleet management, ideally in a corporate environmentIn-depth knowledge of legal requirements and operational risks in fleet operationsUnderstanding of vehicle systems, fleet processes, and cost structuresConfident use of MS Office, fluent in German and EnglishStructured, process-oriented approach, team spirit, and strong communication skillsWhat we offerWe provide you with a comprehensive portfolio of benefits and offerings to support both, your private and professional needs.Emotionally and mentally balancedA positive mind helps us master the challenges of everyday life – both professionally and privately. We offer consultation in difficult life situations as well as mental health awareness trainings.Physically thrivingWe support you in staying physically fit through an offering to maintain personal health and a professional environment. You can benefit from health check-ups; vaccination drives as well as advice on healthy living and nutrition.Socially connectedNetworking opens up new perspectives, helps us thrive professionally and personally as well as strengthens our self-confidence and well-being. You can benefit from PME family service, FitnessCenter Job, flexible working (e.g parttime, hybrid working, job tandem) as well as an extensive culture of diversity, equity and inclusion.Financially secureWe provide you with financial security not only during your active career but also for the future. You can benefit from offerings such as pension plans, banking services, company bicycle or “Deutschlandticket”.Since our offerings slightly vary across locations, please contact your recruiter with specific questions.This job is available in full and parttime.In case of any recruitment related questions, please get in touch with Christin Bode.Contact Christin Bode: +49 30-3407 4860 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.
+```
+
+*(7,105 characters)*
+
+### ✨ Extracted Summary
+
+Role: Fleet Operations Manager in Global Procurement (f/m/x) at Deutsche Bank Gruppe f/m/x Frankfurt Job ID: R0393530 Key Responsibilities - Manage all operational tasks related to the company car program, ensuring compliance with the company car policy. Support the development and implementation of a future-oriented fleet strategy. Assist in negotiating supplier contracts and maintain strategic partnerships with service providers, manufacturers, and leasing companies. Act as the main contact for suppliers and employees regarding escalations or legal questions. Analyze market trends to identify potential savings and promote sustainability improvements Requirements - Completed commercial or technical training or studies, preferably in the automotive industry. Several years of experience in fleet management, ideally in a corporate environment. In-depth knowledge of legal requirements and operational risks in fleet operations. Understanding of vehicle systems, fleet processes, and cost structures. Proficient in MS Office languages German and English Structured, process-oriented approach team spirit and strong communication skills Details - A comprehensive portfolio of benefits to support both professional and personal needs Emotionally and mentally balanced support through various services Physically thriving support through health check-ups, vaccination drives, and advice on healthy living Socially connected support through networking opportunities, family service, flexible working options, and an inclusive culture Financial security through pension plans, banking services, company bicycle or "Deutschlandticket." Contact: Christin Bode, +49 30-3407 4860
+
+### 🎯 Extracted Skills (6 total)
+
+| # | Skill | Importance | Proficiency | Years | Reasoning |
+|---|-------|------------|-------------|-------|-----------|
+| 1 | Commercial or technical training/studies | essential | advanced | unknown | Completed commercial or technical training or studies, preferably in the automotive industry |
+| 2 | Fleet management experience | critical | expert | unknown | Several years of experience in fleet management, ideally in a corporate environment |
+| 3 | Legal requirements knowledge | essential | advanced | unknown | In-depth knowledge of legal requirements and operational risks in fleet operations |
+| 4 | Vehicle systems understanding | important | intermediate | unknown | Understanding of vehicle systems, fleet processes, and cost structures |
+| 5 | MS Office proficiency | critical | advanced | unknown | Confident use of MS Office, fluent in German and English |
+| 6 | Communication skills | important | intermediate | unknown | Structured, process-oriented approach, team spirit, and strong communication skills |
+
+### 🎯 Profile Match: Gershon Pollatschek
+
+**Total Match Score:** 31.50 points  
+**Skills Matched:** 1  
+
+| Job Skill | Your Skill | Type | Distance | Weight | Score | Reasoning |
+|-----------|------------|------|----------|--------|-------|----------|
+| Communication skills | communication | hierarchy_1 | 1 | 45 | **31.5** | Job: important Communication skills (intermediate), Profile: 15y communication (... |
+
+❌ **Weak match** (32 pts): 0 exact + 1 hierarchy matches
+
+### 🔍 Quality Assessment
+
+✅ **Skill count**: 6 (healthy range)
+✅ **Importance distribution**: {'essential': 2, 'critical': 2, 'important': 2}
+✅ **All skills have detailed reasoning**
+✅ **Extracted by**: qwen2.5:7b (workflow 1124)
+✅ **Extraction time**: 31.4 seconds
+⚠️  **Generic skills without context**: Communication skills
+
+### 🔗 Lineage
+
+- **LLM Interaction ID:** 2614
+- **Workflow Run ID:** 999
+- Can trace full causation using `interaction_lineage` table
+
+---
+
+
+## End of Report
+
+Generated by `tools/generate_skills_qa_report.py`

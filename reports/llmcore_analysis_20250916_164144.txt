@@ -1,0 +1,94 @@
+🏆 LLMCore Performance Analysis Report
+============================================================
+📅 Generated: 2025-09-16T16:41:44.010046
+
+📊 OVERALL MATRIX PERFORMANCE
+----------------------------------------
+Total Tests: 192
+✅ Completed: 174 (90.6%)
+❌ Failed: 18 (9.4%)
+⏱️  Average Latency: 30.9s
+🚀 Fastest Test: 2.5s
+🐌 Slowest Test: 293.5s
+
+🤖 MODEL PERFORMANCE RANKING
+----------------------------------------
+ 1. 🏆 llama3.2:1b          100.0% success, 🚀   9.3s avg
+ 2. 🏆 gemma3:1b            100.0% success, 🚀  10.9s avg
+ 3. 🏆 llama3.2:latest      100.0% success, 🚀  14.4s avg
+ 4. 🏆 phi3:latest          100.0% success, 🐎  28.8s avg
+ 5. 🏆 mistral:latest       100.0% success, 🐎  31.4s avg
+ 6. 🏆 dolphin3:latest      100.0% success, 🐎  39.6s avg
+ 7. 🏆 dolphin3:8b          100.0% success, 🐎  42.3s avg
+ 8. ⚠️ deepseek-r1:8b        25.0% success, 🐌 189.8s avg
+
+🎯 MAX'S TRANSITION LOGIC ANALYSIS
+----------------------------------------
+Model Performance Variance: 75.0%
+Success Rate Range: 25.0% - 100.0%
+Clear Winners (≥95%): 7
+Problem Models (<80%): 1
+
+📋 RECOMMENDATION: CLEAR_WINNERS
+🎯 NEXT ACTION: Focus on top-performing models for real-world validation
+
+🎯 PRIORITY MODELS FOR TIER 2 TESTING:
+  1. llama3.2:1b
+  2. gemma3:1b
+  3. llama3.2:latest
+
+📋 CANONICAL DIFFICULTY ANALYSIS
+----------------------------------------
+🟢 ce                        100.0% success,  10.8s avg
+🟢 ot                        100.0% success,  13.4s avg
+🟢 ps                        100.0% success,  55.0s avg
+🟢 rb                        100.0% success,  58.3s avg
+🟢 rc                        100.0% success,  72.5s avg
+🟢 pt                        100.0% success,  74.4s avg
+🟡 ld                         87.5% success,  11.4s avg
+🟡 rw                         87.5% success,  19.7s avg
+🟡 ra                         87.5% success,  19.8s avg
+🟡 kr                         87.5% success,  20.3s avg
+🟡 ri                         87.5% success,  21.1s avg
+🟡 la                         87.5% success,  21.7s avg
+🟡 mt                         87.5% success,  22.4s avg
+🟡 kv                         87.5% success,  23.0s avg
+🟡 lf                         87.5% success,  25.9s avg
+🟡 gv                         87.5% success,  26.0s avg
+🟡 oc                         87.5% success,  26.0s avg
+🟡 ms                         87.5% success,  26.3s avg
+🟡 rr                         87.5% success,  27.0s avg
+🟡 fp                         87.5% success,  27.2s avg
+🟡 rd                         87.5% success,  27.4s avg
+🟡 gr                         87.5% success,  28.2s avg
+🟡 li                         87.5% success,  34.6s avg
+🟡 ca                         87.5% success,  35.5s avg
+
+🧠 SENTIENCE FACET PERFORMANCE
+----------------------------------------
+🧠 Clean-Extract        100.0% success,  10.8s avg
+🧠 Output-Template      100.0% success,  13.4s avg
+🧠 Plan-Strategy        100.0% success,  55.0s avg
+🧠 Reason-Benefits      100.0% success,  58.3s avg
+🧠 Reason-Common        100.0% success,  72.5s avg
+🧠 Plan-Task            100.0% success,  74.4s avg
+⚡ Learn-Classify        87.5% success,  11.4s avg
+⚡ Reason-WhatIf         87.5% success,  19.7s avg
+⚡ Reason-Abduce         87.5% success,  19.8s avg
+⚡ Know-Requirements     87.5% success,  20.3s avg
+⚡ Reason-Induce         87.5% success,  21.1s avg
+⚡ Learn-Accept          87.5% success,  21.7s avg
+⚡ Memory-Track          87.5% success,  22.4s avg
+⚡ Know-Vocabularies     87.5% success,  23.0s avg
+⚡ Memory-Focus          87.5% success,  25.9s avg
+⚡ Group-Validate        87.5% success,  26.0s avg
+⚡ Output-Combine        87.5% success,  26.0s avg
+⚡ Memory-State          87.5% success,  26.3s avg
+⚡ Reason-Intent         87.5% success,  27.0s avg
+⚡ Fulfill-Prioritize    87.5% success,  27.2s avg
+⚡ Reason-Deduce         87.5% success,  27.4s avg
+⚡ Group-Rank            87.5% success,  28.2s avg
+⚡ Learn-Integrate       87.5% success,  34.6s avg
+⚡ Clean-Audit           87.5% success,  35.5s avg
+
+🏆 ANALYSIS COMPLETE - Ready for Tier 2 Real Job Testing!

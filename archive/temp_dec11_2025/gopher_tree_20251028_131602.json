@@ -1,0 +1,14 @@
+{
+  "job_title": "Python Developer",
+  "timestamp": "20251028_131602",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/PROGRAMMING_SKILLS",
+    "ROOT/DEPLOYMENT_TECHNOLOGIES"
+  ],
+  "stats": {
+    "nodes_explored": 3,
+    "leaf_nodes": 2,
+    "max_depth": 3
+  }
+}

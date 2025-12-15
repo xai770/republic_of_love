@@ -1,0 +1,17 @@
+ interaction_id |         conversation_name         |     actor_name     |  status   |  started_time   | completed_time  | duration_sec |                                            output_preview                                            
+----------------+-----------------------------------+--------------------+-----------+-----------------+-----------------+--------------+------------------------------------------------------------------------------------------------------
+            686 | Fetch Jobs from Deutsche Bank API | db_job_fetcher     | completed | 18:43:30.076443 | 18:43:30.253717 |            0 | {"data": {"status": "[RATE_LIMITED]", "message": "Already fetched 158 jobs today", "jobs_fetched": 0
+            687 | Validate Job Description          | sql_query_executor | completed | 18:43:30.275131 | 18:43:30.347187 |            0 | {"data": {"status": "[RUN]", "query_result": {"validation_result": "[VALID]"}, "result_value": "[VAL
+            688 | Check if Summary Exists           | sql_query_executor | completed | 18:43:30.350859 | 18:43:30.418153 |            0 | {"data": {"status": "[RUN]", "query_result": {"summary_exists": false}, "result_value": "false"}, "s
+            689 | session_a_gemma3_extract          | gemma3:1b          | completed | 18:43:30.422519 | 18:43:38.304191 |            8 | {"model": "gemma3:1b", "response": "```text\n**Role:** Associate, Vice President\n**Company:** Deuts
+            690 | session_b_gemma2_grade            | gemma2:latest      | completed | 18:43:38.319459 | 18:44:06.165888 |           28 | {"model": "gemma2:latest", "response": "[PASS] \n\nThe AI-generated summary is a good representation
+            691 | session_c_qwen25_grade            | qwen2.5:7b         | completed | 18:43:38.319459 | 18:44:15.123517 |            9 | {"model": "qwen2.5:7b", "response": "[PASS]\n\nThe summary accurately captures the key aspects of th
+            692 | Format Standardization            | gemma2:latest      | completed | 18:44:15.137072 | 18:45:20.262515 |           65 | {"model": "gemma2:latest", "response": "**Role:** Associate, Vice President\n**Company:** Deutsche B
+            693 | Save Summary                      | summary_saver      | completed | 18:45:20.276013 | 18:45:20.407183 |            0 | {"status": "[SAVED]"}
+            694 | Check if Skills Exist             | sql_query_executor | completed | 18:45:20.413103 | 18:45:20.492568 |            0 | {"data": {"status": "[RUN]", "query_result": {"already_executed": false}, "result_value": "false"}, 
+            695 | r1114_extract_skills              | qwen2.5:7b         | completed | 18:45:20.496259 | 18:45:25.034623 |            5 | {"model": "qwen2.5:7b", "response": "[\"financial_analysis\", \"quantitative_analysis\", \"qualitati
+            696 | IHL Analyst - Find Red Flags      | qwen2.5:7b         | completed | 18:45:25.050186 | 18:45:28.803293 |            4 | {"model": "qwen2.5:7b", "response": "```json\n{\n  \"analyst_verdict\": \"GENUINE\",\n  \"suggested_
+            697 | IHL Skeptic - Challenge Analyst   | gemma2:latest      | completed | 18:45:28.818944 | 18:45:53.899202 |           25 | {"model": "gemma2:latest", "response": "```json\n{\n  \"skeptic_verdict\": \"GENUINE\",\n  \"suggest
+            698 | IHL HR Expert - Final Verdict     | qwen2.5:7b         | completed | 18:45:53.913692 | 18:46:03.840182 |           10 | {"model": "qwen2.5:7b", "response": "```json\n{\n  \"ihl_score\": 6,\n  \"verdict\": \"BORDERLINE\",
+(13 rows)
+

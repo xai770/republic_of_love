@@ -1,0 +1,69 @@
+{
+  "timestamp": "20251001_174107",
+  "test_method": "Model unload with keep_alive=0",
+  "phase13_issue": "Reported 3ms, actual warm calls much slower",
+  "corrected_estimates": {
+    "cold_start_avg": 1.7117297119564483,
+    "warm_start_avg": 0.07943574587504068,
+    "speedup_ratio": 23.49931264061429
+  },
+  "production_recommendations": {
+    "first_call_estimate": 1.7117297119564483,
+    "subsequent_calls_estimate": 0.07943574587504068,
+    "mixed_load_estimate": 0.8955827289157445,
+    "timeout_threshold": 3.4234594239128966
+  },
+  "detailed_results": [
+    {
+      "model": "llama3.2:latest",
+      "cold_latencies": [
+        1.7727017402648926,
+        1.775817632675171,
+        1.7522971630096436
+      ],
+      "warm_latencies": [
+        0.07549643516540527,
+        0.07516694068908691,
+        0.07123351097106934
+      ],
+      "avg_cold": 1.766938845316569,
+      "avg_warm": 0.07396562894185384,
+      "speedup": 23.88864761368557,
+      "iterations": 3
+    },
+    {
+      "model": "gemma3:1b",
+      "cold_latencies": [
+        1.1688246726989746,
+        1.4401826858520508,
+        1.3905889987945557
+      ],
+      "warm_latencies": [
+        0.11001276969909668,
+        0.10055065155029297,
+        0.10187959671020508
+      ],
+      "avg_cold": 1.3331987857818604,
+      "avg_warm": 0.10414767265319824,
+      "speedup": 12.801042517976224,
+      "iterations": 3
+    },
+    {
+      "model": "llama3.2:1b",
+      "cold_latencies": [
+        3.1364426612854004,
+        1.4807488918304443,
+        1.4879629611968994
+      ],
+      "warm_latencies": [
+        0.06307792663574219,
+        0.062290191650390625,
+        0.05521368980407715
+      ],
+      "avg_cold": 2.0350515047709146,
+      "avg_warm": 0.060193936030069985,
+      "speedup": 33.80824779018108,
+      "iterations": 3
+    }
+  ]
+}

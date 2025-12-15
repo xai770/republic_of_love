@@ -1,0 +1,102 @@
+{
+  "task_type": "taxonomy",
+  "description": "Test LLM ability to correctly classify unmatched skills as ALIAS, NEW, SPLIT, or SKIP",
+  "metadata": {
+    "created": "2025-12-03",
+    "author": "Sandy",
+    "pass_cases": 4,
+    "fail_cases": 0
+  },
+  "existing_skills": [
+    {"skill_id": 1033, "skill_name": "Machine Learning Algorithms", "parent": "Artificial Intelligence"},
+    {"skill_id": 1045, "skill_name": "Deep Learning", "parent": "Machine Learning Algorithms"},
+    {"skill_id": 1001, "skill_name": "Data Science", "parent": "Analytics"},
+    {"skill_id": 1010, "skill_name": "Python", "parent": "Programming Languages"},
+    {"skill_id": 1050, "skill_name": "Predictive Modeling", "parent": "Data Science"},
+    {"skill_id": 1020, "skill_name": "SQL", "parent": "Database Technologies"},
+    {"skill_id": 1030, "skill_name": "Artificial Intelligence", "parent": null},
+    {"skill_id": 1060, "skill_name": "Natural Language Processing", "parent": "Artificial Intelligence"},
+    {"skill_id": 1070, "skill_name": "TensorFlow", "parent": "Deep Learning"},
+    {"skill_id": 1080, "skill_name": "PyTorch", "parent": "Deep Learning"}
+  ],
+  "test_cases": [
+    {
+      "id": "alias_01",
+      "raw_skill_name": "Machine Learning",
+      "expected_decision": "ALIAS",
+      "expected_skill_id": 1033,
+      "notes": "Common abbreviation of Machine Learning Algorithms"
+    },
+    {
+      "id": "alias_02",
+      "raw_skill_name": "ML",
+      "expected_decision": "ALIAS",
+      "expected_skill_id": 1033,
+      "notes": "Acronym for Machine Learning"
+    },
+    {
+      "id": "alias_03",
+      "raw_skill_name": "Python Programming",
+      "expected_decision": "ALIAS",
+      "expected_skill_id": 1010,
+      "notes": "Verbose form of Python"
+    },
+    {
+      "id": "new_01",
+      "raw_skill_name": "Statistical Modeling",
+      "expected_decision": "NEW",
+      "expected_parent_id": 1001,
+      "notes": "Distinct skill under Data Science"
+    },
+    {
+      "id": "new_02",
+      "raw_skill_name": "Computer Vision",
+      "expected_decision": "NEW",
+      "expected_parent_id": 1030,
+      "notes": "AI subdomain not yet in taxonomy"
+    },
+    {
+      "id": "new_03",
+      "raw_skill_name": "R Programming",
+      "expected_decision": "NEW",
+      "expected_parent_id": null,
+      "notes": "New programming language, sibling to Python"
+    },
+    {
+      "id": "split_01",
+      "raw_skill_name": "Programming Skills (Python/R)",
+      "expected_decision": "SPLIT",
+      "notes": "Should split into Python (existing) + R (new)"
+    },
+    {
+      "id": "split_02",
+      "raw_skill_name": "TensorFlow/PyTorch",
+      "expected_decision": "SPLIT",
+      "notes": "Should split into two existing skills"
+    },
+    {
+      "id": "skip_01",
+      "raw_skill_name": "3+ years experience",
+      "expected_decision": "SKIP",
+      "notes": "Not a skill, experience requirement"
+    },
+    {
+      "id": "skip_02",
+      "raw_skill_name": "Remote work",
+      "expected_decision": "SKIP",
+      "notes": "Not a skill, work arrangement"
+    },
+    {
+      "id": "skip_03",
+      "raw_skill_name": "Bachelor's degree required",
+      "expected_decision": "SKIP",
+      "notes": "Not a skill, education requirement"
+    },
+    {
+      "id": "skip_04",
+      "raw_skill_name": "Competitive salary",
+      "expected_decision": "SKIP",
+      "notes": "Not a skill, compensation"
+    }
+  ]
+}

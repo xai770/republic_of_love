@@ -1,0 +1,102 @@
+# Skills Extraction QA Report
+
+**Generated:** 2025-11-05 17:02:50  
+**Postings Analyzed:** 1  
+**Database:** turing
+
+---
+
+## Summary
+
+- **Total postings:** 1
+- **Total skills extracted:** 9
+- **Average skills per posting:** 9.0
+- **Postings with warnings:** 1
+
+---
+
+## Posting #2: Senior Tax Analyst (d/m/w)
+
+### 📋 Metadata
+
+- **Company:** Deutsche Bank
+- **Posting ID:** 2
+- **Extracted by:** qwen2.5:7b (Actor 45)
+- **Workflow:** Fake Job Detector (ID: 1124)
+- **Workflow Run:** 976
+- **Extraction Time:** 33.3 seconds
+- **Extracted:** 2025-11-03 11:31:39.229616
+- **Skills Count:** 9
+
+### 📝 Original Job Description
+
+```
+Senior Tax Analyst (d/m/w) Job ID:R0339600 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-06-16 Location: Frankfurt Position Overview Über den BereichGroup Tax ist Teil des CFO-Bereiches der Deutschen Bank. Die Stelle ist im Bereich Tax Reporting & Compliance Germany angesiedelt. Der Bereich verantwortet die Aufstellung der für das Tax Reporting nach IFRS und HGB erforderlichen Informationen sowie die Erfüllung der gesetzlichen Verpflichtungen gegenüber den Finanzbehörden insbesondere durch Erstellung der Ertragsteuererklärungen und durch Unterstützung bei den steuerlichen Betriebsprüfungen.Zur Verstärkung unseres Tax Reporting & Compliance Teams suchen wir einen Spezialisten (m/w/d) mit breit gefächerten und idealerweise bankspezifischen Kenntnissen im Steuerrecht und der Bilanzierung nach IFRS und HGB.Gemeinsam im Team mit erfahrenen Steuerspezialisten sind Sie für die Erfüllung ertragsteuerlicher Verpflichtungen verantwortlich.Ihre AufgabenIm Rahmen des Einzel- und Konzernabschlusses berechnen Sie die laufenden und latenten Steuern der Deutsche Bank AG nach HGB und IFRS.Bereichsübergreifend arbeiten Sie mit unseren Fachkräften und Spezialisten im In- und Ausland an vielfältigen steuerrechtlichen Themen.Sie bearbeiten selbständig steuerfachliche Themen im Bereich Tax Reporting & Compliance inklusive der Erstellung der Dokumentation und setzen Steuerrechtsänderungen prozessual um.Zusammen im Team gewährleisten Sie das Monitoring und die Plausibilisierung der Steuerpositionen der Berichtseinheiten in der Tax Region Germany für den IFRS-Konzernabschluss.Wir freuen uns auf Ihre Ideen, um gemeinsam die Automatisierung und Standardisierung der ertragsteuerlichen Prozesse in der Region Germany im GlobalTaxCenter und SmartTaxBalance weiter voranzutreiben.Ihre Fähigkeiten und ErfahrungenSie verfügen über einen betriebswirtschaftlichen oder vergleichbaren Studienabschluss mit Schwerpunkt Steuern oder über ein Studium zum Diplom-Finanzwirt oder eine vergleichbare Qualifikation mit aktuellen steuerrechtlichen InhaltenSie besitzen mehrjährige Berufserfahrung im Bereich Tax Reporting & Compliance von Konzernen oder bei einer international ausgerichteten Steuerberatungsgesellschaft im Bereich Besteuerung von BankenFundierte Kenntnisse der deutschen Steuergesetzgebung und Erfahrung in der Anwendung von Steuerregelungen.Fundierte Kenntnisse der Rechnungslegung nach IFRS und HGB insbesondere im Bereich latenter Steuern.Als echter Teamplayer sind Sie offen und lernbereit für neue Inhalte und zeigen Verantwortungsbewusstsein, sowie eine selbständige und lösungsorientierte Arbeitsweise, auch unter hohem Zeitdruck.Sie verfügen über sehr gute MS-Office- (insbesondere MS Excel) und SAP-Kenntnisse, idealerweise sind Sie mit den Anwendungen GlobalTaxCenter und TaxBalance von Amana oder einem vergleichbaren Produkt vertraut.Sehr gute Deutsch- und Englischkenntnisse in Wort und Schrift runden Ihr Profil ab.Was wir Ihnen bietenWir bieten eine breite Palette von Leistungen, die all Ihre beruflichen und persönlichen Bedürfnisse abdecken.Emotional ausgeglichenEine positive Haltung hilft uns, die Herausforderungen des Alltags zu meistern – beruflich wie privat. Profitieren Sie von Angeboten wie Beratung in schwierigen Lebenssituationen und Angeboten zur Förderung mentaler Gesundheit.Körperlich fitMit Angeboten zur Aufrechterhaltung Ihrer persönlichen Gesundheit und einem förderlichen beruflichen Umfeld hilft Ihnen die Bank, körperlich fit zu bleiben. Profitieren Sie von Angeboten wie umfangreichen Check-up Untersuchungen, Impfangeboten und Beratung zur gesunden Lebensführung.Sozial vernetztDer Austausch mit anderen eröffnet uns neue Perspektiven, bringt uns beruflich wie persönlich voran und stärkt unser Selbstvertrauen und Wohlbefinden. Profitieren Sie von Angeboten wie Unterstützung durch den pme Familienservice, das FitnessCenter Job, flexible Arbeitszeitmodelle (bspw. Teilzeit, Jobtandem, hybrides Arbeiten) sowie einer umfangreichen Kultur der Vielfalt, Chancengleichheit und Teilhabe.Finanziell abgesichertDie Bank sichert Sie nicht nur während Ihrer aktiven Karriere, sondern auch für die Zukunft finanziell ab und unterstützt Ihre Flexibilität sowie Mobilität – egal ob privat oder beruflich. Profitieren Sie von Angeboten wie Beitragsplänen für Altersvorsorge, Bankdienstleistungen für Mitarbeiter*innen, Firmenfahrrad oder dem Deutschlandticket. Die Stelle wird in Voll- und in Teilzeit angeboten Da die Benefits je nach Standort geringfügig variieren, gehen Sie bitte bei konkreten Fragen auf Ihren Recruiter / Ihre Recruiterin zu. Bei Fragen zum Rekrutierungsprozess steht Ihnen Evangelia Tseliou gerne zur Verfügung. Kontakt Evangelia Tseliou: +49 69 910-45463 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.
+```
+
+*(5,170 characters)*
+
+### ✨ Extracted Summary
+
+**Role:** Senior Tax Analyst (d/m/w)
+
+**Company:** Deutsche Bank
+
+**Location:** Frankfurt
+
+**Job ID:** R0339600
+
+**Key Responsibilities:**
+- Im Rahmen des Einzel- und Konzernabschlusses berechnen Sie die laufenden und latenten Steuern der Deutsche Bank AG nach HGB und IFRS.
+- Bereichsübergreifend arbeiten Sie mit unseren Fachkräften und Spezialisten im In- und Ausland an vielfältigen steuerrechtlichen Themen.
+- Bearbeiten Sie selbständig steuerfachliche Themen im Bereich Tax Reporting & Compliance, einschließlich der Erstellung der Dokumentation.
+- Zusammen mit dem Team gewährleisten Sie das Monitoring und die Plausibilisierung der Steuerpositionen der Berichtseinheiten in der Tax Region Germany für den IFRS-Konzernabschluss.
+- Freuen auf Ihre Ideen, um gemeinsam die Automatisierung und Standardisierung der ertragsteuerlichen Prozesse in der Region Germany im GlobalTaxCenter und SmartTaxBalance voranzutreiben.
+
+**Requirements:**
+- Betriebswirtschaftlicher oder vergleichbarer Studienabschluss mit Schwerpunkt Steuern oder Diplom-Finanzwirt/Qualifikation.
+- Fundierte Kenntnisse der deutschen Steuergesetzgebung und Erfahrung in der Anwendung von Steuerregelungen.
+- Fundierte Kenntnisse der Rechnungslegung nach IFRS und HGB insbesondere im Bereich latenter Steuern.
+- Als echter Teamplayer sind Sie offen, lernbereit für neue Inhalte und zeigen Verantwortungsbewusstsein sowie eine selbständige und lösungsorientierte Arbeitsweise auch unter hohem Zeitdruck.
+- Gute Kenntnisse in MS-Office (insbesondere MS Excel) idealerweise sind Sie mit den Anwendungen GlobalTaxCenter und TaxBalance von Amana oder einem vergleichbaren Produkt vertraut.
+- Sehr gute Deutsch- und Englischkenntnisse in Wort und Schrift.
+
+### 🎯 Extracted Skills (9 total)
+
+| # | Skill | Importance | Proficiency | Years | Reasoning |
+|---|-------|------------|-------------|-------|-----------|
+| 1 | Tax Reporting and Compliance | essential | advanced | unknown | Core skill required for the role, involves preparing tax reports in line with IFRS and HGB. |
+| 2 | IFRS and HGB Knowledge | essential | advanced | unknown | Proficient understanding of IFRS and HGB for tax reporting. |
+| 3 | Tax Law Knowledge | essential | advanced | unknown | Deep knowledge in German tax law is crucial for the role. |
+| 4 | Team Player | important | intermediate | unknown | Requires working well with a team and being open to new content, especially under pressure. |
+| 5 | Problem Solving | important | intermediate | unknown | Ability to work independently and find solutions in a pressurized environment. |
+| 6 | MS Office (Advanced Excel) | important | advanced | unknown | Strong MS Office skills, especially in Excel, are necessary for the role. |
+| 7 | SAP Knowledge | important | intermediate | unknown | Experience with SAP systems is beneficial, especially those related to GlobalTaxCenter and TaxBalance. |
+| 8 | English (Advanced) | important | advanced | unknown | Strong written and verbal English skills are necessary for the role. |
+| 9 | German (Advanced) | essential | advanced | unknown | Fluent in German as it is a core requirement for the role. |
+
+### 🎯 Profile Match: Gershon Pollatschek
+
+❌ **No skill overlap** - Your profile doesn't match any required skills
+
+### 🔍 Quality Assessment
+
+✅ **Skill count**: 9 (healthy range)
+✅ **Importance distribution**: {'essential': 4, 'important': 5}
+✅ **All skills have detailed reasoning**
+✅ **Extracted by**: qwen2.5:7b (workflow 1124)
+✅ **Extraction time**: 33.3 seconds
+⚠️  **Generic skills without context**: Problem Solving
+
+### 🔗 Lineage
+
+- **LLM Interaction ID:** 2547
+- **Workflow Run ID:** 976
+- Can trace full causation using `interaction_lineage` table
+
+---
+
+
+## End of Report
+
+Generated by `tools/generate_skills_qa_report.py`

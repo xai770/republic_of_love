@@ -1,0 +1,408 @@
+{
+  "timestamp": "20251029_074746",
+  "model": "qwen2.5:7b",
+  "parents_checked": 52,
+  "merge_groups": [
+    {
+      "parent_id": "ANALYTICS",
+      "parent_name": "Analytics",
+      "canonical": "RISK_MANAGEMENT",
+      "canonical_id": "RISK_MANAGEMENT",
+      "merge_into_canonical": [
+        "RISK_MGMT"
+      ],
+      "reason": "Abbreviations of the same concept"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Analytical Skills",
+      "canonical_id": "ANALYTICAL_SKILLS",
+      "merge_into_canonical": [
+        "ANALYTICAL_ABILITIES"
+      ],
+      "reason": "Synonyms for analytical abilities"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Claims Management",
+      "canonical_id": "CLAIMS_MANAGEMENT",
+      "merge_into_canonical": [
+        "CLAIMS_ADMINISTRATION"
+      ],
+      "reason": "Synonyms for claims administration"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Customer Relationship Mgmt",
+      "canonical_id": "CUSTOMER_RELATIONSHIP_MGMT",
+      "merge_into_canonical": [
+        "CUSTOMER_RELATIONSHIPS",
+        "CUSTOMER_SERVICE"
+      ],
+      "reason": "Synonyms or related terms for customer relationship management"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Financial Mgmt",
+      "canonical_id": "FINANCIAL_MGMT",
+      "merge_into_canonical": [
+        "FINANCIAL_AND_ACCOUNTING_MGMT",
+        "FINANCIAL_MANAGEMENT"
+      ],
+      "reason": "Abbreviations or related terms for financial management"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "HR Management",
+      "canonical_id": "HUMAN_RESOURCES_MANAGEMENT",
+      "merge_into_canonical": [
+        "EXECUTION_MANAGEMENT_SKILLS"
+      ],
+      "reason": "Synonyms for human resources management under execution management skills"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Leadership And Management Skills",
+      "canonical_id": "LEADERSHIP_AND_MANAGEMENT_SKILLS",
+      "merge_into_canonical": [
+        "LEADERSHIP_AND_INFLUENCE",
+        "MANAGEMENT_SKILLS"
+      ],
+      "reason": "Synonyms for leadership and management skills"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Legal And Regulatory",
+      "canonical_id": "LEGAL_AND_REGULATORY",
+      "merge_into_canonical": [
+        "LEGAL_AND_JURISPRUDENCE",
+        "LEGAL_AND_REGULATORY_CONCEPTS"
+      ],
+      "reason": "Synonyms for legal and regulatory concepts"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Marketing And Sales Skills",
+      "canonical_id": "MARKETING_AND_SALES_SKILLS",
+      "merge_into_canonical": [
+        "SALES_AND_MARKETING",
+        "SALES_AND_MARKETING_SKILLS",
+        "SALES_SKILLS"
+      ],
+      "reason": "Synonyms or related terms for marketing and sales skills"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Quality And Systems Mgmt",
+      "canonical_id": "QUALITY_AND_SYSTEMS_MGMT",
+      "merge_into_canonical": [
+        "QUALITY_AND_STANDARDS",
+        "QUALITY_CONTROL_AND_COMPLIANCE"
+      ],
+      "reason": "Synonyms for quality and systems management"
+    },
+    {
+      "parent_id": "BUSINESS_SKILLS",
+      "parent_name": "Business Skills",
+      "canonical": "Risk Management Skills",
+      "canonical_id": "RISK_MANAGEMENT_SKILLS",
+      "merge_into_canonical": [
+        "RISK_MANAGEMENT",
+        "RISK_MANAGEMENT_AND_ANALYSIS"
+      ],
+      "reason": "Synonyms or related terms for risk management skills"
+    },
+    {
+      "parent_id": "communication",
+      "parent_name": "Communication",
+      "canonical": "Oral_Communication",
+      "canonical_id": "oral_communication",
+      "merge_into_canonical": [
+        "speech",
+        "verbal_communication"
+      ],
+      "reason": "These terms all refer to the ability to communicate effectively through spoken words."
+    },
+    {
+      "parent_id": "communication",
+      "parent_name": "Communication",
+      "canonical": "Clear_Writing",
+      "canonical_id": "clear_writing",
+      "merge_into_canonical": [
+        "written_communication",
+        "writing"
+      ],
+      "reason": "These terms describe the ability to convey information clearly and effectively in written form."
+    },
+    {
+      "parent_id": "COMMUNICATION_SKILLS",
+      "parent_name": "Communication Skills",
+      "canonical": "Speaking Skills",
+      "canonical_id": "SPEAKING_SKILLS",
+      "merge_into_canonical": [
+        "SPEAKING",
+        "SPEAKING_AND_ORAL_COMMUNICATION"
+      ],
+      "reason": "These are all variations of speaking skills"
+    },
+    {
+      "parent_id": "COMMUNICATION_SKILLS",
+      "parent_name": "Communication Skills",
+      "canonical": "Verbal Communication Skills",
+      "canonical_id": "VERBAL_COMMUNICATION_SKILLS",
+      "merge_into_canonical": [
+        "VERBAL_COMMUNICATION",
+        "VERBAL_COMMUNICATION_SKILLS"
+      ],
+      "reason": "These terms refer to the same skill with different wording and abbreviation"
+    },
+    {
+      "parent_id": "COMMUNICATION_SKILLS",
+      "parent_name": "Communication Skills",
+      "canonical": "Written Communication Skills",
+      "canonical_id": "WRITTEN_COMMUNICATION_SKILLS",
+      "merge_into_canonical": [
+        "WRITING",
+        "WRITING_AND_ORAL_COMMUNICATION",
+        "WRITING_AND_COMPOSITION",
+        "WRITING_AND_DOCUMENTATION"
+      ],
+      "reason": "These terms are all related to written communication skills, with some including oral aspects"
+    },
+    {
+      "parent_id": "finance",
+      "parent_name": "Finance",
+      "canonical": "Anti_Money_Laundering",
+      "canonical_id": "anti_money_laundering",
+      "merge_into_canonical": [
+        "anti_financial_crime",
+        "anti_financial_crime_compliance"
+      ],
+      "reason": "Synonyms and abbreviations of the same concept"
+    },
+    {
+      "parent_id": "INTERPERSONAL_SKILLS",
+      "parent_name": "Interpersonal Skills",
+      "canonical": "Communication Skills",
+      "canonical_id": "COMMUNICATION_SKILLS",
+      "merge_into_canonical": [
+        "CONFLICT_MGMT_AND_RESOLVEDSKILLS"
+      ],
+      "reason": "These are likely meant to refer to the same concept, with 'Conflict Mgmt And Resolvedskills' being an abbreviation or misspelling of 'Communication Skills'."
+    },
+    {
+      "parent_id": "IT_INFRASTRUCTURE",
+      "parent_name": "It Infrastructure",
+      "canonical": "Security And ",
+      "canonical_id": "SECURITY_AND_",
+      "merge_into_canonical": [
+        "SECURITY"
+      ],
+      "reason": "Synonym of Security"
+    },
+    {
+      "parent_id": "MANAGEMENT_SKILLS",
+      "parent_name": "Management Skills",
+      "canonical": "Leadership Skills",
+      "canonical_id": "LEADERSHIP_SKILLS",
+      "merge_into_canonical": [
+        "LEADERSHIP",
+        "LEADERSHIP_AND_TEAM_MANAGEMENT"
+      ],
+      "reason": "These terms are synonymous and refer to the same concept of leading and managing teams."
+    },
+    {
+      "parent_id": "problem_solving",
+      "parent_name": "Problem_Solving",
+      "canonical": "Problem_Solving_Skills",
+      "canonical_id": "problem_solving_skills",
+      "merge_into_canonical": [
+        "complex_problem_solving",
+        "new_business_identification"
+      ],
+      "reason": "These skills are related to problem-solving but use different terms"
+    },
+    {
+      "parent_id": "REGULATORY_COMPLIANCE",
+      "parent_name": "Regulatory Compliance",
+      "canonical": "Compliance And Regulatory Awareness",
+      "canonical_id": "COMPLIANCE_AND_REGULATORY_AWARENESS",
+      "merge_into_canonical": [
+        "REGULATORY_AWARENESS"
+      ],
+      "reason": "Synonyms"
+    },
+    {
+      "parent_id": "RISK_MANAGEMENT",
+      "parent_name": "Risk Management",
+      "canonical": "Risk Analysis And Control",
+      "canonical_id": "RISK_ANALYSIS_AND_CONTROL",
+      "merge_into_canonical": [
+        "RISK_ANALYSIS_AND_PLANING",
+        "RISK_ANALYSIS_AND_STRATEGY"
+      ],
+      "reason": "These terms are different wordings of the same concept."
+    },
+    {
+      "parent_id": "RISK_MANAGEMENT",
+      "parent_name": "Risk Management",
+      "canonical": "Risk Assessment And Mitigation",
+      "canonical_id": "RISK_ASSESSMENT_AND_MITIGATION",
+      "merge_into_canonical": [
+        "Risk Assessment and Mitigation",
+        "Risk Mgmt And Analysis"
+      ],
+      "reason": "These terms are different wordings of the same concept."
+    },
+    {
+      "parent_id": "RISK_MANAGEMENT",
+      "parent_name": "Risk Management",
+      "canonical": "Risk Management",
+      "canonical_id": "RISK_MGMT",
+      "merge_into_canonical": [],
+      "reason": ""
+    },
+    {
+      "parent_id": "soft_skills",
+      "parent_name": "Soft Skills",
+      "canonical": "Communication",
+      "canonical_id": "communication",
+      "merge_into_canonical": [
+        "analytics",
+        "presentation_skills",
+        "writing_content"
+      ],
+      "reason": "These terms are related to exchanging information and can be considered synonyms or aspects of communication."
+    },
+    {
+      "parent_id": "soft_skills",
+      "parent_name": "Soft Skills",
+      "canonical": "Initiative",
+      "canonical_id": "initiative",
+      "merge_into_canonical": [],
+      "reason": "No clear duplicates or synonyms found for this skill."
+    },
+    {
+      "parent_id": "soft_skills",
+      "parent_name": "Soft Skills",
+      "canonical": "Leadership",
+      "canonical_id": "leadership",
+      "merge_into_canonical": [
+        "LEADERSHIP,Program_Guidance",
+        "leadership_project_management"
+      ],
+      "reason": "These terms are variations of leadership with slight context differences but essentially refer to the same skill."
+    },
+    {
+      "parent_id": "soft_skills",
+      "parent_name": "Soft Skills",
+      "canonical": "Negotiation",
+      "canonical_id": "negotiation",
+      "merge_into_canonical": [],
+      "reason": "No clear duplicates or synonyms found for this skill."
+    },
+    {
+      "parent_id": "soft_skills",
+      "parent_name": "Soft Skills",
+      "canonical": "Organization",
+      "canonical_id": "organization",
+      "merge_into_canonical": [
+        "ORGANIZATIONAL_AND_PROJECT_MANAGEMENT",
+        "Organizational_Skills"
+      ],
+      "reason": "These terms are related to organizing and can be considered as different aspects of the same skill."
+    },
+    {
+      "parent_id": "soft_skills",
+      "parent_name": "Soft Skills",
+      "canonical": "Presentation_Skills",
+      "canonical_id": "presentation_skills",
+      "merge_into_canonical": [
+        "PRESENTATION,Talent"
+      ],
+      "reason": "These terms refer to the same skill with slight variations in naming."
+    },
+    {
+      "parent_id": "SOFT_SKILLS",
+      "parent_name": "Soft Skills",
+      "canonical": "Collaboration Skills",
+      "canonical_id": "COLLABORATION_SKILLS",
+      "merge_into_canonical": [
+        "COLLABORATION_AND_TEAMS",
+        "COLLABORATION_AND_TEAMWORK"
+      ],
+      "reason": "These are all variations of collaboration-related skills."
+    },
+    {
+      "parent_id": "SOFT_SKILLS",
+      "parent_name": "Soft Skills",
+      "canonical": "Communication Skills",
+      "canonical_id": "COMMUNICATION_SKILLS",
+      "merge_into_canonical": [
+        "INTERPERSONAL_SKILLS"
+      ],
+      "reason": "Both terms encompass the same broad skill set involving interactions with others."
+    },
+    {
+      "parent_id": "TECHNICAL_SKILLS",
+      "parent_name": "Technical Skills",
+      "canonical": "Analytics And Modeling",
+      "canonical_id": "ANALYTICS_AND_MODELING",
+      "merge_into_canonical": [
+        "ANALYSIS_AND_RESEARCH",
+        "MODELING_SKILLS"
+      ],
+      "reason": "These terms are related to data analysis and modeling, with slight variations in wording."
+    },
+    {
+      "parent_id": "TECHNICAL_SKILLS",
+      "parent_name": "Technical Skills",
+      "canonical": "Data Analysis Methods And Tools",
+      "canonical_id": "DATA_ANALYSIS_METHODS_AND_TOOLS",
+      "merge_into_canonical": [
+        "DATA_ANALYSIS_TOOLS"
+      ],
+      "reason": "These terms refer to the same concept of tools used for data analysis, with 'Methods' and 'Tools' being synonymous."
+    },
+    {
+      "parent_id": "TECHNICAL_SKILLS",
+      "parent_name": "Technical Skills",
+      "canonical": "Information Security And Cybersecurity",
+      "canonical_id": "INFORMATION_SECURITY_AND_CYBERSECURITY",
+      "merge_into_canonical": [
+        "INFORMATION_SECURITY"
+      ],
+      "reason": "These terms refer to the same concept of securing information, with 'And' and 'Cybersecurity' being synonymous."
+    },
+    {
+      "parent_id": "TECHNICAL_SKILLS",
+      "parent_name": "Technical Skills",
+      "canonical": "Performance Measurement And Improvement",
+      "canonical_id": "PERFORMANCE_MEASUREMENT_AND_IMPROVEMENT",
+      "merge_into_canonical": [
+        "PERFORMANCE_MANAGEMENT"
+      ],
+      "reason": "These terms are related to performance but with slight variations in wording, referring to the same concept."
+    },
+    {
+      "parent_id": "TECHNICAL_SKILLS",
+      "parent_name": "Technical Skills",
+      "canonical": "Risk Management Tools And Techniques",
+      "canonical_id": "RISK_MANAGEMENT_TOOLS_AND_TECHNIQUES",
+      "merge_into_canonical": [
+        "RISK_MANAGEMENT_TOOLS",
+        "RISK_MGMT"
+      ],
+      "reason": "These terms refer to the same concept of risk management tools, with 'And Techniques' and 'Mgmt' being synonymous."
+    }
+  ]
+}

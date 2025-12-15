@@ -1,0 +1,19 @@
+{
+  "job_title": "IBC &amp; A Germany Analyst (f/m/x)",
+  "timestamp": "20251028_094457",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/BUSINESS_ANALYSIS",
+    "ROOT/TECHNICAL_SKILLS/SOFTWARE_TOOLS_PROFICIENCY",
+    "ROOT/TECHNICAL_SKILLS/DATA_ANALYSIS",
+    "ROOT/TECHNICAL_SKILLS/MODELING_SKILLS",
+    "ROOT/DOMAIN_KNOWLEDGE/INDUSTRY_KNOWLEDGE",
+    "ROOT/DOMAIN_KNOWLEDGE/MARKET_ANALYSIS",
+    "ROOT/DOMAIN_KNOWLEDGE/REGULATORY_AWARENESS"
+  ],
+  "stats": {
+    "nodes_explored": 10,
+    "leaf_nodes": 7,
+    "max_depth": 6
+  }
+}

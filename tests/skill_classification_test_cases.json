@@ -1,0 +1,103 @@
+{
+  "task_type": "skill_classification",
+  "description": "Test cases for WF3005 skill domain classification",
+  "prompt_template": "Classify this skill into the most appropriate domain:\n\nSKILL: {skill_name}\n\nDOMAIN OPTIONS (ID|name):\n8452|technology\n8453|data_and_analytics\n8454|business_operations\n8455|people_and_communication\n8456|compliance_and_risk\n8457|project_and_product\n8458|corporate_culture\n8459|specialized_knowledge\n\nRespond with ONLY the domain_id (number) on the first line.",
+  "test_cases": [
+    {
+      "id": "tech_python",
+      "skill_name": "Python programming",
+      "expected_verdict": "8452",
+      "rationale": "Python is a programming language, clearly technology"
+    },
+    {
+      "id": "tech_kubernetes",
+      "skill_name": "Kubernetes orchestration",
+      "expected_verdict": "8452",
+      "rationale": "Container orchestration is infrastructure/technology"
+    },
+    {
+      "id": "data_sql",
+      "skill_name": "SQL query optimization",
+      "expected_verdict": "8453",
+      "rationale": "SQL optimization is data/analytics focused"
+    },
+    {
+      "id": "data_ml",
+      "skill_name": "Machine learning model training",
+      "expected_verdict": "8453",
+      "rationale": "ML is data science/analytics"
+    },
+    {
+      "id": "biz_budgeting",
+      "skill_name": "Budgeting and forecasting",
+      "expected_verdict": "8454",
+      "rationale": "Financial planning is business operations"
+    },
+    {
+      "id": "biz_supply",
+      "skill_name": "Supply chain management",
+      "expected_verdict": "8454",
+      "rationale": "Operations/logistics is business operations"
+    },
+    {
+      "id": "people_comms",
+      "skill_name": "Stakeholder communication",
+      "expected_verdict": "8455",
+      "rationale": "Communication with stakeholders is people/comm"
+    },
+    {
+      "id": "people_present",
+      "skill_name": "Executive presentations",
+      "expected_verdict": "8455",
+      "rationale": "Presenting to executives is people/communication"
+    },
+    {
+      "id": "risk_audit",
+      "skill_name": "Internal audit procedures",
+      "expected_verdict": "8456",
+      "rationale": "Audit is compliance/risk"
+    },
+    {
+      "id": "risk_gdpr",
+      "skill_name": "GDPR compliance",
+      "expected_verdict": "8456",
+      "rationale": "Data privacy regulations are compliance"
+    },
+    {
+      "id": "proj_agile",
+      "skill_name": "Agile methodology",
+      "expected_verdict": "8457",
+      "rationale": "Agile is project/product management methodology"
+    },
+    {
+      "id": "proj_roadmap",
+      "skill_name": "Product roadmap development",
+      "expected_verdict": "8457",
+      "rationale": "Roadmapping is product management"
+    },
+    {
+      "id": "culture_dei",
+      "skill_name": "Diversity and inclusion initiatives",
+      "expected_verdict": "8458",
+      "rationale": "D&I is corporate culture"
+    },
+    {
+      "id": "culture_remote",
+      "skill_name": "Remote team management",
+      "expected_verdict": "8458",
+      "rationale": "Remote work practices are culture/org design"
+    },
+    {
+      "id": "spec_medical",
+      "skill_name": "Medical terminology",
+      "expected_verdict": "8459",
+      "rationale": "Healthcare-specific knowledge"
+    },
+    {
+      "id": "spec_banking",
+      "skill_name": "Basel III regulations",
+      "expected_verdict": "8459",
+      "rationale": "Banking-specific regulatory knowledge"
+    }
+  ]
+}

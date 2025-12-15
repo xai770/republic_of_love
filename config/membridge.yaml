@@ -1,0 +1,41 @@
+# MemBridge Configuration
+# Clean integration for v17+ LLM operations
+
+membridge:
+  enabled: true
+  database_path: "data/membridge.db"
+  
+  validation:
+    enabled: true
+    block_json: true
+    validate_templates: true
+  
+  logging:
+    detailed: true
+    track_performance: true
+    track_quality_indicators: true
+    track_failure_reasons: true
+  
+  models:
+    default: "gemma3:1b"
+    available:
+      - "gemma3:1b"
+      - "llama3.2:latest" 
+      - "qwen2.5:7b"
+      - "deepseek-r1:8b"
+  
+  prompt_improvement:
+    track_llm_suggestions: true
+    version_naming: true
+    performance_delta_tracking: true
+
+# Template Registry Configuration
+templates:
+  auto_migrate_v14: true
+  naming_convention: "{template_name}_v{version}"
+  
+# Testing Configuration  
+testing:
+  batch_comparison: true
+  model_switching: true
+  performance_benchmarking: true

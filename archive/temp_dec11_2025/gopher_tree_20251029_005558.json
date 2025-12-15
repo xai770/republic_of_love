@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251029_005558",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/COMMUNICATIONSKILLS",
+    "ROOT/PROJECTMANAGEMENT",
+    "ROOT/CLIENTRELATIONSHIPS"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

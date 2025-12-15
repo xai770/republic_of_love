@@ -1,0 +1,19 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251029_004754",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/SEcurities_Services_Knowledge",
+    "ROOT/Sales_Strategy_and_Planing/Sales_Strategy_Development",
+    "ROOT/Sales_Strategy_and_Planing/Target_Acquisition_Planning",
+    "ROOT/Sales_Strategy_and_Planing/Performance_Monitoring",
+    "ROOT/Customer_Relationship_Management/Relationship_Building_Strategies",
+    "ROOT/Customer_Relationship_Management/Client_Need_Analysis",
+    "ROOT/Customer_Relationship_Management/Conflict_Solving"
+  ],
+  "stats": {
+    "nodes_explored": 10,
+    "leaf_nodes": 7,
+    "max_depth": 6
+  }
+}

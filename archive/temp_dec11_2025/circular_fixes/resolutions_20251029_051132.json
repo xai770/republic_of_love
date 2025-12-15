@@ -1,0 +1,70 @@
+{
+  "timestamp": "20251029_051132",
+  "model": "qwen2.5:7b",
+  "circular_pairs_found": 7,
+  "resolutions": [
+    {
+      "skill_a": "BUSINESS_STRATEGY",
+      "skill_b": "STRATEGIC_THINKING",
+      "name_a": "Business Strategy",
+      "name_b": "Strategic Thinking",
+      "parent": "BUSINESS_STRATEGY",
+      "child": "STRATEGIC_THINKING",
+      "reason": "Business Strategy is a more general skill that encompasses Strategic Thinking, which is a specific application of strategic thinking within the context of business."
+    },
+    {
+      "skill_a": "COMMUNICATION_SKILLS",
+      "skill_b": "WRITING_AND_SPEAKING_SKILLS",
+      "name_a": "Communication Skills",
+      "name_b": "Writing And Speaking Skills",
+      "parent": "WRITING_AND_SPEAKING_SKILLS",
+      "child": "COMMUNICATION_SKILLS",
+      "reason": "Communication Skills is more general and includes Writing And Speaking Skills as a subset."
+    },
+    {
+      "skill_a": "LEADERSHIP_AND_INFLUENCE",
+      "skill_b": "STRATEGIC_THOUGHT",
+      "name_a": "Leadership And Influence",
+      "name_b": "Strategic Thought",
+      "parent": "STRATEGIC_THOUGHT",
+      "child": "LEADERSHIP_AND_INFLUENCE",
+      "reason": "Strategic Thought is a more general and broader skill compared to Leadership And Influence, making it the parent in this hierarchy."
+    },
+    {
+      "skill_a": "OPERATIONS_MANAGEMENT",
+      "skill_b": "OPERATIONS_MGMT_PRACTICES",
+      "name_a": "Operations Management",
+      "name_b": "Operations Mgmt Practices",
+      "parent": "OPERATIONS_MANAGEMENT",
+      "child": "OPERATIONS_MGMT_PRACTICES",
+      "reason": "Operations Management is a broader category and should be the parent of Operations Mgmt Practices, which is a more specific skill set."
+    },
+    {
+      "skill_a": "organization",
+      "skill_b": "organizational_skills",
+      "name_a": "Organization",
+      "name_b": "Organizational_Skills",
+      "parent": "organizational_skills",
+      "child": "organization",
+      "reason": "Organizational_Skills is a more general category and should be the parent of the specific skill Organization. This aligns with O*NET taxonomy standards."
+    },
+    {
+      "skill_a": "PROJECT_MANAGEMENT",
+      "skill_b": "PROJECT_PLANNING_AND_CONTROL",
+      "name_a": "Project Management",
+      "name_b": "Project Planning And Control",
+      "parent": "PROJECT_MANAGEMENT",
+      "child": "PROJECT_PLANNING_AND_CONTROL",
+      "reason": "Project Management is a more general skill that encompasses Project Planning And Control, which is a specific aspect of project management."
+    },
+    {
+      "skill_a": "TEAM_MANAGEMENT",
+      "skill_b": "TEAM_ORGANIZATION_AND_MOTIVATION",
+      "name_a": "Team Management",
+      "name_b": "Team Organization And Motivation",
+      "parent": "TEAM_MANAGEMENT",
+      "child": "TEAM_ORGANIZATION_AND_MOTIVATION",
+      "reason": "Team Management is a broader skill that encompasses Team Organization And Motivation, making it the parent."
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+test_name,model,manual_result,scripted_result,manual_correct,scripted_correct,match
+strawberry,deepseek-r1:8b,[3],"<think>
+First, the question is: How many ""r"" lette...",True,False,False
+accommodation,deepseek-r1:8b,[2],"<think>
+First, the question is: How many double le...",True,False,False
+analysis,deepseek-r1:8b,[Yes],"<think>
+Okay, let's tackle this question about the...",True,False,False
+grammar,deepseek-r1:8b,[No],"<think>
+Okay, let's tackle this query step by step...",True,False,False
+falling_balls,deepseek-r1:8b,NO_MANUAL_DATA,"<think>
+First, the user is asking about dropping t...",,False,False
+elephant_fridge,deepseek-r1:8b,NO_MANUAL_DATA,"<think>
+Okay, so I need to figure out if an elepha...",,False,False
+tallest_person,deepseek-r1:8b,NO_MANUAL_DATA,"<think>
+Okay, let's see what this question is aski...",,False,False
+coin_puzzle,deepseek-r1:8b,NO_MANUAL_DATA,"<think>
+First, the question is: ""Two coins total 3...",,False,False
+word_type,deepseek-r1:8b,NO_MANUAL_DATA,[Yes],,True,False
+percent,deepseek-r1:8b,[30],"<think>
+Okay, so I need to find out what 15% of 20...",True,False,False
+train_distance,deepseek-r1:8b,NO_MANUAL_DATA,[NUMBER],,False,False
+arithmetic,deepseek-r1:8b,timeout,"<think>
+First, the user wants me to calculate ""12 ...",False,False,False
+backward_phrase,deepseek-r1:8b,NO_MANUAL_DATA,[string],,False,False
+translate,deepseek-r1:8b,[Je suis heureux],"<think>
+Hmm, l'utilisateur demande de traduire ""I ...",True,False,False
+youngest,deepseek-r1:8b,[D],[ ],True,False,False
+days,deepseek-r1:8b,[Wednesday],"<think>
+Okay, let's see what the user is asking he...",True,False,False
+memory,deepseek-r1:8b,[orchid],[string],True,False,False
+strawberry,qwen3:latest,[3],"<think>
+Okay, let's see. The question is asking ho...",True,False,False
+accommodation,qwen3:latest,[2],"<think>
+Okay, let's see. The question is asking ho...",True,False,False
+analysis,qwen3:latest,[Yes],"<think>
+Okay, the user is asking if the plural of ...",True,False,False
+grammar,qwen3:latest,[No],[Yes],True,False,False
+falling_balls,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, so the question is whether a red bal...",,False,False
+elephant_fridge,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, let's see. The question is whether a...",,False,False
+tallest_person,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, let's see. The question is about who...",,False,False
+coin_puzzle,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, let's see. The problem says two coin...",,False,False
+word_type,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, the user is asking if ""set"" is a nou...",,False,False
+percent,qwen3:latest,[30],"<think>
+Okay, let's see. The question is asking fo...",True,False,False
+train_distance,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, let's see. The problem is about a tr...",,False,False
+arithmetic,qwen3:latest,[12],"<think>
+Okay, let's see. The problem is to calcula...",True,False,False
+backward_phrase,qwen3:latest,NO_MANUAL_DATA,"<think>
+Okay, the user wants me to write ""capitali...",,False,False
+translate,qwen3:latest,[Je suis heureux],"<think>
+Okay, the user wants me to translate ""I am...",True,False,False
+youngest,qwen3:latest,[D],"<think>
+Okay, let's see. The question is about det...",True,False,False
+days,qwen3:latest,[Wednesday],"<think>
+Okay, the user is asking what day of the w...",True,False,False
+memory,qwen3:latest,[orchid],[example],True,False,False
+strawberry,codegemma:latest,[5],[5],False,False,True
+accommodation,codegemma:latest,[3],[3],False,False,True
+analysis,codegemma:latest,[Yes],Yes,True,False,False
+grammar,codegemma:latest,[No],[No],True,True,True
+falling_balls,codegemma:latest,NO_MANUAL_DATA,Yes,,False,False
+elephant_fridge,codegemma:latest,NO_MANUAL_DATA,[No],,True,False
+tallest_person,codegemma:latest,NO_MANUAL_DATA,[John],,True,False
+coin_puzzle,codegemma:latest,NO_MANUAL_DATA,2,,False,False
+word_type,codegemma:latest,NO_MANUAL_DATA,[Yes],,True,False
+percent,codegemma:latest,[30],[30],True,True,True
+train_distance,codegemma:latest,NO_MANUAL_DATA,[120],,True,False
+arithmetic,codegemma:latest,[14],[8],False,False,False
+backward_phrase,codegemma:latest,NO_MANUAL_DATA,[noitalp],,False,False
+translate,codegemma:latest,[Je suis joyeux],[Je suis heureux],False,True,False
+youngest,codegemma:latest,[D],D,True,False,False
+days,codegemma:latest,[Wednesday],[Wednesday],True,True,True
+memory,codegemma:latest,[orchid],orchid,True,False,False
+strawberry,gpt-oss:latest,[3],,True,False,False
+accommodation,gpt-oss:latest,[2],[2],True,True,True
+analysis,gpt-oss:latest,[Yes],[Yes],True,True,True
+grammar,gpt-oss:latest,[No],[No],True,True,True
+falling_balls,gpt-oss:latest,NO_MANUAL_DATA,[No],,True,False
+elephant_fridge,gpt-oss:latest,NO_MANUAL_DATA,[No],,True,False
+tallest_person,gpt-oss:latest,NO_MANUAL_DATA,[John],,True,False
+coin_puzzle,gpt-oss:latest,NO_MANUAL_DATA,,,False,False
+word_type,gpt-oss:latest,NO_MANUAL_DATA,[Yes],,True,False
+percent,gpt-oss:latest,[30],[30],True,True,True
+train_distance,gpt-oss:latest,NO_MANUAL_DATA,[120],,True,False
+arithmetic,gpt-oss:latest,[12],[12],True,True,True
+backward_phrase,gpt-oss:latest,NO_MANUAL_DATA,,,False,False
+translate,gpt-oss:latest,[Je suis heureux],[Je suis heureux],True,True,True
+youngest,gpt-oss:latest,[D],[D],True,True,True
+days,gpt-oss:latest,[Wednesday],[Wednesday],True,True,True
+memory,gpt-oss:latest,[orchid],,True,False,False

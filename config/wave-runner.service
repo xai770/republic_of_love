@@ -1,0 +1,31 @@
+[Unit]
+Description=Wave Runner Daemon - Turing Workflow Execution
+Documentation=file:///home/xai/Documents/ty_learn/docs/architecture/WORKFLOW_EXECUTION.md
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=xai
+Group=xai
+WorkingDirectory=/home/xai/Documents/ty_learn
+Environment=PATH=/usr/bin:/usr/local/bin
+EnvironmentFile=-/home/xai/Documents/ty_learn/.env
+ExecStart=/usr/bin/python3 scripts/wave_runner_daemon.py --poll-interval 5
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=80%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=append:/home/xai/Documents/ty_learn/logs/wave_runner_daemon.log
+StandardError=append:/home/xai/Documents/ty_learn/logs/wave_runner_daemon.log
+
+[Install]
+WantedBy=multi-user.target

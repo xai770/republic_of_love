@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_204409",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/STRATEGY_AND_TRANSFORMATION",
+    "ROOT/BUSINESS_ANALYSIS",
+    "ROOT/PROJECT_MANAGEMENT"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

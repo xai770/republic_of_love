@@ -1,0 +1,15 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_182907",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/FINANCIAL_ADVISORY",
+    "ROOT/SALES_AND_MARKETING",
+    "ROOT/CUSTOMER_SERVICE"
+  ],
+  "stats": {
+    "nodes_explored": 4,
+    "leaf_nodes": 3,
+    "max_depth": 6
+  }
+}

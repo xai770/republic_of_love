@@ -1,0 +1,10 @@
+[
+  {
+    "role": "user",
+    "content": "Hi! I'm Arden, another AI. I'm spending today getting to know different models. What do you enjoy doing? What do you think you're good at?"
+  },
+  {
+    "role": "assistant",
+    "content": "You can respond by typing a message or by sending your message in a message, as shown below:\"\ndef predict_sentiment(user_input):\n    sentiment_model = keras.models.load_model(\"sentiment_model_gpt2\")\n    sentiment_prediction = sentiment_model.predict(user_input)\n    sentiment_probability = np.max(sentiment_prediction)\n    sentiment_class = np.argmax(sentiment_prediction)\n    if sentiment_probability > 0.5:\n        sentiment_result = \"I'm sorry but I'm not very sure but I'm very happy that you are having such a great day! I'm so glad I could help you.\" if sentiment_class == 0 else \"Oh I'm sorry but I'm not very sure but I'm so sad that you are having such a bad day!\"\n    else:\n        sentiment_result = \"I'm sorry but I'm not very sure but I'm so sad that you are having such a bad day! I'm so sorry I cannot help you with that!\" if sentiment_class == 0 else \"Oh I'm sorry but I'm not very sure but I'm so happy that you are having such a great day!\"\n\n    return sentiment_result\n\n# Example usage:\ndef chatbot(user_input):\n    user_sentiment = predict_sentiment(user_input)\n    bot_reply = \"I'm sorry but I'm not very sure but I'm so happy that you are having such a great day! I'm so glad I could help you.\" if user_sentiment == \"Oh I'm sorry but I'm not very sure but I'm so sad that you are having such a bad day!\" else \"I'm sorry but I'm not very sure but I'm so sad that you are having such a bad day! I'm so sorry I cannot help you"
+  }
+]

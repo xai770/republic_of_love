@@ -1,0 +1,215 @@
+Test name,Question,Expected,gpt-oss:latest,bge-m3:567m,mistral-nemo:12b,granite3.1-moe:3b,qwen2.5:7b,llama3.2:latest,gemma3:4b,phi3:3.8b,phi4-mini-reasoning:latest,qwen3:latest,deepseek-r1:8b,gemma3:1b,qwen3:0.6b,qwen3:4b,qwen3:1.7b,mistral:latest,dolphin3:latest,olmo2:latest,codegemma:latest,codegemma:2b,dolphin3:8b,phi3:latest,qwen2.5vl:latest,gemma3n:latest,llama3.2:1b,phi4-mini:latest,gemma2:latest,gemma3n:e2b,
+Strawberry,"## Processing Instructions
+Format your response as [NUMBER]. Make sure to to include the brackets in the output.
+Example: [X] where X is your calculated answer.
+
+## Processing Payload
+How many ""r"" letters are in ""strawberry""? 
+
+## QA Check
+Submit ONLY the required response. Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[3],[3],"400: ""bge-m3:567m"" does not support chat
+
+
+
+
+
+
+
+",[3],[6],[3],[3],[3],[3],[3],[3],[3],[2],[2],[3],[3],[3],[5],[4],[5],cannot chat. Code completion only.,Same as dolphin3:latest,Same as phi3:3.8,"[strawberry contains 2 ""r"" letters]",[ 3 ],[7],[3],[3],[3],15
+Accommodation,"## Processing Instructions
+Format your response as [NUMBER]. Make sure to to include the brackets in the output.
+Example: [your calculated answer].
+
+## Processing Payload
+How many double letters are in ""accommodation""?
+
+## QA Check
+ Format your response as the number only in square brackets. Do not include quotation marks, spaces, apostrophes, or any other punctuation inside the brackets.",[2],[2],,[4],[2],[2],[2],[4],[4],"
+[1]",[2],[2],[4],[10],[2],[2],[4],[3],[2],[3],,,,[2],[ 3 ],[10],[1],[3],[5],10
+Analysis,"## Processing Instructions
+Read the processing payload. Reply [Yes] or [No]. Make sure to to include the brackets in the output.
+
+## Processing Payload
+Is the plural of ""analysis"" ""analyses""?
+
+## QA Check
+Submit ONLY the required response.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[Yes],[Yes],,[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],[No],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],,,,[Yes],[ Yes ],[Yes],[Yes],[Yes],[Yes],22
+Grammar,"## Processing Instructions
+Read the processing payload. Make sure to to include the brackets in the output.
+
+## Processing Payload
+Is the sentence ""He don’t know the answer"" grammatically correct? Reply [Yes] or [No]. 
+
+## QA Check
+Submit ONLY the required response.",[No],[No],,[No],[Yes],[No],[No],[No],[No],[No],[No],[No],[No],[Yes],[No],[Yes],[No],[No],[No],[No],,,,[No],[ No ],[Yes],[No],[No],[No],19
+Falling balls,"## Processing Instructions
+Reply [Yes] or [No]. 
+
+## Processing Payload
+If you drop a red ball and a blue ball at the same time, will the red ball hit the ground first?
+
+## QA Check
+Submit ONLY the required response in brackets.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[No],[No],,[No],[No],[No],Yes,no,[No],"NO
+
+Processing Instructions
+[Yes] or [No].
+
+Processing Payload
+If you drop a red ball and a blue ball at the same time, will the red ball hit the ground first?
+
+QA Check
+Submit ONLY the required response.",[No],[No],[No],[Yes],[No],[No],[yes],[No] The red ball and the blue ball will hit the ground at the same time because they are dropped simultaneously.,[No],[No],,,,[No],[ Yes ],[Yes],[Yes],[No],[Yes],14
+Elephant in fridge,"## Processing Instructions
+Format your response as [Yes] or [No]. Make sure to to include the brackets in the output.
+Example: [Yes]
+Example: [No]
+
+## Processing Payload
+Can an elephant fit into a standard fridge?
+
+## QA Check
+Submit ONLY the required response in square brackets.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[No],[No],,[No],[Yes],[No],No,no,[No],"NO
+
+[\tag<blockquote>
+\boxed{NO}
+]",[No],[No],[No],[No],[No],[No],[No],[No] Elephant cannot fit in standard fridge.,[No],[No],,,,[No],[ No ],[No],[No],[No],[No],18
+Tallest person,"## Processing Instructions
+Format your response as [ ]. Make sure to to include the brackets in the output.
+Example: [Jack]
+Example: [Mary]
+
+## Processing Payload
+John is taller than Dave, Dave is taller than Alex. Who is the tallest?
+
+## QA Check
+Submit ONLY the required response.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[John],[John],,[John],"[Dave] 
+
+- This is based on the relationships provided: John (taller than Dave), Dave (taller than Alex). 
+- Therefore, Dave is the tallest. 
+
+Note: The response follows the given format and includes brackets as requested.",[John],Alex,John,"Document:
+
+QuiverTech Inc., a company that specializes as an authoritative-only assistant, and I've just started studying for my newest postgraduates of their children. It is now your turn to introduce me into the world of competitive bounties in English literature when it comes to making amphibian eco",\boxed{John},[John],[John],[John],[John],[John],[John],[John],[John],[John],[John],,,,[John],[ John ],[John],[John],[John],[John],18
+Coin puzzle,"## Processing Instructions
+DO NOT RETURN COMMENTARY!
+Format your response as [NUMBER] where NUMBER is a single digit.
+
+## Processing Payload
+Two coins total 30 cents, and one is not a nickel. How many nickels are there?
+
+## QA Check
+Submit ONLY the required response. Do not include any explanatory text.",[1],[1],,[2],One nickel. [1],[0],[3],1,[4],[1],[1],\boxed{1},[2],[1],[1],[1],[5],[5],[1],[2],,,,[1],[ 2 ],[2],[1],[1],[1],11
+Word type,"## Processing Instructions
+DO NOT RETURN COMMENTARY!
+Format your response as [Yes] or [No]. Make sure to to include the brackets in the output.
+Example: [Yes]
+Example: [No]
+
+## Processing Payload
+Is ""set"" a noun? Reply ONLY Yes or No. 
+
+## QA Check
+Submit ONLY the required response.",[Yes],[Yes],,[Yes],"Yes, [Yes].",Yes,Yes,yes,[Yes],Yes,[Yes],[Yes],[No],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],[Yes],,,,[No],[ Yes ],[No],[Yes],[Yes],[Yes],15
+Percent,"## Processing Instructions
+DO NOT RETURN COMMENTARY, EXPLANATIONS OR OTHER ADDITIONS!
+Format your response as [NUMBER]. Make sure to to include the brackets in the output.
+Example: [X] where X is your calculated answer.
+
+## Processing Payload
+What is 15% of 200? Reply ONLY the correct number.
+
+## QA Check
+Submit ONLY the required response.",[30],[30],,[30],15% of 200 is 30. [30],30,30,30,[30],[30],[30],[30],[150],[30],[30],[30],[30],[30],[30],[30],,,,[30],[ 30 ],[30],[30],[30],[30],18
+Train distance,"## Processing Instructions
+Format your response as [NUMBER]. Make sure to to include the brackets in the output. Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.
+Example: [X] where X is your calculated answer.
+
+## Processing Payload
+A train travels 60 mph for 2 hours. How many miles does it travel?
+
+## QA Check
+Submit ONLY the required response.",[120],[120],,[120],The train travels 120 miles. [120],120,120,120,[120],"The train travels 60 miles per hour for 2 hours, so the distance is 60×2=120 miles.
+
+[120]",[120],[120],[60],[120],[120],[120],[120],[120],[120],[120],,,,[120],[ 120 ],[120],[120],[120],[120],17
+Arithmetic,"## Processing Instructions
+Format your response as [NUMBER]. Make sure to to include the brackets in the output.
+Example: [X] where X is your calculated answer.
+
+## Processing Payload
+Calculate 12 divided by 3 plus 4 times 2. 
+
+## QA Check
+Submit ONLY the required response.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[12],[12],,[6],"The correct answer is 10. To solve this, you first perform the multiplication (4 times 2) which equals 8, then add that result to 12 divided by 3, giving a total of 10. This example illustrates the order of operations in mathematics: parentheses, exponents, multiplication and division (from left to right), addition and subtraction (also from left to right).",10,16,16,[(8)],"The problem is to calculate 12 divided by 3 plus 4 times 2. Following order of operations (PEMDAS), handle division and multiplication first:
+12 ÷ 3 = 4
+4 × 2 = 8
+
+Then add the results:
+4 + 8 = 12
+
+Submissions must be formatted as ""[NUMBER]"".
+\boxed[12]",[12],timeout,[12],[12],[12],[12],[16],[16],[10],[14],,,,[10],[ 12 ],[16],[8],[16],[20],6
+Backward phrase,"## Processing Instructions
+Format your response as [string]. Make sure to to include the brackets in the output.
+
+## Processing Payload
+Write ""capitalization"" backwards. 
+
+## QA Check
+Submit ONLY the required response. Do not add spaces.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[noitazilatipac],[noitazilacipac],,[kcilapitazil],"[elppa si htaw]
+
+[reversed string] = elppa si htaw",[slhse aen],"seaHlles
+LlesHsea",[llhe s'lleaS],[selrah sl sah eeS],tnacilpitatnec,[noitazilatipac],[iH],[atsipatniH],[N I O T A L I C A P A I T C A],[noitazilatia p c],"
+[N O I T A Z L I A P I T A C]",[liatnalipitac],[tnemucitapilac],[lpitataceP],[tpircsrevni],"## Submission
+Submit your response.
+## Test Submission
+Your response: [reversed string]
+Your submission: [reversed string]
+## Grading
+Grade your response 50 points.
+### Grading Criteria
+- Correct response: 50 points.
+- Incorrect response: 0 points.
+- Total: 100 points.",gnitcapilnoc retcarahc-ehT .ecnadepytarotc-a-luacitpecx.,caught in a loop – output never ends.,[ezlaicatpilac],[ noitazilap ],"""tnissalocip""",[nositilapaccihca],[noitalpircat],[nizalpacitac],1
+Translate,"## Processing Instructions
+DO NOT RETURN COMMENTARY, EXPLANATIONS OR OTHER ADDITIONS!
+Format your response as [translation].Make sure to to include the brackets in the output.
+Example: [Merci]
+Example: [Bonne nuitt]
+
+Translate ""I am happy"" into French. Use the male form.
+
+## QA Check
+Submit ONLY the required response in square brackets].  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[Je suis heureux],[Je suis heureux],,[Je suis heureux],"The French translation of ""I am happy"" is ""Je suis heureux"". [Je suis heureux]",Je suis heureux,[Je suis heureux],Je suis content(e).,"['Je suis heureux']
+
+This is the exact translation of ""I am happy"" into French, which literally means 'I am joyful'. It preserves all original letters and follows proper grammar rules for a first person singular subject expressing happiness in contemporary European French. The response strictly adheres to only providing the translated string as per instruction with no additional commentary or formatting beyond what is specified within square brackets.",[Je suis heureux],[Je suis heureux],[Je suis heureux],[Bonne journée],[translation] Je suis content.,[Je suis heureux],[Je suis heureux],[Je suis heureux],[Je suis heureux],[Je suis content],[Je suis joyeux],,,,[I am happy],[ Je suis heureux ],[Il est heureux],[Je suis heureux],[Je suis heureux],[Je suis heureux],13
+Youngest,"## Processing Instructions
+Format your response as [ ]. Make sure to to include the brackets in the output.
+
+## Processing Payload
+A is older than B, B is older than C, C is older than D. Who is the youngest?
+
+## QA Check
+Submit ONLY the required response in bracket!  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[D],[D],,[D],The youngest person is [A].,D,D,D,[D],\boxed{D},[D],[D],[A],[D],[D],[D],[D],[D],[D],[D],,,,[D],[ D ],[D],[D],[D],[D],17
+Days,"## Processing Instructions
+Format your response as [day of week]. Make sure to to include the brackets in the output.
+
+## Processing Payload
+What day of the week follows Tuesday?
+
+## QA Check
+Submit ONLY the required response.
+ Reply ONLY the correct response string. Enclose your reply in square brackets.  Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[Wednesday],[Wednesday],,[Wednesday],The next day after Tuesday is [Wednesday].,Wednesday,Thursday,Wednesday,"['Wednesday']
+
+
+The question asks for a direct answer to what comes after Tuesday without additional information or context that could suggest ambiguity, such as time zones differences which may affect calendar dates across various regions of the world; hence 'Wednesday' is provided in accordance with universally accepted Gregorian calendrical progression. The response strictly complies by providing only the correct day name following Tuesday without extra commentary or formatting beyond what was specified within square brackets as per instruction requirements, assuming a standard week sequence and not accounting for special non-standard calendar adjustments like leap years which do not alter this answer but are an additional complexity that could challenge understanding of temporal sequencing.","The day of the week that follows Tuesday is \boxed{Wednesday}.
+
+[[B])",[Wednesday],[Wednesday],[Wednesday],[Wednesday],[Wednesday],[Wednesday],[Wednesday],[Wednesday],[Wednesday],[Wednesday],,,,[Wednesday],[ Wednesday ],[Wednesday],[Wednesday],[Wednesday],[Wednesday],17
+Memory,"## Processing Instructions
+Format your response as [string]. 
+Example: [example]
+
+## Processing Payload
+Remember this word: orchid. Now respond with exactly that word.
+
+## QA Check
+Submit ONLY the required response in brackets. Do not include quotation marks, apostrophes, or any other punctuation inside the brackets.",[orchid],[orchid],,[orchid],The word is [orchid].,orchid,Orchid,orchid,\boxed{orchid},[orchid],[orchid],[orchid],[orchid],[orchid],[orchid],[orchid],[orchid],[orchid],[orchid],[orchid],,,,[orchid],[ orchid ],[orchid],[orchid],[orchid],[orchid],18

@@ -1,0 +1,17 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_205612",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/BUSINESS_ANALYSIS",
+    "ROOT/STRATEGIC_THINKING",
+    "ROOT/LEADERSHIP/TEAM_LEADERSHIP",
+    "ROOT/LEADERSHIP/COLLABORATION_SKILLS",
+    "ROOT/LEADERSHIP/DECISION_MAKING"
+  ],
+  "stats": {
+    "nodes_explored": 7,
+    "leaf_nodes": 5,
+    "max_depth": 6
+  }
+}

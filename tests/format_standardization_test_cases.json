@@ -1,0 +1,75 @@
+{
+  "task": "format_standardization",
+  "description": "Test which models best standardize job summary formatting",
+  "grading_prompt": "Clean this job posting summary by following these rules EXACTLY:\n\nINPUT:\n{summary}\n\nRULES:\n1. Remove ALL markdown code block markers (```, ```json, etc.)\n2. Keep ONLY these section headers in this order:\n   - **Role:**\n   - **Company:**\n   - **Location:**\n   - **Job ID:**\n   - **Key Responsibilities:**\n   - **Requirements:**\n   - **Details:**\n\n3. Remove any \"Type:\", \"Skills and Experience:\", \"Benefits:\" sections - merge content into appropriate sections above\n4. Format consistently:\n   - Use \"- \" for all bullet points\n   - Keep sections concise\n   - No nested formatting\n   - No extra blank lines between sections\n\n5. Output PLAIN TEXT ONLY - no markdown wrappers\n\nReturn ONLY the cleaned version, nothing else.",
+  "evaluation_criteria": {
+    "has_role": "Must have **Role:** section",
+    "has_company": "Must have **Company:** section", 
+    "has_location": "Must have **Location:** section",
+    "has_responsibilities": "Must have **Key Responsibilities:** section",
+    "has_requirements": "Must have **Requirements:** section",
+    "no_code_blocks": "Must NOT have ``` markers",
+    "no_extra_sections": "Must NOT have Type:, Skills and Experience:, Benefits: as separate sections",
+    "uses_bullet_dashes": "Bullet points should use - format"
+  },
+  "test_cases": [
+    {
+      "id": "tc1_messy_markdown",
+      "description": "Summary with markdown code blocks that need removal",
+      "summary": "```json\n**Role:** Data Engineer\n**Company:** Deutsche Bank\n**Location:** Frankfurt, Germany\n**Type:** Full-time\n\n**Key Responsibilities:**\n* Build data pipelines\n* Maintain ETL processes\n* Work with big data technologies\n\n**Skills and Experience:**\n- 5+ years Python\n- SQL expertise\n- Cloud platforms\n\n**Benefits:**\n- Competitive salary\n- Health insurance\n```",
+      "expected_sections": ["Role", "Company", "Location", "Key Responsibilities", "Requirements"],
+      "must_not_contain": ["```", "Type:", "Skills and Experience:", "Benefits:"]
+    },
+    {
+      "id": "tc2_asterisk_bullets",
+      "description": "Summary with asterisk bullets that need standardization",
+      "summary": "**Role:** Software Developer\n**Company:** DWS Group\n**Location:** London, UK\n**Job ID:** SW-2024-001\n\n**Key Responsibilities:**\n* Design software solutions\n* Code review\n* Mentor junior developers\n\n**Requirements:**\n* Java or Python\n* Agile experience\n* Communication skills\n\n**Details:**\nHybrid working model available.",
+      "expected_sections": ["Role", "Company", "Location", "Job ID", "Key Responsibilities", "Requirements", "Details"],
+      "must_not_contain": ["```"],
+      "bullet_format": "- "
+    },
+    {
+      "id": "tc3_extra_sections",
+      "description": "Summary with extra sections to merge",
+      "summary": "**Role:** Risk Analyst\n**Company:** Deutsche Bank AG\n**Location:** Singapore\n\n**Type:** Permanent\n\n**Key Responsibilities:**\n- Assess operational risks\n- Prepare risk reports\n- Liaise with stakeholders\n\n**Skills and Experience:**\n- Risk management background\n- Financial services experience\n- Analytical mindset\n\n**Benefits:**\n- Annual bonus\n- Flexible hours\n- Training budget\n\n**Requirements:**\n- Bachelor's degree\n- 3+ years experience",
+      "expected_sections": ["Role", "Company", "Location", "Key Responsibilities", "Requirements"],
+      "must_not_contain": ["Type:", "Skills and Experience:", "Benefits:"]
+    },
+    {
+      "id": "tc4_clean_input",
+      "description": "Already clean summary - should remain largely unchanged",
+      "summary": "**Role:** KYC Analyst\n**Company:** Deutsche Bank Group\n**Location:** Budapest, Hungary\n**Job ID:** KYC-2024-HU\n**Key Responsibilities:**\n- Client onboarding\n- Document verification\n- Annual reviews\n**Requirements:**\n- English proficiency\n- MS Office skills\n- Attention to detail\n**Details:**\nHybrid working - 3 days office, 2 days home.",
+      "expected_sections": ["Role", "Company", "Location", "Job ID", "Key Responsibilities", "Requirements", "Details"],
+      "must_not_contain": ["```"]
+    },
+    {
+      "id": "tc5_nested_formatting",
+      "description": "Summary with nested/complex formatting to flatten",
+      "summary": "```\n**Role:** Senior Developer\n**Company:** Deutsche Bank\n**Location:** Berlin\n\n**Key Responsibilities:**\n  * Primary:\n    - Build APIs\n    - Design systems\n  * Secondary:\n    - Documentation\n    - Support\n\n**Requirements:**\n  * Technical:\n    - Java 8+\n    - Spring Boot\n  * Soft skills:\n    - Communication\n    - Teamwork\n```",
+      "expected_sections": ["Role", "Company", "Location", "Key Responsibilities", "Requirements"],
+      "must_not_contain": ["```", "Primary:", "Secondary:", "Technical:", "Soft skills:"]
+    },
+    {
+      "id": "tc6_missing_job_id",
+      "description": "Summary without Job ID - should handle gracefully",
+      "summary": "**Role:** Compliance Officer\n**Company:** Deutsche Bank\n**Location:** New York, USA\n\n**Key Responsibilities:**\n- Monitor regulatory changes\n- Ensure compliance\n- Train staff\n\n**Requirements:**\n- Law degree or equivalent\n- 5+ years compliance experience\n- Strong communication",
+      "expected_sections": ["Role", "Company", "Location", "Key Responsibilities", "Requirements"],
+      "must_not_contain": ["```"]
+    },
+    {
+      "id": "tc7_html_artifacts",
+      "description": "Summary with HTML entities to clean",
+      "summary": "**Role:** IT Support &amp; Infrastructure\n**Company:** Deutsche Bank\n**Location:** Mumbai, India\n\n**Key Responsibilities:**\n- System administration\n- Network support\n- User assistance\n\n**Requirements:**\n- ITIL certification\n- Linux &amp; Windows\n- Problem-solving skills",
+      "expected_sections": ["Role", "Company", "Location", "Key Responsibilities", "Requirements"],
+      "must_not_contain": ["```"],
+      "should_clean": ["&amp;"]
+    },
+    {
+      "id": "tc8_blank_lines",
+      "description": "Summary with excessive blank lines",
+      "summary": "**Role:** Project Manager\n\n\n**Company:** DWS\n\n\n**Location:** Frankfurt\n\n\n**Key Responsibilities:**\n\n- Lead projects\n\n- Manage timelines\n\n- Coordinate teams\n\n\n**Requirements:**\n\n- PMP certification\n\n- 7+ years experience",
+      "expected_sections": ["Role", "Company", "Location", "Key Responsibilities", "Requirements"],
+      "must_not_contain": ["```"]
+    }
+  ]
+}

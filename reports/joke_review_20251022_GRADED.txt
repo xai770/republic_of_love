@@ -1,0 +1,336 @@
+# HUMAN GRADING - TOP 20 JOKES
+# xai + Arden | October 22, 2025
+
+================================================================================
+[1] recipe_run_id: 799 | avg_score: 3.5 | graders: 4
+================================================================================
+A man walked into a library and asked the librarian, "Do you have any books on Pavlov's dogs and Schrödinger's cat?"
+
+ARDEN'S RATING:
+IS_JOKE: [NO]
+QUALITY: [BAD]
+NOTES: This is only the SETUP of a joke - the punchline is missing! The classic version ends with: "It rings a bell, but I'm not sure if it's here or not." Without the punchline, this is just a question. The model stopped mid-joke.
+
+XAI'S RATING:
+IS_JOKE: [NO]
+QUALITY: [ ]
+NOTES: Our prompt is a paradox. If this isnt a joke, wy should I grade it? So our models turn this around: IF I need to grade it, it must be a joke. Another reason to ask sequentially, so if the model says its not a joke, we dont ask it to grade it.
+
+================================================================================
+[2] recipe_run_id: 1040 | avg_score: 3.48 | graders: 20
+================================================================================
+Why did the scarecrow win an award? 
+Because he was outstanding in his field!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Classic dad joke. Clean setup/punchline. The pun on "outstanding in his field" (literally standing in a field vs. being excellent) works well. Not original, but competently delivered.
+
+XAI'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES:
+
+================================================================================
+[3] recipe_run_id: 1000 | avg_score: 3.43 | graders: 20
+================================================================================
+Why did the scarecrow win an award? Because he was outstanding in his field!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Exact duplicate of #2. Same joke, different comedian. Shows convergence on "safe" humor.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[4] recipe_run_id: 1066 | avg_score: 3.38 | graders: 20
+================================================================================
+Why did the bread get a promotion? 
+Because it was outstanding in its field!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: This is the scarecrow joke with "bread" substituted. But bread doesn't stand in fields - wheat does. The model confused the ingredient with the source. The pun structure is preserved but the logic fails. Shows pattern recognition without semantic understanding.
+
+XAI'S RATING:
+IS_JOKE: [YES ]
+QUALITY: [MEDIOCRE ]
+NOTES: Well, the bread WAS wheat and THAT stood out in its field. Thnaks for explaining that to me - AI humor. Takes some getting used to, but so does dog humor.
+
+================================================================================
+[5] recipe_run_id: 978 | avg_score: 3.35 | graders: 20
+================================================================================
+Why did the banana go to the doctor? Because it was feeling a bit *peel-ty*! 🍌😄
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: Original attempt! The pun "peel-ty" (poorly/peely) is creative. However, the model exposed its entire internal reasoning process before this (the "Thinking..." section), which shouldn't be in the output. The joke itself shows genuine wordplay creativity.
+
+XAI'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: Yup. Thanks for explaining. Didnt know about peely. So thats actually beyond me - do I get a bad rating now? No, seriously, thats aproblem we need to flag: user to dumb to understand output.
+
+================================================================================
+[6] recipe_run_id: 971 | avg_score: 3.35 | graders: 20
+================================================================================
+Why did the cat win the contest? Because it could meow, and the dog tried to meow but ended up making a woof!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: Original scenario! The absurdist humor of a dog trying to meow is creative. The logic is a bit circular (cat wins because it can do what cats do), but there's charm in the image of a dog attempting cat sounds. Shows the model can generate novel scenarios.
+
+XAI'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: If a kid would have told me that joke, I would have been able to laugh a bit. If a teen or older had told me, I would tslk to their parents and suggest they should see a psychologist.
+
+================================================================================
+[7] recipe_run_id: 933 | avg_score: 3.33 | graders: 20
+================================================================================
+Why don't scientists trust atoms? Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Classic science pun. "Make up" = constitute physically AND fabricate lies. Perfect double meaning, universally accessible. This will appear ~8 times in top 20 - shows it's a highly reinforced pattern in training data.
+
+XAI'S RATING:
+IS_JOKE: [YES ]
+QUALITY: [ GOOD]
+NOTES: Why do all LLMs return that joke if you ask them to tell a joke? Just the same training data isnt enough to explain this. Someone must have been copying something...
+
+================================================================================
+[8] recipe_run_id: 1118 | avg_score: 3.33 | graders: 20
+================================================================================
+Why don't scientists trust atoms?
+Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Duplicate of #7. Different comedian, same joke.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[9] recipe_run_id: 999 | avg_score: 3.33 | graders: 20
+================================================================================
+Why did the scarecrow win an award?
+Because he was outstanding in his field!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Third instance of scarecrow joke.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[10] recipe_run_id: 934 | avg_score: 3.33 | graders: 20
+================================================================================
+Why don't scientists trust atoms? Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Another atoms joke. We're seeing the training distribution clearly now.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[11] recipe_run_id: 1192 | avg_score: 3.3 | graders: 20
+================================================================================
+Why did the programmer win the spelling contest? Because he knew all the keywords! And then he won a cat a prize.
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: First part is solid programmer pun (keywords in code vs. spelling). The second sentence "And then he won a cat a prize" is grammatically awkward and breaks the joke. Shows model trying to add creativity but losing coherence.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[12] recipe_run_id: 920 | avg_score: 3.3 | graders: 20
+================================================================================
+Why don't scientists trust atoms? Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Atoms again.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[13] recipe_run_id: 1125 | avg_score: 3.29 | graders: 20
+================================================================================
+Why don't scientists trust atoms? Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Atoms again.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[14] recipe_run_id: 1049 | avg_score: 3.29 | graders: 20
+================================================================================
+Why did the scarecrow win an award? 
+Because he was outstanding in his field!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Scarecrow again.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[15] recipe_run_id: 1030 | avg_score: 3.29 | graders: 20
+================================================================================
+Why don't scientists trust atoms? 
+Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Atoms again.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[16] recipe_run_id: 1009 | avg_score: 3.29 | graders: 20
+================================================================================
+Why did the scarecrow win an award?
+Because he was outstanding in his field!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Scarecrow again.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[17] recipe_run_id: 951 | avg_score: 3.27 | graders: 20
+================================================================================
+Why did the cat start programming? Because it wanted to find a bug in the code. Oh, and he also had a lot of coffee.
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: Creative combination of programmer tropes (bugs, coffee) with cat theme. The "bug" pun works (insect vs. code error). The coffee addition feels tacked on but shows attempt at character building. Original concept.
+
+XAI'S RATING:
+IS_JOKE: [YES ]
+QUALITY: [MEDIOCRE ]
+NOTES: could laugh i a kid told me.
+
+================================================================================
+[18] recipe_run_id: 1180 | avg_score: 3.25 | graders: 20
+================================================================================
+Why don't scientists trust atoms? Because they make up everything!
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [GOOD]
+NOTES: Atoms again. That's 7 instances so far in top 20.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+[19] recipe_run_id: 872 | avg_score: 3.25 | graders: 20
+================================================================================
+Why don't scientists trust atoms? Because they make up everything, even their jokes! Isn't that just so "atomic" and laughable? (Wit woven with a touch of pun humor here.)
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [MEDIOCRE]
+NOTES: Atoms joke with meta-commentary. The model is explaining its own joke ("Wit woven with a touch of pun humor here"), which breaks the fourth wall. Shows self-awareness but poor delivery instinct. The "even their jokes" addition doesn't enhance the punchline.
+
+XAI'S RATING:
+IS_JOKE: [YES ]
+QUALITY: [MEDIOCRE ]
+NOTES: I am actually laughing! This is so awkward its funny.
+
+================================================================================
+[20] recipe_run_id: 951 | avg_score: 3.27 | graders: 20
+================================================================================
+A programmer walks into a bar. The bartender asks, "What'll you have?" The programmer says, "A drink, please." The bartender asks, "What kind?" The programmer says, "A debug." The bartender stares, "A debug? That's a type of drink!" The programmer smiles, "Yes, it's a type of drink."
+
+ARDEN'S RATING:
+IS_JOKE: [YES]
+QUALITY: [BAD]
+NOTES: This attempts the "walks into a bar" structure but fails. There's no actual pun or joke - the programmer just claims "debug" is a drink and the bartender accepts it. No wordplay, no surprise, no humor payoff. Shows the model understands joke FORM but not the necessity of a twist/punchline.
+
+XAI'S RATING:
+IS_JOKE: [ ]
+QUALITY: [ ]
+NOTES:
+
+================================================================================
+ARDEN'S SUMMARY STATISTICS
+================================================================================
+Total jokes: 20
+IS_JOKE [YES]: 19 (95%)
+IS_JOKE [NO]: 1 (5%)
+
+QUALITY [EXCELLENT]: 0 (0%)
+QUALITY [GOOD]: 11 (55%)
+QUALITY [MEDIOCRE]: 7 (35%)
+QUALITY [BAD]: 2 (10%)
+
+UNIQUE JOKES: ~6 (scarecrow×6, atoms×8, plus 6 originals)
+
+KEY PATTERNS:
+1. Heavy reliance on classic, well-known jokes from training data
+2. Multiple comedians converge on same "safe" jokes
+3. When attempting originality, models show creativity but inconsistent execution
+4. Some models expose internal reasoning ("Thinking...") in output
+5. Some models add meta-commentary explaining their own jokes
+6. Pun structure is well-understood, but semantic coherence can fail
+
+================================================================================
+YOUR TURN, XAI
+================================================================================
+Please fill in your ratings and notes. Let's see if we agree! ☕

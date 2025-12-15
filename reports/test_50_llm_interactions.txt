@@ -1,0 +1,15 @@
+        conversation_name        |     model     | total_calls | avg_seconds | min_seconds | max_seconds | completed | failed 
+---------------------------------+---------------+-------------+-------------+-------------+-------------+-----------+--------
+ Format Standardization          | gemma2:latest |          50 |        56.0 |          21 |         170 |        50 |      0
+ session_b_gemma2_grade          | gemma2:latest |          50 |        24.9 |          17 |          35 |        50 |      0
+ IHL Skeptic - Challenge Analyst | gemma2:latest |          50 |        24.2 |          12 |          47 |        50 |      0
+ session_d_qwen25_improve        | qwen2.5:7b    |           8 |        24.1 |          11 |          41 |         8 |      0
+ IHL HR Expert - Final Verdict   | qwen2.5:7b    |          50 |        10.8 |           9 |          14 |        50 |      0
+ session_c_qwen25_grade          | qwen2.5:7b    |          50 |         9.7 |           6 |          42 |        50 |      0
+ session_a_gemma3_extract        | gemma3:1b     |          50 |         6.8 |           4 |          19 |        50 |      0
+ session_e_qwen25_regrade        | qwen2.5:7b    |           8 |         6.0 |           4 |           8 |         8 |      0
+ r1114_extract_skills            | qwen2.5:7b    |          50 |         5.5 |           3 |           8 |        50 |      0
+ session_f_create_ticket         | qwen2.5:7b    |           8 |         4.3 |           4 |           5 |         8 |      0
+ IHL Analyst - Find Red Flags    | qwen2.5:7b    |          50 |         4.2 |           3 |          13 |        50 |      0
+(11 rows)
+

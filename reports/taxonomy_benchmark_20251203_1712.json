@@ -1,0 +1,538 @@
+{
+  "timestamp": "2025-12-03T17:12:07.491867",
+  "test_cases_count": 12,
+  "models_tested": [
+    "qwen2.5:7b",
+    "mistral:latest",
+    "phi3:latest",
+    "gemma3:4b",
+    "llama3.2:latest"
+  ],
+  "results": {
+    "qwen2.5:7b": {
+      "correct": 10,
+      "total": 12,
+      "accuracy": 83.33333333333334,
+      "avg_latency_ms": 1653.4990866978962,
+      "qualified": false,
+      "details": [
+        {
+          "id": "alias_01",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 4381.591320037842,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"Machine Learning is a broader term for Machine Learning Algorithms.\"\n}"
+        },
+        {
+          "id": "alias_02",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 1505.600929260254,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"'ML' is an alias for 'Machine Learning Algorithms'.\"\n}"
+        },
+        {
+          "id": "alias_03",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 1383.3222389221191,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"Python Programming is an alias for Python.\"\n}"
+        },
+        {
+          "id": "new_01",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 1568.7479972839355,
+          "response": "{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"Statistical Modeling is not directly aligned with any existing skills and represents a distinct area of expertise.\"\n}"
+        },
+        {
+          "id": "new_02",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 1472.463607788086,
+          "response": "{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"Computer Vision is not an alias of any existing skill and is a distinct field.\"\n}"
+        },
+        {
+          "id": "new_03",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 1410.0301265716553,
+          "response": "{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"R Programming is a distinct programming language not covered in the existing taxonomy.\"\n}"
+        },
+        {
+          "id": "split_01",
+          "expected": "SPLIT",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 1267.2464847564697,
+          "response": "{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"It encompasses two distinct programming languages not covered separately.\"\n}"
+        },
+        {
+          "id": "split_02",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1824.488639831543,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": null,\n  \"reasoning\": \"TensorFlow/PyTorch refers to frameworks within Deep Learning and can be considered as references to TensorFlow and PyTorch respectively.\"\n}"
+        },
+        {
+          "id": "skip_01",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1172.3721027374268,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"Experience requirement, not a skill\"\n}"
+        },
+        {
+          "id": "skip_02",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1348.6809730529785,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"Remote work is not a skill but rather a work arrangement.\"\n}"
+        },
+        {
+          "id": "skip_03",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1282.6218605041504,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"This is an educational requirement, not a skill.\"\n}"
+        },
+        {
+          "id": "skip_04",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1224.822759628296,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"Competitive salary is not a skill.\"\n}"
+        }
+      ]
+    },
+    "mistral:latest": {
+      "correct": 7,
+      "total": 12,
+      "accuracy": 58.333333333333336,
+      "avg_latency_ms": 2029.175837834676,
+      "qualified": false,
+      "details": [
+        {
+          "id": "alias_01",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 5305.478811264038,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"The term 'Machine Learning' is a broader concept that includes several specific skills such as Deep Learning and Predictive Modeling in the"
+        },
+        {
+          "id": "alias_02",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 1568.7675476074219,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"ML is short for Machine Learning Algorithms\"\n}"
+        },
+        {
+          "id": "alias_03",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 1840.4738903045654,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"Python Programming is another name for Python (id: 1010)\"\n}"
+        },
+        {
+          "id": "new_01",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1831.8555355072021,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1050,\n  \"reasoning\": \"Statistical Modeling is another name for Predictive Modeling\"\n}"
+        },
+        {
+          "id": "new_02",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1924.3319034576416,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1060,\n  \"reasoning\": \"Computer Vision is another name for Natural Language Processing (NLP) under Artificial Intelligence\"\n}"
+        },
+        {
+          "id": "new_03",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 2847.554922103882,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": null,\n  \"reasoning\": \"R Programming is not currently in the taxonomy but it is a popular programming language used for statistical computing and graphics. It can"
+        },
+        {
+          "id": "split_01",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1818.3743953704834,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"Python is already a part of the existing 'Programming Languages' skill\"\n}"
+        },
+        {
+          "id": "split_02",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 2201.2462615966797,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1070,\n  \"reasoning\": \"TensorFlow and PyTorch are both deep learning libraries, thus they are aliases of the existing skill with id 1070\"\n}"
+        },
+        {
+          "id": "skip_01",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1154.8521518707275,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"This is not a skill but an experience requirement\"\n}"
+        },
+        {
+          "id": "skip_02",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1252.1979808807373,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"Remote work is not a skill but an experience or requirement\"\n}"
+        },
+        {
+          "id": "skip_03",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1241.2841320037842,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"This is not a skill, it is an educational requirement.\"\n}"
+        },
+        {
+          "id": "skip_04",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1363.6925220489502,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"Competitive salary is not a skill, but an employment-related aspect.\"\n}"
+        }
+      ]
+    },
+    "phi3:latest": {
+      "correct": 6,
+      "total": 12,
+      "accuracy": 50.0,
+      "avg_latency_ms": 1950.3002365430195,
+      "qualified": false,
+      "details": [
+        {
+          "id": "alias_01",
+          "expected": "ALIAS",
+          "actual": "PARSE_ERROR",
+          "correct": false,
+          "latency_ms": 3407.1669578552246,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033, // Alias for Machine Learning Algorithms in the taxonomy.\n  \"reasoning\": \"Machine learning is an integral part of artificial intelligence and close"
+        },
+        {
+          "id": "alias_02",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 946.6543197631836,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"ML is an abbreviation for Machine Learning Algorithms.\"\n}"
+        },
+        {
+          "id": "alias_03",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 1196.3245868682861,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"Python is a programming language already present in the taxonomy under 'Programming Languages'.\"\n}\n```"
+        },
+        {
+          "id": "new_01",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1050.1463413238525,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1050,\n  \"reasoning\": \"Statistical Modeling is a fundamental aspect of Predictive Modeling.\"\n}"
+        },
+        {
+          "id": "new_02",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1063.215732574463,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1045,\n  \"reasoning\": \"Computer vision is a specialization within Deep Learning.\"\n}\n```"
+        },
+        {
+          "id": "new_03",
+          "expected": "NEW",
+          "actual": "PARSE_ERROR",
+          "correct": false,
+          "latency_ms": 1702.2302150726318,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": \"1025\", // Assuming R Programming is identified with skill id 1025 based on context.\n  \"reasoning\": \"R programming expertise complements data analysis, a"
+        },
+        {
+          "id": "split_01",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1229.6206951141357,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": [1010],\n  \"reasoning\": \"Programming Skills in Python are already encapsulated under the existing skill 'Python'.\"\n}\n```"
+        },
+        {
+          "id": "split_02",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1477.3311614990234,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": [1070, 1080],\n  \"reasoning\": \"TensorFlow and PyTorch are both libraries used for deep learning; they should be recognized as aliases of the Deep Learning"
+        },
+        {
+          "id": "skip_01",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 8544.72017288208,
+          "response": "```json\n{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"The phrase '3+ years experience' describes a benefit or requirement rather than being an independent skill.\"\n}\n```\n\n\nYour task is to"
+        },
+        {
+          "id": "skip_02",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 766.918420791626,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"Remote work is not a technical skill but rather an experience requirement or benefit.\"\n}"
+        },
+        {
+          "id": "skip_03",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1000.3087520599365,
+          "response": "```json\n{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"The term 'Bachelor's degree required' is not a technical skill but rather an experience or educational requirement.\"\n}\n```"
+        },
+        {
+          "id": "skip_04",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1018.965482711792,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"Competitive salary is not a skill but rather an aspect of employment or benefits.\"\n}"
+        }
+      ]
+    },
+    "gemma3:4b": {
+      "correct": 6,
+      "total": 12,
+      "accuracy": 50.0,
+      "avg_latency_ms": 1951.2774745623271,
+      "qualified": false,
+      "details": [
+        {
+          "id": "alias_01",
+          "expected": "ALIAS",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 5996.587038040161,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"\u2018Machine Learning\u2019 encompasses a broad range of techniques and is best represented as a standalone skill, distinct from its constitue"
+        },
+        {
+          "id": "alias_02",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1577.8095722198486,
+          "response": "```json\n{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1001,\n  \"reasoning\": \"\u2018ML\u2019 is a common abbreviation for Data Science, representing a core skill within that domain.\"\n}\n```"
+        },
+        {
+          "id": "alias_03",
+          "expected": "ALIAS",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 1693.9809322357178,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"While 'Python Programming' is a fundamental skill, it's currently not represented as a distinct skill within the taxonomy, making it "
+        },
+        {
+          "id": "new_01",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 1578.2029628753662,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"Statistical Modeling represents a distinct area of expertise that isn't fully captured by existing skills like Predictive Modeling an"
+        },
+        {
+          "id": "new_02",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 1660.3193283081055,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"Computer Vision is a distinct field of AI that warrants its own categorization, encompassing image and video analysis, which isn't fu"
+        },
+        {
+          "id": "new_03",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 1448.3344554901123,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"R Programming is a distinct programming language and ecosystem, warranting its own classification within the taxonomy.\"\n}\n```"
+        },
+        {
+          "id": "split_01",
+          "expected": "SPLIT",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 1786.4773273468018,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"While Python is a listed skill, 'Programming Skills (Python/R)' represents a broader competency encompassing proficiency in multiple "
+        },
+        {
+          "id": "split_02",
+          "expected": "SPLIT",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 1503.9019584655762,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"TensorFlow/PyTorch represent specific deep learning frameworks and are distinct enough to warrant being categorized as a new skill.\"\n"
+        },
+        {
+          "id": "skip_01",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1613.9419078826904,
+          "response": "```json\n{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"\\\"3+ years experience\\\" is a requirement, not a skill itself, and doesn't map to any existing canonical skill.\"\n}\n```"
+        },
+        {
+          "id": "skip_02",
+          "expected": "SKIP",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 1453.9272785186768,
+          "response": "```json\n{\n  \"decision\": \"NEW\",\n  \"skill_id\": null,\n  \"reasoning\": \"Remote work is a distinct capability relating to work arrangements and management practices, not directly covered by existing skills."
+        },
+        {
+          "id": "skip_03",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1591.9194221496582,
+          "response": "```json\n{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"A bachelor's degree is a qualification requirement, not a demonstrable skill itself, and therefore doesn't belong in the skill taxon"
+        },
+        {
+          "id": "skip_04",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 1509.92751121521,
+          "response": "```json\n{\n  \"decision\": \"SKIP\",\n  \"skill_id\": null,\n  \"reasoning\": \"A 'competitive salary' is a desired outcome or compensation factor, not a specific skill required for performing a task.\"\n}\n```"
+        }
+      ]
+    },
+    "llama3.2:latest": {
+      "correct": 5,
+      "total": 12,
+      "accuracy": 41.66666666666667,
+      "avg_latency_ms": 1191.0320520401,
+      "qualified": false,
+      "details": [
+        {
+          "id": "alias_01",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 4249.142408370972,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"Machine Learning is a synonym for the existing canonical skill id: 1033\"\n}"
+        },
+        {
+          "id": "alias_02",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 850.3310680389404,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1033,\n  \"reasoning\": \"ML is an alias for Machine Learning Algorithms\"\n}"
+        },
+        {
+          "id": "alias_03",
+          "expected": "ALIAS",
+          "actual": "ALIAS",
+          "correct": true,
+          "latency_ms": 960.9384536743164,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"Python Programming is another name for the existing skill Python (id: 1010)\"\n}"
+        },
+        {
+          "id": "new_01",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 966.0813808441162,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1001,\n  \"reasoning\": \"Statistical Modeling is a subfield of Data Science (id: 1001)\"\n}"
+        },
+        {
+          "id": "new_02",
+          "expected": "NEW",
+          "actual": "NEW",
+          "correct": true,
+          "latency_ms": 786.9915962219238,
+          "response": "{\"decision\": \"NEW\", \"skill_id\": null, \"reasoning\": \"Computer Vision is not a known existing canonical skill in the provided taxonomy.\"}"
+        },
+        {
+          "id": "new_03",
+          "expected": "NEW",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 823.462724685669,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"R Programming is another name for a Programming Language skill\"\n}"
+        },
+        {
+          "id": "split_01",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 939.582109451294,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1010,\n  \"reasoning\": \"Programming Skills (Python/R) is an alias for the existing Python programming language skill\"\n}"
+        },
+        {
+          "id": "split_02",
+          "expected": "SPLIT",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 896.5988159179688,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1070,\n  \"reasoning\": \"TensorFlow/PyTorch is an alias for Deep Learning Algorithms\"\n}"
+        },
+        {
+          "id": "skip_01",
+          "expected": "SKIP",
+          "actual": "SKIP",
+          "correct": true,
+          "latency_ms": 629.352331161499,
+          "response": "{\n  \"decision\": \"SKIP\",\n  \"reasoning\": \"Experience requirement is not a specific technical skill.\"\n}"
+        },
+        {
+          "id": "skip_02",
+          "expected": "SKIP",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1113.3193969726562,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": null,\n  \"reasoning\": \"Remote work can refer to a specific context within the existing skill 'Artificial Intelligence', implying that remote work is a subset or a"
+        },
+        {
+          "id": "skip_03",
+          "expected": "SKIP",
+          "actual": "NEW",
+          "correct": false,
+          "latency_ms": 929.0480613708496,
+          "response": "{\n  \"decision\": \"NEW\",\n  \"reasoning\": \"Bachelor's degree is a general requirement that can be applied to many fields and doesn't directly relate to any specific existing skill\"\n}"
+        },
+        {
+          "id": "skip_04",
+          "expected": "SKIP",
+          "actual": "ALIAS",
+          "correct": false,
+          "latency_ms": 1147.536277770996,
+          "response": "{\n  \"decision\": \"ALIAS\",\n  \"skill_id\": 1020,\n  \"reasoning\": \"Competitive salary is a benefit that can be influenced by various skills, such as Salary Negotiation (which could be an existing or new ski"
+        }
+      ]
+    }
+  }
+}

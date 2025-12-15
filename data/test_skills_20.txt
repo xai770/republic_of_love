@@ -1,0 +1,35 @@
+# 20 Test Skills for WF3005 Determinism Testing
+# Created: 2025-12-08 by Arden
+# Purpose: Run WF3005 3x on these skills, compare hierarchy assignments
+#
+# Format: One raw skill per line (exactly as it appears in posting_skills.raw_skill_name)
+
+# Simple (5) - Single concept, clear hierarchy expected
+Project Management
+Machine Learning
+Communication
+Data Analysis
+Budget Management
+
+# Compound (5) - Multiple concepts in one string
+Programming Skills (Python/R)
+Programming languages (e.g., Python, Java)
+Database design and optimization
+Version control systems (e.g., Git)
+Coding/Programming
+
+# Ambiguous (5) - Could legitimately go multiple places
+Agile Methodologies
+Team Leadership
+Customer Service
+Quality Assurance
+Risk Assessment
+
+# Case Variants (2) - Test normalization
+software development
+team leadership
+
+# Edge Cases (3) - Templates, acronyms, certifications
+Technical Expertise in [Specific Technology]
+User Experience (UX) Design
+Scrum Master Certification

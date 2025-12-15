@@ -1,0 +1,17 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_211256",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/TECHNICAL SKILLS",
+    "ROOT/LEADERSHIP",
+    "ROOT/DOMAIN_KNOWLEDGE/SPECIFIC_TECHNOLOGIES_KNOWLEDGE",
+    "ROOT/DOMAIN_KNOWLEDGE/INDUSTRY_EXPERIENCE",
+    "ROOT/DOMAIN_KNOWLEDGE/SOLUTION_DESIGN_AND_IMPLEMENTATION"
+  ],
+  "stats": {
+    "nodes_explored": 7,
+    "leaf_nodes": 5,
+    "max_depth": 6
+  }
+}

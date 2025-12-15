@@ -1,0 +1,9 @@
+{
+  "timestamp": "20251029_085630",
+  "model": "qwen2.5:7b",
+  "stats": {
+    "merged": 0,
+    "children_moved": 0,
+    "errors": 0
+  }
+}

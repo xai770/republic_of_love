@@ -1,0 +1,127 @@
+USER: Analyze this job posting and suggest 5-8 TOP-LEVEL skill categories.
+
+JOB TITLE: IBC &amp; A Germany Analyst (f/m/x)
+JOB DESCRIPTION: IBC & A Germany Analyst (f/m/x) Job ID:R0393483 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-07-01 Location: Frankfurt Position Overview Details of the role and how it fits into the teamA role in Deutsche Bank’s Corporate Finance team offers you an opportunity to work on exciting challenges with some of the most influential decision-makers in corporate GermanyOur team advises large companies and financial investors across the globe on some of their most important strategic transactions including takeovers and mergers, joint ventures, leveraged buy-outs, activist & hostile defenses and capital raising services, underpinned by one of the world’s largest and most successful debt and capital markets platformsOur team-based culture promotes and rewards individual talents. Our employees have a wide variety of academic and professional careers. You will find an extremely dynamic and intellectually stimulating environment in which you are part of a team that supports your successYour key responsibilitiesYou will perform sector and company research, work on complex and highly quantitative analyses, such as financial models, company valuations, credit analysis and analysis of strategic scenarios. You will also support the preparation of client presentations and pitchesYou will assume responsibility for the project management on live transactions at an early stage, both, internally across international sector and product teams, as well as externally with clients and other advisorsFurther, you will support senior bankers in the coverage effort of key accounts across the German-speaking regionYour skills and experiencesUniversity degree in economics, business administration, law or similar, ideally with an international focus and focus on corporate financeIdeally experience in corporate finance (M&A, ECM, DCM, LDCM) at a bulge bracket investment bank or comparable practical (internship) experienceStrong analytical and financial modelling capabilitiesHigh motivation, commitment, focus on work quality and attention to detailAbility to multi-task in a dynamic and fast-paced environmentStrong commitment to integrity, professionalism and teamworkWhat we offerWe provide you with a comprehensive portfolio of benefits and offerings to support both, your private and professional needs.Emotionally and mentally balancedA positive mind helps us master the challenges of everyday life – both professionally and privately. We offer consultation in difficult life situations as well as mental health awareness trainings.Physically thrivingWe support you in staying physically fit through an offering to maintain personal health and a professional environment. You can benefit from health check-ups; vaccination drives as well as advice on healthy living and nutrition.Socially connectedNetworking opens up new perspectives, helps us thrive professionally and personally as well as strengthens our self-confidence and well-being. You can benefit from PME family service, FitnessCenter Job, flexible working (e.g parttime, hybrid working, job tandem) as well as an extensive culture of diversity, equity and inclusion.Financially secureWe provide you with financial security not only during your active career but also for the future. You can benefit from offerings such as pension plans, banking services, company bicycle or “Deutschlandticket”.Since our offerings slightly vary across locations, please contact your recruiter with specific questions.This job is available in full and parttime.In case of any recruitment related questions, please get in touch with Philipp Maass.Contact Philipp Maass: +49(69)910-48515 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.
+
+Examples: TECHNICAL, SOFT_SKILLS, DOMAIN, BUSINESS_ANALYSIS, LEADERSHIP
+
+Output ONLY a numbered list (no other text):
+1. CATEGORY_NAME - Brief explanation
+2. CATEGORY_NAME - Brief explanation
+...
+
+ASSISTANT: [?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25h1[?25l[?25h.[?25l[?25h BUSINESS[?25l[?25h_ANAL[?25l[?25hYSIS[?25l[?25h -[?25l[?25h In[?25l[?25hvol[?25l[?25hves[?25l[?25h performing[?25l[?25h sector[?25l[?25h and[?25l[?25h company[?25l[?25h research[?25l[?25h,[?25l[?25h financial[?25l[?25h modeling[?25l[?25h,[?25l[?25h and[?25l[?25h strategic[?25l[?25h scenario[?25l[?25h analysis[?25l[?25h.
+[?25l[?25h2[?25l[?25h.[?25l[?25h FIN[?25l[?25hANC[?25l[?25hIAL[?25l[?25h_MODEL[?25l[?25hING[?25l[?25h -[?25l[?25h Requires[?25l[?25h strong[?25l[?25h skills[?25l[?25h in[?25l[?25h creating[?25l[?25h and[?25l[?25h analyzing[?25l[?25h complex[?25l[?25h financial[?25l[?25h models[?25l[?25h for[?25l[?25h val[?25l[?25huations[?25l[?25h and[?25l[?25h credit[?25l[?25h assessments[?25l[?25h.
+[?25l[?25h3[?25l[?25h.[?25l[?25h PROJECT[?25l[?25h_MAN[?25l[?25hAGEMENT[?25l[?25h -[?25l[?25h Eng[?25l[?25hages[?25l[?25h in[?25l[?25h managing[?25l[?25h projects[?25l[?25h on[?25l[?25h live[?25l[?25h transactions[?25l[?25h from[?25l[?25h an[?25l[?25h early[?25l[?25h stage[?25l[?25h,[?25l[?25h including[?25l[?25h internal[?25l[?25h and[?25l[?25h external[?25l[?25h client[?25l[?25h interactions[?25l[?25h.
+[?25l[?25h4[?25l[?25h.[?25l[?25h COMM[?25l[?25hUNICATION[?25l[?25h_SK[?25l[?25hILLS[?25l[?25h -[?25l[?25h Supports[?25l[?25h the[?25l[?25h preparation[?25l[?25h of[?25l[?25h client[?25l[?25h presentations[?25l[?25h and[?25l[?25h pitches[?25l[?25h,[?25l[?25h requiring[?25l[?25h clear[?25l[?25h and[?25l[?25h effective[?25l[?25h communication[?25l[?25h.
+[?25l[?25h5[?25l[?25h.[?25l[?25h STR[?25l[?25hATEG[?25l[?25hIC[?25l[?25h_TH[?25l[?25hINK[?25l[?25hING[?25l[?25h -[?25l[?25h Ass[?25l[?25hists[?25l[?25h in[?25l[?25h strategic[?25l[?25h transactions[?25l[?25h such[?25l[?25h as[?25l[?25h take[?25l[?25hovers[?25l[?25h,[?25l[?25h merg[?25l[?25hers[?25l[?25h,[?25l[?25h and[?25l[?25h joint[?25l[?25h ventures[?25l[?25h,[?25l[?25h needing[?25l[?25h a[?25l[?25h high[?25l[?25h level[?25l[?25h of[?25l[?25h strategic[?25l[?25h insight[?25l[?25h and[?25l[?25h analysis[?25l[?25h.
+[?25l[?25h6[?25l[?25h.[?25l[?25h TEAM[?25l[?25hWORK[?25l[?25h_AND[?25l[?25h_CO[?25l[?25hOPER[?25l[?25hATION[?25l[?25h -[?25l[?25h Works[?25l[?25h within[?25l[?25h a[?25l[?25h team[?25l[?25h environment[?25l[?25h to[?25l[?25h support[?25l[?25h the[?25l[?25h success[?25l[?25h of[?25l[?25h colleagues[?25l[?25h and[?25l[?25h clients[?25l[?25h,[?25l[?25h emphasizing[?25l[?25h integrity[?25l[?25h,[?25l[?25h professionalism[?25l[?25h,[?25l[?25h and[?25l[?25h teamwork[?25l[?25h.[?25l[?25h
+
+[?25l[?25h
+
+USER: You previously identified these 2 subcategories under 'ROOT':
+
+CATEGORY_NAME
+CATEGORY_NAME
+
+Based on the job posting for: IBC &amp; A Germany Analyst (f/m/x)
+
+Which of these subcategories are MOST relevant to explore further? 
+Pick the 2-3 most important ones that are central to this job's requirements.
+
+Respond with ONLY the category names (one per line, no numbers or explanations):
+CATEGORY1
+CATEGORY2
+...
+
+ASSISTANT: [?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hBUS[?25l[?25hINESS[?25l[?25h_ANAL[?25l[?25hYSIS[?25l[?25h
+[?25l[?25hFIN[?25l[?25hANC[?25l[?25hIAL[?25l[?25h_MODEL[?25l[?25hING[?25l[?25h
+[?25l[?25hPROJECT[?25l[?25h_MAN[?25l[?25hAGEMENT[?25l[?25h
+
+[?25l[?25h
+
+USER: Looking at the job posting, break down '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' into subcategories or specific skills.
+
+Context path: ROOT
+Job: IBC &amp; A Germany Analyst (f/m/x)
+
+If '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' is already a specific atomic skill that cannot be broken down, respond ONLY with:
+LEAF_NODE: This is a specific skill.
+
+Otherwise, list 5-10 subcategories:
+1. SUBCATEGORY - Explanation
+2. SUBCATEGORY - Explanation
+...
+
+ASSISTANT: [?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hLE[?25l[?25hAF[?25l[?25h_NODE[?25l[?25h:[?25l[?25h This[?25l[?25h is[?25l[?25h a[?25l[?25h specific[?25l[?25h skill[?25l[?25h.[?25l[?25h
+
+[?25l[?25h
+
+USER: Looking at the job posting, break down '💬 ARDEN → qwen2.5:7b' into subcategories or specific skills.
+
+Context path: ROOT
+Job: IBC &amp; A Germany Analyst (f/m/x)
+
+If '💬 ARDEN → qwen2.5:7b' is already a specific atomic skill that cannot be broken down, respond ONLY with:
+LEAF_NODE: This is a specific skill.
+
+Otherwise, list 5-10 subcategories:
+1. SUBCATEGORY - Explanation
+2. SUBCATEGORY - Explanation
+...
+
+ASSISTANT: [?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hLE[?25l[?25hAF[?25l[?25h_NODE[?25l[?25h:[?25l[?25h This[?25l[?25h is[?25l[?25h a[?25l[?25h specific[?25l[?25h skill[?25l[?25h.[?25l[?25h
+
+[?25l[?25h
+
+USER: Looking at the job posting, break down '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' into subcategories or specific skills.
+
+Context path: ROOT
+Job: IBC &amp; A Germany Analyst (f/m/x)
+
+If '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' is already a specific atomic skill that cannot be broken down, respond ONLY with:
+LEAF_NODE: This is a specific skill.
+
+Otherwise, list 5-10 subcategories:
+1. SUBCATEGORY - Explanation
+2. SUBCATEGORY - Explanation
+...
+
+ASSISTANT: [?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hLE[?25l[?25hAF[?25l[?25h_NODE[?25l[?25h:[?25l[?25h This[?25l[?25h is[?25l[?25h a[?25l[?25h specific[?25l[?25h skill[?25l[?25h.[?25l[?25h
+
+[?25l[?25h
+
+USER: Looking at the job posting, break down 'You previously identified these 2 subcategories under 'ROOT':' into subcategories or specific skills.
+
+Context path: ROOT
+Job: IBC &amp; A Germany Analyst (f/m/x)
+
+If 'You previously identified these 2 subcategories under 'ROOT':' is already a specific atomic skill that cannot be broken down, respond ONLY with:
+LEAF_NODE: This is a specific skill.
+
+Otherwise, list 5-10 subcategories:
+1. SUBCATEGORY - Explanation
+2. SUBCATEGORY - Explanation
+...
+
+ASSISTANT: [?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hLE[?25l[?25hAF[?25l[?25h_NODE[?25l[?25h:[?25l[?25h This[?25l[?25h is[?25l[?25h a[?25l[?25h specific[?25l[?25h skill[?25l[?25h.[?25l[?25h
+
+[?25l[?25h
+
+USER: Looking at the job posting, break down 'CATEGORY_NAME' into subcategories or specific skills.
+
+Context path: ROOT
+Job: IBC &amp; A Germany Analyst (f/m/x)
+
+If 'CATEGORY_NAME' is already a specific atomic skill that cannot be broken down, respond ONLY with:
+LEAF_NODE: This is a specific skill.
+
+Otherwise, list 5-10 subcategories:
+1. SUBCATEGORY - Explanation
+2. SUBCATEGORY - Explanation
+...
+
+ASSISTANT: [?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠴ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠏ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?2026h[?25l[1G⠦ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠧ [K[?25h[?2026l[?2026h[?25l[1G⠇ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠋ [K[?25h[?2026l[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hLE[?25l[?25hAF[?25l[?25h_NODE[?25l[?25h:[?25l[?25h This[?25l[?25h is[?25l[?25h a[?25l[?25h specific[?25l[?25h skill[?25l[?25h.[?25l[?25h
+
+[?25l[?25h
+

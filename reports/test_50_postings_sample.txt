@@ -1,0 +1,9 @@
+ posting_id |                     job_title                      | desc_length | summary_status  | skills_status | ihl_score | ihl_category 
+------------+----------------------------------------------------+-------------+-----------------+---------------+-----------+--------------
+       4864 | Investment Banking & Capital Markets – Investment  |        6415 | ✅ (2953 chars) | ❌            | ❌        | 
+       4865 | Investment Banking & Capital Markets - Investment  |        6344 | ✅ (3191 chars) | ❌            | ❌        | 
+       4866 | Senior Engineer QA & Testing-AI, AVP               |        8739 | ✅ (3454 chars) | ❌            | ❌        | 
+       4867 | Senior Data Scientist- Senior Engineer, AVP        |       11235 | ✅ (1884 chars) | ❌            | ❌        | 
+       4868 | Non-Financial Risk Assessor (FinTechs/VASPs/Neobro |        4499 | ✅ (2388 chars) | ❌            | ❌        | 
+(5 rows)
+

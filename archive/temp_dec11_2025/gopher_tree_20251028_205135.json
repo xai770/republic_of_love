@@ -1,0 +1,19 @@
+{
+  "job_title": "Unknown Position",
+  "timestamp": "20251028_205135",
+  "model": "qwen2.5:7b",
+  "hierarchy": [
+    "ROOT/NETWORK_ARCHITECTURE",
+    "ROOT/NSX_TECHNOLOGY/NSX_DEPLOYMENT",
+    "ROOT/NSX_TECHNOLOGY/NSX_SECURITY",
+    "ROOT/NSX_TECHNOLOGY/NSX_OPERATIONS",
+    "ROOT/PROBLEM_SOLVING/DIAGNOSTIC_SKILLS",
+    "ROOT/PROBLEM_SOLVING/RESOLUTION_TECHNIQUES",
+    "ROOT/PROBLEM_SOLVING/INCIDENT_RESPONSE"
+  ],
+  "stats": {
+    "nodes_explored": 10,
+    "leaf_nodes": 7,
+    "max_depth": 6
+  }
+}

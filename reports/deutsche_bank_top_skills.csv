@@ -1,0 +1,127 @@
+skill_name,job_count,pct_of_jobs,importance_levels,avg_weight
+communication skills,289,16.99,"critical, essential, important, preferred",73.2
+analytical skills,140,8.23,"critical, essential, important",80.9
+attention to detail,100,5.88,"critical, essential, important, preferred",72.0
+project management,88,5.17,"critical, essential, important, preferred",65.7
+problem-solving skills,78,4.59,"critical, essential, important, preferred",74.0
+interpersonal skills,63,3.70,"critical, essential, important, preferred",65.5
+excellent communication skills,56,3.29,"critical, essential, important",82.1
+client relationship management,55,3.23,"critical, essential, important, preferred",74.5
+strong analytical skills,53,3.12,"critical, essential, important",82.3
+risk management,52,3.06,"critical, essential, important, preferred",79.8
+stakeholder management,52,3.06,"critical, essential, important, preferred",68.4
+strong communication skills,51,3.00,"critical, essential, important",79.8
+in-depth knowledge of product and policy,47,2.76,essential,95.0
+team player,44,2.59,"critical, essential, important, preferred",58.2
+risk assessment,42,2.47,"critical, essential, important",86.2
+presentation skills,41,2.41,"critical, essential, important, preferred",60.0
+problem solving,40,2.35,"critical, essential, important",74.9
+regulatory compliance,39,2.29,"critical, essential, important, preferred",81.8
+team collaboration,39,2.29,"critical, essential, important, preferred",60.1
+organizational skills,38,2.23,"critical, essential, important",69.2
+teamwork,37,2.18,"critical, essential, important, preferred",65.8
+java,37,2.18,"critical, essential, important, preferred",90.4
+interpreting regulatory guidelines,34,2.00,"critical, essential, important",80.6
+english language proficiency,34,2.00,"critical, essential, important, preferred",75.4
+agile methodologies,34,2.00,"critical, essential, important, preferred",75.9
+identifying trends and inconsistencies,33,1.94,"critical, essential, important, preferred",49.2
+regulatory document review,32,1.88,"critical, essential, important, preferred",73.6
+leadership,32,1.88,"critical, essential, important, preferred",75.9
+good negotiation skill,31,1.82,"critical, essential, important",80.7
+due diligence,29,1.70,"critical, essential, important",88.1
+problem-solving,29,1.70,"critical, essential, important, preferred",73.6
+spring boot,28,1.65,"critical, essential, important, preferred",87.2
+good communication skill,28,1.65,"critical, essential, important",84.8
+microservices architecture,28,1.65,"critical, essential, important, preferred",83.5
+project management skills,27,1.59,"critical, essential, important, preferred",63.4
+communication,26,1.53,"critical, essential, important",79.6
+aml/kyc regulations and industry guidelines,26,1.53,essential,95.0
+client data verification,26,1.53,"critical, essential",91.0
+interpreting alerts,24,1.41,"critical, important, preferred",44.4
+java programming,23,1.35,"critical, essential, important, preferred",79.1
+data analysis,23,1.35,"critical, essential, important",83.9
+change management,23,1.35,"critical, essential, important, preferred",74.6
+python programming,23,1.35,"critical, essential, important, preferred",66.3
+time management,22,1.29,"critical, essential, important",63.6
+analytical thinking,22,1.29,"critical, essential, important, preferred",74.5
+german language proficiency,22,1.29,"essential, important, preferred",61.8
+detail orientation,20,1.18,"critical, essential, important",75.4
+adaptability,20,1.18,"critical, important, preferred",48.9
+fluency in english,20,1.18,"critical, essential, important, preferred",77.3
+project management experience,19,1.12,"critical, essential, important, preferred",45.8
+sql,18,1.06,"critical, essential, important, preferred",72.5
+documentation skills,18,1.06,"critical, essential, important",67.5
+regulatory knowledge,18,1.06,"critical, essential, important, preferred",76.4
+verification of client data,18,1.06,"critical, essential",89.1
+java development,17,1.00,"critical, essential, preferred",89.4
+incident management,17,1.00,"critical, essential, important",85.3
+kubernetes,17,1.00,"critical, essential, important, preferred",70.6
+awareness and information about the competition,17,1.00,"essential, important, preferred",50.0
+good communication skills,16,0.94,"critical, essential, important",77.2
+ability to work under pressure,16,0.94,"critical, essential, important",78.1
+agile methodology,16,0.94,"critical, essential, important, preferred",86.2
+collaboration,16,0.94,"critical, essential, important, preferred",64.7
+credit analysis,16,0.94,"critical, essential, important",89.4
+dsa management and new dsa empanelment,16,0.94,"critical, essential, important",84.1
+problem-solving abilities,16,0.94,"critical, essential, important",77.8
+training and development,16,0.94,"important, preferred",37.2
+collaboration skills,15,0.88,"critical, essential, important",66.3
+financial analysis,15,0.88,"critical, essential",87.3
+problem solving skills,15,0.88,"critical, essential, important",71.7
+risk assessment of clients,15,0.88,"critical, essential, important",86.5
+spring framework,15,0.88,"critical, essential, important",85.5
+emotionally and mentally balanced,15,0.88,"essential, important, preferred",38.7
+problem-solving ability,14,0.82,"critical, essential, important, preferred",69.3
+self-motivation,14,0.82,"critical, important, preferred",46.4
+customer service,14,0.82,"critical, essential, important",78.7
+strong network of dsa's in the market,14,0.82,"critical, essential",88.6
+process improvement,14,0.82,"critical, essential, important, preferred",53.6
+excel proficiency,14,0.82,"critical, essential, important, preferred",69.3
+python,14,0.82,"critical, essential, important, preferred",59.6
+stakeholder engagement,13,0.76,"critical, essential, important",73.8
+strong interpersonal skills,13,0.76,"critical, essential, important",68.3
+bachelor's degree or equivalent,13,0.76,essential,95.0
+performance optimization,13,0.76,"critical, essential, important, preferred",65.0
+good communication skills (oral and written),13,0.76,"critical, essential, important",64.2
+clear understanding of payments flow,13,0.76,essential,95.0
+effective communication skills,13,0.76,"critical, essential, important",77.3
+leadership skills,12,0.71,"critical, essential, important, preferred",60.6
+aml/kyc compliance,12,0.71,essential,95.0
+strong organizational skills,12,0.71,"critical, essential, important, preferred",65.4
+docker,12,0.71,"critical, essential, important, preferred",74.2
+team leadership,12,0.71,"critical, essential, important, preferred",76.3
+relationship management,12,0.71,"critical, essential, important",80.6
+bachelor's degree,12,0.71,essential,92.9
+cross-functional collaboration,12,0.71,"essential, important, preferred",60.0
+strong analytical and problem-solving skills,12,0.71,"critical, essential, important",84.8
+stakeholder management skills,11,0.65,"critical, essential, important",69.1
+initiative taking,11,0.65,"critical, important, preferred",58.6
+having good communication skill,11,0.65,"critical, essential, important",85.9
+minimum graduation in any stream,11,0.65,"essential, important",87.7
+end-to-end kyc process understanding,11,0.65,"critical, essential",90.9
+jenkins,11,0.65,"critical, essential, important, preferred",58.2
+strong problem-solving skills,11,0.65,"critical, essential, important",78.6
+university degree,11,0.65,essential,94.5
+kafka,11,0.65,"essential, important, preferred",55.9
+strategic thinking,10,0.59,"critical, essential, important, preferred",69.5
+english proficiency,10,0.59,"critical, essential, important, preferred",69.0
+commercial acumen,10,0.59,"critical, essential, important, preferred",74.2
+strong communication and collaboration skills,10,0.59,"critical, essential, important",76.0
+excellent written and verbal communication skills,10,0.59,"critical, essential, important",83.1
+german language skills,10,0.59,preferred,22.5
+verbal communication skills,10,0.59,"critical, essential, important",71.8
+git,10,0.59,"critical, essential, important",72.5
+jira,10,0.59,"important, preferred",41.0
+swift back office operation,10,0.59,"critical, essential, important",75.5
+swift risk and regulatory payments,10,0.59,"critical, essential",85.3
+ability to implement tasks and projects with minimal supervision,10,0.59,"critical, essential, important",61.0
+having awareness and information about the competition,10,0.59,"essential, important, preferred",53.0
+team management,10,0.59,"critical, essential, important, preferred",77.5
+negotiation skills,10,0.59,"critical, essential, important, preferred",54.0
+multitasking,10,0.59,important,48.0
+terraform,10,0.59,"critical, essential, important, preferred",67.5
+maven,10,0.59,"critical, important, preferred",55.5
+shell scripting,10,0.59,"critical, essential, important, preferred",61.5
+effective communication,10,0.59,"critical, essential, important",83.0
+communication skills (written and verbal),10,0.59,"critical, essential, important",72.5
+ability to work in a fast-paced environment,10,0.59,"critical, essential, important",70.5

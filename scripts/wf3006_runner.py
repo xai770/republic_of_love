@@ -38,6 +38,8 @@ from core.wave_runner.actors.orphan_fetcher_v2 import execute as fetch_orphans
 from core.wave_runner.actors.classification_saver import execute as save_classification
 from core.wave_runner.actors.classification_applier import execute as apply_classification
 from core.wave_runner.actors.debate_panel import run_debate
+from core.wave_runner.actors.domain_split_grader import execute as grade_proposal
+from core.wave_runner.actors.domain_proposal_applier import execute as apply_proposals
 
 # Configuration
 BATCH_SIZE = 10
@@ -51,6 +53,8 @@ stats = {
     "debates_held": 0,
     "debates_overturned": 0,
     "domains_created": 0,
+    "proposals_graded": 0,
+    "proposals_approved": 0,
     "errors": 0,
     "start_time": None
 }
@@ -122,6 +126,90 @@ def parse_classifications(response_text: str) -> list:
             pass
     
     return decisions
+
+
+def process_pending_proposals() -> dict:
+    """Grade and apply any pending domain proposals."""
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    
+    result = {
+        "graded": 0,
+        "approved": 0,
+        "rejected": 0,
+        "applied": 0
+    }
+    
+    # Load .env if exists
+    env_file = PROJECT_ROOT / '.env'
+    if env_file.exists():
+        with open(env_file) as f:
+            for line in f:
+                if '=' in line and not line.startswith('#'):
+                    k, v = line.strip().split('=', 1)
+                    os.environ.setdefault(k, v)
+    
+    # Check for pending proposals
+    conn = psycopg2.connect(
+        host=os.environ.get('DB_HOST', 'localhost'),
+        dbname=os.environ.get('DB_NAME', 'turing'),
+        user=os.environ.get('DB_USER', 'base_admin'),
+        password=os.environ.get('DB_PASSWORD', 'base_yoga_secure_2025')
+    )
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("""
+            SELECT proposal_id, proposal_type, suggested_name 
+            FROM domain_split_proposals 
+            WHERE status = 'pending'
+            ORDER BY created_at
+            LIMIT 5
+        """)
+        pending = cur.fetchall()
+        
+        if not pending:
+            return result
+        
+        log(f"Found {len(pending)} pending proposals to grade")
+        
+        # Grade each proposal
+        for proposal in pending:
+            log(f"  Grading proposal {proposal['proposal_id']}: {proposal['suggested_name']}")
+            
+            grade_result = grade_proposal({"proposal_id": proposal['proposal_id']})
+            result["graded"] += 1
+            stats["proposals_graded"] += 1
+            
+            # Check results array for the grading outcome
+            results = grade_result.get("results", [])
+            if results and results[0].get("grader_approved"):
+                result["approved"] += 1
+                stats["proposals_approved"] += 1
+                log(f"    ✅ APPROVED (conf: {results[0].get('grader_confidence', 'N/A')})")
+            elif grade_result.get("approved", 0) > 0:
+                # Batch grading returned approved count
+                result["approved"] += grade_result.get("approved", 0)
+                stats["proposals_approved"] += grade_result.get("approved", 0)
+                log(f"    ✅ APPROVED")
+            else:
+                result["rejected"] += 1
+                reasoning = (results[0].get('grader_reasoning', 'No reason') if results 
+                           else grade_result.get('message', 'No reason'))
+                log(f"    ❌ REJECTED: {str(reasoning)[:50]}...")
+        
+        # Apply approved proposals
+        if result["approved"] > 0:
+            log("  Applying approved proposals...")
+            apply_result = apply_proposals({})
+            result["applied"] = apply_result.get("applied", 0)
+            log(f"    Applied {result['applied']} domain proposals")
+        
+    finally:
+        cur.close()
+        conn.close()
+    
+    return result
 
 
 def process_batch() -> dict:
@@ -240,6 +328,12 @@ def process_batch() -> dict:
     batch_stats["applied"] = apply_result.get("applied", 0)
     log(f"Applied {batch_stats['applied']} relationships")
     
+    # Step 6: Grade and apply pending domain proposals
+    log("Processing pending domain proposals...")
+    proposal_result = process_pending_proposals()
+    if proposal_result.get("graded", 0) > 0:
+        log(f"Graded {proposal_result['graded']} proposals, approved {proposal_result['approved']}, applied {proposal_result['applied']}")
+    
     # Update global stats
     stats["batches_processed"] += 1
     stats["skills_classified"] += batch_stats["classified"]
@@ -299,6 +393,8 @@ def run_daemon(interval: int = 30, max_batches: int = None):
     log(f"Debates held: {stats['debates_held']}")
     log(f"Debates overturned: {stats['debates_overturned']}")
     log(f"Domains created: {stats['domains_created']}")
+    log(f"Proposals graded: {stats['proposals_graded']}")
+    log(f"Proposals approved: {stats['proposals_approved']}")
 
 
 def run_single_batch():

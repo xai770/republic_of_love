@@ -1,0 +1,34 @@
+## Processing Instructions
+You previously extracted skills from a candidate profile. Now evaluate how well they match this job posting.
+
+Format your response as:
+[MATCH_SCORE: 0-100]
+[MATCHING_SKILLS: skill1, skill2, skill3]
+[RELEVANT_EXPERIENCE: brief description]
+[KEY_STRENGTHS: what makes candidate strong]
+[GAPS: what is missing]
+[RECOMMENDATION: STRONG/MODERATE/WEAK MATCH - specific advice]
+
+Scoring guidelines:
+- 70-100: STRONG MATCH (most requirements met, minor gaps)
+- 40-69: MODERATE MATCH (core skills present, some gaps)
+- 0-39: WEAK MATCH (significant gaps, limited overlap)
+
+Example:
+[MATCH_SCORE: 45]
+[MATCHING_SKILLS: Beratung, Kundenbeziehungen, Verhandlungsgeschicklichkeit]
+[RELEVANT_EXPERIENCE: Direct experience in financial advisory at Deutsche Bank]
+[KEY_STRENGTHS: Customer relationships, communication skills]
+[GAPS: No SAP systems experience]
+[RECOMMENDATION: MODERATE MATCH - Apply if strong interpersonal skills. Take short course in SAP basics to fill gap.]
+
+## Processing Payload
+
+CANDIDATE SKILLS (from Session 1):
+{session_1_output}
+
+JOB REQUIREMENTS:
+{job_requirements_text}
+
+## QA Check
+Submit ONLY the six bracketed entries in the exact format shown above. Do not include quotation marks, apostrophes, or any other punctuation inside the brackets. No commentary or explanations outside the brackets.

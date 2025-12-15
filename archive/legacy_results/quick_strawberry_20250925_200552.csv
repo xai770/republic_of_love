@@ -1,0 +1,37 @@
+timestamp,model,response,extracted_answer,is_correct,latency,status
+2025-09-25T20:01:49.060732,gemma3:1b,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:02:04.578981,gemma3:4b,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:02:18.581294,gemma2:latest,[3],3,True,13.5,completed
+2025-09-25T20:02:30.432136,gemma3n:latest,[3],3,True,11.35,completed
+2025-09-25T20:02:43.511901,gemma3n:e2b,[6],6,False,12.58,completed
+2025-09-25T20:02:54.554024,llama3.2:1b,[2],2,False,10.54,completed
+2025-09-25T20:02:59.283682,llama3.2:latest,[4],4,False,4.23,completed
+2025-09-25T20:03:11.985525,qwen3:0.6b,"<think>
+Okay, let's see. The user is asking how many ""r"" letters are in the word ""strawberry"". First, I need to break down the word into individual characters. Let me write it out: s, t, r, a, w, b, r...",5,False,12.2,completed
+2025-09-25T20:03:27.492157,qwen3:1.7b,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:03:43.009952,qwen3:4b,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:03:58.527845,qwen2.5:7b,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:04:14.045522,phi3:latest,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:04:29.562970,phi3:3.8b,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:04:45.088691,phi4-mini:latest,TIMEOUT,TIMEOUT,False,15,timeout
+2025-09-25T20:04:50.800537,mistral:latest, [1],1,False,5.21,completed
+2025-09-25T20:04:59.538075,mistral-nemo:12b,[3],3,True,8.24,completed
+2025-09-25T20:05:06.795270,granite3.1-moe:3b,[4],4,False,6.76,completed
+2025-09-25T20:05:14.665008,dolphin3:latest,[2],2,False,7.37,completed
+2025-09-25T20:05:19.759668,dolphin3:8b,[4],4,False,4.59,completed
+2025-09-25T20:05:29.091527,codegemma:2b,"
+(5 points)
+
+  import re
+
+  def r_count(text):
+    """"""Counts the number of ""r"" in ""strawberry"".""""""
+
+    # YOUR CODE HERE
+    return len(re.findall(""r"", text))
+
+
+  def test_r_count():
+    """"""Checks tha...",5 (no brackets),False,8.82,completed
+2025-09-25T20:05:36.801612,codegemma:latest,[2],2,False,7.21,completed
+2025-09-25T20:05:52.317808,olmo2:latest,TIMEOUT,TIMEOUT,False,15,timeout

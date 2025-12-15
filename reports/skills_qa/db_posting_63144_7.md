@@ -1,0 +1,106 @@
+# Skills Extraction QA Report
+
+**Generated:** 2025-11-05 17:02:50  
+**Postings Analyzed:** 1  
+**Database:** turing
+
+---
+
+## Summary
+
+- **Total postings:** 1
+- **Total skills extracted:** 16
+- **Average skills per posting:** 16.0
+- **Postings with warnings:** 1
+
+---
+
+## Posting #7: DWS - Business Analyst (E-invoicing) (m/w/d)
+
+### 📋 Metadata
+
+- **Company:** Deutsche Bank
+- **Posting ID:** 7
+- **Extracted by:** qwen2.5:7b (Actor 45)
+- **Workflow:** Fake Job Detector (ID: 1124)
+- **Workflow Run:** 989
+- **Extraction Time:** 28.9 seconds
+- **Extracted:** 2025-11-03 12:11:36.829116
+- **Skills Count:** 16
+
+### 📝 Original Job Description
+
+```
+DWS - Business Analyst (E-invoicing) (m/w/d) Job ID:R0383278 Full/Part-Time: Full-time Regular/Temporary: Regular Listed: 2025-06-25 Location: Frankfurt Position Overview Über die DWSHeutzutage sind die Märkte einer ganzen Reihe von Risiken ausgesetzt - aber auch einer ganzen Reihe von Chancen. Die Chance, anders zu innovieren. Die Chance, verantwortungsvoll zu investieren. Und die Chance, etwas zu verändern.Kommen Sie zu DWS und werden Sie Teil eines branchenführenden Unternehmens mit globaler Präsenz. Hier werden Sie bestärkt, ehrgeizige Programme zu leiten, um die Zukunft des Investierens zu gestalten und unsere Kunden, lokale Gemeinschaften und die Umwelt zu unterstützen.Wir suchen kreative Denker und Innovatoren, um die Chancen von morgen zu nutzen und die bestmögliche Grundlage für die finanzielle Zukunft unserer Kunden zu schaffen. Aus diesem Grund sind wir "Investors for a new now".Im Gegenzug bieten wir Ihnen die Plattform, die Sie brauchen, um etwas zu bewirken, indem Sie mit einigen der größten Vordenker der Branche zusammenarbeiten.Das ist Ihre Chance, Ihre Ziele zu erreichen und eine außergewöhnliche Karriere zu führen. Das ist Ihre Chance, in Ihre Zukunft zu investieren.Lesen Sie hier mehr über DWS und wer wir sind.Team- / Divisionbeschreibung EMEA Trailer and Management Fee & US Billing Unit - Verantwortungsbereich:Das Global Invoice Verification Team als Teil des Geschäftsbereichs Investment Operations (DWS COO Division) spielt eine zentrale und kritische Rolle in der Wertschöpfungskette für globale Publikums-; Spezialfonds sowie Mandate der DWS.Das Team ist zuständig für die:Abwicklung von Rechnungen von globalen Vendoren und Dienstleistern in Zusammenarbeit mit PWC, den operativen Fachabteilungen und Global Financekorrekte Parametrisierung, Berechnung, Prüfung der Verbindlichkeiten im DWS-eigenen System VPS, SimCorp Dimension (SCD); Revenue Manager; DB-Buyer und ihrer Instruktion mit Schnittstellen zu SAPR3 oder SAP4Hanadie Verarbeitung von Rückstellungen und forcast Reports inklusive der Datenlieferungen an die DWS-Finanzabteilungdie Validierung und Zahlung verschiedener RechnungenIm Rahmen des Tagesgeschäfts unterstützt das Team verschiedene Front-, Middle- und Back-Office Bereiche innerhalb der DWS. Eine Zusammenarbeit mit diversen externen und internen, globalen Stakeholdern, wie Relationship Managern, Finance, Steuern, Vertragsmanagement, Verwahrstellen und Beratern ist Bestandteil der täglichen Aufgaben.Das Team ist global aufgestellt und beschäftigt Mitarbeitende an den Standorten in Frankfurt, Luxembourg, USA, den Philippinen, sowie Indien.RollenbeschreibungAls Business Analyst (Functional Role Title: Operations Specialist - E-invoicing) (m/w/d) zeigen Sie sich verantwortlich für den reibungslosen Ablauf wiederkehrender Rechnungsprozesse, für Change Initiativen und Prozessdokumentationen, sowie das Erreichen der gemeinsam gesteckten Ziele innerhalb der vorgegebenen Zeitlinien. In der Rolle konzentrieren Sie sich auf die Gestaltung und Sicherstellung der Einhaltung von Abrechnungsprozessen im Umfeld der von der DWS administrierten Wertpapierfonds und externer DWS-Mandate.Zu Ihren Aufgaben zählen:E-Invoicing Prozessaufsatz inkl. BAU-Implementierung sowie BearbeitungGlobal Invoice Verification ProzesszentralisierungÜberprüfung von Rechnungsinformationen (Sicherstellung der Richtigkeit der Rechnungsinformationen, Sicherstellung der Einhaltung der geltenden rechtlichen Rahmenvereinbarungen und Verträge)Zentrale Überwachung der Gebührentransaktionen (Sicherstellen, dass Zahlungen und Buchungen pünktlich und akkurat erfolgen, Meldung überfälliger Rechnungen usw.)Analyse und Behebung von Abrechnungsdiskrepanzen (Cash-Breaks)Datenlieferung an die Finanzabteilungen sowie ReportingZusammenarbeit mit internen und externen Stakeholdern (Vertragsmanagement, Finanzabteilung, Verwahrstellen, externe Kunden & IT)Kritische Beurteilung und ausgezeichnetes Verständnis neuer Vertragsaufsätze und System-konfigurationen im Hinblick auf die operative UmsetzbarkeitUnterstützung der Gestaltung und Umsetzung von Strategien, um eine kontinuierliche Prozessverbesserung zu gewährleisten, Veränderungsprojekte zu definieren und so eine Verbesserung der Leistungen herbeizuführenDokumentation, Standardisierung und Verbesserung von Methoden und ProzessenUmsetzung von Geschäftsstrategien und -zielen verschiedener Produkt- und Geschäftsbereiche unter Einhaltung aller interner und externer Vorschriften/Richtlinien sowie der vereinbarten Key Operating Documents (KOD), Service Level Agreements (SLA's), Key Performance Indicators (KPI's), Key Risk Indicatiors (KRI's)Projektarbeit Wir suchenErfolgreich abgeschlossenes wirtschaftswissenschaftliches Studium oder vergleichbare AusbildungErfahrung im Bereich Operations im Asset ManagementBuchhalterische Kenntnisse, vorzugsweise im Bereich der Fonds- oder FinanzbuchhaltungVon Vorteil: Produkt- und Systemkenntnisse (SimCorp Dimension/Aladdin/SAP)Fundierte Kenntnisse in MS Office-Anwendungen (insbesondere Excel)Große Lernbereitschaft und Aufgeschlossenheit, neue Wege zu gehenAusgeprägte lösungs- und serviceorientierte Kommunikationsfähigkeiten, sehr gutes Deutsch und Englisch in Wort und Schrift (Französisch von Vorteil)Erfahrung im Umgang mit internen und externen Kunden sowie DienstleisternHilfsbereitschaft und TeamfähigkeitAufgeschlossenheit und Fähigkeit, innerhalb des Teams Informationen auszutauschen sowie Fachwissen und Kompetenz zu vermittelnEin hohes Maß an Eigeninitiative sowie wohlüberlegter, selbstbewusster EntscheidungsfindungEigeninitiative Bereitschaft den Status Quo zu verbessern und messbare Resultate zu erzielenPotential für Weiterentwicklung und hohes VerantwortungsbewusstseinAusschreibungszeitraum: 10.04.2025 bis auf WeiteresWir bieten Ihnen:Ohne den Ehrgeiz unserer Mitarbeiter wären unsere Erfolge nicht möglich. Und es ist uns wichtig, dass Sie gerne zur Arbeit kommen – gesund, glücklich und wertgeschätzt. Bei der DWS haben Sie Zugriff auf eine Reihe von Benefits, aus denen Sie wählen können und die speziell auf Ihren Lebensstil abgestimmt sind. Egal, ob Sie sich für die Gesundheitsversorgung oder betriebliche Vergünstigungen interessieren oder über Ihre Altersvorsorge nachdenken, es ist für jeden etwas dabei.Einige unserer Benefits:Leistungen zur körperlichen und geistigen Gesundheit, einschließlich (aber nicht beschränkt auf) der gesetzlichen Krankenversicherung (BKK), Krankengeld und Support-Hotlines für MitarbeiterFamilienfreundliche Leistungen, einschließlich großzügiger Elternzeitpakete (unterstützt alle Varianten von Familienformen) und Unterstützung bei der Suche nach Kinderbetreuungsmöglichkeiten, einschließlich des DWS-eigenen KindergartenservicesEine Vielzahl an Pensionsplänen, persönlichen Budgetkonten zur Ermöglichung von Sabbaticals oder vorzeitigem Ruhestand sowie vermögenswirksamen LeistungenDie Möglichkeit, unsere CSR-Strategie zu unterstützen, die sich auf die Bekämpfung des Klimawandels und die Erreichung größerer sozialer Gerechtigkeit konzentriert. Sie können an unsere Partnerorganisationen spenden oder sich an Corporate-Volunteering-Möglichkeiten in Ihren lokalen Gemeinden beteiligen, indem Sie uns vor Ort unterstützenLeistungen zur Mobilität, beispielsweise ein subventioniertes Deutschlandticket sowie Angebote zu Firmenwagen und JobRadDas aktuelle Hybrid-Arbeitsmodell der DWS ist darauf ausgelegt, die Balance zwischen persönlicher Zusammenarbeit und Engagement im Büro zu finden, die den Kern unserer Arbeitskultur ausmacht. Wir setzen uns für die Unterstützung flexibler und hybrider Arbeitsvereinbarungen auf der ganzen Welt ein. Abhängig von dem Standort oder der Stelle, auf die Sie sich bewerben, wird die Aufteilung zwischen der Arbeit im Büro und der Arbeit zu Hause im Rahmen Ihres Bewerbungs- und Interviewprozesses besprochen.Wir werden unsere Arbeitsumgebungen und -methoden weiterhin überprüfen und weiterentwickeln, um bestmögliche Arbeitsbedingungen für unsere Mitarbeiter zu schaffen.Wenn Sie aus irgendeinem Grund, einschließlich oder im Zusammenhang mit einer Behinderung oder einem langfristigen Gesundheitszustand, Anpassungen oder Änderungen am Bewerbungsprozess benötigen, wenden Sie sich bitte an Ihren Recruiter und teilen Sie uns mit, welche Unterstützung Sie möglicherweise benötigen. Beispiele für Anpassungen sind die Änderung des Interviewformats oder die Bereitstellung von Unterstützung in den Räumlichkeiten der DWS. Dies hat keine Auswirkungen auf Ihre Bewerbung und Ihr Rekrutierungsteam wird die Optionen mit Ihnen besprechen.#LI-VL1 #LI-03 Wir streben eine Unternehmenskultur an, in der wir gemeinsam jeden Tag das Beste geben. Dazu gehören verantwortungsvolles Handeln, wirtschaftliches Denken, Initiative ergreifen und zielgerichtete Zusammenarbeit.Gemeinsam teilen und feiern wir die Erfolge unserer Mitarbeiter*innen. Gemeinsam sind wir die Deutsche Bank Gruppe.Wir begrüßen Bewerbungen von allen Menschen und fördern ein positives, faires und integratives Arbeitsumfeld.
+```
+
+*(9,022 characters)*
+
+### ✨ Extracted Summary
+
+Role: Business Analyst (E-invoicing)
+Company: DWS
+Location: Frankfurt
+Job ID: R0383278
+Key Responsibilities: - Streamline e-invoicing processes and implement global invoice verification
+- Validate and pay various invoices, ensuring accurate accounting and reconciliation
+- Support front-, middle-, and back-office operations by collaborating with diverse stakeholders including Relationship Managers, Finance, Tax, Contract Management, Warehousing, and Consultants
+- Oversee vendor and service provider billing, handle forecast reports and data deliveries to finance departments
+- Analyze and resolve billing discrepancies (Cash-Breaks)
+- Document, standardize, and improve methods and processes
+- Support the development and implementation of strategies for continuous process improvement
+Requirements: - Completed economic or related studies
+- Experience in operations within asset management
+- Bookkeeping skills, preferably in fund or financial bookkeeping
+- Product and system knowledge (SimCorp Dimension/Aladdin/SAP)
+- Proficiency in MS Office applications, especially Excel
+- Strong problem-solving and service-oriented communication skills, fluent in German and English (French is a plus)
+Details: - Focus on operational processes within the DWS COO division.
+- Collaborate with various stakeholders to drive process improvement and strategic initiatives.
+
+### 🎯 Extracted Skills (16 total)
+
+| # | Skill | Importance | Proficiency | Years | Reasoning |
+|---|-------|------------|-------------|-------|-----------|
+| 1 | Business Analysis | essential | advanced | unknown | Required for defining and documenting business requirements, processes, and strategies. |
+| 2 | E-invoicing Process Documentation | essential | advanced | unknown | Key responsibility in the role of E-invoicing Operations Specialist. |
+| 3 | Processe Design and Implementation | essential | advanced | unknown | Important for creating and implementing processes to support business objectives. |
+| 4 | Reconciliation Analysis | essential | intermediate | unknown | Required for identifying discrepancies in financial transactions. |
+| 5 | Data Management | important | advanced | unknown | Involves handling and delivering data to finance departments. |
+| 6 | Change Management | important | intermediate | unknown | Supports defining and implementing change initiatives within the organization. |
+| 7 | Financial Accounting | critical | advanced | unknown | N/A |
+| 8 | MS Office Applications (Excel) Proficiency | important | intermediate | unknown | Required for data analysis and reporting. |
+| 9 | Interpersonal Communication | preferred | advanced | unknown | Enhances collaboration with internal and external stakeholders. |
+| 10 | Problem Solving | important | intermediate | unknown | Critical for identifying and resolving issues in financial processes. |
+| 11 | Initiative and Decision Making | essential | beginner | unknown | Encourages proactivity and strategic decision-making in roles involving process improvement. |
+| 12 | Teamwork and Collaboration | important | intermediate | unknown | Promotes effective teamwork and information sharing within the team. |
+| 13 | Technical Proficiency (SimCorp Dimension/Aladdin/SAP) | preferred | beginner | unknown | Desirable for system configuration and implementation in certain processes. |
+| 14 | Learning Readiness | preferred | beginner | unknown | Encourages adaptability to new methods and technologies. |
+| 15 | Customer Service Orientation | important | intermediate | unknown | Involves working with both internal and external clients. |
+| 16 | Language Skills (German, English, French) | essential | advanced | unknown | Key for effective communication within a multinational team. |
+
+### 🎯 Profile Match: Gershon Pollatschek
+
+❌ **No skill overlap** - Your profile doesn't match any required skills
+
+### 🔍 Quality Assessment
+
+✅ **Skill count**: 16 (healthy range)
+✅ **Importance distribution**: {'essential': 6, 'important': 6, 'critical': 1, 'preferred': 3}
+✅ **Extracted by**: qwen2.5:7b (workflow 1124)
+✅ **Extraction time**: 28.9 seconds
+⚠️  **Generic skills without context**: Interpersonal Communication, Problem Solving, Teamwork and Collaboration
+⚠️  **1 skills lack detailed reasoning**
+
+### 🔗 Lineage
+
+- **LLM Interaction ID:** 2584
+- **Workflow Run ID:** 989
+- Can trace full causation using `interaction_lineage` table
+
+---
+
+
+## End of Report
+
+Generated by `tools/generate_skills_qa_report.py`
