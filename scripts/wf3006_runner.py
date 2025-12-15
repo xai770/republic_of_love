@@ -66,6 +66,79 @@ def log(msg: str, level: str = "INFO"):
     print(f"[{ts}] [{level}] {msg}")
 
 
+def save_debate_reasoning(entity_id: int, debate_result: dict):
+    """Save debate reasoning to classification_reasoning table."""
+    import psycopg2
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    conn = psycopg2.connect(
+        host=os.environ.get('DB_HOST', 'localhost'),
+        dbname=os.environ.get('DB_NAME', 'turing'),
+        user=os.environ.get('DB_USER', 'base_admin'),
+        password=os.environ.get('DB_PASSWORD', 'base_yoga_secure_2025')
+    )
+    
+    try:
+        cur = conn.cursor()
+        
+        # Save challenger reasoning
+        challenge = debate_result.get("challenge", {})
+        if challenge and not challenge.get("error"):
+            cur.execute("""
+                INSERT INTO classification_reasoning 
+                    (entity_id, model, role, reasoning, confidence, suggested_domain)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                entity_id,
+                "qwen2.5:7b",
+                "challenger",
+                challenge.get("challenge_reasoning", ""),
+                challenge.get("strength", 0.5),
+                challenge.get("alternative_domain")
+            ))
+        
+        # Save defender reasoning
+        defense = debate_result.get("defense", {})
+        if defense and not defense.get("error"):
+            cur.execute("""
+                INSERT INTO classification_reasoning 
+                    (entity_id, model, role, reasoning, confidence, suggested_domain)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                entity_id,
+                "gemma3:4b",
+                "defender",
+                defense.get("defense", ""),
+                defense.get("revised_confidence", 0.7),
+                debate_result.get("initial", {}).get("domain")
+            ))
+        
+        # Save judge ruling
+        ruling = debate_result.get("ruling", {})
+        if ruling and not ruling.get("error"):
+            cur.execute("""
+                INSERT INTO classification_reasoning 
+                    (entity_id, model, role, reasoning, confidence, suggested_domain,
+                     was_overturned, overturn_reason)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                entity_id,
+                "gemma3:4b",
+                "judge",
+                ruling.get("reasoning", ""),
+                ruling.get("final_confidence", 0.7),
+                ruling.get("final_domain"),
+                debate_result.get("overturned", False),
+                ruling.get("reasoning") if debate_result.get("overturned") else None
+            ))
+        
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+
 def call_llm(prompt: str, model: str = CLASSIFIER_MODEL) -> dict:
     """Call Ollama LLM."""
     try:
@@ -269,13 +342,22 @@ def process_batch() -> dict:
     
     # Step 3: Debate low-confidence classifications
     debated_decisions = []
+    skill_ids_in_batch = {s["entity_id"]: s for s in skills}
+    
     for decision in decisions:
         confidence = decision.get("confidence", 0.85)
+        skill_id = decision.get("entity_id")
         
+        # Convert entity_id to int for lookup (LLM sometimes returns it as string)
+        try:
+            skill_id_int = int(skill_id) if skill_id is not None else None
+        except (ValueError, TypeError):
+            skill_id_int = None
+        
+        # Debug: log confidence being evaluated
         if confidence < DEBATE_CONFIDENCE_THRESHOLD:
-            # Find the skill info
-            skill_id = decision.get("entity_id")
-            skill_info = next((s for s in skills if s["entity_id"] == skill_id), None)
+            log(f"  Low confidence detected: entity_id={skill_id}, conf={confidence}")
+            skill_info = skill_ids_in_batch.get(skill_id_int)
             
             if skill_info:
                 log(f"  Debating {skill_info['name']} (conf: {confidence})...")
@@ -292,6 +374,12 @@ def process_batch() -> dict:
                     available_domains=fetch_result.get("domains", []),
                     similar_skills=skill_info.get("similar", [])
                 )
+                
+                # Save debate reasoning to DB
+                try:
+                    save_debate_reasoning(skill_id_int, debate_result)
+                except Exception as e:
+                    log(f"  Warning: Failed to save debate reasoning: {e}", "WARN")
                 
                 if debate_result.get("overturned"):
                     log(f"    ⚡ OVERTURNED → {debate_result.get('final_domain')}")
