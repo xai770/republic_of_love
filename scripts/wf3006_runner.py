@@ -1,0 +1,343 @@
+#!/usr/bin/env python3
+"""
+WF3006 Daemon Runner - Entity Classification
+
+Runs the full classification pipeline continuously:
+1. Fetch batch of orphan skills
+2. Classify with gemma3:4b  
+3. Debate low-confidence with challenger/defender/judge
+4. Save decisions and reasoning
+5. Apply approved decisions
+6. Loop if more orphans exist
+
+Can be run as daemon or one-shot.
+
+Usage:
+    python3 scripts/wf3006_runner.py           # One batch
+    python3 scripts/wf3006_runner.py --daemon  # Continuous until all done
+    python3 scripts/wf3006_runner.py --daemon --interval 60  # Every 60 seconds
+
+Author: Arden
+Date: December 15, 2025
+"""
+
+import argparse
+import json
+import os
+import sys
+import subprocess
+import time
+from datetime import datetime
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from core.wave_runner.actors.orphan_fetcher_v2 import execute as fetch_orphans
+from core.wave_runner.actors.classification_saver import execute as save_classification
+from core.wave_runner.actors.classification_applier import execute as apply_classification
+from core.wave_runner.actors.debate_panel import run_debate
+
+# Configuration
+BATCH_SIZE = 10
+CLASSIFIER_MODEL = "gemma3:4b"
+DEBATE_CONFIDENCE_THRESHOLD = 0.80
+
+# Stats
+stats = {
+    "batches_processed": 0,
+    "skills_classified": 0,
+    "debates_held": 0,
+    "debates_overturned": 0,
+    "domains_created": 0,
+    "errors": 0,
+    "start_time": None
+}
+
+
+def log(msg: str, level: str = "INFO"):
+    """Log with timestamp."""
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}] [{level}] {msg}")
+
+
+def call_llm(prompt: str, model: str = CLASSIFIER_MODEL) -> dict:
+    """Call Ollama LLM."""
+    try:
+        result = subprocess.run(
+            ['ollama', 'run', model],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        
+        if result.returncode != 0:
+            return {"error": result.stderr, "success": False}
+        
+        return {"response": result.stdout.strip(), "success": True}
+        
+    except subprocess.TimeoutExpired:
+        return {"error": "Timeout", "success": False}
+    except Exception as e:
+        return {"error": str(e), "success": False}
+
+
+def build_classification_prompt(skills_text: str, domains_text: str) -> str:
+    """Build classification prompt."""
+    return f"""You are a skill classification expert. Classify each skill into EXACTLY ONE domain.
+
+{domains_text}
+
+For each skill, respond with a JSON object on its own line:
+{{"entity_id": <id>, "action": "CLASSIFY", "domain": "<domain_name>", "confidence": 0.XX, "reasoning": "brief reason"}}
+
+If no domain fits well, use:
+{{"entity_id": <id>, "action": "NEW_DOMAIN", "suggested_domain_name": "<name>", "confidence": 0.XX, "reasoning": "why new domain needed"}}
+
+SKILLS TO CLASSIFY:
+{skills_text}
+
+Respond with one JSON object per skill, one per line. No markdown, no extra text."""
+
+
+def parse_classifications(response_text: str) -> list:
+    """Parse classification response into list of decisions."""
+    import re
+    decisions = []
+    
+    for line in response_text.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Try to extract JSON from line
+        try:
+            json_match = re.search(r'\{[^{}]*\}', line, re.DOTALL)
+            if json_match:
+                decision = json.loads(json_match.group())
+                decisions.append(decision)
+        except json.JSONDecodeError:
+            pass
+    
+    return decisions
+
+
+def process_batch() -> dict:
+    """Process one batch of orphan skills."""
+    batch_stats = {
+        "fetched": 0,
+        "classified": 0,
+        "debated": 0,
+        "saved": 0,
+        "applied": 0,
+        "remaining": 0,
+        "errors": []
+    }
+    
+    # Step 1: Fetch orphans
+    log("Fetching orphan skills...")
+    fetch_result = fetch_orphans({
+        "batch_size": BATCH_SIZE,
+        "include_history": True,
+        "include_similar": True
+    })
+    
+    if fetch_result.get("status") == "NO_ORPHANS":
+        log("No orphans remaining!", "SUCCESS")
+        return {"status": "complete", "remaining": 0}
+    
+    if fetch_result.get("status") == "error":
+        log(f"Fetch error: {fetch_result.get('error')}", "ERROR")
+        batch_stats["errors"].append(f"Fetch: {fetch_result.get('error')}")
+        return {"status": "error", **batch_stats}
+    
+    skills = fetch_result.get("skills", [])
+    batch_stats["fetched"] = len(skills)
+    batch_stats["remaining"] = fetch_result.get("remaining", 0)
+    
+    log(f"Fetched {len(skills)} skills, {batch_stats['remaining']} remaining")
+    
+    # Step 2: Classify
+    log(f"Classifying with {CLASSIFIER_MODEL}...")
+    prompt = build_classification_prompt(
+        fetch_result.get("skills_text", ""),
+        fetch_result.get("domains_text", "")
+    )
+    
+    llm_result = call_llm(prompt)
+    
+    if not llm_result.get("success"):
+        log(f"LLM error: {llm_result.get('error')}", "ERROR")
+        batch_stats["errors"].append(f"LLM: {llm_result.get('error')}")
+        return {"status": "error", **batch_stats}
+    
+    response_text = llm_result.get("response", "")
+    decisions = parse_classifications(response_text)
+    batch_stats["classified"] = len(decisions)
+    
+    log(f"Classified {len(decisions)} skills")
+    
+    # Step 3: Debate low-confidence classifications
+    debated_decisions = []
+    for decision in decisions:
+        confidence = decision.get("confidence", 0.85)
+        
+        if confidence < DEBATE_CONFIDENCE_THRESHOLD:
+            # Find the skill info
+            skill_id = decision.get("entity_id")
+            skill_info = next((s for s in skills if s["entity_id"] == skill_id), None)
+            
+            if skill_info:
+                log(f"  Debating {skill_info['name']} (conf: {confidence})...")
+                batch_stats["debated"] += 1
+                stats["debates_held"] += 1
+                
+                debate_result = run_debate(
+                    skill=skill_info,
+                    initial_classification={
+                        "domain": decision.get("domain"),
+                        "confidence": confidence,
+                        "reasoning": decision.get("reasoning", "")
+                    },
+                    available_domains=fetch_result.get("domains", []),
+                    similar_skills=skill_info.get("similar", [])
+                )
+                
+                if debate_result.get("overturned"):
+                    log(f"    ⚡ OVERTURNED → {debate_result.get('final_domain')}")
+                    stats["debates_overturned"] += 1
+                    decision["domain"] = debate_result.get("final_domain")
+                    decision["confidence"] = debate_result.get("final_confidence")
+                    decision["reasoning"] += f" [DEBATED: {debate_result.get('ruling', {}).get('reasoning', '')}]"
+        
+        debated_decisions.append(decision)
+    
+    # Step 4: Save decisions
+    log("Saving decisions...")
+    
+    # Convert to response format for saver
+    response_for_saver = "\n".join([json.dumps(d) for d in debated_decisions])
+    
+    save_result = save_classification({
+        "response": response_for_saver,
+        "model": CLASSIFIER_MODEL
+    })
+    
+    batch_stats["saved"] = save_result.get("saved", 0)
+    
+    if save_result.get("domains_created", 0) > 0:
+        stats["domains_created"] += save_result.get("domains_created")
+        log(f"  Created {save_result.get('domains_created')} new domain(s)")
+    
+    log(f"Saved {batch_stats['saved']} decisions")
+    
+    # Step 5: Apply approved decisions
+    log("Applying approved decisions...")
+    apply_result = apply_classification({})
+    
+    batch_stats["applied"] = apply_result.get("applied", 0)
+    log(f"Applied {batch_stats['applied']} relationships")
+    
+    # Update global stats
+    stats["batches_processed"] += 1
+    stats["skills_classified"] += batch_stats["classified"]
+    
+    return {"status": "success", **batch_stats}
+
+
+def run_daemon(interval: int = 30, max_batches: int = None):
+    """Run continuously until no orphans remain or max_batches hit."""
+    stats["start_time"] = datetime.now()
+    batch_count = 0
+    
+    log("=" * 60)
+    log("WF3006 Entity Classification Daemon Starting")
+    log(f"Batch size: {BATCH_SIZE}, Interval: {interval}s")
+    log("=" * 60)
+    
+    while True:
+        batch_count += 1
+        
+        if max_batches and batch_count > max_batches:
+            log(f"Reached max batches ({max_batches}), stopping")
+            break
+        
+        log(f"\n--- BATCH {batch_count} ---")
+        result = process_batch()
+        
+        if result.get("status") == "complete":
+            log("🎉 All orphans classified!", "SUCCESS")
+            break
+        
+        if result.get("status") == "error":
+            stats["errors"] += 1
+            if stats["errors"] > 5:
+                log("Too many consecutive errors, stopping", "ERROR")
+                break
+        else:
+            stats["errors"] = 0  # Reset on success
+        
+        remaining = result.get("remaining", 0)
+        if remaining == 0:
+            log("No more orphans!", "SUCCESS")
+            break
+        
+        log(f"Sleeping {interval}s... ({remaining} orphans remaining)")
+        time.sleep(interval)
+    
+    # Print summary
+    elapsed = (datetime.now() - stats["start_time"]).total_seconds()
+    
+    log("\n" + "=" * 60)
+    log("DAEMON SUMMARY")
+    log("=" * 60)
+    log(f"Runtime: {elapsed:.1f} seconds")
+    log(f"Batches processed: {stats['batches_processed']}")
+    log(f"Skills classified: {stats['skills_classified']}")
+    log(f"Debates held: {stats['debates_held']}")
+    log(f"Debates overturned: {stats['debates_overturned']}")
+    log(f"Domains created: {stats['domains_created']}")
+
+
+def run_single_batch():
+    """Run a single batch."""
+    log("=" * 60)
+    log("WF3006 Single Batch Run")
+    log("=" * 60)
+    
+    result = process_batch()
+    
+    log("\n" + "=" * 60)
+    log("BATCH RESULT")
+    log("=" * 60)
+    log(f"Status: {result.get('status')}")
+    log(f"Fetched: {result.get('fetched', 0)}")
+    log(f"Classified: {result.get('classified', 0)}")
+    log(f"Debated: {result.get('debated', 0)}")
+    log(f"Saved: {result.get('saved', 0)}")
+    log(f"Applied: {result.get('applied', 0)}")
+    log(f"Remaining: {result.get('remaining', 0)}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="WF3006 Entity Classification Runner")
+    parser.add_argument("--daemon", action="store_true", help="Run continuously")
+    parser.add_argument("--interval", type=int, default=30, help="Seconds between batches (daemon mode)")
+    parser.add_argument("--max-batches", type=int, help="Max batches before stopping (daemon mode)")
+    parser.add_argument("--batch-size", type=int, default=10, help="Skills per batch")
+    
+    args = parser.parse_args()
+    
+    global BATCH_SIZE
+    BATCH_SIZE = args.batch_size
+    
+    if args.daemon:
+        run_daemon(interval=args.interval, max_batches=args.max_batches)
+    else:
+        run_single_batch()
+
+
+if __name__ == "__main__":
+    main()
