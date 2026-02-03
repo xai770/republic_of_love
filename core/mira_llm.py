@@ -471,6 +471,13 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
     
     logger.info(f"Mira LLM chat: lang={language}, uses_du={uses_du}, message={message[:50]}")
     
+    # Check for Doug research request
+    doug_request = detect_doug_request(message)
+    if doug_request:
+        doug_response = await handle_doug_request(doug_request, user_id, conn, language, uses_du)
+        if doug_response:
+            return doug_response
+    
     # Build yogi context
     yogi_context = build_yogi_context(user_id, conn)
     
@@ -491,6 +498,186 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
                    "Ich habe gerade Probleme zu antworten. Können Sie es gleich nochmal versuchen?"
     
     return MiraResponse(reply=fallback, language=language, fallback=True)
+
+
+def detect_doug_request(message: str) -> Optional[dict]:
+    """
+    Detect if user is asking for company research.
+    
+    Patterns:
+    - "Was weißt du über [Company]?"
+    - "Tell me about [Company]"
+    - "Research [Company] for me"
+    - "Can Doug look into [Company]?"
+    
+    Returns dict with 'company' key if detected, None otherwise.
+    """
+    message_lower = message.lower()
+    
+    # German patterns
+    de_patterns = [
+        r'was weißt du über\s+(.+?)(?:\?|$)',
+        r'was wisst ihr über\s+(.+?)(?:\?|$)',
+        r'recherchier(?:e|st)?\s+(?:mal\s+)?(.+?)(?:\s+für mich)?(?:\?|$)',
+        r'kannst du (?:mir\s+)?(?:was|etwas) über\s+(.+?)\s+(?:sagen|erzählen|herausfinden)',
+        r'(?:mehr\s+)?(?:infos?|informationen)\s+(?:über|zu)\s+(.+?)(?:\?|$)',
+        r'doug.*?(?:über|zu)\s+(.+?)(?:\?|$)',
+    ]
+    
+    # English patterns  
+    en_patterns = [
+        r'what do you know about\s+(.+)',
+        r'tell me (?:more\s+)?about\s+(.+)',
+        r'research\s+(.+)',
+        r'can (?:you|doug) look into\s+(.+)',
+        r'(?:more\s+)?info(?:rmation)?\s+(?:about|on)\s+(.+)',
+        r'doug.*?about\s+(.+)',
+    ]
+    
+    all_patterns = de_patterns + en_patterns
+    
+    for pattern in all_patterns:
+        match = re.search(pattern, message_lower, re.IGNORECASE)
+        if match:
+            company = match.group(1).strip()
+            # Clean up common suffixes (order matters - longer first)
+            company = re.sub(r'\s+for me please$', '', company, flags=re.IGNORECASE)
+            company = re.sub(r'\s+for me$', '', company, flags=re.IGNORECASE)
+            company = re.sub(r'\s+für mich$', '', company, flags=re.IGNORECASE)
+            company = re.sub(r'\s+please$', '', company, flags=re.IGNORECASE)
+            company = re.sub(r'\s+bitte$', '', company, flags=re.IGNORECASE)
+            company = re.sub(r'\s+mal$', '', company, flags=re.IGNORECASE)
+            company = re.sub(r'\s+doch$', '', company, flags=re.IGNORECASE)
+            # Remove trailing punctuation
+            company = company.rstrip('?.!').strip()
+            if company and len(company) > 1:
+                return {'company': company, 'raw_match': match.group(0)}
+    
+    return None
+
+
+async def handle_doug_request(
+    request: dict, 
+    user_id: int, 
+    conn, 
+    language: str, 
+    uses_du: bool
+) -> Optional[MiraResponse]:
+    """
+    Handle a Doug research request.
+    
+    1. Find if user has any matches/interactions with this company
+    2. If yes → queue Doug research on that posting
+    3. If no → offer to search generally
+    """
+    company = request['company']
+    
+    with conn.cursor() as cur:
+        # Check if user has any interactions with postings from this company
+        cur.execute("""
+            SELECT upi.interaction_id, upi.posting_id, upi.state,
+                   p.job_title, p.extracted_summary
+            FROM user_posting_interactions upi
+            JOIN postings p ON upi.posting_id = p.posting_id
+            WHERE upi.user_id = %s
+              AND (
+                  LOWER(p.job_title) LIKE %s
+                  OR LOWER(p.extracted_summary) LIKE %s
+              )
+            ORDER BY upi.updated_at DESC
+            LIMIT 1
+        """, (user_id, f'%{company.lower()}%', f'%{company.lower()}%'))
+        
+        interaction = cur.fetchone()
+        
+        if interaction:
+            # User has interacted with a posting from this company
+            interaction_id = interaction['interaction_id']
+            job_title = interaction['job_title']
+            current_state = interaction['state']
+            
+            # Check if already researched
+            if current_state == 'informed':
+                # Already researched — check for existing report
+                cur.execute("""
+                    SELECT body FROM yogi_messages
+                    WHERE user_id = %s AND posting_id = %s 
+                      AND sender_type = 'doug' AND message_type = 'research_report'
+                    ORDER BY created_at DESC LIMIT 1
+                """, (user_id, interaction['posting_id']))
+                report = cur.fetchone()
+                
+                if report:
+                    if language == 'en':
+                        reply = f"Doug already researched {company}! Check your messages for his report on '{job_title}'."
+                    else:
+                        if uses_du:
+                            reply = f"Doug hat {company} schon recherchiert! Schau in deine Nachrichten — dort findest du seinen Bericht zu '{job_title}'."
+                        else:
+                            reply = f"Doug hat {company} bereits recherchiert! Schauen Sie in Ihre Nachrichten — dort finden Sie seinen Bericht zu '{job_title}'."
+                    return MiraResponse(reply=reply, language=language)
+            
+            elif current_state == 'researching':
+                # Already in queue
+                if language == 'en':
+                    reply = f"Doug is already working on researching {company}. I'll let you know when he's done!"
+                else:
+                    if uses_du:
+                        reply = f"Doug recherchiert gerade schon zu {company}. Ich sag dir Bescheid, wenn er fertig ist!"
+                    else:
+                        reply = f"Doug recherchiert gerade bereits zu {company}. Ich sage Ihnen Bescheid, wenn er fertig ist!"
+                return MiraResponse(reply=reply, language=language)
+            
+            else:
+                # Queue for research
+                cur.execute("""
+                    UPDATE user_posting_interactions
+                    SET state = 'researching', state_changed_at = NOW(), updated_at = NOW()
+                    WHERE interaction_id = %s
+                """, (interaction_id,))
+                conn.commit()
+                
+                if language == 'en':
+                    reply = f"I've asked Doug to research {company} for the '{job_title}' position. He'll dig into company culture, reviews, and anything useful. This takes a few minutes — I'll notify you when it's ready!"
+                else:
+                    if uses_du:
+                        reply = f"Ich hab Doug gebeten, {company} zu recherchieren — speziell für die Stelle '{job_title}'. Er schaut sich Firmenkultur, Bewertungen und alles Nützliche an. Das dauert ein paar Minuten — ich sag dir Bescheid!"
+                    else:
+                        reply = f"Ich habe Doug gebeten, {company} zu recherchieren — speziell für die Stelle '{job_title}'. Er schaut sich Firmenkultur, Bewertungen und alles Nützliche an. Das dauert ein paar Minuten — ich sage Ihnen Bescheid!"
+                return MiraResponse(reply=reply, language=language)
+        
+        else:
+            # No interaction with this company yet
+            # Check if we have any postings from this company at all
+            cur.execute("""
+                SELECT posting_id, job_title FROM postings
+                WHERE LOWER(job_title) LIKE %s OR LOWER(extracted_summary) LIKE %s
+                LIMIT 3
+            """, (f'%{company.lower()}%', f'%{company.lower()}%'))
+            postings = cur.fetchall()
+            
+            if postings:
+                # We have postings but user hasn't interacted
+                if language == 'en':
+                    reply = f"I found some jobs that mention {company}, but you haven't viewed them yet. Want me to show you those matches first? Then Doug can research the ones you're interested in."
+                else:
+                    if uses_du:
+                        reply = f"Ich habe Stellen gefunden, die {company} erwähnen, aber du hast sie noch nicht angeschaut. Soll ich dir die Matches zuerst zeigen? Dann kann Doug die recherchieren, die dich interessieren."
+                    else:
+                        reply = f"Ich habe Stellen gefunden, die {company} erwähnen, aber Sie haben sie noch nicht angesehen. Soll ich Ihnen die Matches zuerst zeigen? Dann kann Doug die recherchieren, die Sie interessieren."
+            else:
+                # Company not in our database
+                if language == 'en':
+                    reply = f"I don't have any job postings from {company} right now. We focus on jobs in Germany from Arbeitsagentur and Deutsche Bank. Is there something else I can help with?"
+                else:
+                    if uses_du:
+                        reply = f"Ich habe gerade keine Stellenangebote von {company}. Wir konzentrieren uns auf Jobs in Deutschland von der Arbeitsagentur und Deutsche Bank. Kann ich dir bei etwas anderem helfen?"
+                    else:
+                        reply = f"Ich habe derzeit keine Stellenangebote von {company}. Wir konzentrieren uns auf Jobs in Deutschland von der Arbeitsagentur und Deutsche Bank. Kann ich Ihnen bei etwas anderem helfen?"
+            
+            return MiraResponse(reply=reply, language=language)
+    
+    return None  # Fall through to normal LLM response
 
 
 # Singleton instance
