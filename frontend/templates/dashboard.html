@@ -1379,26 +1379,20 @@ function timeAgo(dateStr) {
 // Load stats
 async function loadStats() {
     try {
-        // Matches count
-        const matchRes = await fetch('/api/matches/?limit=100');
+        // Matches count (T011: use stats endpoint with proper filtering)
+        const matchRes = await fetch('/api/matches/stats');
         if (matchRes.ok) {
-            const matches = await matchRes.json();
-            document.getElementById('stat-matches').textContent = matches.length;
+            const stats = await matchRes.json();
+            document.getElementById('stat-matches').textContent = stats.total_count;
         }
         
-        // Profile completeness
+        // Profile completeness (T010: use server-calculated value)
         const profileRes = await fetch('/api/profiles/me');
         if (profileRes.ok) {
             const profile = await profileRes.json();
-            // Simple completeness calculation
-            let complete = 0;
-            if (profile.full_name) complete += 25;
-            if (profile.target_roles) complete += 25;
-            if (profile.target_locations) complete += 25;
-            if (profile.work_history && profile.work_history.length > 0) complete += 25;
-            document.getElementById('stat-profile').textContent = complete + '%';
+            document.getElementById('stat-profile').textContent = profile.completeness;
         } else {
-            document.getElementById('stat-profile').textContent = '0%';
+            document.getElementById('stat-profile').textContent = '0';
         }
         
         // Active jobs

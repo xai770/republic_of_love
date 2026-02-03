@@ -26,6 +26,10 @@ class ProfileResponse(BaseModel):
     location: Optional[str]
     skills: List[str]
     skill_count: int
+    # T010: Added fields for completeness calculation
+    has_work_history: bool = False
+    has_preferences: bool = False
+    completeness: int = 0  # 0-100%
 
 
 class ProfileUpdate(BaseModel):
@@ -71,10 +75,11 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
     Returns profile linked to authenticated user.
     """
     with conn.cursor() as cur:
-        # Get profile linked to this user
+        # Get profile linked to this user (including preferences)
         cur.execute("""
             SELECT profile_id, full_name as display_name, email, 
-                   current_title as title, desired_locations[1] as location
+                   current_title as title, desired_locations[1] as location,
+                   desired_roles, desired_locations, skill_keywords
             FROM profiles
             WHERE user_id = %s
         """, (user['user_id'],))
@@ -83,20 +88,45 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
         if not profile:
             raise HTTPException(status_code=404, detail="No profile linked to this account")
         
-        # Get skills from profiles.skill_keywords (JSON array)
-        cur.execute("""
-            SELECT skill_keywords FROM profiles WHERE profile_id = %s
-        """, (profile['profile_id'],))
-        row = cur.fetchone()
-        skill_keywords = row['skill_keywords'] if row else None
-        
-        # Parse JSON if needed
+        # Parse skills from JSON array
+        import json
+        skill_keywords = profile['skill_keywords']
         skills = []
         if skill_keywords:
-            import json
             if isinstance(skill_keywords, str):
                 skill_keywords = json.loads(skill_keywords)
             skills = sorted(set(skill_keywords)) if skill_keywords else []
+        
+        # Check for work history
+        cur.execute("""
+            SELECT COUNT(*) as cnt FROM profile_work_history WHERE profile_id = %s
+        """, (profile['profile_id'],))
+        work_history_count = cur.fetchone()['cnt']
+        has_work_history = work_history_count > 0
+        
+        # Check for preferences
+        has_preferences = bool(profile['desired_roles'] or profile['desired_locations'])
+        
+        # T010: Calculate completeness
+        # - Name: +10%
+        # - Title: +10%  
+        # - Location: +10%
+        # - Work history (1+ entries): +30%
+        # - Skills extracted: +20%
+        # - Job preferences set: +20%
+        completeness = 0
+        if profile['display_name']:
+            completeness += 10
+        if profile['title']:
+            completeness += 10
+        if profile['location']:
+            completeness += 10
+        if has_work_history:
+            completeness += 30
+        if len(skills) > 0:
+            completeness += 20
+        if has_preferences:
+            completeness += 20
         
         return ProfileResponse(
             profile_id=profile['profile_id'],
@@ -105,7 +135,10 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
             title=profile['title'],
             location=profile['location'],
             skills=skills,
-            skill_count=len(skills)
+            skill_count=len(skills),
+            has_work_history=has_work_history,
+            has_preferences=has_preferences,
+            completeness=completeness
         )
 
 

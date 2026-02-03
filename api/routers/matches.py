@@ -75,6 +75,49 @@ def list_my_matches(
         return [MatchSummary(**row) for row in cur.fetchall()]
 
 
+class MatchStats(BaseModel):
+    """Stats for user's matches - filtered by quality threshold."""
+    total_count: int  # All matches above cutoff
+    strong_count: int  # Score >= 0.70
+    partial_count: int  # Score 0.50-0.70
+    applied_count: int  # User marked as applied
+
+
+@router.get("/stats", response_model=MatchStats)
+def get_my_match_stats(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Get match statistics for the current user.
+    Only counts matches above the quality cutoff (0.50).
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        
+        if not profile:
+            return MatchStats(total_count=0, strong_count=0, partial_count=0, applied_count=0)
+        
+        cur.execute("""
+            SELECT 
+                COUNT(*) FILTER (WHERE skill_match_score >= 0.50) as total_count,
+                COUNT(*) FILTER (WHERE skill_match_score >= 0.70) as strong_count,
+                COUNT(*) FILTER (WHERE skill_match_score >= 0.50 AND skill_match_score < 0.70) as partial_count,
+                COUNT(*) FILTER (WHERE user_applied = true) as applied_count
+            FROM profile_posting_matches
+            WHERE profile_id = %s
+        """, (profile['profile_id'],))
+        row = cur.fetchone()
+        
+        return MatchStats(
+            total_count=row['total_count'] or 0,
+            strong_count=row['strong_count'] or 0,
+            partial_count=row['partial_count'] or 0,
+            applied_count=row['applied_count'] or 0
+        )
+
+
 @router.get("/{match_id}", response_model=MatchDetail)
 def get_match_detail(match_id: int, user: dict = Depends(require_user), conn=Depends(get_db)):
     """
