@@ -4,23 +4,23 @@ Workflow Guard - Entry Point Enforcement for Long-Running Scripts
 
 This module enforces two critical rules:
 1. Scripts MUST be run via the wrapper (nohup enforcement)
-2. Every workflow run IS an interaction (lineage tracking)
+2. Every workflow run IS an ticket (lineage tracking)
 
 Usage:
     from core.workflow_guard import require_wrapper
     
     # At the TOP of any long-running script:
-    interaction_id = require_wrapper(
+    ticket_id = require_wrapper(
         script_name="run_batch_cleanup.py",
-        description="Batch cleanup - processes pending interactions"
+        description="Batch cleanup - processes pending tickets"
     )
     
-    # Pass interaction_id to child operations for lineage
+    # Pass ticket_id to child operations for lineage
 
 Philosophy:
-    The ONLY entry point to Turing is via interactions.
+    The ONLY entry point to Turing is via tickets.
     A workflow run is Sandy (or another agent) asking Turing to do something.
-    All child interactions trace back to this parent.
+    All child tickets trace back to this parent.
 
 Author: Arden
 Date: 2025-11-30
@@ -42,15 +42,15 @@ def _verify_handshake() -> bool:
     return os.environ.get("TURING_HANDSHAKE", "") == TURING_HANDSHAKE
 
 
-def _create_workflow_interaction(
+def _create_workflow_ticket(
     script_name: str,
     description: str,
     actor_name: str = "sandy"
 ) -> int:
     """
-    Create an interaction record for this workflow run.
+    Create an ticket record for this workflow run.
     
-    Returns the interaction_id that child operations should reference.
+    Returns the ticket_id that child operations should reference.
     """
     from dotenv import load_dotenv
     import psycopg2
@@ -84,26 +84,26 @@ def _create_workflow_interaction(
                 """, (actor_name, f"agent://{actor_name}"))
                 actor_id = cur.fetchone()[0]
             
-            # Get the "workflow_runs" conversation (meta-conversation for runs)
+            # Get the "workflow_runs" task_type (meta-task_type for runs)
             cur.execute("""
-                SELECT conversation_id FROM conversations 
-                WHERE conversation_name = 'workflow_runs'
+                SELECT task_type_id FROM task_types 
+                WHERE task_type_name = 'workflow_runs'
             """)
             row = cur.fetchone()
             
             if row:
-                conversation_id = row[0]
+                task_type_id = row[0]
             else:
-                # Create the meta-conversation - need an actor_id for it
+                # Create the meta-task_type - need an actor_id for it
                 # Use the sandy actor we just found/created
                 cur.execute("""
-                    INSERT INTO conversations (conversation_name, actor_id)
+                    INSERT INTO task_types (task_type_name, actor_id)
                     VALUES ('workflow_runs', %s)
-                    RETURNING conversation_id
+                    RETURNING task_type_id
                 """, (actor_id,))
-                conversation_id = cur.fetchone()[0]
+                task_type_id = cur.fetchone()[0]
             
-            # Create the interaction for THIS workflow run
+            # Create the ticket for THIS workflow run
             input_data = json.dumps({
                 "script": script_name,
                 "description": description,
@@ -113,8 +113,8 @@ def _create_workflow_interaction(
             })
             
             cur.execute("""
-                INSERT INTO interactions (
-                    conversation_id,
+                INSERT INTO tickets (
+                    task_type_id,
                     actor_id,
                     actor_type,
                     status,
@@ -127,22 +127,22 @@ def _create_workflow_interaction(
                     'script',
                     'running',
                     (SELECT COALESCE(MAX(execution_order), 0) + 1 
-                     FROM interactions WHERE conversation_id = %s),
+                     FROM tickets WHERE task_type_id = %s),
                     %s,
                     NOW()
                 )
-                RETURNING interaction_id
+                RETURNING ticket_id
             """, (
-                conversation_id,
+                task_type_id,
                 actor_id,
-                conversation_id,
+                task_type_id,
                 input_data
             ))
             
-            interaction_id = cur.fetchone()[0]
+            ticket_id = cur.fetchone()[0]
             conn.commit()
             
-            return interaction_id
+            return ticket_id
             
     finally:
         conn.close()
@@ -169,7 +169,7 @@ def _block_direct_invocation(script_name: str):
     print("  • Process runs in background (won't block terminal)")
     print("  • Process survives if your session ends")
     print("  • Output is logged to a file")
-    print("  • Run is recorded as an interaction in Turing")
+    print("  • Run is recorded as an ticket in Turing")
     print("═" * 60)
     sys.exit(1)
 
@@ -180,18 +180,18 @@ def require_wrapper(
     actor_name: str = "sandy"
 ) -> int:
     """
-    Enforce wrapper usage and create workflow interaction.
+    Enforce wrapper usage and create workflow ticket.
     
     Call this at the TOP of any long-running script.
     
     Args:
         script_name: Name of the script (for logging/error messages)
-        description: What this workflow does (stored in interaction)
+        description: What this workflow does (stored in ticket)
         actor_name: Who is running this (default: sandy)
     
     Returns:
-        interaction_id: The ID of the workflow-run interaction.
-                        Pass this to child operations as parent_interaction_id.
+        ticket_id: The ID of the workflow-run ticket.
+                        Pass this to child operations as parent_ticket_id.
     
     Raises:
         SystemExit: If not called via proper wrapper
@@ -199,42 +199,42 @@ def require_wrapper(
     Example:
         from core.workflow_guard import require_wrapper
         
-        interaction_id = require_wrapper(
+        ticket_id = require_wrapper(
             script_name="run_batch_cleanup.py",
             description="Processing pending batch items"
         )
         
-        # Now pass interaction_id to child work:
-        runner = WaveRunner(parent_interaction_id=interaction_id, ...)
+        # Now pass ticket_id to child work:
+        runner = WaveRunner(parent_ticket_id=ticket_id, ...)
     """
     # First: check the handshake
     if not _verify_handshake():
         _block_direct_invocation(script_name)
     
-    # Second: create the interaction record
-    interaction_id = _create_workflow_interaction(
+    # Second: create the ticket record
+    ticket_id = _create_workflow_ticket(
         script_name=script_name,
         description=description,
         actor_name=actor_name
     )
     
-    print(f"📋 Workflow registered as interaction #{interaction_id}")
+    print(f"📋 Workflow registered as ticket #{ticket_id}")
     
-    return interaction_id
+    return ticket_id
 
 
-def complete_workflow_interaction(
-    interaction_id: int,
+def complete_workflow_ticket(
+    ticket_id: int,
     output: Optional[dict] = None,
     error: Optional[str] = None
 ):
     """
-    Mark the workflow interaction as complete.
+    Mark the workflow ticket as complete.
     
     Call this when the workflow finishes (success or failure).
     
     Args:
-        interaction_id: The ID returned by require_wrapper()
+        ticket_id: The ID returned by require_wrapper()
         output: Final output/stats (optional)
         error: Error message if failed (optional)
     """
@@ -257,14 +257,14 @@ def complete_workflow_interaction(
             output_json = json.dumps(output) if output else None
             
             cur.execute("""
-                UPDATE interactions
+                UPDATE tickets
                 SET status = %s,
                     output = %s,
                     error_message = %s,
                     completed_at = NOW(),
                     updated_at = NOW()
-                WHERE interaction_id = %s
-            """, (status, output_json, error, interaction_id))
+                WHERE ticket_id = %s
+            """, (status, output_json, error, ticket_id))
             
             conn.commit()
             
@@ -289,11 +289,11 @@ def require_wrapper_unless_debug(
     """
     Like require_wrapper, but allows bypass with TURING_DEBUG=1.
     
-    Returns None in debug mode (no interaction created).
+    Returns None in debug mode (no ticket created).
     """
     if is_debug_mode():
         print("⚠️  DEBUG MODE - Wrapper check bypassed")
-        print("⚠️  No interaction record created")
+        print("⚠️  No ticket record created")
         return None
     
     return require_wrapper(script_name, description, actor_name)

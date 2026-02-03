@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "created": "2025-12-31",
+  "approved_by": "Sandy",
+  "notes": "10 root categories. Credentials removed (not skills). Max 4 levels deep.",
+  "categories": [
+    {
+      "code": "PO",
+      "name": "perception_and_observation",
+      "description": "Sensing, monitoring, detecting, inspecting, recognizing patterns, situational awareness"
+    },
+    {
+      "code": "LC",
+      "name": "language_and_communication",
+      "description": "Speaking, writing, translating, presenting, documentation, reading comprehension, active listening"
+    },
+    {
+      "code": "CA",
+      "name": "cognitive_and_analytical",
+      "description": "Logic, math, statistics, research, problem-solving, critical thinking, reasoning, judgment, decision-making"
+    },
+    {
+      "code": "CG",
+      "name": "creative_and_generative",
+      "description": "Design, art, music, creative writing, innovation, ideation, synthesis, imagination, brainstorming"
+    },
+    {
+      "code": "EC",
+      "name": "execution_and_compliance",
+      "description": "Following procedures, regulatory compliance, quality assurance, auditing, standards adherence, process execution"
+    },
+    {
+      "code": "TC",
+      "name": "technical",
+      "description": "Tools, platforms, programming languages, systems, software, hardware, digital skills, technology fluency"
+    },
+    {
+      "code": "PM",
+      "name": "physical_and_manual",
+      "description": "Motor skills, craftsmanship, athletics, equipment operation, dexterity, physical endurance, hand-eye coordination"
+    },
+    {
+      "code": "DE",
+      "name": "domain_expertise",
+      "description": "Industry-specific knowledge: healthcare, finance, legal, education, manufacturing, retail, government"
+    },
+    {
+      "code": "IP",
+      "name": "interpersonal",
+      "description": "Leadership, negotiation, mentoring, conflict resolution, teamwork, collaboration, empathy, influence"
+    },
+    {
+      "code": "SM",
+      "name": "self_management",
+      "description": "Time management, stress management, adaptability, self-motivation, emotional regulation, resilience, learning agility"
+    },
+    {
+      "code": "NR",
+      "name": "_NeedsReview",
+      "description": "Skills that don't fit cleanly into existing categories and require human review for proper classification"
+    }
+  ]
+}

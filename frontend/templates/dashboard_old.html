@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — talent.yoga{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="nav-brand">🎯 talent.yoga</div>
+    <div class="nav-user">
+        {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
+        {% endif %}
+        <span>{{ user.display_name or user.email }}</span>
+        <a href="/auth/logout" class="logout-btn">Logout</a>
+    </div>
+</nav>
+
+<main class="dashboard">
+    <h1>Welcome, {{ user.display_name or 'there' }}!</h1>
+    
+    <div class="cards">
+        <div class="card">
+            <h2>Your Profile</h2>
+            <div hx-get="/api/profiles/me" hx-trigger="load" hx-target="this">
+                Loading profile...
+            </div>
+            <a href="/profile" class="btn">Edit Profile</a>
+        </div>
+        
+        <div class="card">
+            <h2>Recent Matches</h2>
+            <div hx-get="/api/matches?limit=5" hx-trigger="load" hx-target="this">
+                Loading matches...
+            </div>
+            <a href="/matches" class="btn">View All Matches</a>
+        </div>
+        
+        <div class="card">
+            <h2>Job Market</h2>
+            <p>Active postings we're tracking</p>
+            <div hx-get="/api/postings/stats" hx-trigger="load" hx-target="this">
+                Loading stats...
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

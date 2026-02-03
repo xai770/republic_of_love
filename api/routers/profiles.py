@@ -1,0 +1,543 @@
+"""
+Profile endpoints — CRUD for user profiles.
+"""
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import date
+import tempfile
+import os
+
+from api.deps import get_db, require_user
+
+router = APIRouter(prefix="/profiles", tags=["profiles"])
+
+
+class ProfileSkill(BaseModel):
+    skill: str
+    years: Optional[int] = None
+
+
+class ProfileResponse(BaseModel):
+    profile_id: int
+    display_name: Optional[str]
+    email: Optional[str]
+    title: Optional[str]
+    location: Optional[str]
+    skills: List[str]
+    skill_count: int
+
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    title: Optional[str] = None
+    location: Optional[str] = None
+
+
+class PreferencesUpdate(BaseModel):
+    desired_roles: Optional[List[str]] = None
+    desired_locations: Optional[List[str]] = None
+    expected_salary_min: Optional[int] = None
+    expected_salary_max: Optional[int] = None
+    min_seniority: Optional[str] = None
+
+
+class WorkHistoryCreate(BaseModel):
+    company: str
+    title: str
+    start_date: date
+    end_date: Optional[date] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    is_current: bool = False
+
+
+class WorkHistoryResponse(BaseModel):
+    work_history_id: int
+    company: str
+    title: str
+    start_date: Optional[date]
+    end_date: Optional[date]
+    description: Optional[str]
+    location: Optional[str]
+    is_current: bool
+    duration_months: Optional[int]
+
+
+@router.get("/me", response_model=ProfileResponse)
+def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """
+    Get the current user's profile.
+    Returns profile linked to authenticated user.
+    """
+    with conn.cursor() as cur:
+        # Get profile linked to this user
+        cur.execute("""
+            SELECT profile_id, full_name as display_name, email, 
+                   current_title as title, desired_locations[1] as location
+            FROM profiles
+            WHERE user_id = %s
+        """, (user['user_id'],))
+        profile = cur.fetchone()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        
+        # Get skills from profile_facets
+        cur.execute("""
+            SELECT DISTINCT skill_name
+            FROM profile_facets
+            WHERE profile_id = %s AND skill_name IS NOT NULL
+            ORDER BY skill_name
+        """, (profile['profile_id'],))
+        skills = [row['skill_name'] for row in cur.fetchall()]
+        
+        return ProfileResponse(
+            profile_id=profile['profile_id'],
+            display_name=profile['display_name'],
+            email=profile['email'],
+            title=profile['title'],
+            location=profile['location'],
+            skills=skills,
+            skill_count=len(skills)
+        )
+
+
+@router.put("/me", response_model=ProfileResponse)
+def update_my_profile(
+    update: ProfileUpdate,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Update the current user's profile.
+    """
+    with conn.cursor() as cur:
+        # Get existing profile
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        
+        # Build update query dynamically
+        updates = []
+        values = []
+        if update.name is not None:
+            updates.append("full_name = %s")
+            values.append(update.name)
+        if update.title is not None:
+            updates.append("current_title = %s")
+            values.append(update.title)
+        if update.location is not None:
+            updates.append("desired_locations = ARRAY[%s]")
+            values.append(update.location)
+        
+        if updates:
+            updates.append("updated_at = NOW()")
+            values.append(profile['profile_id'])
+            cur.execute(f"""
+                UPDATE profiles SET {', '.join(updates)}
+                WHERE profile_id = %s
+            """, values)
+            conn.commit()
+        
+    # Return updated profile
+    return get_my_profile(user, conn)
+
+
+@router.put("/me/preferences")
+def update_my_preferences(
+    prefs: PreferencesUpdate,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Update job search preferences (target roles, locations, salary, seniority).
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        
+        # Build update query
+        updates = []
+        values = []
+        
+        if prefs.desired_roles is not None:
+            updates.append("desired_roles = %s")
+            values.append(prefs.desired_roles)
+        if prefs.desired_locations is not None:
+            updates.append("desired_locations = %s")
+            values.append(prefs.desired_locations)
+        if prefs.expected_salary_min is not None:
+            updates.append("expected_salary_min = %s")
+            values.append(prefs.expected_salary_min)
+        if prefs.expected_salary_max is not None:
+            updates.append("expected_salary_max = %s")
+            values.append(prefs.expected_salary_max)
+        if prefs.min_seniority is not None:
+            updates.append("min_seniority = %s")
+            values.append(prefs.min_seniority)
+        
+        if updates:
+            updates.append("updated_at = NOW()")
+            values.append(profile['profile_id'])
+            cur.execute(f"""
+                UPDATE profiles SET {', '.join(updates)}
+                WHERE profile_id = %s
+            """, values)
+            conn.commit()
+        
+        return {"status": "ok", "message": "Preferences updated"}
+
+
+@router.get("/{profile_id}", response_model=ProfileResponse)
+def get_profile(profile_id: int, user: dict = Depends(require_user), conn=Depends(get_db)):
+    """
+    Get a specific profile by ID.
+    Users can only view their own profile.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT profile_id, full_name as display_name, email, user_id
+            FROM profiles
+            WHERE profile_id = %s
+        """, (profile_id,))
+        profile = cur.fetchone()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Check ownership
+        if profile['user_id'] != user['user_id']:
+            raise HTTPException(status_code=403, detail="Cannot view other users' profiles")
+        
+        # Get skills
+        cur.execute("""
+            SELECT DISTINCT skill
+            FROM profile_facets
+            WHERE profile_id = %s AND skill IS NOT NULL
+            ORDER BY skill
+        """, (profile_id,))
+        skills = [row['skill'] for row in cur.fetchall()]
+        
+        return ProfileResponse(
+            profile_id=profile['profile_id'],
+            display_name=profile['display_name'],
+            email=profile['email'],
+            title=None,
+            location=None,
+            skills=skills,
+            skill_count=len(skills)
+        )
+
+
+# --- Work History Endpoints ---
+
+@router.get("/me/work-history", response_model=List[WorkHistoryResponse])
+def get_my_work_history(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """Get all work history entries for current user's profile."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        
+        cur.execute("""
+            SELECT work_history_id, company_name as company, job_title as title,
+                   start_date, end_date, job_description as description,
+                   location, is_current, duration_months
+            FROM profile_work_history
+            WHERE profile_id = %s
+            ORDER BY COALESCE(end_date, CURRENT_DATE) DESC, start_date DESC
+        """, (profile['profile_id'],))
+        
+        return [WorkHistoryResponse(**row) for row in cur.fetchall()]
+
+
+@router.post("/me/work-history", response_model=WorkHistoryResponse, status_code=201)
+def add_work_history(
+    entry: WorkHistoryCreate,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """Add a new work history entry."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        
+        cur.execute("""
+            INSERT INTO profile_work_history 
+                (profile_id, company_name, job_title, start_date, end_date, 
+                 job_description, location, is_current, extraction_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+            RETURNING work_history_id, company_name as company, job_title as title,
+                      start_date, end_date, job_description as description,
+                      location, is_current, duration_months
+        """, (
+            profile['profile_id'], entry.company, entry.title,
+            entry.start_date, entry.end_date, entry.description,
+            entry.location, entry.is_current
+        ))
+        result = cur.fetchone()
+        conn.commit()
+        
+        # TODO: Trigger Clara extraction async (P1.3 notes)
+        
+        return WorkHistoryResponse(**result)
+
+
+@router.put("/me/work-history/{work_history_id}", response_model=WorkHistoryResponse)
+def update_work_history(
+    work_history_id: int,
+    entry: WorkHistoryCreate,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """Update an existing work history entry."""
+    with conn.cursor() as cur:
+        # Verify ownership
+        cur.execute("""
+            SELECT wh.work_history_id 
+            FROM profile_work_history wh
+            JOIN profiles p ON wh.profile_id = p.profile_id
+            WHERE wh.work_history_id = %s AND p.user_id = %s
+        """, (work_history_id, user['user_id']))
+        
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Work history entry not found")
+        
+        cur.execute("""
+            UPDATE profile_work_history SET
+                company_name = %s, job_title = %s, start_date = %s, end_date = %s,
+                job_description = %s, location = %s, is_current = %s,
+                extraction_status = 'pending',
+                updated_at = NOW()
+            WHERE work_history_id = %s
+            RETURNING work_history_id, company_name as company, job_title as title,
+                      start_date, end_date, job_description as description,
+                      location, is_current, duration_months
+        """, (
+            entry.company, entry.title, entry.start_date, entry.end_date,
+            entry.description, entry.location, entry.is_current,
+            work_history_id
+        ))
+        result = cur.fetchone()
+        conn.commit()
+        
+        # Clara extraction triggered via extraction_status='pending'
+        # Run: python tools/run_pending_extractions.py
+        
+        return WorkHistoryResponse(**result)
+
+
+@router.delete("/me/work-history/{work_history_id}", status_code=204)
+def delete_work_history(
+    work_history_id: int,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """Delete a work history entry."""
+    with conn.cursor() as cur:
+        # Verify ownership and delete
+        cur.execute("""
+            DELETE FROM profile_work_history wh
+            USING profiles p
+            WHERE wh.profile_id = p.profile_id
+              AND wh.work_history_id = %s
+              AND p.user_id = %s
+            RETURNING wh.work_history_id
+        """, (work_history_id, user['user_id']))
+        
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Work history entry not found")
+        
+        conn.commit()
+    
+    return None
+
+
+# --- CV Parsing ---
+
+def parse_cv_text(text: str) -> List[dict]:
+    """
+    Parse CV text to extract work history using LLM.
+    Returns list of work history entries.
+    """
+    import requests
+    
+    prompt = f"""Extract work history from this CV. Return a JSON array of jobs.
+
+CV TEXT:
+{text[:8000]}
+
+Return ONLY a JSON array with this structure (no other text):
+[
+  {{
+    "company": "Company Name",
+    "title": "Job Title",
+    "start_date": "YYYY-MM-DD or YYYY-MM",
+    "end_date": "YYYY-MM-DD or YYYY-MM or null if current",
+    "description": "Job description/responsibilities",
+    "location": "City, Country or null",
+    "is_current": true/false
+  }}
+]
+
+Extract all work experiences. Use null for missing dates. Order by most recent first."""
+
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "qwen2.5:7b",
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.1}
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        result = response.json()["response"]
+        
+        # Extract JSON from response
+        import json
+        import re
+        
+        # Find JSON array in response
+        match = re.search(r'\[[\s\S]*\]', result)
+        if match:
+            jobs = json.loads(match.group())
+            # Normalize dates
+            for job in jobs:
+                if job.get('start_date') and len(job['start_date']) == 7:
+                    job['start_date'] += '-01'
+                if job.get('end_date') and len(job['end_date']) == 7:
+                    job['end_date'] += '-01'
+            return jobs
+        return []
+    except Exception as e:
+        print(f"CV parse error: {e}")
+        return []
+
+
+@router.post("/me/parse-cv")
+async def parse_cv(
+    file: UploadFile = File(...),
+    user: dict = Depends(require_user)
+):
+    """
+    Parse uploaded CV (PDF/DOCX) and extract work history.
+    Returns structured work history for user confirmation.
+    """
+    filename = file.filename.lower()
+    content = await file.read()
+    
+    text = ""
+    
+    try:
+        if filename.endswith('.pdf'):
+            import pymupdf
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            doc = pymupdf.open(tmp_path)
+            text = "\n".join(page.get_text() for page in doc)
+            doc.close()
+            os.unlink(tmp_path)
+            
+        elif filename.endswith(('.docx', '.doc')):
+            from docx import Document
+            import io
+            doc = Document(io.BytesIO(content))
+            text = "\n".join(para.text for para in doc.paragraphs)
+            
+        elif filename.endswith('.txt'):
+            text = content.decode('utf-8', errors='ignore')
+            
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type. Use PDF, DOCX, or TXT.")
+        
+        if not text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract text from file")
+        
+        # Parse with LLM
+        jobs = parse_cv_text(text)
+        
+        if not jobs:
+            raise HTTPException(status_code=400, detail="Could not extract work history from CV")
+        
+        return jobs
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+# --- Extracted Skills (Facets) ---
+
+class FacetResponse(BaseModel):
+    facet_id: int
+    skill: Optional[str]
+    domain: Optional[str]
+    seniority: Optional[str]
+    experience_years: Optional[int]
+
+
+@router.get("/me/facets", response_model=List[FacetResponse])
+def get_my_facets(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """Get extracted skills/facets for current user's profile."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        if not profile:
+            return []
+        
+        cur.execute("""
+            SELECT profile_facet_id AS facet_id, skill_name AS skill, industry_domain AS domain, seniority, experience_years
+            FROM profile_facets
+            WHERE profile_id = %s AND skill_name IS NOT NULL
+            ORDER BY skill_name
+        """, (profile['profile_id'],))
+        
+        return [FacetResponse(**row) for row in cur.fetchall()]
+
+
+@router.post("/me/reextract")
+def reextract_skills(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """
+    Trigger re-extraction of skills from work history.
+    Marks all work history as pending for Clara processing.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile found")
+        
+        # Mark all work history as pending extraction
+        cur.execute("""
+            UPDATE profile_work_history 
+            SET extraction_status = 'pending'
+            WHERE profile_id = %s
+        """, (profile['profile_id'],))
+        
+        # Delete existing facets
+        cur.execute("DELETE FROM profile_facets WHERE profile_id = %s", (profile['profile_id'],))
+        
+        conn.commit()
+        
+    # Run extraction synchronously for immediate feedback
+    try:
+        from tools.run_pending_extractions import process_pending
+        results = process_pending(max_items=50)
+        return {"status": "ok", "extracted": results['succeeded']}
+    except Exception as e:
+        return {"status": "queued", "message": "Extraction queued for background processing"}

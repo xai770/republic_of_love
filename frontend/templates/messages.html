@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+
+{% block title %}Messages — talent.yoga{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
+    <div class="nav-links">
+        <a href="/profile" class="nav-link">Profile</a>
+        <a href="/matches" class="nav-link">Matches</a>
+        <a href="/messages" class="nav-link active">Messages</a>
+    </div>
+    <div class="nav-user">
+        {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
+        {% endif %}
+        <span>{{ user.display_name or user.email }}</span>
+        <a href="/auth/logout" class="logout-btn">Logout</a>
+    </div>
+</nav>
+
+<main class="messages-container">
+    <!-- Sidebar: Message List -->
+    <aside class="message-list">
+        <div class="message-list-header">
+            <h2>📬 Messages</h2>
+            <div class="unread-badge" id="total-unread">0</div>
+        </div>
+        
+        <!-- Sender Filters -->
+        <div class="sender-filters">
+            <button class="sender-filter active" data-sender="all">
+                All
+                <span class="filter-count" id="count-all">0</span>
+            </button>
+            <button class="sender-filter" data-sender="doug">
+                🔍 Doug
+                <span class="filter-count" id="count-doug">0</span>
+            </button>
+            <button class="sender-filter" data-sender="mira">
+                💬 Mira
+                <span class="filter-count" id="count-mira">0</span>
+            </button>
+            <button class="sender-filter" data-sender="adele">
+                🎯 Adele
+                <span class="filter-count" id="count-adele">0</span>
+            </button>
+            <button class="sender-filter" data-sender="system">
+                ⚙️ System
+                <span class="filter-count" id="count-system">0</span>
+            </button>
+            <button class="sender-filter" data-sender="yogi">
+                👤 Yogis
+                <span class="filter-count" id="count-yogi">0</span>
+            </button>
+        </div>
+        
+        <!-- Message Items -->
+        <div class="message-items" id="message-items">
+            <!-- Populated by JS -->
+        </div>
+        
+        <!-- Mark All Read -->
+        <div class="list-actions">
+            <button class="btn-link" onclick="markAllRead()">Mark all as read</button>
+        </div>
+    </aside>
+    
+    <!-- Main: Message Detail -->
+    <section class="message-detail" id="message-detail">
+        <div class="empty-detail" id="empty-detail">
+            <span class="empty-icon">💬</span>
+            <p>Select a message to read</p>
+        </div>
+        
+        <div class="message-content hidden" id="message-content">
+            <div class="message-header">
+                <div class="sender-avatar" id="sender-avatar">🔍</div>
+                <div class="sender-info">
+                    <span class="sender-name" id="sender-name">Doug</span>
+                    <span class="sender-role" id="sender-role">Research Assistant</span>
+                </div>
+                <span class="message-time" id="message-time">Just now</span>
+            </div>
+            
+            <h2 class="message-subject" id="message-subject">Subject</h2>
+            
+            <div class="message-body" id="message-body">
+                <!-- Rendered markdown -->
+            </div>
+            
+            <div class="message-actions">
+                <button class="btn" onclick="viewPosting()" id="view-posting-btn">
+                    📋 View Related Posting
+                </button>
+                <button class="btn btn-secondary" onclick="deleteMessage()">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<style>
+/* Messages Layout */
+.messages-container {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: calc(100vh - 60px);
+    background: var(--bg);
+}
+
+/* Message List (Sidebar) */
+.message-list {
+    background: var(--card-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.message-list-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.message-list-header h2 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.unread-badge {
+    background: var(--primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Sender Filters */
+.sender-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.sender-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--bg);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sender-filter:hover {
+    border-color: var(--primary);
+}
+
+.sender-filter.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.filter-count {
+    background: rgba(255,255,255,0.2);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.5rem;
+    font-size: 0.625rem;
+}
+
+.sender-filter.active .filter-count {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Message Items */
+.message-items {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.message-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.message-item:hover {
+    background: var(--bg);
+}
+
+.message-item.active {
+    background: rgba(99, 102, 241, 0.1);
+    border-left: 3px solid var(--primary);
+}
+
+.message-item.unread {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.message-item.unread .item-subject {
+    font-weight: 600;
+}
+
+.item-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.item-avatar.doug { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.item-avatar.mira { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); }
+.item-avatar.adele { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+.item-avatar.sage { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.item-avatar.sandy { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+.item-avatar.system { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+.item-avatar.yogi { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+
+.item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.item-sender {
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.item-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.item-subject {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-preview {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.list-actions {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+/* Message Detail */
+.message-detail {
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.empty-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.message-content {
+    max-width: 800px;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sender-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.sender-info {
+    flex: 1;
+}
+
+.sender-name {
+    display: block;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.sender-role {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.message-time {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.message-subject {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.message-body {
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.message-body h1, .message-body h2, .message-body h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.message-body h1 { font-size: 1.5rem; }
+.message-body h2 { font-size: 1.25rem; }
+.message-body h3 { font-size: 1.125rem; }
+
+.message-body p {
+    margin-bottom: 1rem;
+}
+
+.message-body ul, .message-body ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.message-body li {
+    margin-bottom: 0.5rem;
+}
+
+.message-body blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--text-muted);
+}
+
+.message-actions {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: var(--primary);
+    color: white;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+/* Empty state for no messages */
+.no-messages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.no-messages .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .messages-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .message-list {
+        display: none;
+    }
+    
+    .message-list.mobile-visible {
+        display: flex;
+        position: fixed;
+        inset: 60px 0 0 0;
+        z-index: 100;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// State
+let allMessages = [];
+let currentFilter = 'all';
+let currentMessageId = null;
+let unreadCounts = {};
+
+// Sender display info
+const senderInfo = {
+    doug: { name: 'Doug', role: 'Research Assistant', emoji: '🔍' },
+    mira: { name: 'Mira', role: 'Your Guide', emoji: '💬' },
+    adele: { name: 'Adele', role: 'Interview Coach', emoji: '🎯' },
+    sage: { name: 'Sage', role: 'Skills Advisor', emoji: '📚' },
+    sandy: { name: 'Sandy', role: 'Market Analyst', emoji: '📊' },
+    mysti: { name: 'Mysti', role: 'Encouragement', emoji: '✨' },
+    system: { name: 'System', role: 'Notifications', emoji: '⚙️' },
+    yogi: { name: 'Yogi', role: 'Fellow Traveler', emoji: '👤' }
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check URL params for posting filter
+    const params = new URLSearchParams(window.location.search);
+    const postingId = params.get('posting');
+    
+    await loadMessages(postingId);
+    await loadUnreadCounts();
+    
+    setupFilters();
+    
+    // Auto-select first unread or first message
+    const firstUnread = allMessages.find(m => !m.is_read);
+    if (firstUnread) {
+        selectMessage(firstUnread.message_id);
+    } else if (allMessages.length > 0) {
+        selectMessage(allMessages[0].message_id);
+    }
+});
+
+async function loadMessages(postingId = null) {
+    try {
+        let url = '/api/messages/?limit=100';
+        if (postingId) {
+            url += `&posting_id=${postingId}`;
+        }
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to load messages');
+        
+        const data = await res.json();
+        allMessages = data.messages;
+        
+        renderMessageList();
+    } catch (err) {
+        console.error('Failed to load messages:', err);
+    }
+}
+
+async function loadUnreadCounts() {
+    try {
+        const res = await fetch('/api/messages/unread-counts');
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        unreadCounts = data.by_sender;
+        
+        // Update badges
+        document.getElementById('total-unread').textContent = data.total;
+        document.getElementById('count-all').textContent = data.total;
+        
+        ['doug', 'mira', 'adele', 'system', 'yogi'].forEach(sender => {
+            const el = document.getElementById(`count-${sender}`);
+            if (el) el.textContent = unreadCounts[sender] || 0;
+        });
+    } catch (err) {
+        console.error('Failed to load unread counts:', err);
+    }
+}
+
+function setupFilters() {
+    document.querySelectorAll('.sender-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.sender-filter').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.sender;
+            renderMessageList();
+        });
+    });
+}
+
+function renderMessageList() {
+    const container = document.getElementById('message-items');
+    
+    // Filter messages
+    const filtered = allMessages.filter(m => {
+        if (currentFilter === 'all') return true;
+        return m.sender_type === currentFilter;
+    });
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="no-messages">
+                <span class="empty-icon">📭</span>
+                <p>No messages yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = filtered.map(m => {
+        const info = senderInfo[m.sender_type] || senderInfo.system;
+        const isActive = m.message_id === currentMessageId;
+        const isUnread = !m.is_read;
+        const time = formatTime(m.created_at);
+        
+        return `
+            <div class="message-item ${isActive ? 'active' : ''} ${isUnread ? 'unread' : ''}" 
+                 onclick="selectMessage(${m.message_id})">
+                <div class="item-avatar ${m.sender_type}">${info.emoji}</div>
+                <div class="item-content">
+                    <div class="item-header">
+                        <span class="item-sender">${info.name}</span>
+                        <span class="item-time">${time}</span>
+                    </div>
+                    <div class="item-subject">${escapeHtml(m.subject || 'No subject')}</div>
+                    <div class="item-preview">${escapeHtml(m.preview)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function selectMessage(messageId) {
+    currentMessageId = messageId;
+    
+    // Update list selection
+    document.querySelectorAll('.message-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const activeItem = document.querySelector(`.message-item[onclick="selectMessage(${messageId})"]`);
+    if (activeItem) {
+        activeItem.classList.add('active');
+        activeItem.classList.remove('unread');
+    }
+    
+    // Fetch full message (auto-marks as read)
+    try {
+        const res = await fetch(`/api/messages/${messageId}`);
+        if (!res.ok) throw new Error('Failed to load message');
+        
+        const msg = await res.json();
+        renderMessageDetail(msg);
+        
+        // Update local state
+        const localMsg = allMessages.find(m => m.message_id === messageId);
+        if (localMsg) localMsg.is_read = true;
+        
+        // Refresh unread counts
+        loadUnreadCounts();
+    } catch (err) {
+        console.error('Failed to load message:', err);
+    }
+}
+
+function renderMessageDetail(msg) {
+    document.getElementById('empty-detail').classList.add('hidden');
+    document.getElementById('message-content').classList.remove('hidden');
+    
+    const info = senderInfo[msg.sender_type] || senderInfo.system;
+    
+    document.getElementById('sender-avatar').textContent = info.emoji;
+    document.getElementById('sender-avatar').className = `sender-avatar ${msg.sender_type}`;
+    document.getElementById('sender-name').textContent = info.name;
+    document.getElementById('sender-role').textContent = info.role;
+    document.getElementById('message-time').textContent = formatTime(msg.created_at);
+    document.getElementById('message-subject').textContent = msg.subject || 'No subject';
+    
+    // Render markdown body
+    document.getElementById('message-body').innerHTML = marked.parse(msg.body);
+    
+    // Show/hide posting button
+    const postingBtn = document.getElementById('view-posting-btn');
+    if (msg.posting_id) {
+        postingBtn.classList.remove('hidden');
+        postingBtn.onclick = () => window.location.href = `/matches?posting=${msg.posting_id}`;
+    } else {
+        postingBtn.classList.add('hidden');
+    }
+    
+    // Store for delete
+    window.currentMessage = msg;
+}
+
+async function deleteMessage() {
+    if (!window.currentMessage) return;
+    
+    if (!confirm('Delete this message?')) return;
+    
+    try {
+        const res = await fetch(`/api/messages/${window.currentMessage.message_id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Failed to delete');
+        
+        // Remove from local state
+        allMessages = allMessages.filter(m => m.message_id !== window.currentMessage.message_id);
+        currentMessageId = null;
+        
+        // Clear detail view
+        document.getElementById('empty-detail').classList.remove('hidden');
+        document.getElementById('message-content').classList.add('hidden');
+        
+        renderMessageList();
+        loadUnreadCounts();
+    } catch (err) {
+        console.error('Failed to delete message:', err);
+    }
+}
+
+async function markAllRead() {
+    try {
+        const url = currentFilter === 'all' 
+            ? '/api/messages/mark-all-read'
+            : `/api/messages/mark-all-read?sender_type=${currentFilter}`;
+        
+        const res = await fetch(url, { method: 'POST' });
+        if (!res.ok) throw new Error('Failed to mark all read');
+        
+        // Update local state
+        allMessages.forEach(m => {
+            if (currentFilter === 'all' || m.sender_type === currentFilter) {
+                m.is_read = true;
+            }
+        });
+        
+        renderMessageList();
+        loadUnreadCounts();
+    } catch (err) {
+        console.error('Failed to mark all read:', err);
+    }
+}
+
+function formatTime(isoString) {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = now - date;
+    
+    // Today
+    if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
+        return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.getDate() === yesterday.getDate()) {
+        return 'Yesterday';
+    }
+    
+    // This week
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+        return date.toLocaleDateString('de-DE', { weekday: 'short' });
+    }
+    
+    // Older
+    return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

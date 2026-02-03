@@ -23,7 +23,7 @@ Usage:
             e,
             context={
                 'posting_id': 123,
-                'conversation': 'gemma3_extract',
+                'task_type': 'gemma3_extract',
                 'workflow_run_id': 456
             },
             severity=ErrorSeverity.ERROR,
@@ -110,7 +110,7 @@ def handle_error(
     
     Args:
         error: Exception that occurred
-        context: Context dict (posting_id, conversation, etc.)
+        context: Context dict (posting_id, task_type, etc.)
         severity: Error severity level
         db_conn: Database connection for recording (optional)
         raise_after_handling: Whether to re-raise after handling
@@ -141,7 +141,7 @@ def handle_error(
                 INSERT INTO workflow_errors (
                     workflow_run_id,
                     posting_id,
-                    conversation_id,
+                    task_type_id,
                     actor_id,
                     execution_order,
                     error_type,
@@ -152,7 +152,7 @@ def handle_error(
             """, (
                 context.get('workflow_run_id'),
                 context.get('posting_id'),
-                context.get('conversation_id'),
+                context.get('task_type_id'),
                 context.get('actor_id'),
                 context.get('execution_order'),
                 error_details['error_type'],

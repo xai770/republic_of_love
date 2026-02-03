@@ -1,0 +1,1750 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — talent.yoga{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    <!-- Top Header Bar -->
+    <header class="header-bar">
+        <div class="header-left">
+            <button class="hamburger" onclick="toggleSidebar()">
+                <span></span><span></span><span></span>
+            </button>
+            <a href="/" class="header-logo">
+                <img src="/static/images/icons/logo.png?v=2" alt="talent.yoga" class="logo-img">
+                <span class="logo-text"><span class="talent">talent</span><span class="yoga">.yoga</span></span>
+            </a>
+        </div>
+        
+        <div class="header-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="{{ t('common.search_placeholder') }}" class="search-input">
+        </div>
+        
+        <div class="header-right">
+            <!-- Theme Toggle -->
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+                <span class="theme-icon-light">☀️</span>
+                <span class="theme-icon-dark">🌙</span>
+            </button>
+            <!-- Language Toggle -->
+            <div class="lang-toggle">
+                {% for code in languages %}
+                <a href="/api/i18n/set/{{ code }}" class="lang-btn {{ 'active' if code == lang else '' }}">{{ code|upper }}</a>
+                {% endfor %}
+            </div>
+            <span class="user-name">{{ user.display_name or user.email }}</span>
+            <div class="user-avatar">
+                {% if user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="Avatar">
+                {% else %}
+                <div class="avatar-placeholder">{{ (user.display_name or user.email)[0]|upper }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" onclick="toggleSidebar()">×</button>
+        <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="Collapse sidebar">‹</button>
+        
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item active">
+                <span class="nav-icon-wrap" style="background: #fff3e0;">
+                    <img src="/static/images/icons/icon-home.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.start') }}</span>
+            </a>
+            <a href="/matches" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #e3f2fd;">
+                    <img src="/static/images/icons/icon-dashboard.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.overview') }}</span>
+            </a>
+            <a href="/profile" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #fff8e1;">
+                    <img src="/static/images/icons/icon-profile.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.resume') }}</span>
+            </a>
+            <a href="/matches" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #e8f5e9;">
+                    <img src="/static/images/icons/icon-jobs.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.jobs') }}</span>
+            </a>
+            <a href="/messages" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #fff3e0;">
+                    <img src="/static/images/icons/icon-inbox.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.messages') }}</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <a href="#" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #fce4ec;">
+                    <img src="/static/images/icons/icon-help.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.help') }}</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #e8f5e9;">
+                    <img src="/static/images/icons/icon-chat.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.chat') }}</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon-wrap" style="background: #ede7f6;">
+                    <img src="/static/images/icons/icon-account.png" alt="" class="nav-icon-img">
+                </span>
+                <span class="nav-label">{{ t('nav.account') }}</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="/auth/logout" class="nav-item logout">
+                <span class="nav-icon-wrap" style="background: #ffebee;">
+                    <span class="nav-icon">🚪</span>
+                </span>
+                <span class="nav-label">{{ t('common.logout') }}</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Greeting Section -->
+        <section class="greeting-section">
+            <h1 class="greeting-title">{{ t('dashboard.welcome', name=(user.display_name.split()[0] if user.display_name else 'there')) }}</h1>
+        </section>
+        
+        <!-- Stat Cards -->
+        <section class="stat-cards">
+            <a href="/matches" class="stat-card">
+                <div class="stat-icon blue">
+                    <img src="/static/images/icons/icon-dashboard.png" alt="" class="stat-icon-img">
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">{{ t('dashboard.stat_dashboard') }}</div>
+                    <div class="stat-value"><span id="stat-matches">—</span> <span class="stat-unit">{{ t('dashboard.stat_dashboard_unit') }}</span></div>
+                </div>
+            </a>
+            <a href="/profile" class="stat-card">
+                <div class="stat-icon orange">
+                    <img src="/static/images/icons/icon-profile.png" alt="" class="stat-icon-img">
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">{{ t('dashboard.stat_resume') }}</div>
+                    <div class="stat-value"><span id="stat-profile">—</span>% <span class="stat-unit">{{ t('dashboard.stat_resume_unit') }}</span></div>
+                </div>
+            </a>
+            <a href="/matches" class="stat-card">
+                <div class="stat-icon teal">
+                    <img src="/static/images/icons/icon-jobs.png" alt="" class="stat-icon-img">
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">{{ t('dashboard.stat_jobs') }}</div>
+                    <div class="stat-value"><span id="stat-jobs">—</span> <span class="stat-unit">{{ t('dashboard.stat_jobs_unit') }}</span></div>
+                </div>
+            </a>
+            <a href="#" class="stat-card stat-card-small">
+                <div class="stat-icon pink">
+                    <img src="/static/images/icons/icon-help.png" alt="" class="stat-icon-img">
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">{{ t('nav.help') }}</div>
+                </div>
+            </a>
+        </section>
+        
+        <!-- Recent Matches -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <h2>{{ t('dashboard.recent_jobs') }}</h2>
+                <a href="/matches" class="view-all-link">{{ t('dashboard.view_all') }} →</a>
+            </div>
+            
+            <div class="job-cards" id="job-cards">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>{{ t('common.loading') }}</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quick Actions -->
+        <section class="dashboard-section">
+            <h2>{{ t('quick_actions.title') }}</h2>
+            <div class="quick-actions">
+                <a href="/profile" class="quick-action">
+                    <span class="action-icon">✏️</span>
+                    <span class="action-label">{{ t('quick_actions.edit_profile') }}</span>
+                </a>
+                <a href="/matches" class="quick-action">
+                    <span class="action-icon">🎯</span>
+                    <span class="action-label">{{ t('quick_actions.view_matches') }}</span>
+                </a>
+                <a href="/finances" class="quick-action">
+                    <span class="action-icon">💰</span>
+                    <span class="action-label">{{ t('quick_actions.finances') }}</span>
+                </a>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Mira Chat Widget -->
+<div id="mira-widget" class="mira-widget">
+    <button class="mira-fab" onclick="toggleMiraChat()" title="Chat mit Mira">
+        <span class="mira-fab-icon">💬</span>
+        <span class="mira-fab-close">✕</span>
+    </button>
+    
+    <div class="mira-chat-window">
+        <div class="mira-header">
+            <div class="mira-avatar">🧘</div>
+            <div class="mira-title">
+                <span class="mira-name">Mira</span>
+                <span class="mira-status">Deine Begleiterin</span>
+            </div>
+            <button class="mira-minimize" onclick="toggleMiraChat()">−</button>
+        </div>
+        
+        <div class="mira-messages" id="mira-messages">
+            <!-- Messages will be inserted here -->
+        </div>
+        
+        <div class="mira-input-area">
+            <textarea id="mira-input" placeholder="Schreib mir..." rows="1" onkeydown="handleMiraKeydown(event)"></textarea>
+            <button class="mira-send" onclick="sendMiraMessage()">
+                <span>➤</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- i18n data for JavaScript -->
+<script>
+const LANG = '{{ lang }}';
+const I18N = {
+    common: {
+        today: '{{ t("common.today") }}',
+        yesterday: '{{ t("common.yesterday") }}',
+        days_ago: '{{ t("common.days_ago") }}',
+        weeks_ago: '{{ t("common.weeks_ago") }}',
+        months_ago: '{{ t("common.months_ago") }}',
+        loading: '{{ t("common.loading") }}',
+        error: '{{ t("common.error") }}'
+    },
+    dashboard: {
+        no_matches: '{{ t("dashboard.no_matches") }}',
+        complete_profile: '{{ t("dashboard.complete_profile") }}',
+        strong_match: '{{ t("dashboard.strong_match") }}',
+        partial_match: '{{ t("dashboard.partial_match") }}',
+        details: '{{ t("dashboard.details") }}',
+        unknown_company: '{{ t("dashboard.unknown_company") }}'
+    }
+};
+</script>
+
+<style>
+/* ============================================
+   CSS VARIABLES - Light Theme (default)
+   ============================================ */
+:root {
+    --bg-primary: #f5f7fb;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-header: linear-gradient(135deg, #e8f5e8 0%, #e0f4f4 40%, #f0edf8 70%, #fef9f3 100%);
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --accent-primary: #5a67d8;
+    --accent-hover: #4c51bf;
+    --success: #48bb78;
+    --warning: #ed8936;
+    --error: #e53e3e;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+    --bg-primary: #1a202c;
+    --bg-secondary: #2d3748;
+    --bg-card: #2d3748;
+    --bg-header: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    --text-primary: #f7fafc;
+    --text-secondary: #e2e8f0;
+    --text-muted: #a0aec0;
+    --border-color: #4a5568;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --accent-primary: #7f9cf5;
+    --accent-hover: #667eea;
+}
+
+/* Apply variables to key elements */
+[data-theme="dark"] .app-layout { background: var(--bg-primary); }
+[data-theme="dark"] .header-bar { background: var(--bg-header); }
+[data-theme="dark"] .sidebar { background: var(--bg-secondary); border-right: 1px solid var(--border-color); }
+[data-theme="dark"] .main-content { background: var(--bg-primary); }
+[data-theme="dark"] .stat-card { background: var(--bg-card); border-color: var(--border-color); }
+[data-theme="dark"] .job-card { background: var(--bg-card); border-color: var(--border-color); }
+[data-theme="dark"] .greeting-title { color: var(--text-primary); }
+[data-theme="dark"] .section-title { color: var(--text-primary); }
+[data-theme="dark"] .nav-item { color: var(--text-secondary); }
+[data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+[data-theme="dark"] .nav-item.active { background: rgba(90,103,216,0.2); color: var(--text-primary); }
+[data-theme="dark"] .stat-label { color: var(--text-muted); }
+[data-theme="dark"] .stat-value { color: var(--text-primary); }
+[data-theme="dark"] .job-title { color: var(--text-primary); }
+[data-theme="dark"] .job-location { color: var(--text-muted); }
+[data-theme="dark"] .search-input { background: rgba(255,255,255,0.1); color: var(--text-primary); border-color: var(--border-color); }
+[data-theme="dark"] .search-input::placeholder { color: var(--text-muted); }
+[data-theme="dark"] .user-name { color: var(--text-secondary); }
+[data-theme="dark"] .nav-divider { background: var(--border-color); }
+[data-theme="dark"] .sidebar-footer { border-color: var(--border-color); }
+
+/* App Layout - Maria Mockup Style */
+.app-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #f5f7fb;
+}
+
+/* Header Bar - Brighter like mockup */
+.header-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, #e8f5e8 0%, #e0f4f4 40%, #f0edf8 70%, #fef9f3 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    height: 80px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 56px;
+    width: auto;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.logo-text .talent {
+    color: #2d3a4d;
+}
+
+.logo-text .yoga {
+    color: #3fb8a9;
+}
+
+.header-search {
+    flex: 1;
+    max-width: 500px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255,255,255,0.7);
+    border-radius: 2rem;
+    padding: 0.5rem 1.25rem;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.search-icon {
+    color: #64748b;
+}
+
+.search-input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    font-size: 0.9rem;
+    outline: none;
+    color: #2d3748;
+}
+
+.search-input::placeholder {
+    color: #94a3b8;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    background: rgba(255,255,255,0.6);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.9);
+}
+
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: inline; }
+[data-theme="dark"] .theme-toggle { background: rgba(255,255,255,0.1); }
+[data-theme="dark"] .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+/* Language Toggle */
+.lang-toggle {
+    display: flex;
+    gap: 0.25rem;
+    background: rgba(255,255,255,0.6);
+    border-radius: 1rem;
+    padding: 0.25rem;
+}
+
+.lang-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+}
+
+.lang-btn:hover {
+    color: #2d3748;
+}
+
+.lang-btn.active {
+    background: white;
+    color: #2d3748;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.user-name {
+    font-size: 0.9rem;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+.user-avatar img,
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Sidebar - White with colorful icons */
+.sidebar {
+    width: 220px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 80px;
+    left: 0;
+    height: calc(100vh - 80px);
+    z-index: 1000;
+    transition: width 0.3s ease, transform 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* Collapsed sidebar state */
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .logo-text {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 0.625rem 0.5rem;
+}
+
+.sidebar.collapsed .nav-icon-wrap {
+    margin: 0;
+}
+
+/* Hover expand - only on desktop */
+@media (min-width: 769px) {
+    .sidebar.collapsed:hover {
+        width: 220px;
+    }
+    
+    .sidebar.collapsed:hover .nav-label {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .sidebar.collapsed:hover .nav-item {
+        justify-content: flex-start;
+        padding: 0.625rem 1rem;
+    }
+}
+
+/* Collapse toggle button */
+.sidebar-collapse-btn {
+    position: absolute;
+    bottom: 70px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #5a67d8;
+    color: white;
+    border: 2px solid white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    z-index: 1001;
+    transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-collapse-btn {
+    transform: rotate(180deg);
+}
+
+.sidebar-close {
+    display: none;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    color: #4a5568;
+    text-decoration: none;
+    transition: all 0.2s;
+    position: relative;
+    font-size: 0.9rem;
+    margin: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+}
+
+.nav-item:hover {
+    background: #f7fafc;
+    color: #2d3748;
+}
+
+.nav-item.active {
+    background: #eef4ff;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #5a67d8;
+    border-radius: 2px;
+}
+
+/* Icon container with pastel background */
+.nav-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.nav-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.nav-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.nav-icon {
+    font-size: 1.25rem;
+    width: 28px;
+    text-align: center;
+}
+
+.nav-label {
+    font-size: 0.9rem;
+}
+
+.nav-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 1rem 1.25rem;
+}
+
+.sidebar-footer {
+    padding: 1rem 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.nav-item.logout {
+    color: #a0aec0;
+}
+
+.nav-item.logout:hover {
+    color: #e53e3e;
+    background: #fff5f5;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    margin-left: 220px;
+    margin-top: 80px;
+    background: #f5f7fb;
+    min-height: calc(100vh - 80px);
+    padding-bottom: 2rem;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed ~ .main-content,
+body.sidebar-collapsed .main-content {
+    margin-left: 60px;
+}
+
+/* Greeting Section */
+.greeting-section {
+    padding: 2rem 2rem 1rem;
+}
+
+.greeting-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* Stat Cards - Mockup Style */
+.stat-cards {
+    display: flex;
+    gap: 1rem;
+    padding: 0 2rem 2rem;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #edf2f7;
+    text-decoration: none;
+    color: inherit;
+    min-width: 150px;
+    flex: 1;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.stat-card-small {
+    flex: 0 0 auto;
+    min-width: 100px;
+}
+
+.stat-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.stat-icon.blue {
+    background: #ebf5ff;
+}
+
+.stat-icon.orange {
+    background: #fff7ed;
+}
+
+.stat-icon.teal {
+    background: #e6fffa;
+}
+
+.stat-icon.pink {
+    background: #fdf2f8;
+}
+
+.stat-icon-img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.stat-value {
+    font-size: 1rem;
+    color: #4a5568;
+}
+
+.stat-unit {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+/* Hamburger */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.hamburger span {
+    width: 24px;
+    height: 3px;
+    background: #2d3748;
+    border-radius: 2px;
+}
+
+.nav-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 1rem 1.25rem;
+}
+
+.sidebar-footer {
+    padding: 1rem 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.nav-item.logout {
+    color: #a0aec0;
+}
+
+.nav-item.logout:hover {
+    color: #e53e3e;
+    background: #fff5f5;
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+    padding: 0 2rem 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.view-all-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+
+/* Job Cards */
+.job-cards {
+    display: grid;
+    gap: 1rem;
+}
+
+.job-card {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.job-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.job-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.job-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.job-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.job-company {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.job-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.job-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.match-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.match-badge.strong {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.match-badge.partial {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.salary-pill {
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: #f1f5f9;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.job-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    text-decoration: none;
+    background: var(--primary);
+    color: white;
+    transition: background 0.2s;
+}
+
+.job-btn:hover {
+    background: var(--primary-dark);
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+.quick-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.action-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.action-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Loading */
+.loading-placeholder {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Sidebar Overlay (mobile) */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 80px;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .header-bar {
+        padding: 0.75rem 1rem;
+    }
+    
+    .header-search {
+        display: none;
+    }
+    
+    .logo-text {
+        display: none;
+    }
+    
+    .user-name {
+        display: none;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        top: 80px;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .sidebar-close {
+        display: block;
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .hamburger {
+        display: flex;
+    }
+    
+    .greeting-section {
+        padding: 1.5rem 1rem 1rem;
+    }
+    
+    .greeting-title {
+        font-size: 1.5rem;
+    }
+    
+    .stat-cards {
+        padding: 0 1rem 1.5rem;
+        gap: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+        min-width: 120px;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .stat-icon-img {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .stat-value {
+        font-size: 0.85rem;
+    }
+    
+    .stat-unit {
+        display: none;
+    }
+    
+    .dashboard-section {
+        padding: 0 1rem 1.5rem;
+    }
+    
+    .job-card {
+        flex-direction: column;
+    }
+    
+    .job-actions {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Mira Chat Widget */
+.mira-widget {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    font-family: inherit;
+}
+
+.mira-fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mira-fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+
+.mira-fab-icon, .mira-fab-close {
+    font-size: 1.5rem;
+    color: white;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.mira-fab-close {
+    position: absolute;
+    opacity: 0;
+    transform: rotate(-90deg);
+}
+
+.mira-widget.open .mira-fab-icon {
+    opacity: 0;
+    transform: rotate(90deg);
+}
+
+.mira-widget.open .mira-fab-close {
+    opacity: 1;
+    transform: rotate(0);
+}
+
+.mira-chat-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 380px;
+    height: 500px;
+    background: var(--card-bg, white);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.mira-widget.open .mira-chat-window {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.mira-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.mira-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.mira-title {
+    flex: 1;
+}
+
+.mira-name {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.mira-status {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.mira-minimize {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.8;
+}
+
+.mira-minimize:hover {
+    opacity: 1;
+}
+
+.mira-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mira-message {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    animation: messageIn 0.3s ease;
+}
+
+@keyframes messageIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mira-message.mira {
+    background: var(--bg, #f3f4f6);
+    color: var(--text, #1f2937);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.mira-message.user {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.mira-typing {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: var(--bg, #f3f4f6);
+    border-radius: 16px;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.mira-typing span {
+    width: 8px;
+    height: 8px;
+    background: var(--text-muted, #9ca3af);
+    border-radius: 50%;
+    animation: typingDot 1.4s infinite ease-in-out;
+}
+
+.mira-typing span:nth-child(2) { animation-delay: 0.2s; }
+.mira-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.mira-input-area {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border, #e5e7eb);
+    background: var(--card-bg, white);
+}
+
+.mira-input-area textarea {
+    flex: 1;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    max-height: 100px;
+    background: var(--bg, #f9fafb);
+    color: var(--text, #1f2937);
+}
+
+.mira-input-area textarea:focus {
+    border-color: #667eea;
+}
+
+.mira-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+
+.mira-send:hover {
+    transform: scale(1.05);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .mira-widget {
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .mira-chat-window {
+        width: calc(100vw - 32px);
+        height: calc(100vh - 140px);
+        right: -8px;
+    }
+}
+</style>
+
+<script>
+// Generate company logo color from name
+function getLogoColor(name) {
+    const colors = [
+        '#667eea', '#764ba2', '#f59e0b', '#10b981', 
+        '#3b82f6', '#ef4444', '#8b5cf6', '#06b6d4'
+    ];
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+}
+
+// Get company initials
+function getInitials(name) {
+    if (!name) return '??';
+    const words = name.split(/\s+/);
+    if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+// Time ago - i18n aware
+function timeAgo(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const days = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return I18N.common.today;
+    if (days === 1) return I18N.common.yesterday;
+    if (days < 7) return I18N.common.days_ago.replace('{n}', days);
+    if (days < 30) return I18N.common.weeks_ago.replace('{n}', Math.floor(days / 7));
+    return I18N.common.months_ago.replace('{n}', Math.floor(days / 30));
+}
+
+// Load stats
+async function loadStats() {
+    try {
+        // Matches count
+        const matchRes = await fetch('/api/matches/?limit=100');
+        if (matchRes.ok) {
+            const matches = await matchRes.json();
+            document.getElementById('stat-matches').textContent = matches.length;
+        }
+        
+        // Profile completeness
+        const profileRes = await fetch('/api/profiles/me');
+        if (profileRes.ok) {
+            const profile = await profileRes.json();
+            // Simple completeness calculation
+            let complete = 0;
+            if (profile.full_name) complete += 25;
+            if (profile.target_roles) complete += 25;
+            if (profile.target_locations) complete += 25;
+            if (profile.work_history && profile.work_history.length > 0) complete += 25;
+            document.getElementById('stat-profile').textContent = complete + '%';
+        } else {
+            document.getElementById('stat-profile').textContent = '0%';
+        }
+        
+        // Active jobs
+        const jobsRes = await fetch('/api/postings/stats');
+        if (jobsRes.ok) {
+            const stats = await jobsRes.json();
+            document.getElementById('stat-jobs').textContent = stats.active_count || stats.count || '0';
+        }
+    } catch (err) {
+        console.error('Failed to load stats:', err);
+    }
+}
+
+// Load job cards
+async function loadJobCards() {
+    const container = document.getElementById('job-cards');
+    
+    try {
+        const res = await fetch('/api/matches/?limit=5');
+        if (!res.ok) throw new Error('Failed to load');
+        
+        const matches = await res.json();
+        
+        if (matches.length === 0) {
+            container.innerHTML = `
+                <div class="loading-placeholder">
+                    <p>${I18N.dashboard.no_matches} <a href="/profile">${I18N.dashboard.complete_profile}</a></p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = matches.map(m => {
+            const score = Math.round(m.skill_match_score * 100);
+            const badgeClass = score >= 70 ? 'strong' : 'partial';
+            const badgeText = score >= 70 ? I18N.dashboard.strong_match : I18N.dashboard.partial_match;
+            const logoColor = getLogoColor(m.company);
+            const initials = getInitials(m.company);
+            const timeText = m.matched_at ? timeAgo(m.matched_at) : '';
+            
+            return `
+                <div class="job-card">
+                    <div class="job-logo" style="background: ${logoColor}">${initials}</div>
+                    <div class="job-info">
+                        <div class="job-title">${escapeHtml(m.title)}</div>
+                        <div class="job-company">${escapeHtml(m.company || I18N.dashboard.unknown_company)}</div>
+                        <div class="job-meta">
+                            ${m.location ? `<span>📍 ${escapeHtml(m.location)}</span>` : ''}
+                            <span>📊 ${score}% Match</span>
+                            ${timeText ? `<span>🕐 ${timeText}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="job-actions">
+                        <span class="match-badge ${badgeClass}">${badgeText}</span>
+                        <a href="/report/${m.match_id}" class="job-btn">${I18N.dashboard.details}</a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        container.innerHTML = `
+            <div class="loading-placeholder">
+                <p style="color: var(--error)">${I18N.common.error}. ${I18N.common.loading}</p>
+            </div>
+        `;
+    }
+}
+
+// Escape HTML
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+}
+
+// Theme toggle
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+}
+
+// Restore theme on load
+function restoreTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+}
+
+// Run theme restore immediately (before DOMContentLoaded)
+restoreTheme();
+
+// Toggle sidebar (mobile)
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+// Toggle sidebar collapse (desktop)
+function toggleSidebarCollapse() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    
+    // Update main content margin
+    document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+    
+    // Persist to localStorage
+    localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+}
+
+// Restore sidebar state on load
+function restoreSidebarState() {
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed && window.innerWidth > 768) {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.body.classList.add('sidebar-collapsed');
+    }
+}
+
+// Notifications
+function toggleNotifications(e) {
+    e.stopPropagation();
+    // TODO: Show notification dropdown
+}
+
+// Load notifications badge
+async function loadNotifications() {
+    try {
+        const res = await fetch('/api/notifications/count');
+        if (res.ok) {
+            const data = await res.json();
+            const badge = document.getElementById('notif-badge');
+            if (badge && data.unread > 0) {
+                badge.textContent = data.unread > 9 ? '9+' : data.unread;
+                badge.classList.remove('hidden');
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load notifications:', err);
+    }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    restoreSidebarState();
+    loadStats();
+    loadJobCards();
+    loadNotifications();
+});
+
+// Close sidebar on outside click (mobile)
+document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768) {
+        if (!e.target.closest('.sidebar') && !e.target.closest('.hamburger')) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('show');
+        }
+    }
+});
+
+// ========================================
+// Mira Chat Widget
+// ========================================
+
+const miraState = {
+    isOpen: false,
+    hasGreeted: false,
+    usesDu: null  // null = unknown, will mirror user
+};
+
+function toggleMiraChat() {
+    const widget = document.getElementById('mira-widget');
+    miraState.isOpen = !miraState.isOpen;
+    widget.classList.toggle('open', miraState.isOpen);
+    
+    if (miraState.isOpen && !miraState.hasGreeted) {
+        loadMiraGreeting();
+        miraState.hasGreeted = true;
+    }
+    
+    if (miraState.isOpen) {
+        setTimeout(() => {
+            document.getElementById('mira-input').focus();
+        }, 300);
+    }
+}
+
+function loadMiraGreeting() {
+    const userName = "{{ current_user.name if current_user else '' }}".split(' ')[0];
+    const hour = new Date().getHours();
+    
+    let timeGreeting;
+    if (hour < 12) {
+        timeGreeting = 'Guten Morgen';
+    } else if (hour < 18) {
+        timeGreeting = 'Guten Tag';
+    } else {
+        timeGreeting = 'Guten Abend';
+    }
+    
+    const greetings = [
+        `${timeGreeting}${userName ? ', ' + userName : ''}! Ich bin Mira, deine Begleiterin hier bei talent.yoga. Wie kann ich dir heute helfen?`,
+        `Hallo${userName ? ' ' + userName : ''}! Schön, dich zu sehen. Ich bin Mira – wenn du Fragen hast, bin ich für dich da.`,
+    ];
+    
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    addMiraMessage(greeting, false);
+}
+
+function addMiraMessage(content, isUser) {
+    const container = document.getElementById('mira-messages');
+    const msg = document.createElement('div');
+    msg.className = `mira-message ${isUser ? 'user' : 'mira'}`;
+    msg.textContent = content;
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showMiraTyping() {
+    const container = document.getElementById('mira-messages');
+    const typing = document.createElement('div');
+    typing.className = 'mira-typing';
+    typing.id = 'mira-typing';
+    typing.innerHTML = '<span></span><span></span><span></span>';
+    container.appendChild(typing);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideMiraTyping() {
+    const typing = document.getElementById('mira-typing');
+    if (typing) typing.remove();
+}
+
+async function sendMiraMessage() {
+    const input = document.getElementById('mira-input');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    // Add user message
+    addMiraMessage(text, true);
+    input.value = '';
+    input.style.height = 'auto';
+    
+    // Detect Du/Sie from user message
+    if (miraState.usesDu === null) {
+        if (/\b(du|dein|dich|dir)\b/i.test(text)) {
+            miraState.usesDu = true;
+        } else if (/\b(Sie|Ihr|Ihnen|Ihre)\b/.test(text)) {
+            miraState.usesDu = false;
+        }
+    }
+    
+    // Show typing indicator
+    showMiraTyping();
+    
+    try {
+        const response = await fetch('/api/mira/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: text,
+                uses_du: miraState.usesDu
+            })
+        });
+        
+        hideMiraTyping();
+        
+        if (response.ok) {
+            const data = await response.json();
+            addMiraMessage(data.reply, false);
+        } else {
+            addMiraMessage('Entschuldigung, da ist etwas schiefgelaufen. Versuch es bitte nochmal.', false);
+        }
+    } catch (error) {
+        hideMiraTyping();
+        addMiraMessage('Ich kann gerade nicht antworten. Bitte versuch es später nochmal.', false);
+        console.error('Mira chat error:', error);
+    }
+}
+
+function handleMiraKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMiraMessage();
+    }
+}
+
+// Auto-resize textarea
+document.addEventListener('DOMContentLoaded', () => {
+    const miraInput = document.getElementById('mira-input');
+    if (miraInput) {
+        miraInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+    }
+});
+</script>
+{% endblock %}

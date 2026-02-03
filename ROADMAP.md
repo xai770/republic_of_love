@@ -58,6 +58,10 @@ The `.yoga` products are **applications** that run on Turing:
 - [ ] Metrics export (Prometheus?)
 - [ ] Admin GUI improvements (Streamlit)
 
+### Technical Debt
+- [ ] Dedupe postings at download time (check `external_job_id` before insert)
+- [ ] Skip duplicate postings in interrogator before they enter pipeline
+
 ### Future
 - [ ] Web API for external access
 - [ ] Multi-tenant support

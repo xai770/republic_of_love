@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Impressum — talent.yoga{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="nav-brand"><a href="/">🎯 talent.yoga</a></div>
+</nav>
+
+<main class="legal-page">
+    <h1>Impressum</h1>
+    <p class="subtitle">Legal Notice according to § 5 TMG</p>
+    
+    <section>
+        <h2>Service Provider</h2>
+        <p>
+            talent.yoga<br>
+            Ilka Pollatschek<br>
+            Quellenstraße 1a<br>
+            64853 Otzberg-Lengfeld<br>
+            Germany
+        </p>
+    </section>
+    
+    <section>
+        <h2>Contact</h2>
+        <p>
+            Email: hello@talent.yoga
+        </p>
+    </section>
+    
+    <section>
+        <h2>Responsible for Content</h2>
+        <p>
+            Ilka Pollatschek<br>
+            (Same address as above)
+        </p>
+    </section>
+    
+    <section>
+        <h2>EU Dispute Resolution</h2>
+        <p>
+            The European Commission provides a platform for online dispute resolution (OS): 
+            <a href="https://ec.europa.eu/consumers/odr" target="_blank">https://ec.europa.eu/consumers/odr</a>
+        </p>
+        <p>
+            We are not willing or obliged to participate in dispute resolution proceedings before a consumer arbitration board.
+        </p>
+    </section>
+    
+    <footer class="legal-footer">
+        <a href="/privacy">Privacy Policy</a> · 
+        <a href="/terms">Terms of Service</a> · 
+        <a href="/">Back to Home</a>
+    </footer>
+</main>
+
+<style>
+.legal-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.legal-page h1 {
+    margin-bottom: 0.5rem;
+}
+
+.legal-page .subtitle {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.legal-page section {
+    margin-bottom: 2rem;
+}
+
+.legal-page h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+}
+
+.legal-page p {
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.legal-footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+.legal-footer a {
+    color: var(--text-muted);
+}
+
+.legal-footer a:hover {
+    color: var(--primary);
+}
+</style>
+{% endblock %}

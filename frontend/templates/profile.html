@@ -1,0 +1,1062 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile — talent.yoga{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
+    <div class="nav-links">
+        <a href="/profile" class="nav-link active">Profile</a>
+        <a href="/matches" class="nav-link">Matches</a>
+    </div>
+    <div class="nav-user">
+        {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
+        {% endif %}
+        <span>{{ user.display_name or user.email }}</span>
+        <a href="/auth/logout" class="logout-btn">Logout</a>
+    </div>
+</nav>
+
+<main class="profile-editor">
+    <h1>Your Profile</h1>
+    
+    {% if not profile %}
+    <!-- Method Selection for New Users -->
+    <div class="method-select" id="method-select">
+        <h2>How would you like to start?</h2>
+        <div class="method-cards">
+            <div class="method-card" onclick="selectMethod('form')">
+                <span class="method-icon">📝</span>
+                <h3>Fill Out Form</h3>
+                <p>Enter your work history step by step</p>
+            </div>
+            <div class="method-card" onclick="selectMethod('upload')">
+                <span class="method-icon">📄</span>
+                <h3>Upload CV</h3>
+                <p>Upload your resume (PDF/DOCX)</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Profile Form -->
+    <div class="profile-form {% if not profile %}hidden{% endif %}" id="profile-form">
+        <section class="form-section">
+            <h2>Basic Info</h2>
+            <form id="basic-info-form" hx-put="/api/profiles/me" hx-swap="none">
+                <div class="form-row">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" value="{{ profile.display_name or '' }}" required>
+                </div>
+                <div class="form-row">
+                    <label for="title">Current Title</label>
+                    <input type="text" id="title" name="title" value="{{ profile.title or '' }}" placeholder="e.g., Senior Software Engineer">
+                </div>
+                <div class="form-row">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" value="{{ profile.location or '' }}" placeholder="e.g., Frankfurt, Germany">
+                </div>
+                <button type="submit" class="btn">Save Basic Info</button>
+            </form>
+        </section>
+        
+        <section class="form-section">
+            <h2>🎯 Job Preferences</h2>
+            <p class="help-text">Tell us what you're looking for — we'll filter matches accordingly.</p>
+            <form id="preferences-form" onsubmit="savePreferences(event)">
+                <div class="form-row">
+                    <label for="target_roles">Target Roles</label>
+                    <input type="text" id="target_roles" name="target_roles" 
+                           value="{{ profile.desired_roles|join(', ') if profile and profile.desired_roles else '' }}"
+                           placeholder="e.g., Software Engineer, Tech Lead, Architect">
+                    <small>Comma-separated list of roles you're interested in</small>
+                </div>
+                <div class="form-row">
+                    <label for="target_locations">Target Locations</label>
+                    <input type="text" id="target_locations" name="target_locations" 
+                           value="{{ profile.desired_locations|join(', ') if profile and profile.desired_locations else '' }}"
+                           placeholder="e.g., Frankfurt, Munich, Remote">
+                    <small>Comma-separated list of locations (or "Remote")</small>
+                </div>
+                <div class="form-row form-row-half">
+                    <div>
+                        <label for="salary_min">Minimum Salary (€)</label>
+                        <input type="number" id="salary_min" name="salary_min" 
+                               value="{{ profile.expected_salary_min or '' }}"
+                               placeholder="e.g., 70000" step="1000">
+                    </div>
+                    <div>
+                        <label for="salary_max">Maximum Salary (€)</label>
+                        <input type="number" id="salary_max" name="salary_max" 
+                               value="{{ profile.expected_salary_max or '' }}"
+                               placeholder="e.g., 100000" step="1000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="min_seniority">Minimum Job Level</label>
+                    <select id="min_seniority" name="min_seniority">
+                        <option value="">Any level</option>
+                        <option value="junior" {% if profile and profile.min_seniority == 'junior' %}selected{% endif %}>Junior / Entry</option>
+                        <option value="mid" {% if profile and profile.min_seniority == 'mid' %}selected{% endif %}>Mid-level</option>
+                        <option value="senior" {% if profile and profile.min_seniority == 'senior' %}selected{% endif %}>Senior</option>
+                        <option value="lead" {% if profile and profile.min_seniority == 'lead' %}selected{% endif %}>Lead / Head</option>
+                    </select>
+                    <small>Don't show me jobs below this level</small>
+                </div>
+                <button type="submit" class="btn">Save Preferences</button>
+            </form>
+        </section>
+        
+        <section class="form-section">
+            <div class="section-header">
+                <h2>Work History</h2>
+                <button class="btn btn-secondary" onclick="showUploadModal()">📄 Import from CV</button>
+            </div>
+            
+            <div id="work-history-list">
+                Loading work history...
+            </div>
+            
+            <button class="btn btn-add" onclick="showWorkHistoryModal()">+ Add Work Experience</button>
+        </section>
+        
+        <section class="form-section">
+            <h2>Extracted Skills</h2>
+            <p class="help-text">These skills are automatically extracted from your work history. Edit your work descriptions to improve them.</p>
+            <div id="skills-list">
+                Loading skills...
+            </div>
+            <button class="btn btn-secondary" onclick="reextractSkills()">🔄 Re-extract Skills</button>
+        </section>
+        
+        <section class="form-section notification-settings">
+            <h2>🔔 Benachrichtigungen</h2>
+            <p class="help-text">Erhalte Updates über neue passende Stellen und Antworten von Mira per E-Mail.</p>
+            
+            <div id="notification-consent" class="notification-consent">
+                {% if notification_consent %}
+                <div class="consent-active">
+                    <div class="form-row">
+                        <label for="notification-email">E-Mail für Benachrichtigungen</label>
+                        <div class="email-row">
+                            <input type="email" id="notification-email" value="{{ notification_email or '' }}" placeholder="deine@email.de">
+                            <button class="btn btn-secondary" onclick="updateNotificationEmail()">Speichern</button>
+                        </div>
+                        <small>Eingewilligt am: {{ notification_consent_at.strftime('%d.%m.%Y') if notification_consent_at else 'N/A' }}</small>
+                    </div>
+                    
+                    <div class="form-row notification-prefs">
+                        <label>Was möchtest du erhalten?</label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="pref-job-alerts" {% if notification_preferences.get('job_alerts', True) %}checked{% endif %} onchange="updateNotificationPrefs()">
+                            Neue passende Stellen
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="pref-mira-responses" {% if notification_preferences.get('mira_responses', True) %}checked{% endif %} onchange="updateNotificationPrefs()">
+                            Antworten von Mira
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="pref-journey-updates" {% if notification_preferences.get('journey_updates', False) %}checked{% endif %} onchange="updateNotificationPrefs()">
+                            Updates zu meinen Bewerbungen
+                        </label>
+                    </div>
+                    
+                    <div class="form-row">
+                        <label>Wie oft?</label>
+                        <div class="frequency-options">
+                            <label class="radio-label">
+                                <input type="radio" name="frequency" value="immediate" {% if notification_preferences.get('frequency', 'daily') == 'immediate' %}checked{% endif %} onchange="updateNotificationPrefs()">
+                                Sofort
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="frequency" value="daily" {% if notification_preferences.get('frequency', 'daily') == 'daily' %}checked{% endif %} onchange="updateNotificationPrefs()">
+                                Täglich
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="frequency" value="weekly" {% if notification_preferences.get('frequency', 'daily') == 'weekly' %}checked{% endif %} onchange="updateNotificationPrefs()">
+                                Wöchentlich
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-danger btn-small" onclick="revokeNotificationConsent()">
+                        Alle Benachrichtigungen deaktivieren
+                    </button>
+                </div>
+                {% else %}
+                <div class="consent-request">
+                    <p>Möchtest du informiert werden, wenn Mira eine Antwort für dich hat oder neue passende Stellen gefunden werden?</p>
+                    <div class="form-row">
+                        <input type="email" id="consent-email" placeholder="Deine E-Mail-Adresse" class="consent-email-input">
+                    </div>
+                    <div class="consent-actions">
+                        <button class="btn" onclick="grantNotificationConsent()">Ja, benachrichtigt mich</button>
+                    </div>
+                    <small class="privacy-note">Du kannst dies jederzeit in den Einstellungen ändern. <a href="/privacy">Datenschutz</a></small>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Work History Modal -->
+<div class="modal" id="work-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="work-modal-title">Add Work Experience</h2>
+            <button class="close-btn" onclick="closeWorkModal()">&times;</button>
+        </div>
+        <form id="work-history-form">
+            <input type="hidden" id="work-id" name="work_history_id">
+            <div class="form-row">
+                <label for="company">Company *</label>
+                <input type="text" id="company" name="company" required>
+            </div>
+            <div class="form-row">
+                <label for="job-title">Job Title *</label>
+                <input type="text" id="job-title" name="title" required>
+            </div>
+            <div class="form-row form-row-half">
+                <div>
+                    <label for="start-date">Start Date *</label>
+                    <input type="date" id="start-date" name="start_date" required>
+                </div>
+                <div>
+                    <label for="end-date">End Date</label>
+                    <input type="date" id="end-date" name="end_date">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="is-current" onchange="toggleEndDate()"> Current position
+                    </label>
+                </div>
+            </div>
+            <div class="form-row">
+                <label for="job-location">Location</label>
+                <input type="text" id="job-location" name="location" placeholder="e.g., Frankfurt, Germany">
+            </div>
+            <div class="form-row">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="6" placeholder="Describe your responsibilities, achievements, and technologies used. Include numbers for better skill matching!"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeWorkModal()">Cancel</button>
+                <button type="submit" class="btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- CV Upload Modal -->
+<div class="modal" id="upload-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Upload Your CV</h2>
+            <button class="close-btn" onclick="closeUploadModal()">&times;</button>
+        </div>
+        <div class="upload-area" id="upload-area" 
+             ondrop="handleDrop(event)" 
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)">
+            <span class="upload-icon">📄</span>
+            <p>Drop your CV here</p>
+            <p>or</p>
+            <input type="file" id="cv-file" accept=".pdf,.docx,.doc,.txt" onchange="handleFileSelect(event)" hidden>
+            <button class="btn" onclick="document.getElementById('cv-file').click()">Browse Files</button>
+            <p class="help-text">Supported: PDF, DOCX, TXT</p>
+        </div>
+        <div id="upload-progress" class="hidden">
+            <div class="spinner"></div>
+            <p>Parsing your CV...</p>
+        </div>
+        <div id="upload-results" class="hidden">
+            <h3>Found Work Experiences</h3>
+            <div id="parsed-jobs"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button class="btn" onclick="importSelectedJobs()">Import Selected</button>
+            </div>
+        </div>
+        <p class="help-text privacy-note">⚠️ Your CV is processed locally and not stored. We only extract work history.</p>
+    </div>
+</div>
+
+<script>
+// Load data on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadWorkHistory();
+    loadSkills();
+});
+
+async function loadWorkHistory() {
+    const container = document.getElementById('work-history-list');
+    try {
+        const response = await fetch('/api/profiles/me/work-history');
+        if (response.status === 404) {
+            container.innerHTML = '<p class="help-text">No work history yet. Add your first job!</p>';
+            return;
+        }
+        if (!response.ok) throw new Error('Failed to load');
+        
+        const jobs = await response.json();
+        if (jobs.length === 0) {
+            container.innerHTML = '<p class="help-text">No work history yet. Add your first job!</p>';
+            return;
+        }
+        
+        container.innerHTML = jobs.map(job => `
+            <div class="work-card">
+                <div class="work-card-header">
+                    <div>
+                        <h4>${job.company || 'Unknown Company'} — ${job.title || 'Unknown Title'}</h4>
+                        <span class="dates">${formatDate(job.start_date)} - ${job.is_current ? 'Present' : formatDate(job.end_date)}</span>
+                    </div>
+                    <div class="work-card-actions">
+                        <button onclick="showWorkHistoryModal(${job.work_history_id})">✏️</button>
+                        <button onclick="deleteWorkHistory(${job.work_history_id})">🗑️</button>
+                    </div>
+                </div>
+                ${job.description ? `<p class="description">${job.description.substring(0, 200)}${job.description.length > 200 ? '...' : ''}</p>` : ''}
+            </div>
+        `).join('');
+    } catch (err) {
+        container.innerHTML = '<p class="error">Error loading work history</p>';
+    }
+}
+
+async function loadSkills() {
+    const container = document.getElementById('skills-list');
+    try {
+        const response = await fetch('/api/profiles/me/facets');
+        if (!response.ok) throw new Error('Failed to load');
+        
+        const facets = await response.json();
+        if (facets.length === 0) {
+            container.innerHTML = '<p class="help-text">No skills extracted yet. Add work history first.</p>';
+            return;
+        }
+        
+        const skills = [...new Set(facets.map(f => f.skill).filter(Boolean))];
+        container.innerHTML = `
+            <div class="skills-container">
+                ${skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+            </div>
+            <p class="help-text" style="margin-top:1rem">${skills.length} skills extracted from your work history</p>
+        `;
+    } catch (err) {
+        container.innerHTML = '<p class="help-text">Add work history to see extracted skills.</p>';
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '?';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+}
+
+// Method selection
+function selectMethod(method) {
+    document.getElementById('method-select').classList.add('hidden');
+    document.getElementById('profile-form').classList.remove('hidden');
+    if (method === 'upload') {
+        showUploadModal();
+    }
+}
+
+// Work History Modal
+let editingWorkId = null;
+
+function showWorkHistoryModal(workId = null) {
+    editingWorkId = workId;
+    const modal = document.getElementById('work-modal');
+    const form = document.getElementById('work-history-form');
+    const title = document.getElementById('work-modal-title');
+    
+    form.reset();
+    
+    if (workId) {
+        title.textContent = 'Edit Work Experience';
+        // Fetch and populate form
+        fetch(`/api/profiles/me/work-history`)
+            .then(r => r.json())
+            .then(jobs => {
+                const job = jobs.find(j => j.work_history_id === workId);
+                if (job) {
+                    document.getElementById('work-id').value = job.work_history_id;
+                    document.getElementById('company').value = job.company || '';
+                    document.getElementById('job-title').value = job.title || '';
+                    document.getElementById('start-date').value = job.start_date || '';
+                    document.getElementById('end-date').value = job.end_date || '';
+                    document.getElementById('is-current').checked = job.is_current;
+                    document.getElementById('job-location').value = job.location || '';
+                    document.getElementById('description').value = job.description || '';
+                    toggleEndDate();
+                }
+            });
+    } else {
+        title.textContent = 'Add Work Experience';
+        document.getElementById('work-id').value = '';
+    }
+    
+    modal.classList.add('show');
+}
+
+function closeWorkModal() {
+    document.getElementById('work-modal').classList.remove('show');
+    editingWorkId = null;
+}
+
+function toggleEndDate() {
+    const isCurrent = document.getElementById('is-current').checked;
+    document.getElementById('end-date').disabled = isCurrent;
+    if (isCurrent) document.getElementById('end-date').value = '';
+}
+
+document.getElementById('work-history-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = {
+        company: form.company.value,
+        title: form.title.value,
+        start_date: form.start_date.value,
+        end_date: form.end_date.value || null,
+        location: form.location.value || null,
+        description: form.description.value || null,
+        is_current: document.getElementById('is-current').checked
+    };
+    
+    const workId = document.getElementById('work-id').value;
+    const url = workId 
+        ? `/api/profiles/me/work-history/${workId}`
+        : '/api/profiles/me/work-history';
+    const method = workId ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+        closeWorkModal();
+        loadWorkHistory();
+    } else {
+        alert('Error saving work history');
+    }
+});
+
+async function deleteWorkHistory(workId) {
+    if (!confirm('Delete this work experience?')) return;
+    
+    const response = await fetch(`/api/profiles/me/work-history/${workId}`, {method: 'DELETE'});
+    if (response.ok) {
+        loadWorkHistory();
+    }
+}
+
+// CV Upload
+function showUploadModal() {
+    document.getElementById('upload-modal').classList.add('show');
+    document.getElementById('upload-area').classList.remove('hidden');
+    document.getElementById('upload-progress').classList.add('hidden');
+    document.getElementById('upload-results').classList.add('hidden');
+}
+
+function closeUploadModal() {
+    document.getElementById('upload-modal').classList.remove('show');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) uploadCV(file);
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) uploadCV(file);
+}
+
+async function uploadCV(file) {
+    document.getElementById('upload-area').classList.add('hidden');
+    document.getElementById('upload-progress').classList.remove('hidden');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/api/profiles/me/parse-cv', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) throw new Error('Upload failed');
+        
+        const jobs = await response.json();
+        showParsedJobs(jobs);
+    } catch (err) {
+        alert('Error parsing CV: ' + err.message);
+        document.getElementById('upload-area').classList.remove('hidden');
+        document.getElementById('upload-progress').classList.add('hidden');
+    }
+}
+
+let parsedJobs = [];
+
+function showParsedJobs(jobs) {
+    parsedJobs = jobs;
+    document.getElementById('upload-progress').classList.add('hidden');
+    document.getElementById('upload-results').classList.remove('hidden');
+    
+    const container = document.getElementById('parsed-jobs');
+    container.innerHTML = jobs.map((job, i) => `
+        <div class="parsed-job">
+            <label>
+                <input type="checkbox" checked data-index="${i}">
+                <strong>${job.company || 'Unknown Company'}</strong> — ${job.title || 'Unknown Title'}
+                <br><small>${job.start_date || '?'} - ${job.end_date || 'Present'}</small>
+            </label>
+        </div>
+    `).join('');
+}
+
+async function importSelectedJobs() {
+    const checkboxes = document.querySelectorAll('#parsed-jobs input:checked');
+    const selectedJobs = Array.from(checkboxes).map(cb => parsedJobs[cb.dataset.index]);
+    
+    for (const job of selectedJobs) {
+        await fetch('/api/profiles/me/work-history', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(job)
+        });
+    }
+    
+    closeUploadModal();
+    loadWorkHistory();
+}
+
+// Skills
+async function reextractSkills() {
+    if (!confirm('Re-extract skills from your work history? This may take a moment.')) return;
+    
+    const response = await fetch('/api/profiles/me/reextract', {method: 'POST'});
+    if (response.ok) {
+        loadSkills();
+        alert('Skills re-extracted!');
+    }
+}
+
+// Job Preferences
+async function savePreferences(event) {
+    event.preventDefault();
+    
+    const targetRolesRaw = document.getElementById('target_roles').value;
+    const targetLocationsRaw = document.getElementById('target_locations').value;
+    const salaryMin = document.getElementById('salary_min').value;
+    const salaryMax = document.getElementById('salary_max').value;
+    const minSeniority = document.getElementById('min_seniority').value;
+    
+    // Parse comma-separated into arrays
+    const targetRoles = targetRolesRaw.split(',').map(s => s.trim()).filter(Boolean);
+    const targetLocations = targetLocationsRaw.split(',').map(s => s.trim()).filter(Boolean);
+    
+    const data = {
+        desired_roles: targetRoles,
+        desired_locations: targetLocations,
+        expected_salary_min: salaryMin ? parseInt(salaryMin) : null,
+        expected_salary_max: salaryMax ? parseInt(salaryMax) : null,
+        min_seniority: minSeniority || null
+    };
+    
+    try {
+        const response = await fetch('/api/profiles/me/preferences', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error('Failed to save preferences');
+        
+        alert('Präferenzen gespeichert!');
+    } catch (err) {
+        alert('Fehler: ' + err.message);
+    }
+}
+
+// Notification Consent (P0.8)
+async function grantNotificationConsent() {
+    const email = document.getElementById('consent-email').value.trim();
+    if (!email) {
+        alert('Bitte gib eine E-Mail-Adresse ein.');
+        return;
+    }
+    
+    // Basic email validation
+    if (!email.includes('@') || !email.includes('.')) {
+        alert('Bitte gib eine gültige E-Mail-Adresse ein.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/notifications/consent', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                notification_email: email,
+                grant_consent: true,
+                preferences: {
+                    job_alerts: true,
+                    mira_responses: true,
+                    journey_updates: false,
+                    frequency: 'daily'
+                }
+            })
+        });
+        
+        if (!response.ok) throw new Error('Fehler beim Speichern');
+        
+        // Reload page to show consent-active state
+        location.reload();
+    } catch (err) {
+        alert('Fehler: ' + err.message);
+    }
+}
+
+async function revokeNotificationConsent() {
+    if (!confirm('Möchtest du wirklich alle Benachrichtigungen deaktivieren?')) return;
+    
+    try {
+        const response = await fetch('/api/notifications/consent', {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error('Fehler beim Widerrufen');
+        
+        // Reload page to show consent-request state
+        location.reload();
+    } catch (err) {
+        alert('Fehler: ' + err.message);
+    }
+}
+
+async function updateNotificationEmail() {
+    const email = document.getElementById('notification-email').value.trim();
+    if (!email) {
+        alert('Bitte gib eine E-Mail-Adresse ein.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/notifications/consent', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ notification_email: email })
+        });
+        
+        if (!response.ok) throw new Error('Fehler beim Speichern');
+        
+        alert('E-Mail-Adresse aktualisiert!');
+    } catch (err) {
+        alert('Fehler: ' + err.message);
+    }
+}
+
+async function updateNotificationPrefs() {
+    const prefs = {
+        job_alerts: document.getElementById('pref-job-alerts').checked,
+        mira_responses: document.getElementById('pref-mira-responses').checked,
+        journey_updates: document.getElementById('pref-journey-updates').checked,
+        frequency: document.querySelector('input[name="frequency"]:checked')?.value || 'daily'
+    };
+    
+    try {
+        const response = await fetch('/api/notifications/consent', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ preferences: prefs })
+        });
+        
+        if (!response.ok) throw new Error('Fehler beim Speichern');
+        
+        // Silent success for preference toggles
+    } catch (err) {
+        alert('Fehler: ' + err.message);
+    }
+}
+</script>
+
+<style>
+/* Profile Editor specific styles */
+.profile-editor {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.method-select {
+    text-align: center;
+    padding: 3rem 0;
+}
+
+.method-cards {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.method-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 1rem;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 200px;
+}
+
+.method-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+
+.method-icon {
+    font-size: 3rem;
+}
+
+.form-section {
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-row {
+    margin-bottom: 1rem;
+}
+
+.form-row label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.form-row input, .form-row select, .form-row textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-size: 1rem;
+}
+
+.form-row small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.form-row-half {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    margin-top: 0.5rem;
+}
+
+.checkbox-label input {
+    width: auto;
+}
+
+.btn-add {
+    width: 100%;
+    margin-top: 1rem;
+    background: var(--bg);
+    color: var(--primary);
+    border: 2px dashed var(--border);
+}
+
+.btn-add:hover {
+    border-color: var(--primary);
+    background: var(--card-bg);
+}
+
+.btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.help-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+/* Work history card */
+.work-card {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.work-card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.work-card h4 {
+    margin: 0;
+}
+
+.work-card .dates {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.work-card-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Skills tags */
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-content form {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+}
+
+/* Upload area */
+.upload-area {
+    padding: 3rem;
+    text-align: center;
+    border: 2px dashed var(--border);
+    border-radius: 0.5rem;
+    margin: 1.5rem;
+}
+
+.upload-area.drag-over {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.upload-icon {
+    font-size: 3rem;
+}
+
+.privacy-note {
+    text-align: center;
+    padding: 1rem;
+}
+
+.parsed-job {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    margin: 0.5rem 1.5rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Notification Settings (P0.8) */
+.notification-settings {
+    border-left: 3px solid var(--primary);
+}
+
+.notification-consent {
+    margin-top: 1rem;
+}
+
+.consent-request {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(37, 99, 235, 0.1));
+    border-radius: 0.5rem;
+}
+
+.consent-request p {
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+}
+
+.consent-email-input {
+    max-width: 300px;
+    margin: 0 auto 1rem;
+    text-align: center;
+}
+
+.consent-actions {
+    margin-top: 1rem;
+}
+
+.consent-active {
+    padding: 0.5rem 0;
+}
+
+.email-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.email-row input {
+    flex: 1;
+}
+
+.email-row button {
+    white-space: nowrap;
+}
+
+.notification-prefs {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.notification-prefs label.checkbox-label {
+    padding: 0.5rem 0;
+}
+
+.frequency-options {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.radio-label input {
+    width: auto;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    margin-top: 1.5rem;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

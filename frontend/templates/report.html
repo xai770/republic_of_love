@@ -1,0 +1,770 @@
+{% extends "base.html" %}
+
+{% block title %}Match Report — talent.yoga{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
+    <div class="nav-links">
+        <a href="/profile" class="nav-link">Profile</a>
+        <a href="/matches" class="nav-link">Matches</a>
+    </div>
+    <div class="nav-user">
+        {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
+        {% endif %}
+        <span>{{ user.display_name or user.email }}</span>
+        <a href="/auth/logout" class="logout-btn">Logout</a>
+    </div>
+</nav>
+
+<main class="report-page">
+    <div class="report-back">
+        <a href="/matches">← Back to Dashboard</a>
+    </div>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loading-state">
+        <div class="spinner"></div>
+        <p>Loading report...</p>
+    </div>
+    
+    <!-- Report Content -->
+    <div class="report-content hidden" id="report-content">
+        <!-- Header -->
+        <header class="report-header">
+            <div class="report-badge" id="report-badge">APPLY</div>
+            <h1 id="report-title">Job Title</h1>
+            <div class="report-company" id="report-company">Company</div>
+            <div class="report-meta">
+                <span id="report-location">📍 Location</span>
+                <span id="report-score" class="score">85% Match</span>
+            </div>
+            <div class="report-actions">
+                <a href="#" target="_blank" class="btn" id="view-posting-btn">View Original Posting</a>
+                <button class="btn btn-secondary" id="applied-btn" onclick="toggleApplied()">Mark as Applied</button>
+                <div class="rating-inline" id="rating-container">
+                    <span>Rate:</span>
+                    <span class="rating-star" onclick="rateMatch(1)">☆</span>
+                    <span class="rating-star" onclick="rateMatch(2)">☆</span>
+                    <span class="rating-star" onclick="rateMatch(3)">☆</span>
+                    <span class="rating-star" onclick="rateMatch(4)">☆</span>
+                    <span class="rating-star" onclick="rateMatch(5)">☆</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Why Apply / Concerns -->
+        <section class="report-section" id="reasons-section">
+            <h2 id="reasons-title">Why You Should Apply</h2>
+            <ul id="reasons-list"></ul>
+        </section>
+        
+        <!-- No-go narrative -->
+        <section class="report-section hidden" id="nogo-section">
+            <h2>Concerns</h2>
+            <p id="nogo-narrative"></p>
+        </section>
+        
+        <!-- Skill Breakdown -->
+        <section class="report-section">
+            <h2>Skill Breakdown</h2>
+            <div class="skill-breakdown" id="skill-breakdown"></div>
+        </section>
+        
+        <!-- Similarity Matrix (Collapsible) -->
+        <section class="report-section collapsible">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Similarity Matrix</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="matrix-container" id="matrix-container">
+                    <p class="help-text">No matrix data available</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Cover Letter -->
+        <section class="report-section collapsible" id="cover-letter-section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Generated Cover Letter</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="cover-letter-box">
+                    <button class="copy-btn" onclick="copyCoverLetter()">📋 Copy</button>
+                    <div class="cover-letter-text" id="cover-letter-text">
+                        No cover letter generated.
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Skill Visualization -->
+        <section class="report-section collapsible" id="viz-section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Skill Visualization</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="viz-container" id="viz-container">
+                    <div class="viz-loading" id="viz-loading">
+                        <div class="spinner"></div>
+                        <p>Generating visualization...</p>
+                    </div>
+                    <iframe id="viz-iframe" class="viz-iframe hidden" src="" title="Skill visualization"></iframe>
+                    <p class="viz-error hidden" id="viz-error">Unable to load visualization</p>
+                </div>
+                <p class="help-text viz-help">Interactive UMAP projection showing how your skills map to job requirements. Hover for details, scroll to zoom.</p>
+            </div>
+        </section>
+        
+        <!-- Generated timestamp -->
+        <footer class="report-footer">
+            <small id="generated-at">Generated: —</small>
+        </footer>
+    </div>
+</main>
+
+<style>
+/* Report Page Styles */
+.report-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.report-back a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.report-back a:hover {
+    color: var(--primary);
+}
+
+/* Header */
+.report-header {
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.report-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.report-badge.apply {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.report-badge.skip {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.report-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.report-company {
+    font-size: 1.125rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.report-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+}
+
+.report-meta .score {
+    font-weight: 600;
+}
+
+.score.high { color: var(--success); }
+.score.medium { color: #f59e0b; }
+.score.low { color: var(--error); }
+
+.report-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.rating-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+}
+
+.rating-star {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #d1d5db;
+    transition: color 0.15s;
+}
+
+.rating-star:hover, .rating-star.active {
+    color: #fbbf24;
+}
+
+/* Sections */
+.report-section {
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.report-section h2 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+}
+
+.report-section ul {
+    padding-left: 1.5rem;
+}
+
+.report-section li {
+    margin-bottom: 0.5rem;
+}
+
+/* Collapsible */
+.collapsible .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    margin: -1.5rem;
+    padding: 1.5rem;
+}
+
+.collapsible .section-header h2 {
+    margin: 0;
+}
+
+.toggle-icon {
+    transition: transform 0.2s;
+}
+
+.collapsible.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.collapsible.collapsed .section-body {
+    display: none;
+}
+
+.section-body {
+    margin-top: 1rem;
+}
+
+/* Skill Breakdown */
+.skill-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.skill-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto 80px;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: 0.5rem;
+}
+
+.skill-icon {
+    font-size: 1.25rem;
+}
+
+.skill-names {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.skill-req {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skill-arrow {
+    color: var(--text-muted);
+}
+
+.skill-match {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skill-percent {
+    text-align: right;
+    font-weight: 600;
+}
+
+.skill-percent.high { color: var(--success); }
+.skill-percent.medium { color: #f59e0b; }
+.skill-percent.low { color: var(--error); }
+
+/* Matrix */
+.matrix-container {
+    overflow-x: auto;
+}
+
+.matrix-table {
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+
+.matrix-table th, .matrix-table td {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.matrix-table th {
+    background: var(--bg);
+    font-weight: 500;
+}
+
+.matrix-table .row-header {
+    text-align: left;
+    font-weight: 500;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.matrix-cell {
+    min-width: 50px;
+}
+
+.matrix-cell.high { background: #dcfce7; }
+.matrix-cell.medium { background: #fef3c7; }
+.matrix-cell.low { background: #fee2e2; }
+
+/* Cover Letter */
+.cover-letter-box {
+    position: relative;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.copy-btn:hover {
+    background: var(--bg);
+}
+
+.cover-letter-text {
+    background: var(--bg);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    font-family: inherit;
+    line-height: 1.7;
+}
+
+/* Visualization */
+.viz-container {
+    background: var(--bg);
+    border-radius: 0.5rem;
+    min-height: 400px;
+    position: relative;
+}
+
+.viz-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.viz-iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.viz-error {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.viz-help {
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
+/* Footer */
+.report-footer {
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 2rem;
+}
+
+/* Loading */
+.loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.hidden { display: none !important; }
+
+.btn-secondary {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--bg);
+}
+
+.btn-secondary.applied {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.help-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .report-page { padding: 1rem; }
+    .report-header { padding: 1.5rem; }
+    .report-actions { flex-direction: column; align-items: stretch; }
+    .rating-inline { margin-left: 0; justify-content: center; }
+    .skill-row { grid-template-columns: auto 1fr auto; }
+    .skill-names { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+    .skill-arrow { display: none; }
+}
+</style>
+
+<script>
+const matchId = {{ match_id }};
+let reportData = null;
+
+document.addEventListener('DOMContentLoaded', loadReport);
+
+async function loadReport() {
+    try {
+        const res = await fetch(`/api/matches/${matchId}/detail`);
+        if (!res.ok) throw new Error('Failed to load report');
+        
+        reportData = await res.json();
+        renderReport(reportData);
+        
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('report-content').classList.remove('hidden');
+    } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('loading-state').innerHTML = 
+            `<p style="color: var(--error)">Failed to load report. <a href="/matches">Return to dashboard</a></p>`;
+    }
+}
+
+function renderReport(data) {
+    // Badge
+    const badge = document.getElementById('report-badge');
+    badge.textContent = data.recommendation === 'APPLY' ? '✅ APPLY' : '⚠️ REVIEW';
+    badge.className = 'report-badge ' + (data.recommendation === 'APPLY' ? 'apply' : 'skip');
+    
+    // Header info
+    document.getElementById('report-title').textContent = data.title || 'Unknown Position';
+    document.getElementById('report-company').textContent = data.company || 'Company not specified';
+    document.getElementById('report-location').textContent = '📍 ' + (data.location || 'Location not specified');
+    
+    // Score
+    const scoreEl = document.getElementById('report-score');
+    const scorePct = Math.round(data.score * 100);
+    scoreEl.textContent = scorePct + '% Match';
+    scoreEl.className = 'score ' + (scorePct >= 80 ? 'high' : scorePct >= 60 ? 'medium' : 'low');
+    
+    // Posting link
+    const postingBtn = document.getElementById('view-posting-btn');
+    if (data.posting_url) {
+        postingBtn.href = data.posting_url;
+    } else {
+        postingBtn.href = `/posting/${data.posting_id}`;
+    }
+    
+    // Applied state
+    if (data.user_applied) {
+        document.getElementById('applied-btn').classList.add('applied');
+        document.getElementById('applied-btn').textContent = '✓ Applied';
+    }
+    
+    // Rating
+    if (data.user_rating) {
+        updateRatingDisplay(data.user_rating);
+    }
+    
+    // Reasons
+    const reasonsSection = document.getElementById('reasons-section');
+    const reasonsTitle = document.getElementById('reasons-title');
+    const reasonsList = document.getElementById('reasons-list');
+    
+    if (data.recommendation === 'APPLY' && data.go_reasons?.length) {
+        reasonsTitle.textContent = 'Why You Should Apply';
+        reasonsList.innerHTML = data.go_reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+    } else if (data.nogo_reasons?.length) {
+        reasonsTitle.textContent = 'Points to Consider';
+        reasonsList.innerHTML = data.nogo_reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+    } else {
+        reasonsSection.classList.add('hidden');
+    }
+    
+    // No-go narrative
+    if (data.nogo_narrative) {
+        document.getElementById('nogo-section').classList.remove('hidden');
+        document.getElementById('nogo-narrative').textContent = data.nogo_narrative;
+    }
+    
+    // Skill breakdown
+    renderSkillBreakdown(data.skill_breakdown || []);
+    
+    // Similarity matrix
+    renderMatrix(data.similarity_matrix);
+    
+    // Load visualization
+    loadVisualization();
+    
+    // Cover letter
+    if (data.cover_letter) {
+        document.getElementById('cover-letter-text').textContent = data.cover_letter;
+    } else {
+        document.getElementById('cover-letter-section').classList.add('hidden');
+    }
+    
+    // Generated timestamp
+    if (data.computed_at) {
+        document.getElementById('generated-at').textContent = 'Generated: ' + new Date(data.computed_at).toLocaleString();
+    }
+}
+
+function renderSkillBreakdown(skills) {
+    const container = document.getElementById('skill-breakdown');
+    
+    if (!skills.length) {
+        container.innerHTML = '<p class="help-text">No skill breakdown available</p>';
+        return;
+    }
+    
+    // Sort by similarity descending
+    skills.sort((a, b) => b.similarity - a.similarity);
+    
+    container.innerHTML = skills.map(s => {
+        const pct = Math.round(s.similarity * 100);
+        const icon = s.status === 'strong' ? '✓' : s.status === 'partial' ? '~' : '✗';
+        const iconColor = s.status === 'strong' ? 'high' : s.status === 'partial' ? 'medium' : 'low';
+        const pctClass = pct >= 70 ? 'high' : pct >= 60 ? 'medium' : 'low';
+        
+        return `
+            <div class="skill-row">
+                <span class="skill-icon skill-percent ${iconColor}">${icon}</span>
+                <div class="skill-names">
+                    <span class="skill-req">${escapeHtml(s.requirement)}</span>
+                    <span class="skill-arrow">↔</span>
+                    <span class="skill-match">${escapeHtml(s.matched_skill || '—')}</span>
+                </div>
+                <span class="skill-percent ${pctClass}">${pct}%</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderMatrix(matrix) {
+    const container = document.getElementById('matrix-container');
+    
+    if (!matrix || !matrix.matches?.length) {
+        container.innerHTML = '<p class="help-text">No detailed matrix available</p>';
+        return;
+    }
+    
+    // Extract unique skills and requirements
+    const requirements = [...new Set(matrix.matches.map(m => m.requirement))];
+    const skills = [...new Set(matrix.matches.map(m => m.matched_skill).filter(Boolean))];
+    
+    if (skills.length === 0) {
+        container.innerHTML = '<p class="help-text">No detailed matrix available</p>';
+        return;
+    }
+    
+    // Build lookup
+    const lookup = {};
+    matrix.matches.forEach(m => {
+        lookup[`${m.requirement}|${m.matched_skill}`] = m.similarity;
+    });
+    
+    let html = '<table class="matrix-table"><thead><tr><th></th>';
+    skills.forEach(s => {
+        html += `<th>${escapeHtml(s.substring(0, 15))}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    
+    requirements.forEach(req => {
+        html += `<tr><td class="row-header">${escapeHtml(req.substring(0, 30))}</td>`;
+        skills.forEach(skill => {
+            const sim = lookup[`${req}|${skill}`] || 0;
+            const pct = Math.round(sim * 100);
+            const cls = sim >= 0.7 ? 'high' : sim >= 0.6 ? 'medium' : 'low';
+            html += `<td class="matrix-cell ${cls}" title="${pct}%">${pct}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function toggleSection(header) {
+    header.closest('.collapsible').classList.toggle('collapsed');
+}
+
+async function toggleApplied() {
+    const btn = document.getElementById('applied-btn');
+    const isApplied = btn.classList.contains('applied');
+    
+    try {
+        const res = await fetch(`/api/matches/${matchId}/applied?applied=${!isApplied}`, {
+            method: 'POST'
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        
+        btn.classList.toggle('applied');
+        btn.textContent = !isApplied ? '✓ Applied' : 'Mark as Applied';
+    } catch (err) {
+        alert('Failed to update: ' + err.message);
+    }
+}
+
+async function rateMatch(rating) {
+    try {
+        const res = await fetch(`/api/matches/${matchId}/rate?rating=${rating}`, {
+            method: 'POST'
+        });
+        if (!res.ok) throw new Error('Failed to rate');
+        
+        updateRatingDisplay(rating);
+    } catch (err) {
+        alert('Failed to rate: ' + err.message);
+    }
+}
+
+function updateRatingDisplay(rating) {
+    document.querySelectorAll('#rating-container .rating-star').forEach((star, i) => {
+        star.textContent = i < rating ? '★' : '☆';
+        star.classList.toggle('active', i < rating);
+    });
+}
+
+function copyCoverLetter() {
+    const text = document.getElementById('cover-letter-text').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = '📋 Copy', 2000);
+    });
+}
+
+async function loadVisualization() {
+    const iframe = document.getElementById('viz-iframe');
+    const loading = document.getElementById('viz-loading');
+    const error = document.getElementById('viz-error');
+    
+    try {
+        // Load visualization via embed endpoint
+        iframe.src = `/viz/embed/${matchId}`;
+        
+        iframe.onload = function() {
+            loading.classList.add('hidden');
+            iframe.classList.remove('hidden');
+        };
+        
+        iframe.onerror = function() {
+            loading.classList.add('hidden');
+            error.classList.remove('hidden');
+        };
+        
+        // Timeout fallback
+        setTimeout(() => {
+            if (!iframe.classList.contains('hidden')) return; // Already loaded
+            if (loading.classList.contains('hidden')) return; // Already handled
+            loading.classList.add('hidden');
+            error.textContent = 'Visualization is taking longer than expected. It may still be generating...';
+            error.classList.remove('hidden');
+        }, 30000);
+        
+    } catch (err) {
+        loading.classList.add('hidden');
+        error.classList.remove('hidden');
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+}
+</script>
+{% endblock %}

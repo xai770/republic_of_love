@@ -165,10 +165,10 @@ def fetch_scalar(cursor):
     Works with both RealDictCursor and regular tuple cursor.
     
     Usage:
-        cursor.execute("SELECT COUNT(*) FROM entities")
+        cursor.execute("SELECT COUNT(*) FROM owl")
         count = fetch_scalar(cursor)
         
-        cursor.execute("SELECT MAX(entity_id) FROM entities")
+        cursor.execute("SELECT MAX(owl_id) FROM owl")
         max_id = fetch_scalar(cursor)
     
     Returns:
@@ -200,7 +200,7 @@ def get_column(row, index_or_name, fallback_name=None):
     Usage:
         # Works with both cursor types:
         for row in cursor.fetchall():
-            entity_id = get_column(row, 0, 'entity_id')
+            owl_id = get_column(row, 0, 'owl_id')
             name = get_column(row, 'canonical_name')
     
     Returns:

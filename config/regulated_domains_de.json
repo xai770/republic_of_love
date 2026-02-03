@@ -1,0 +1,143 @@
+{
+  "_meta": {
+    "description": "German regulated professions taxonomy for job matching",
+    "source": "Nate's research 2026-01-28, based on BERUFENET, HwO Anlage A, GewO, BaFin",
+    "usage": "Use regulation_basis to determine if hard gates are needed"
+  },
+
+  "regulated_domains": {
+    
+    "healthcare": {
+      "name_de": "Gesundheitswesen",
+      "regulation_basis": "EU_RegulatedProfession",
+      "requires_hard_gate": true,
+      "keywords_de": ["arzt", "ärztin", "pflege", "krankenschwester", "krankenpfleger", "medizin", "therapeut", "apotheker", "zahnarzt", "psychotherapeut", "hebamme", "physiotherapeut", "ergotherapeut", "logopäd", "diätassistent", "rettungssanitäter", "notfallsanitäter"],
+      "keywords_en": ["physician", "doctor", "nurse", "pharmacist", "dentist", "psychotherapist", "midwife", "physiotherapist"],
+      "evidence_patterns": ["approbation", "examiniert", "staatlich anerkannt", "gesundheits- und krankenpfleger"],
+      "notes": "Approbation required for physicians, dentists, pharmacists, psychotherapists"
+    },
+
+    "legal": {
+      "name_de": "Recht und Justiz", 
+      "regulation_basis": "EU_RegulatedProfession",
+      "requires_hard_gate": true,
+      "keywords_de": ["rechtsanwalt", "anwalt", "jurist", "notar", "patentanwalt", "rechtspfleger"],
+      "keywords_en": ["lawyer", "attorney", "solicitor", "notary", "legal counsel"],
+      "evidence_patterns": ["zugelassen", "rechtsanwaltskammer", "staatsexamen", "volljurist"],
+      "notes": "Two Staatsexamen required for Rechtsanwalt"
+    },
+
+    "education_public": {
+      "name_de": "Bildung (öffentlicher Dienst)",
+      "regulation_basis": "EU_RegulatedProfession", 
+      "requires_hard_gate": true,
+      "keywords_de": ["lehrer", "lehrerin", "studienrat", "oberstudienrat", "grundschullehrer", "gymnasiallehrer", "berufsschullehrer"],
+      "keywords_en": ["teacher", "school teacher"],
+      "evidence_patterns": ["staatsexamen", "referendariat", "lehramt", "verbeamtet"],
+      "notes": "State school teachers need Staatsexamen + Referendariat"
+    },
+
+    "childcare_social": {
+      "name_de": "Kinderbetreuung und Sozialarbeit",
+      "regulation_basis": "EU_RegulatedProfession",
+      "requires_hard_gate": true,
+      "keywords_de": ["erzieher", "erzieherin", "kinderpfleger", "sozialpädagog", "sozialarbeiter", "heilerziehungspfleger"],
+      "keywords_en": ["educator", "childcare worker", "social worker", "social pedagogue"],
+      "evidence_patterns": ["staatlich anerkannt", "fachschule", "sozialpädagogik"],
+      "notes": "Erzieher is state-certified (staatlich anerkannt)"
+    },
+
+    "architecture_engineering": {
+      "name_de": "Architektur und Ingenieurwesen",
+      "regulation_basis": "EU_RegulatedProfession",
+      "requires_hard_gate": false,
+      "keywords_de": ["architekt", "stadtplaner", "innenarchitekt", "landschaftsarchitekt", "bauingenieur"],
+      "keywords_en": ["architect", "urban planner", "civil engineer"],
+      "evidence_patterns": ["architektenkammer", "eintragung", "kammermitglied"],
+      "notes": "Title 'Architekt' is protected, requires chamber registration. Engineer title less strict."
+    },
+
+    "construction_trades": {
+      "name_de": "Baugewerbe (Meisterpflicht)",
+      "regulation_basis": "HwO_AnlageA",
+      "requires_hard_gate": false,
+      "keywords_de": ["maurer", "dachdecker", "zimmerer", "installateur", "heizungsbauer", "klempner", "elektrotechniker", "schornsteinfeger", "gerüstbauer", "straßenbauer", "wärme- kälte- schallschutzisolierer", "brunnenbauer"],
+      "keywords_en": ["mason", "roofer", "carpenter", "plumber", "electrician", "chimney sweep"],
+      "evidence_patterns": ["meister", "meisterbrief", "gesellenbrief", "handwerksrolle", "handwerkskammer"],
+      "notes": "Meisterpflicht to RUN a business. Can work as Geselle without Meister."
+    },
+
+    "technical_health_trades": {
+      "name_de": "Technische Gesundheitshandwerke (Meisterpflicht)",
+      "regulation_basis": "HwO_AnlageA",
+      "requires_hard_gate": true,
+      "keywords_de": ["augenoptiker", "hörakustiker", "orthopädietechniker", "orthopädieschuhmacher", "zahntechniker", "feinwerkmechaniker"],
+      "keywords_en": ["optician", "hearing aid acoustician", "orthopaedic technician", "dental technician"],
+      "evidence_patterns": ["meister", "gesellenbrief"],
+      "notes": "Health-related trades with Meisterpflicht - impacts patient safety"
+    },
+
+    "food_trades": {
+      "name_de": "Lebensmittelhandwerk (Meisterpflicht)",
+      "regulation_basis": "HwO_AnlageA",
+      "requires_hard_gate": false,
+      "keywords_de": ["bäcker", "konditor", "fleischer", "metzger"],
+      "keywords_en": ["baker", "confectioner", "butcher"],
+      "evidence_patterns": ["meister", "gesellenbrief"],
+      "notes": "Meisterpflicht for running business, not for employment"
+    },
+
+    "financial_services": {
+      "name_de": "Finanzdienstleistungen",
+      "regulation_basis": "BaFin_Authorisation",
+      "requires_hard_gate": false,
+      "keywords_de": ["versicherungsmakler", "versicherungsvertreter", "finanzanlagenvermittler", "immobiliendarlehensvermittler", "anlageberater"],
+      "keywords_en": ["insurance broker", "investment advisor", "financial advisor"],
+      "evidence_patterns": ["§34d", "§34f", "§34h", "§34i", "ihk-sachkundeprüfung", "bafin-zulassung"],
+      "notes": "GewO permits (§34d/f/h/i) for intermediaries, BaFin authorisation for institutions"
+    },
+
+    "security_guarding": {
+      "name_de": "Bewachungsgewerbe",
+      "regulation_basis": "GewO_34a",
+      "requires_hard_gate": false,
+      "keywords_de": ["sicherheitsmitarbeiter", "wachmann", "security", "objektschutz", "personenschutz", "doorman", "türsteher"],
+      "keywords_en": ["security guard", "security officer", "bouncer"],
+      "evidence_patterns": ["§34a", "sachkundeprüfung", "unterrichtung"],
+      "notes": "§34a Sachkundeprüfung required for certain security activities"
+    },
+
+    "aviation": {
+      "name_de": "Luftfahrt",
+      "regulation_basis": "Other",
+      "requires_hard_gate": true,
+      "keywords_de": ["pilot", "flugkapitän", "copilot", "flugbegleiter"],
+      "keywords_en": ["pilot", "captain", "first officer", "flight attendant"],
+      "evidence_patterns": ["atpl", "cpl", "ppl", "medical class", "lba", "type rating"],
+      "notes": "Pilot licences via Luftfahrt-Bundesamt (LBA)"
+    }
+  },
+
+  "regulation_basis_enum": {
+    "HwO_AnlageA": "Handwerksordnung Anlage A - Meisterpflicht for running business",
+    "EU_RegulatedProfession": "Reglementierter Beruf - legal access requires specific qualification",
+    "GewO_34x": "Gewerbeordnung §34a/d/f/h/i - permit required",
+    "BaFin_Authorisation": "BaFin supervision/authorisation required",
+    "Other": "Other regulation (e.g., LBA for aviation)"
+  },
+
+  "hard_gate_domains": [
+    "healthcare",
+    "legal", 
+    "education_public",
+    "childcare_social",
+    "technical_health_trades",
+    "aviation"
+  ],
+
+  "_usage_notes": {
+    "matching": "For hard_gate_domains, verify profile has matching domain experience before showing match",
+    "soft_gate": "For other regulated domains, show match but add warning about certification requirements",
+    "detection": "Use keywords_de + evidence_patterns to detect domain from job posting text"
+  }
+}

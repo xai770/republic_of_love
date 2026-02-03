@@ -125,7 +125,7 @@ Workflows are defined in the database. Current active:
 | 3001 | Complete Job Processing | Main pipeline (summary → skills → IHL) |
 | 1121 | Skills Extraction | Extract skills from job posting |
 
-Workflow definitions: `docs/workflows/`
+Workflow definitions: `reports/workflows/`
 
 ---
 
@@ -157,7 +157,7 @@ cd by_admin && streamlit run app.py
 ## Architecture Docs
 
 - [docs/architecture/](docs/architecture/) - System design
-- [docs/workflows/](docs/workflows/) - Workflow specifications
+- [reports/workflows/](reports/workflows/) - Workflow specifications
 - [core/README.md](core/README.md) - Engine internals
 
 ---

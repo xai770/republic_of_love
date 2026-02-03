@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "created": "2026-01-21",
+  "author": "Gershon/Arden",
+  "description": "Implied skills that people have but don't mention because they seem 'basic'. Diego adds these based on role/domain/seniority.",
+  "notes": [
+    "Everyone who worked in a corporate office used SharePoint, Confluence, Outlook",
+    "Everyone in management did Excel pivot tables and PowerPoint decks",
+    "Everyone in IT procurement knows Ariba, SAP",
+    "These are 'enabler skills' - not differentiating but necessary for job matching"
+  ],
+  
+  "by_domain": {
+    "banking": {
+      "universal": ["microsoft office", "excel", "powerpoint", "outlook", "sharepoint", "teams"],
+      "management": ["presentation skills", "stakeholder management", "budgeting"],
+      "technology": ["jira", "confluence", "servicenow"],
+      "procurement": ["ariba", "sap", "contract management"]
+    },
+    "television": {
+      "universal": ["non-linear editing", "post-production workflows", "broadcast standards"],
+      "production": ["avid", "final cut pro", "premiere pro", "camera direction"],
+      "post_production": ["color grading", "audio mixing", "visual effects"]
+    },
+    "corporate": {
+      "universal": ["microsoft office", "excel", "powerpoint", "outlook", "sharepoint", "teams"],
+      "management": ["presentation skills", "stakeholder management", "budgeting", "meeting facilitation"],
+      "technology": ["jira", "confluence"]
+    },
+    "pharma": {
+      "universal": ["microsoft office", "excel", "powerpoint", "regulatory awareness"],
+      "compliance": ["gxp", "fda regulations", "audit trail documentation"],
+      "technology": ["veeva", "sap", "trackwise"]
+    },
+    "consulting": {
+      "universal": ["microsoft office", "excel", "powerpoint", "sharepoint"],
+      "management": ["client presentations", "project scoping", "deliverable management"],
+      "technology": ["jira", "confluence", "slack"]
+    }
+  },
+
+  "by_seniority": {
+    "manager": ["team leadership", "performance reviews", "budgeting", "stakeholder reporting"],
+    "lead": ["mentoring", "team coordination", "technical decision-making"],
+    "director": ["strategic planning", "executive presentations", "organizational design", "budget ownership"],
+    "vp": ["executive communication", "board presentations", "strategic planning", "p&l responsibility"],
+    "global": ["cross-cultural communication", "virtual team management", "timezone coordination", "travel management"]
+  },
+
+  "by_role": {
+    "vendor manager": ["contract negotiation", "supplier relationship management", "rfp/rfq process", "sla management"],
+    "category manager": ["spend analysis", "market research", "category strategy", "supplier consolidation"],
+    "software asset manager": ["license compliance", "software inventory", "true-up audits", "license optimization"],
+    "compliance manager": ["audit preparation", "policy documentation", "regulatory reporting", "risk assessment"],
+    "producer": ["scheduling", "budget management", "crew coordination", "timeline management"],
+    "project manager": ["gantt charts", "resource allocation", "risk management", "status reporting"],
+    "it manager": ["incident management", "change management", "service delivery", "capacity planning"]
+  },
+
+  "by_skill_trigger": {
+    "vendor management": ["contract negotiation", "supplier assessment", "commercial negotiation"],
+    "contract compliance": ["audit readiness", "policy enforcement", "exception handling"],
+    "software asset management": ["license tracking", "software inventory", "deployment monitoring"],
+    "team leadership": ["performance management", "hiring", "onboarding", "conflict resolution"],
+    "process improvement": ["process documentation", "workflow analysis", "kpi definition"]
+  },
+
+  "by_setting": {
+    "global team": ["video conferencing", "async communication", "cultural awareness", "timezone management"],
+    "emea": ["multilingual communication", "european regulations", "gdpr awareness"],
+    "cto office": ["executive briefings", "technology roadmap", "strategic alignment"],
+    "outsourced": ["vendor governance", "sla monitoring", "offshore coordination"]
+  }
+}

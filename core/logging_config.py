@@ -200,17 +200,29 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def _configure_logger(logger: logging.Logger):
-    """Configure logger with appropriate handler and formatter"""
+    """Configure logger with appropriate handler and formatter
+    
+    Environment variables:
+        LOG_LEVEL: DEBUG, INFO, WARNING, ERROR (default: INFO)
+        LOG_FORMAT: json, human (default: json for scripts, human for tty)
+    
+    Usage:
+        LOG_LEVEL=DEBUG python scripts/turing_daemon.py --workflow 3021
+    """
     
     # Get log level from environment (default: INFO)
     log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
-    logger.setLevel(getattr(logging, log_level, logging.INFO))
+    level = getattr(logging, log_level, logging.INFO)
+    logger.setLevel(level)
     
     # Create handler (console)
     handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(level)  # Also set handler level
     
     # Choose formatter based on environment
-    log_format = os.getenv('LOG_FORMAT', 'json').lower()
+    # Default to human-readable if stdout is a terminal
+    default_format = 'human' if sys.stdout.isatty() else 'json'
+    log_format = os.getenv('LOG_FORMAT', default_format).lower()
     
     if log_format == 'human':
         formatter = HumanReadableFormatter()

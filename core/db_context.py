@@ -38,7 +38,7 @@ def db_transaction(commit=True):
             cursor.execute("INSERT INTO workflow_runs (...) VALUES (...)")
             run_id = cursor.fetchone()['workflow_run_id']
             
-            cursor.execute("INSERT INTO conversation_runs (...) VALUES (...)", 
+            cursor.execute("INSERT INTO task_type_runs (...) VALUES (...)", 
                           (run_id, ...))
     
     Features:

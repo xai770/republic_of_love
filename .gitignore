@@ -95,3 +95,6 @@ docs/_build/
 artifacts/tmp/
 production/*/tmp/
 experiments/*/tmp/
+backups/*.sql
+backups/*.dump
+config/client_secret*.json

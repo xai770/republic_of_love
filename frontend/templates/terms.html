@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service — talent.yoga{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="nav-brand"><a href="/">🎯 talent.yoga</a></div>
+</nav>
+
+<main class="legal-page">
+    <h1>Terms of Service</h1>
+    <p class="subtitle">Last updated: January 2026</p>
+    
+    <section>
+        <h2>1. Service Description</h2>
+        <p>
+            talent.yoga is a job matching service that analyzes your skills and work history 
+            to recommend relevant job opportunities. We use AI-powered matching to connect 
+            your experience with job requirements.
+        </p>
+    </section>
+    
+    <section>
+        <h2>2. Account Registration</h2>
+        <ul>
+            <li>You must provide accurate information during registration</li>
+            <li>You are responsible for maintaining the security of your account</li>
+            <li>You must be at least 18 years old to use this service</li>
+            <li>One account per person</li>
+        </ul>
+    </section>
+    
+    <section>
+        <h2>3. Acceptable Use</h2>
+        <p>You agree not to:</p>
+        <ul>
+            <li>Provide false or misleading information in your profile</li>
+            <li>Use the service for any illegal purpose</li>
+            <li>Attempt to reverse-engineer or scrape the service</li>
+            <li>Share your account credentials with others</li>
+            <li>Use automated systems to access the service (bots, scrapers)</li>
+        </ul>
+    </section>
+    
+    <section>
+        <h2>4. Job Matching</h2>
+        <ul>
+            <li>Match scores are AI-generated recommendations, not guarantees of fit</li>
+            <li>We do not guarantee employment outcomes</li>
+            <li>Job postings are sourced from third parties; we are not the employer</li>
+            <li>You are responsible for verifying job details before applying</li>
+        </ul>
+    </section>
+    
+    <section>
+        <h2>5. Your Content</h2>
+        <p>
+            By providing your work history and skills, you grant us a license to process 
+            this data for the purpose of job matching. You retain ownership of your data.
+        </p>
+        <p>
+            You may delete your data at any time by deleting your account.
+        </p>
+    </section>
+    
+    <section>
+        <h2>6. Service Availability</h2>
+        <ul>
+            <li>We aim for high availability but do not guarantee uptime</li>
+            <li>We may modify or discontinue features with reasonable notice</li>
+            <li>Scheduled maintenance will be announced in advance when possible</li>
+        </ul>
+    </section>
+    
+    <section>
+        <h2>7. Limitation of Liability</h2>
+        <p>
+            To the maximum extent permitted by law, talent.yoga shall not be liable for:
+        </p>
+        <ul>
+            <li>Lost employment opportunities</li>
+            <li>Inaccurate job information from third-party sources</li>
+            <li>Service interruptions or data loss</li>
+            <li>Any indirect, incidental, or consequential damages</li>
+        </ul>
+    </section>
+    
+    <section>
+        <h2>8. Termination</h2>
+        <p>
+            You may delete your account at any time. We may terminate or suspend your account 
+            if you violate these terms. Upon termination, your data will be deleted within 30 days.
+        </p>
+    </section>
+    
+    <section>
+        <h2>9. Changes to Terms</h2>
+        <p>
+            We may update these terms. Continued use of the service after changes 
+            constitutes acceptance. Material changes will be notified via in-app message.
+        </p>
+    </section>
+    
+    <section>
+        <h2>10. Governing Law</h2>
+        <p>
+            These terms are governed by the laws of Germany. Any disputes shall be 
+            resolved in the courts of Darmstadt, Germany.
+        </p>
+    </section>
+    
+    <section>
+        <h2>11. Contact</h2>
+        <p>
+            Questions about these terms? Contact us at: legal@talent.yoga
+        </p>
+    </section>
+    
+    <footer class="legal-footer">
+        <a href="/impressum">Impressum</a> · 
+        <a href="/privacy">Privacy Policy</a> · 
+        <a href="/">Back to Home</a>
+    </footer>
+</main>
+
+<style>
+.legal-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.legal-page h1 {
+    margin-bottom: 0.5rem;
+}
+
+.legal-page .subtitle {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.legal-page section {
+    margin-bottom: 2rem;
+}
+
+.legal-page h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+}
+
+.legal-page p, .legal-page li {
+    line-height: 1.7;
+    margin-bottom: 0.5rem;
+}
+
+.legal-page ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.legal-page a {
+    color: var(--primary);
+}
+
+.legal-footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+.legal-footer a {
+    color: var(--text-muted);
+}
+
+.legal-footer a:hover {
+    color: var(--primary);
+}
+</style>
+{% endblock %}
