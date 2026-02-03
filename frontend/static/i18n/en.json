@@ -48,7 +48,18 @@
     "strong_match": "Strong Match",
     "partial_match": "Partial Match",
     "details": "Details",
-    "unknown_company": "Unknown Company"
+    "unknown_company": "Unknown Company",
+    "mira_checking": "Let me check what's new...",
+    "mira_intro": "Hi! I'm Mira, your companion. How can I help you today?",
+    "mira_placeholder": "Ask me something...",
+    "matches_found": "Matches found",
+    "click_to_review": "Click to review",
+    "profile_complete": "Profile complete",
+    "click_to_complete": "Click to complete",
+    "your_journey": "Your Journey",
+    "view_progress": "View progress",
+    "next_steps": "Next Steps",
+    "quote_default": "The path unfolds as you walk it."
   },
   "quick_actions": {
     "title": "Quick Actions",

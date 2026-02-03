@@ -118,83 +118,77 @@
     
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Greeting Section -->
-        <section class="greeting-section">
-            <h1 class="greeting-title">{{ t('dashboard.welcome', name=(user.display_name.split()[0] if user.display_name else 'there')) }}</h1>
-        </section>
+        <!-- T004: Home Redesign — Mira-centered, no job cards -->
         
-        <!-- Stat Cards -->
-        <section class="stat-cards">
-            <a href="/matches" class="stat-card">
-                <div class="stat-icon blue">
-                    <img src="/static/images/icons/icon-dashboard.png" alt="" class="stat-icon-img">
+        <!-- Mira Greeting (Front and Center) -->
+        <section class="mira-greeting-section">
+            <div class="mira-greeting-card">
+                <div class="mira-avatar-large">🧘</div>
+                <div class="mira-greeting-content">
+                    <h1 class="mira-greeting-text">{{ t('dashboard.welcome', name=(user.display_name.split()[0] if user.display_name else 'there')) }}</h1>
+                    <p class="mira-subtext" id="mira-status-text">{{ t('dashboard.mira_checking') }}</p>
                 </div>
-                <div class="stat-info">
-                    <div class="stat-label">{{ t('dashboard.stat_dashboard') }}</div>
-                    <div class="stat-value"><span id="stat-matches">—</span> <span class="stat-unit">{{ t('dashboard.stat_dashboard_unit') }}</span></div>
-                </div>
-            </a>
-            <a href="/profile" class="stat-card">
-                <div class="stat-icon orange">
-                    <img src="/static/images/icons/icon-profile.png" alt="" class="stat-icon-img">
-                </div>
-                <div class="stat-info">
-                    <div class="stat-label">{{ t('dashboard.stat_resume') }}</div>
-                    <div class="stat-value"><span id="stat-profile">—</span>% <span class="stat-unit">{{ t('dashboard.stat_resume_unit') }}</span></div>
-                </div>
-            </a>
-            <a href="/matches" class="stat-card">
-                <div class="stat-icon teal">
-                    <img src="/static/images/icons/icon-jobs.png" alt="" class="stat-icon-img">
-                </div>
-                <div class="stat-info">
-                    <div class="stat-label">{{ t('dashboard.stat_jobs') }}</div>
-                    <div class="stat-value"><span id="stat-jobs">—</span> <span class="stat-unit">{{ t('dashboard.stat_jobs_unit') }}</span></div>
-                </div>
-            </a>
-            <a href="#" class="stat-card stat-card-small">
-                <div class="stat-icon pink">
-                    <img src="/static/images/icons/icon-help.png" alt="" class="stat-icon-img">
-                </div>
-                <div class="stat-info">
-                    <div class="stat-label">{{ t('nav.help') }}</div>
-                </div>
-            </a>
-        </section>
-        
-        <!-- Recent Matches -->
-        <section class="dashboard-section">
-            <div class="section-header">
-                <h2>{{ t('dashboard.recent_jobs') }}</h2>
-                <a href="/matches" class="view-all-link">{{ t('dashboard.view_all') }} →</a>
             </div>
             
-            <div class="job-cards" id="job-cards">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    <p>{{ t('common.loading') }}</p>
+            <!-- Inline Mira Chat -->
+            <div class="mira-inline-chat">
+                <div class="mira-inline-messages" id="mira-inline-messages">
+                    <div class="mira-message mira-message-bot">
+                        <span class="mira-msg-avatar">🧘</span>
+                        <div class="mira-msg-bubble">{{ t('dashboard.mira_intro') }}</div>
+                    </div>
+                </div>
+                <div class="mira-inline-input">
+                    <input type="text" id="mira-inline-input" placeholder="{{ t('dashboard.mira_placeholder') }}" onkeydown="if(event.key==='Enter')sendInlineMessage()">
+                    <button onclick="sendInlineMessage()">➤</button>
                 </div>
             </div>
         </section>
         
-        <!-- Quick Actions -->
-        <section class="dashboard-section">
-            <h2>{{ t('quick_actions.title') }}</h2>
-            <div class="quick-actions">
-                <a href="/profile" class="quick-action">
-                    <span class="action-icon">✏️</span>
-                    <span class="action-label">{{ t('quick_actions.edit_profile') }}</span>
-                </a>
-                <a href="/matches" class="quick-action">
-                    <span class="action-icon">🎯</span>
-                    <span class="action-label">{{ t('quick_actions.view_matches') }}</span>
-                </a>
-                <a href="/finances" class="quick-action">
-                    <span class="action-icon">💰</span>
-                    <span class="action-label">{{ t('quick_actions.finances') }}</span>
-                </a>
+        <!-- Summary Cards (No job lists, just stats) -->
+        <section class="summary-cards">
+            <a href="/matches" class="summary-card">
+                <div class="summary-icon">🎯</div>
+                <div class="summary-content">
+                    <span class="summary-number" id="stat-matches">—</span>
+                    <span class="summary-label">{{ t('dashboard.matches_found') }}</span>
+                </div>
+                <div class="summary-detail" id="match-detail">{{ t('dashboard.click_to_review') }}</div>
+            </a>
+            
+            <a href="/profile" class="summary-card">
+                <div class="summary-icon">📋</div>
+                <div class="summary-content">
+                    <span class="summary-number"><span id="stat-profile">—</span>%</span>
+                    <span class="summary-label">{{ t('dashboard.profile_complete') }}</span>
+                </div>
+                <div class="summary-detail">{{ t('dashboard.click_to_complete') }}</div>
+            </a>
+            
+            <a href="/journey" class="summary-card">
+                <div class="summary-icon">🗺️</div>
+                <div class="summary-content">
+                    <span class="summary-number" id="journey-stage">—</span>
+                    <span class="summary-label">{{ t('dashboard.your_journey') }}</span>
+                </div>
+                <div class="summary-detail">{{ t('dashboard.view_progress') }}</div>
+            </a>
+        </section>
+        
+        <!-- Suggested Next Steps -->
+        <section class="next-steps-section">
+            <h2>{{ t('dashboard.next_steps') }}</h2>
+            <div class="next-steps" id="next-steps">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                </div>
             </div>
         </section>
+        
+        <!-- Sentence of the Day (Easter Egg) -->
+        <footer class="daily-quote">
+            <p id="daily-quote">„{{ t('dashboard.quote_default') }}"</p>
+        </footer>
     </main>
 </div>
 
@@ -1337,6 +1331,376 @@ const I18N = {
         right: -8px;
     }
 }
+
+/* ============================================
+   T004: Mira-Centered Home Redesign
+   "Home is the locker room, not the arena"
+   ============================================ */
+
+/* Mira Greeting Section */
+.mira-greeting-section {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.mira-greeting-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+}
+
+.mira-avatar-large {
+    font-size: 4rem;
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.mira-greeting-content {
+    flex: 1;
+}
+
+.mira-greeting-text {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.5rem;
+}
+
+.mira-subtext {
+    color: #64748b;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Inline Mira Chat */
+.mira-inline-chat {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.mira-inline-messages {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mira-message {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.mira-message-user {
+    flex-direction: row-reverse;
+}
+
+.mira-msg-avatar {
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mira-msg-bubble {
+    background: #f1f5f9;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    max-width: 80%;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.mira-message-user .mira-msg-bubble {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.mira-message-user .mira-msg-avatar {
+    display: none;
+}
+
+.mira-inline-input {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.mira-inline-input input {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 2rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    outline: none;
+    background: white;
+}
+
+.mira-inline-input input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.mira-inline-input button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.mira-inline-input button:hover {
+    transform: scale(1.05);
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    padding: 0 2rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+.summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.summary-icon {
+    font-size: 2.5rem;
+}
+
+.summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.summary-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.summary-detail {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    padding-top: 0.5rem;
+    border-top: 1px solid #f1f5f9;
+    width: 100%;
+}
+
+/* Next Steps Section */
+.next-steps-section {
+    padding: 0 2rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.next-steps-section h2 {
+    font-size: 1.25rem;
+    color: #334155;
+    margin-bottom: 1rem;
+}
+
+.next-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.next-step {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.next-step:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.next-step-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    text-align: center;
+}
+
+.next-step-content {
+    flex: 1;
+}
+
+.next-step-title {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.next-step-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.next-step-arrow {
+    color: #94a3b8;
+    font-size: 1.25rem;
+}
+
+/* Daily Quote Footer */
+.daily-quote {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.9rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.daily-quote p {
+    margin: 0;
+}
+
+/* Dark theme adjustments for T004 */
+[data-theme="dark"] .mira-greeting-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e3a5f 50%, #1a3d2f 100%);
+}
+
+[data-theme="dark"] .mira-avatar-large {
+    background: #374151;
+}
+
+[data-theme="dark"] .mira-greeting-text {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .mira-inline-chat {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .mira-msg-bubble {
+    background: #374151;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .mira-inline-input {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .mira-inline-input input {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .summary-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .summary-number {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .next-step {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .next-step:hover {
+    background: #374151;
+}
+
+[data-theme="dark"] .next-step-title {
+    color: #f1f5f9;
+}
+
+/* Mobile responsive for T004 */
+@media (max-width: 768px) {
+    .mira-greeting-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .mira-avatar-large {
+        font-size: 3rem;
+        width: 80px;
+        height: 80px;
+    }
+    
+    .mira-greeting-text {
+        font-size: 1.5rem;
+    }
+    
+    .summary-cards {
+        padding: 0 1rem 1.5rem;
+    }
+    
+    .next-steps-section {
+        padding: 0 1rem 1.5rem;
+    }
+}
 </style>
 
 <script>
@@ -1384,6 +1748,11 @@ async function loadStats() {
         if (matchRes.ok) {
             const stats = await matchRes.json();
             document.getElementById('stat-matches').textContent = stats.total_count;
+            // Update match detail text
+            const detail = document.getElementById('match-detail');
+            if (detail && stats.strong_count > 0) {
+                detail.textContent = `${stats.strong_count} starke Matches`;
+            }
         }
         
         // Profile completeness (T010: use server-calculated value)
@@ -1391,16 +1760,25 @@ async function loadStats() {
         if (profileRes.ok) {
             const profile = await profileRes.json();
             document.getElementById('stat-profile').textContent = profile.completeness;
+            // Update Mira status based on profile
+            const statusText = document.getElementById('mira-status-text');
+            if (statusText) {
+                if (profile.completeness < 50) {
+                    statusText.textContent = 'Lass uns dein Profil vervollständigen!';
+                } else if (profile.completeness < 100) {
+                    statusText.textContent = 'Dein Profil sieht gut aus! Noch ein paar Details?';
+                } else {
+                    statusText.textContent = 'Super! Dein Profil ist vollständig.';
+                }
+            }
         } else {
             document.getElementById('stat-profile').textContent = '0';
         }
         
-        // Active jobs
-        const jobsRes = await fetch('/api/postings/stats');
-        if (jobsRes.ok) {
-            const stats = await jobsRes.json();
-            document.getElementById('stat-jobs').textContent = stats.active_count || stats.count || '0';
-        }
+        // Journey stage placeholder
+        const journeyEl = document.getElementById('journey-stage');
+        if (journeyEl) journeyEl.textContent = 'Start';
+        
     } catch (err) {
         console.error('Failed to load stats:', err);
     }
@@ -1548,9 +1926,151 @@ async function loadNotifications() {
 document.addEventListener('DOMContentLoaded', () => {
     restoreSidebarState();
     loadStats();
-    loadJobCards();
+    loadNextSteps();
+    loadDailyQuote();
     loadNotifications();
 });
+
+// T004: Load suggested next steps based on user state
+async function loadNextSteps() {
+    const container = document.getElementById('next-steps');
+    const steps = [];
+    
+    try {
+        // Check profile completeness
+        const profileRes = await fetch('/api/profiles/me');
+        if (profileRes.ok) {
+            const profile = await profileRes.json();
+            if (profile.completeness < 100) {
+                steps.push({
+                    icon: '✏️',
+                    title: 'Profil vervollständigen',
+                    desc: `Aktuell ${profile.completeness}% — mehr Daten = bessere Matches`,
+                    href: '/profile'
+                });
+            }
+        }
+        
+        // Check for unreviewed matches
+        const matchRes = await fetch('/api/matches/stats');
+        if (matchRes.ok) {
+            const stats = await matchRes.json();
+            if (stats.total_count > 0) {
+                steps.push({
+                    icon: '🎯',
+                    title: `${stats.total_count} Matches ansehen`,
+                    desc: stats.strong_count > 0 ? `${stats.strong_count} davon mit hoher Übereinstimmung` : 'Schau dir die Vorschläge an',
+                    href: '/matches'
+                });
+            }
+        }
+        
+        // Add skill confirmation suggestion
+        steps.push({
+            icon: '🏷️',
+            title: 'Skills bestätigen',
+            desc: 'Sind deine Fähigkeiten aktuell?',
+            href: '/profile#skills'
+        });
+        
+        // Add journey/coaching placeholder
+        steps.push({
+            icon: '📅',
+            title: 'Termin mit Adele buchen',
+            desc: 'Persönliche Beratung für deine nächsten Schritte',
+            href: '/journey'
+        });
+        
+    } catch (err) {
+        console.error('Failed to build next steps:', err);
+        // Fallback steps
+        steps.push(
+            { icon: '📋', title: 'Profil ansehen', desc: 'Überprüfe deine Daten', href: '/profile' },
+            { icon: '🎯', title: 'Matches entdecken', desc: 'Passende Stellen finden', href: '/matches' }
+        );
+    }
+    
+    // Render steps (max 4)
+    container.innerHTML = steps.slice(0, 4).map(s => `
+        <a href="${s.href}" class="next-step">
+            <span class="next-step-icon">${s.icon}</span>
+            <div class="next-step-content">
+                <div class="next-step-title">${s.title}</div>
+                <div class="next-step-desc">${s.desc}</div>
+            </div>
+            <span class="next-step-arrow">→</span>
+        </a>
+    `).join('');
+}
+
+// T004: Daily quote easter egg
+function loadDailyQuote() {
+    const quotes = [
+        '„Der Weg entsteht beim Gehen." — Antonio Machado',
+        '„Jeder Tag ist ein neuer Anfang." — T.S. Eliot',
+        '„Du bist genug, genau so wie du bist."',
+        '„Geduld ist auch eine Form von Handeln." — Auguste Rodin',
+        '„Der beste Zeitpunkt ist jetzt."',
+        '„Kleine Schritte führen zu großen Veränderungen."',
+        '„Vertraue dem Prozess."',
+        '„Was du suchst, sucht auch dich." — Rumi',
+        '„Mut steht am Anfang des Handelns, Glück am Ende." — Demokrit',
+        '„Sei die Veränderung, die du in der Welt sehen möchtest."'
+    ];
+    
+    // Pick quote based on day of year (rotates through list)
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    const quote = quotes[dayOfYear % quotes.length];
+    
+    const el = document.getElementById('daily-quote');
+    if (el) el.textContent = quote;
+}
+
+// T004: Inline Mira chat (simpler version of floating widget)
+async function sendInlineMessage() {
+    const input = document.getElementById('mira-inline-input');
+    const messagesContainer = document.getElementById('mira-inline-messages');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message
+    messagesContainer.innerHTML += `
+        <div class="mira-message mira-message-user">
+            <div class="mira-msg-bubble">${escapeHtml(message)}</div>
+        </div>
+    `;
+    input.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Add thinking indicator
+    const thinkingId = 'mira-thinking-' + Date.now();
+    messagesContainer.innerHTML += `
+        <div class="mira-message mira-message-bot" id="${thinkingId}">
+            <span class="mira-msg-avatar">🧘</span>
+            <div class="mira-msg-bubble">...</div>
+        </div>
+    `;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    try {
+        const res = await fetch('/api/mira/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = data.response;
+        } else {
+            document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = 'Hmm, da ist etwas schiefgelaufen. Versuch es nochmal?';
+        }
+    } catch (err) {
+        document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = 'Verbindungsproblem. Bitte später nochmal versuchen.';
+    }
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
 // Close sidebar on outside click (mobile)
 document.addEventListener('click', (e) => {

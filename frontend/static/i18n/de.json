@@ -48,7 +48,18 @@
     "strong_match": "Starker Match",
     "partial_match": "Teilmatch",
     "details": "Details",
-    "unknown_company": "Unbekanntes Unternehmen"
+    "unknown_company": "Unbekanntes Unternehmen",
+    "mira_checking": "Ich schau mal, was es Neues gibt...",
+    "mira_intro": "Hallo! Ich bin Mira, deine Begleiterin. Wie kann ich dir heute helfen?",
+    "mira_placeholder": "Frag mich etwas...",
+    "matches_found": "Matches gefunden",
+    "click_to_review": "Anklicken zum Durchsehen",
+    "profile_complete": "Profil vollständig",
+    "click_to_complete": "Anklicken zum Ergänzen",
+    "your_journey": "Deine Reise",
+    "view_progress": "Fortschritt ansehen",
+    "next_steps": "Nächste Schritte",
+    "quote_default": "Der Weg entsteht beim Gehen."
   },
   "quick_actions": {
     "title": "Schnellaktionen",
