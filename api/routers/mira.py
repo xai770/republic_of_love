@@ -143,8 +143,115 @@ def get_conversational_response(category: str, uses_du: bool) -> str:
     return random.choice(responses)
 
 
-async def ask_llm(message: str, uses_du: bool, context: Optional[str] = None) -> Optional[str]:
-    """Fallback to LLM for unmatched questions, optionally with FAQ context."""
+def build_yogi_context(user_id: int, conn) -> dict:
+    """
+    Build context about the yogi for Mira's responses.
+    
+    Returns dict with:
+    - profile_summary: skills, preferences
+    - recent_matches: top 3 match titles
+    - journey_summary: active applications, states
+    - last_activity: what yogi did recently
+    """
+    context = {
+        'has_profile': False,
+        'skills': [],
+        'recent_matches': [],
+        'journey_states': {},
+        'match_count': 0,
+    }
+    
+    with conn.cursor() as cur:
+        # Get profile info
+        cur.execute("""
+            SELECT p.skill_keywords
+            FROM profiles p
+            WHERE p.user_id = %s
+        """, (user_id,))
+        profile = cur.fetchone()
+        
+        if profile:
+            context['has_profile'] = True
+            try:
+                import json
+                skills = json.loads(profile['skill_keywords'] or '[]')
+                context['skills'] = skills[:10]  # Limit to 10
+            except:
+                pass
+        
+        # Get recent matches
+        cur.execute("""
+            SELECT p.job_title, p.posting_name as company, m.skill_match_score as score
+            FROM profile_posting_matches m
+            JOIN profiles pr ON m.profile_id = pr.profile_id
+            JOIN postings p ON m.posting_id = p.posting_id
+            WHERE pr.user_id = %s
+            ORDER BY m.computed_at DESC
+            LIMIT 3
+        """, (user_id,))
+        
+        context['recent_matches'] = [
+            {'title': r['job_title'], 'company': r['company'], 'score': float(r['score'] or 0) / 100}
+            for r in cur.fetchall()
+        ]
+        
+        # Get journey state counts
+        cur.execute("""
+            SELECT state, COUNT(*) as cnt
+            FROM user_posting_interactions
+            WHERE user_id = %s
+            GROUP BY state
+        """, (user_id,))
+        context['journey_states'] = {r['state']: r['cnt'] for r in cur.fetchall()}
+        
+        # Total match count
+        cur.execute("""
+            SELECT COUNT(*) as cnt
+            FROM profile_posting_matches m
+            JOIN profiles p ON m.profile_id = p.profile_id
+            WHERE p.user_id = %s
+        """, (user_id,))
+        context['match_count'] = cur.fetchone()['cnt']
+    
+    return context
+
+
+def format_yogi_context_for_prompt(ctx: dict, uses_du: bool) -> str:
+    """Format yogi context as text for system prompt."""
+    parts = []
+    
+    formal = "Sie" if not uses_du else "du"
+    poss = "Ihre" if not uses_du else "deine"
+    
+    if ctx['has_profile']:
+        if ctx['skills']:
+            skills_str = ', '.join(ctx['skills'][:5])
+            parts.append(f"Skills: {skills_str}")
+    else:
+        if uses_du:
+            parts.append("(Noch kein Profil hochgeladen)")
+        else:
+            parts.append("(Noch kein Profil hochgeladen)")
+    
+    if ctx['match_count'] > 0:
+        parts.append(f"Matches: {ctx['match_count']} gefunden")
+        if ctx['recent_matches']:
+            recent = ctx['recent_matches'][0]
+            parts.append(f"Neuester Match: {recent['title']} bei {recent['company']} ({recent['score']:.0%})")
+    
+    if ctx['journey_states']:
+        applied = ctx['journey_states'].get('applied', 0)
+        interested = ctx['journey_states'].get('interested', 0)
+        if applied > 0:
+            parts.append(f"Bewerbungen: {applied}")
+        if interested > 0:
+            parts.append(f"Interessiert an: {interested} Jobs")
+    
+    return '\n'.join(parts) if parts else ''
+
+
+async def ask_llm(message: str, uses_du: bool, context: Optional[str] = None, yogi_context: Optional[dict] = None) -> Optional[str]:
+    """Fallback to LLM for unmatched questions, optionally with FAQ and yogi context."""
     try:
         formal = "Sie" if not uses_du else "du"
         
@@ -165,6 +272,17 @@ Deine Eigenschaften:
 - Matches werden automatisch gefunden, kein aktives Suchen nötig
 
 Wenn die Frage nichts mit talent.yoga zu tun hat, antworte freundlich dass du als Mira nur bei Fragen rund um talent.yoga helfen kannst."""
+
+        # Add yogi context if available
+        if yogi_context:
+            yogi_text = format_yogi_context_for_prompt(yogi_context, uses_du)
+            if yogi_text:
+                system_prompt += f"""
+
+Aktueller Stand {"des Nutzers" if not uses_du else "des Yogis"}:
+{yogi_text}
+
+Nutze diese Information wenn relevant, aber erwähne sie nicht ungefragt."""
 
         # Add FAQ context for medium-confidence matches
         if context:
@@ -455,6 +573,133 @@ async def get_tour(
 
 
 # ============================================================================
+# CONTEXT & PROACTIVE MESSAGES
+# ============================================================================
+
+class YogiContext(BaseModel):
+    has_profile: bool
+    skills: List[str]
+    match_count: int
+    recent_matches: List[dict]
+    journey_states: dict
+
+
+@router.get("/context", response_model=YogiContext)
+async def get_yogi_context(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Get yogi's context for display or debugging.
+    
+    This is the same context Mira uses to personalize responses.
+    """
+    ctx = build_yogi_context(user['user_id'], conn)
+    return YogiContext(**ctx)
+
+
+class ProactiveMessage(BaseModel):
+    message_type: str  # new_matches, saved_job_open, application_viewed
+    message: str
+    data: Optional[dict] = None
+
+
+class ProactiveResponse(BaseModel):
+    messages: List[ProactiveMessage]
+
+
+@router.get("/proactive", response_model=ProactiveResponse)
+async def get_proactive_messages(
+    uses_du: bool = True,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Get proactive messages Mira should display.
+    
+    Checks for:
+    - New matches since last visit
+    - Saved jobs still open
+    - Application status changes (if trackable)
+    """
+    messages = []
+    
+    with conn.cursor() as cur:
+        # Get last login
+        cur.execute("""
+            SELECT last_login_at FROM users WHERE user_id = %s
+        """, (user['user_id'],))
+        last_login = cur.fetchone()
+        last_login_at = last_login['last_login_at'] if last_login else None
+        
+        # Count new matches since last login
+        if last_login_at:
+            cur.execute("""
+                SELECT COUNT(*) as cnt
+                FROM profile_posting_matches m
+                JOIN profiles p ON m.profile_id = p.profile_id
+                WHERE p.user_id = %s AND m.computed_at > %s
+            """, (user['user_id'], last_login_at))
+            new_matches = cur.fetchone()['cnt']
+            
+            if new_matches > 0:
+                if uses_du:
+                    msg = f"🎯 {new_matches} neue Matches seit deinem letzten Besuch!"
+                else:
+                    msg = f"🎯 {new_matches} neue Matches seit Ihrem letzten Besuch!"
+                messages.append(ProactiveMessage(
+                    message_type="new_matches",
+                    message=msg,
+                    data={"count": new_matches}
+                ))
+        
+        # Check favorited jobs still available
+        cur.execute("""
+            SELECT COUNT(*) as cnt
+            FROM user_posting_interactions i
+            JOIN postings p ON i.posting_id = p.posting_id
+            WHERE i.user_id = %s 
+              AND i.is_favorited = TRUE
+              AND p.posting_status = 'active'
+        """, (user['user_id'],))
+        saved_open = cur.fetchone()['cnt']
+        
+        if saved_open > 0 and not last_login_at:  # Only for returning users who haven't seen this
+            if uses_du:
+                msg = f"⭐ {saved_open} deiner gemerkten Jobs sind noch offen!"
+            else:
+                msg = f"⭐ {saved_open} Ihrer gemerkten Jobs sind noch offen!"
+            messages.append(ProactiveMessage(
+                message_type="saved_job_open",
+                message=msg,
+                data={"count": saved_open}
+            ))
+        
+        # Check for pending applications (ghosting detection)
+        cur.execute("""
+            SELECT COUNT(*) as cnt
+            FROM user_posting_interactions
+            WHERE user_id = %s 
+              AND state = 'outcome_pending'
+              AND state_changed_at < NOW() - INTERVAL '14 days'
+        """, (user['user_id'],))
+        waiting_long = cur.fetchone()['cnt']
+        
+        if waiting_long > 0:
+            if uses_du:
+                msg = f"⏳ {waiting_long} Bewerbungen warten schon länger auf Antwort. Soll ich nachfragen helfen?"
+            else:
+                msg = f"⏳ {waiting_long} Bewerbungen warten schon länger auf Antwort. Soll ich beim Nachfragen helfen?"
+            messages.append(ProactiveMessage(
+                message_type="long_wait",
+                message=msg,
+                data={"count": waiting_long}
+            ))
+    
+    return ProactiveResponse(messages=messages)
+
+
+# ============================================================================
 # CONSENT PROMPT — Notification Opt-in
 # ============================================================================
 
@@ -582,7 +827,7 @@ async def chat(
     user: dict = Depends(require_user),
     conn=Depends(get_db)
 ):
-    """Handle Mira chat messages with embedding-based FAQ matching."""
+    """Handle Mira chat messages with embedding-based FAQ matching and yogi context."""
     message = request.message.strip()
     
     # Detect formality from message, or use client hint, or default to du
@@ -609,6 +854,9 @@ async def chat(
         reply = get_conversational_response(conv_category, uses_du)
         return ChatResponse(reply=reply, confidence='high')
     
+    # Build yogi context for personalized responses
+    yogi_ctx = build_yogi_context(user['user_id'], conn)
+    
     # 2. Try embedding-based FAQ matching
     try:
         faq = get_faq()
@@ -625,9 +873,9 @@ async def chat(
                 faq_id=match.faq_entry.faq_id if match.faq_entry else None
             )
         
-        # Medium confidence: use LLM with FAQ context for grounding
+        # Medium confidence: use LLM with FAQ context + yogi context
         if match.confidence == 'medium' and match.context:
-            llm_reply = await ask_llm(message, uses_du, context=match.context)
+            llm_reply = await ask_llm(message, uses_du, context=match.context, yogi_context=yogi_ctx)
             if llm_reply:
                 return ChatResponse(
                     reply=llm_reply,
@@ -638,8 +886,8 @@ async def chat(
     except Exception as e:
         logger.error(f"FAQ matching error: {e}")
     
-    # 3. Low confidence: freeform LLM
-    llm_reply = await ask_llm(message, uses_du)
+    # 3. Low confidence: freeform LLM with yogi context
+    llm_reply = await ask_llm(message, uses_du, yogi_context=yogi_ctx)
     
     if llm_reply:
         return ChatResponse(reply=llm_reply, confidence='low')
