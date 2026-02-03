@@ -63,7 +63,7 @@ CPS decomposes requirements into provable dimensions — used alongside embeddin
 - **Domain** — industry (fintech, healthcare)
 - **Seniority** — level (Senior, VP)
 
-**Storage:** `posting_facets`, `profile_facets` — may be deprecated if embeddings suffice.
+**Storage:** `profile_facets` — used for profile matching. `posting_facets` was deprecated 2026-02 (embeddings suffice for postings).
 
 ---
 
@@ -93,11 +93,13 @@ Rub the table gently when needed. It's there.
 
 Different sources need different processing:
 
-| Source | Fetch | Summarize | Translate | Embed |
-|--------|-------|-----------|-----------|-------|
-| Arbeitsagentur | API | ❌ (concise) | ❌ (German users) | ✅ |
-| Deutsche Bank | API | ✅ (verbose) | ✅ (DE→EN) | ✅ |
-| Future sources | varies | varies | varies | ✅ always |
+| Source | Fetch | Summarize | Embed |
+|--------|-------|-----------|-------|
+| Arbeitsagentur | API | ❌ (concise) | ✅ |
+| Deutsche Bank | API | ✅ (verbose) | ✅ |
+| Future sources | varies | varies | ✅ always |
+
+**No translation needed:** bge-m3 is multilingual (DE↔EN at 0.93 similarity). We embed German job descriptions directly.
 
 **Current architecture:**
 
@@ -162,14 +164,14 @@ An actor is a script that:
 
 | Has work_query? | Changes data? | What is it? | Example |
 |-----------------|---------------|-------------|---------|
-| Yes | Yes | **Actor** | `posting_facets__row_C.py` |
+| Yes | Yes | **Actor** | `postings__embedding_U.py` |
 | No | No | **Tool** | `turing-harness`, `turing-dashboard` |
 
 ### Actor Types
 
 | Type | Suffix | LLM? | Example |
 |------|--------|------|---------|
-| **Create** | `_C` | Usually | `posting_facets__row_C.py` — creates facet rows |
+| **Create** | `_C` | Usually | `profile_facets__extract_C__clara.py` — creates facet rows |
 | **Update** | `_U` | Usually | `postings__extracted_summary_U.py` — updates column |
 | **Read** | `_R` | No | `owl_names__lookup_R__lucy.py` — lookup only |
 | **Create+Update** | `_CU` | Varies | `postings__row_CU.py` — fetches and inserts |
@@ -181,9 +183,9 @@ An actor is a script that:
 ```
 
 Examples:
-- `posting_facets__row_C.py` — creates posting_facets rows
 - `profile_facets__extract_C__clara.py` — Clara extracts profile facets
 - `postings__extracted_summary_U.py` — updates extracted_summary column
+- `postings__embedding_U.py` — updates embeddings for postings
 
 ### Actor Location
 
