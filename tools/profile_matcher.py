@@ -185,7 +185,7 @@ def get_all_postings(conn, limit: int = 100) -> List[Dict]:
     cur.execute("""
         SELECT posting_id 
         FROM postings 
-        WHERE status = 'active' AND extracted_summary IS NOT NULL
+        WHERE posting_status = 'active' AND extracted_summary IS NOT NULL
         LIMIT %s
     """, (limit,))
     posting_ids = [row['posting_id'] for row in cur.fetchall()]

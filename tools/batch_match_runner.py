@@ -101,7 +101,7 @@ def get_all_postings(conn) -> list:
     cur.execute("""
         SELECT DISTINCT p.posting_id, p.job_title, p.source
         FROM postings p
-        WHERE p.status = 'active'
+        WHERE p.posting_status = 'active'
           AND p.extracted_summary IS NOT NULL
     """)
     

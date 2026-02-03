@@ -16,7 +16,7 @@ WORK_QUERY:
     SELECT p.profile_id, po.posting_id
     FROM profiles p
     CROSS JOIN postings po
-    WHERE po.status = 'active'
+    WHERE po.posting_status = 'active'
       AND NOT EXISTS (
         SELECT 1 FROM profile_posting_matches m
         WHERE m.profile_id = p.profile_id 
