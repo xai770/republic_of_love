@@ -3,7 +3,7 @@
 Summary Extract - Thick Actor for Job Posting Summary Extraction
 
 Extracts structured summary from job posting description.
-Uses same model as posting_facets__row_C (qwen2.5-coder:7b) for GPU efficiency.
+Uses qwen2.5-coder:7b for efficient GPU processing.
 Validates extraction via word overlap (summary words must exist in source).
 
 NOTE: This actor is only used for Deutsche Bank postings (see nightly_fetch.sh).

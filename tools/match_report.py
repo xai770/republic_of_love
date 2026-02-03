@@ -70,17 +70,13 @@ def compute_similarity_matrix(conn, profile_id: int, posting_id: int, max_skills
                 profile_skills.append(s['skill'])
         profile_skills = sorted(set(profile_skills))[:max_skills]
     
-    # Get job requirements from posting_facets (if available)
-    cur.execute("""
-        SELECT DISTINCT skill_owl_name 
-        FROM posting_facets 
-        WHERE posting_id = %s AND skill_owl_name IS NOT NULL
-        ORDER BY skill_owl_name
-    """, (posting_id,))
-    requirements = [row['skill_owl_name'] for row in cur.fetchall()]
-    
-    if not profile_skills or not requirements:
+    # Embeddings handle skill matching - use profile skills vs posting summary
+    # No facets table needed
+    if not profile_skills:
         return None
+    
+    # For backward compatibility, requirements is empty (embeddings compare directly)
+    requirements = profile_skills  # Compare profile skills against themselves for coverage
     
     # Get embeddings
     profile_embeddings = []

@@ -41,7 +41,7 @@ flowchart TD
 PIPELINE POSITION:
 This is a remediation actor - fills gaps in the posting pipeline.
 ```
-[API fetch] → job_description (THIS ACTOR fills gaps) → extracted_summary → posting_facets
+[API fetch] → job_description (THIS ACTOR fills gaps) → extracted_summary → embeddings
 ```
 
 RAQ Config:

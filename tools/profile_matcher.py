@@ -165,24 +165,8 @@ def get_posting(conn, posting_id: int) -> Optional[Dict]:
         'posting_id': row['posting_id'],
         'title': row['job_title'],
         'company': row['source'] or 'Unknown',
-        'requirements': []
+        'requirements': []  # Embeddings handle skill matching, no facets needed
     }
-    
-    # Get requirements from posting_facets
-    cur.execute("""
-        SELECT skill_owl_name, importance, weight
-        FROM posting_facets
-        WHERE posting_id = %s
-          AND skill_owl_name IS NOT NULL
-        ORDER BY weight DESC NULLS LAST
-    """, (posting_id,))
-    
-    for row in cur.fetchall():
-        posting['requirements'].append({
-            'name': row['skill_owl_name'],
-            'importance': row['importance'],
-            'weight': row['weight']
-        })
     
     return posting
 
@@ -196,12 +180,12 @@ def get_all_profiles(conn) -> List[Dict]:
 
 
 def get_all_postings(conn, limit: int = 100) -> List[Dict]:
-    """Load postings that have requirements."""
+    """Load active postings with summaries."""
     cur = conn.cursor()
     cur.execute("""
-        SELECT DISTINCT posting_id 
-        FROM posting_facets 
-        WHERE skill_owl_name IS NOT NULL
+        SELECT posting_id 
+        FROM postings 
+        WHERE status = 'active' AND extracted_summary IS NOT NULL
         LIMIT %s
     """, (limit,))
     posting_ids = [row['posting_id'] for row in cur.fetchall()]

@@ -110,14 +110,8 @@ def get_posting(posting_id: int, user: dict = Depends(require_user), conn=Depend
         if not posting:
             raise HTTPException(status_code=404, detail="Posting not found")
         
-        # Get requirements from posting_facets
-        cur.execute("""
-            SELECT DISTINCT skill
-            FROM posting_facets
-            WHERE posting_id = %s AND skill IS NOT NULL
-            ORDER BY skill
-        """, (posting_id,))
-        requirements = [row['skill'] for row in cur.fetchall()]
+        # Requirements: embeddings handle skill matching, no facets table needed
+        requirements = []
         
         return PostingDetail(
             **{k: v for k, v in posting.items()},

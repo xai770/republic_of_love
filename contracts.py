@@ -423,34 +423,7 @@ class FakeJobDetectorContract:
         reasoning: str
 
 
-@register_workflow_contract(workflow_id=3001, workflow_name="Complete Job Processing Pipeline")
-class CompleteJobProcessingPipelineContract:
-    """
-    Contract for Workflow 3001: Full end-to-end job processing.
-    
-    15-conversation pipeline that:
-    1. Fetches jobs from Deutsche Bank API
-    2. Extracts & validates job summary (multi-model consensus)
-    3. Extracts skills & maps to taxonomy
-    4. Performs IHL scoring (3-actor debate)
-    
-    Input: API fetch parameters (user_id, max_jobs)
-    Output: Complete processing results with summary, skills, IHL score
-    
-    Note: This workflow is deprecated - use embedding-based matching instead.
-    """
-    
-    @dataclass
-    class Input:
-        variations_param_1: str  # Job description text
-        posting_id: int          # Posting ID to update
-        user_id: int = 1         # User requesting the work
-        max_jobs: int = 1        # Number of jobs to process
-    
-    @dataclass
-    class Output:
-        extracted_summary: str   # Formatted job summary
-        skills: List[Dict[str, Any]]  # Extracted skills
-        ihl_score: int          # Fake job score (1-10)
-        ihl_verdict: str        # GENUINE | COMPLIANCE_THEATER | PRE_WIRED
-        posting_id: int         # Reference to processed posting
+# WF3001 (CompleteJobProcessingPipelineContract) removed 2026-02-03
+# - Was a 15-conversation pipeline with IHL scoring and translation
+# - Replaced by embedding-based matching (bge-m3 multilingual)
+# - Dead columns dropped: ihl_score, ihl_verdict, job_description_en, extracted_requirements

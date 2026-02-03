@@ -96,12 +96,13 @@ def get_profile_data(conn, profile_id: int) -> dict:
 
 
 def get_all_postings(conn) -> list:
-    """Get all postings with facets."""
+    """Get all active postings with summaries."""
     cur = conn.cursor()
     cur.execute("""
         SELECT DISTINCT p.posting_id, p.job_title, p.source
         FROM postings p
-        WHERE p.posting_id IN (SELECT DISTINCT posting_id FROM posting_facets)
+        WHERE p.status = 'active'
+          AND p.extracted_summary IS NOT NULL
     """)
     
     postings = []
@@ -112,15 +113,8 @@ def get_all_postings(conn) -> list:
 
 
 def get_posting_facets(conn, posting_id: int) -> list:
-    """Get facets for a posting."""
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT skill_owl_name, importance, weight
-        FROM posting_facets
-        WHERE posting_id = %s AND skill_owl_name IS NOT NULL
-        ORDER BY weight DESC NULLS LAST
-    """, (posting_id,))
-    return [dict(r) for r in cur.fetchall()]
+    """Deprecated: embeddings handle skill matching."""
+    return []  # posting_facets table no longer used
 
 
 # ============================================================================

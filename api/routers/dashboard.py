@@ -354,12 +354,8 @@ def match_detail(match_id: int, request: Request, conn=Depends(get_db)):
         if not match or match['user_id'] != user['user_id']:
             return HTMLResponse(render_base('<p>Match not found</p>', user))
         
-        # Get posting requirements (from posting_facets if available)
-        cur.execute("""
-            SELECT skill_owl_name FROM posting_facets 
-            WHERE posting_id = %s AND skill_owl_name IS NOT NULL
-        """, (match['posting_id'],))
-        requirements = [r['skill_owl_name'] for r in cur.fetchall()]
+        # Requirements: embeddings handle skill matching, no facets table
+        requirements = []
         
         # Get profile skills from profiles.skill_keywords
         cur.execute("""

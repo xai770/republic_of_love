@@ -132,24 +132,8 @@ def get_posting_data(conn, posting_id: int) -> Optional[Dict]:
         'title': row['job_title'],
         'company': row['source'] or 'Unknown',
         'summary': row['extracted_summary'],
-        'requirements': [],
+        'requirements': [],  # Embeddings handle skill matching, no facets needed
     }
-    
-    # Get facets
-    cur.execute("""
-        SELECT skill_owl_name, importance, weight, experience_years
-        FROM posting_facets
-        WHERE posting_id = %s AND skill_owl_name IS NOT NULL
-        ORDER BY weight DESC NULLS LAST
-    """, (posting_id,))
-    
-    for row in cur.fetchall():
-        posting['requirements'].append({
-            'skill': row['skill_owl_name'],
-            'importance': row['importance'] or 'required',
-            'weight': row['weight'] or 70,
-            'years': row['experience_years'],
-        })
     
     return posting
 

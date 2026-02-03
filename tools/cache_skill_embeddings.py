@@ -47,10 +47,7 @@ def get_all_skills(conn) -> set:
                 elif isinstance(s, dict) and 'skill' in s:
                     skills.add(s['skill'].strip())
     
-    # Posting skills from posting_facets (if they exist)
-    cur.execute("SELECT DISTINCT skill_owl_name FROM posting_facets WHERE skill_owl_name IS NOT NULL")
-    for row in cur.fetchall():
-        skills.add(row['skill_owl_name'].strip())
+    # Posting skills: embeddings compare directly with posting text, no facets table
     
     return skills
 
@@ -142,21 +139,17 @@ def show_stats(conn):
                 elif isinstance(s, dict) and 'skill' in s:
                     profile_skills.add(s['skill'].strip())
     
-    cur.execute("SELECT DISTINCT skill_owl_name FROM posting_facets WHERE skill_owl_name IS NOT NULL")
-    for row in cur.fetchall():
-        posting_skills.add(row['skill_owl_name'].strip())
+    # Posting skills: embeddings compare directly, no facets table
     
     profile_covered = len(profile_skills & cached_skills) if profile_skills else 0
-    posting_covered = len(posting_skills & cached_skills) if posting_skills else 0
     
     print(f"📊 Skill Embedding Cache Stats")
     print(f"   ─────────────────────────────")
     print(f"   Cached embeddings: {cached}")
     print(f"   Total unique skills: {len(all_skills)}")
-    print(f"   Coverage: {cached/len(all_skills)*100:.1f}%")
+    print(f"   Coverage: {cached/len(all_skills)*100:.1f}%" if all_skills else "   Coverage: N/A")
     print()
-    print(f"   Profile skills: {len(profile_skills)} ({profile_covered} cached = {profile_covered/len(profile_skills)*100:.1f}%)")
-    print(f"   Posting skills: {len(posting_skills)} ({posting_covered} cached = {posting_covered/len(posting_skills)*100:.1f}%)")
+    print(f"   Profile skills: {len(profile_skills)} ({profile_covered} cached)")
 
 
 def main():
