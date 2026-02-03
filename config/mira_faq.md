@@ -57,6 +57,12 @@ talent.yoga is free to use for job seekers. You can search jobs, create your pro
 
 If you want more (unlimited matches, research by Doug, coaching by Adele), you can choose a Standard or Sustainer subscription. You'll find exact prices under "Finances" — where we also show where every euro goes.
 
+
+**answer_sie_de:**
+talent.yoga ist für Jobsuchende kostenlos nutzbar. Sie können Stellen suchen, Ihr Profil anlegen und Matches sehen — ohne zu bezahlen.
+
+Wer mehr möchte (unbegrenzte Matches, Recherche durch Doug, Coaching durch Adele), kann ein Standard- oder Sustainer-Abo wählen. Die genauen Preise finden Sie unter "Finanzen" — dort zeigen wir auch, wohin jeder Euro geht.
+
 ---
 
 ### faq_pricing_002
@@ -82,6 +88,14 @@ If you want more (unlimited matches, research by Doug, coaching by Adele), you c
 
 **Sustainer (€10+/month):** Everything in Standard — plus you fund a free user. Your name appears on the supporters page if you want.
 
+
+**answer_sie_de:**
+**Kostenlos:** Stellen suchen, Profil anlegen, 10 Matches pro Monat.
+
+**Standard (€5/Monat):** Unbegrenzte Matches, Recherche durch Doug, volles Dashboard.
+
+**Sustainer (€10+/Monat):** Alles von Standard — plus Sie finanzierst einen kostenlosen Nutzer mit. Ihr Name erscheint auf der Unterstützer-Seite, wenn Sie möchten.
+
 ---
 
 ### faq_pricing_003
@@ -101,6 +115,12 @@ Aber wenn talent.yoga dir hilft, ermöglicht dein Beitrag, dass andere in der gl
 You don't have to. The free version works.
 
 But if talent.yoga helps you, your contribution enables others in the same situation to get help too. And it keeps us independent — no investors, no ads, no sold data.
+
+
+**answer_sie_de:**
+Sie müssen nicht. Die kostenlose Version funktioniert.
+
+Aber wenn talent.yoga Ihnen hilft, ermöglicht Ihr Beitrag, dass andere in der gleichen Situation auch Hilfe bekommen. Und es hält uns unabhängig — keine Investoren, keine Werbung, keine verkauften Daten.
 
 ---
 
@@ -123,6 +143,12 @@ Dein Geld geht in: Serverkosten, Entwicklung, und (solange wir noch nicht gemein
 Everything is public. Under "Finances" you can see exactly what we receive and spend — every month.
 
 Your money goes to: server costs, development, and (while we're not yet non-profit) repaying the founder investment. No hidden costs, no secrets.
+
+
+**answer_sie_de:**
+Alles ist öffentlich. Unter "Finanzen" sehen Sie genau, was wir einnehmen und ausgeben — jeden Monat.
+
+Ihr Geld geht in: Serverkosten, Entwicklung, und (solange wir noch nicht gemeinnützig sind) die Rückzahlung der Gründer-Investition. Keine versteckten Kosten, keine Geheimnisse.
 
 ---
 
@@ -154,6 +180,14 @@ What we *don't* store: your real name, email address, CV text, company names fro
 
 You can delete everything anytime. One click, all gone.
 
+
+**answer_sie_de:**
+Wir speichern nur, was Sie uns explizit geben — Ihre Skills, Präferenzen und Bewerbungshistorie.
+
+Was wir *nicht* speichern: Ihren echten Namen, Ihre E-Mail-Adresse, Ihren Lebenslauf-Text, Firmennamen aus Ihrem CV. Nach der Skill-Extraktion wird das Originaldokument gelöscht.
+
+Sie können jederzeit alles löschen lassen. Ein Klick, alles weg.
+
 ---
 
 ### faq_privacy_002
@@ -174,6 +208,12 @@ Für Nachrichten nutzen wir In-App-Benachrichtigungen (wenn du eingeloggt bist) 
 You log in with Google — that gives us a token, but we don't store your name or email.
 
 For messages, we use in-app notifications (when you're logged in) or browser push (if you allow it). Works without email.
+
+
+**answer_sie_de:**
+Sie loggst Sie mit Google ein — das gibt uns einen Token, aber wir speichern weder Ihren Namen noch Ihre E-Mail.
+
+Für Nachrichten nutzen wir In-App-Benachrichtigungen (wenn Sie eingeloggt sind) oder Browser-Push (wenn Sie es erlaubst). Funktioniert ohne E-Mail.
 
 ---
 
@@ -197,6 +237,12 @@ Yes. Under "My Account" → "Delete Data" you can remove everything. Your profil
 
 This is permanent. We can't restore anything.
 
+
+**answer_sie_de:**
+Ja. Unter "Mein Konto" → "Daten löschen" können Sie alles entfernen. Ihr Profil, Ihre Matches, Ihre History — alles weg.
+
+Das ist endgültig. Wir können nichts wiederherstellen.
+
 ---
 
 ### faq_privacy_004
@@ -216,6 +262,12 @@ Wir haben keine Investoren, die das verlangen. Keine Werbung, die es braucht. De
 No. Never.
 
 We have no investors demanding it. No ads that need it. Your data belongs to you.
+
+
+**answer_sie_de:**
+Nein. Niemals.
+
+Wir haben keine Investoren, die das verlangen. Keine Werbung, die es braucht. Ihre Daten gehören Ihnen.
 
 ---
 
@@ -245,6 +297,14 @@ Then I compare that with thousands of job postings — and show you which ones f
 
 If you want, I'll accompany you through the whole process — from search to application.
 
+
+**answer_sie_de:**
+Sie laden Ihr Profil hoch oder erzählen mir von Ihren Skills. Ich verstehe, was Sie können.
+
+Dann vergleiche ich das mit Tausenden von Stellenangeboten — und zeige Ihnen, welche passen und warum. Sie sehen nicht nur "Match 78%", sondern auch *warum* es passt und was fehlt.
+
+Wenn Sie wollen, begleite ich Sie durch den ganzen Prozess — von der Suche bis zur Bewerbung.
+
 ---
 
 ### faq_how_002
@@ -266,6 +326,12 @@ Die Prozentzahl zeigt, wie gut dein Profil zu den Anforderungen passt. Bei jedem
 I compare your skills with the job requirements — not just keywords, but semantically. "Python developer" matches "Backend Developer (Python)" even if the words are different.
 
 The percentage shows how well your profile fits the requirements. For each match, I also explain *what* fits and *what's* missing.
+
+
+**answer_sie_de:**
+Ich vergleiche Ihre Skills mit den Anforderungen der Stelle — nicht nur Schlagwörter, sondern semantisch. "Python-Entwickler" matcht mit "Backend Developer (Python)" auch wenn die Wörter verschieden sind.
+
+Die Prozentzahl zeigt, wie gut Ihr Profil zu den Anforderungen passt. Bei jedem Match erkläre ich auch, *was* passt und *was* fehlt.
 
 ---
 
@@ -291,6 +357,14 @@ You show up, you practice, you grow. That's the idea.
 
 (And yes, the name has nothing to do with stretching.)
 
+
+**answer_sie_de:**
+Bei uns heißen Jobsuchende "Yogis" — Menschen auf einem Weg. Jobsuche ist eine Praxis, kein einmaliger Vorgang.
+
+Sie zeigst auf, Sie übst, Sie wächst. Das ist die Idee.
+
+(Und ja, der Name hat nichts mit Dehnübungen zu tun.)
+
 ---
 
 ## PROFILE
@@ -315,6 +389,12 @@ Click "Profile" then "Upload CV". PDF or Word works.
 
 I read the document, extract your skills, then delete the original. You'll see a summary afterwards — check it and correct anything that's wrong.
 
+
+**answer_sie_de:**
+Klick auf "Profil" und dann "Lebenslauf hochladen". PDF oder Word funktioniert.
+
+Ich lese das Dokument, extrahiere Ihre Skills, und lösche dann das Original. Sie sehen danach eine Zusammenfassung — prüf sie und korrigiere, was nicht stimmt.
+
 ---
 
 ### faq_profile_002
@@ -337,6 +417,12 @@ Under "Profile" you can add, change, or remove skills anytime. You can also set 
 
 Changes affect your matches immediately.
 
+
+**answer_sie_de:**
+Unter "Profil" können Sie jederzeit Skills hinzufügen, ändern oder entfernen. Sie können auch Präferenzen setzen — Standort, Remote, Gehaltsvorstellung.
+
+Änderungen wirken sich sofort auf Ihre Matches aus.
+
 ---
 
 ### faq_profile_003
@@ -358,6 +444,12 @@ Wenn etwas fehlt oder falsch ist, kannst du es dort korrigieren. Ich lerne dazu.
 Under "Profile" you can see all the skills I recognized — with years of experience and domain.
 
 If something's missing or wrong, you can correct it there. I learn from that.
+
+
+**answer_sie_de:**
+Unter "Profil" sehen Sie alle Skills, die ich erkannt habe — mit Jahren Erfahrung und Fachbereich.
+
+Wenn etwas fehlt oder falsch ist, können Sie es dort korrigieren. Ich lerne dazu.
 
 ---
 
@@ -382,6 +474,12 @@ Du kannst filtern nach Standort, Branche, Remote-Option und mehr.
 Under "Matches" you'll find all positions that fit your profile — sorted by match quality.
 
 You can filter by location, industry, remote option, and more.
+
+
+**answer_sie_de:**
+Unter "Matches" finden Sie alle Stellen, die zu Ihrem Profil passen — sortiert nach Übereinstimmung.
+
+Sie können filtern nach Standort, Branche, Remote-Option und mehr.
 
 ---
 
@@ -411,6 +509,15 @@ For each match I show you:
 
 Nothing is a black box.
 
+
+**answer_sie_de:**
+Bei jedem Match zeige ich Ihnen:
+- ✓ Was passt (Ihre Skills vs. ihre Anforderungen)
+- ✗ Was fehlt (Skills, die sie wollen, die Sie nicht haben)
+- Meine Einschätzung (Chancen, Hinweise)
+
+Nichts ist eine Black Box.
+
 ---
 
 ### faq_matches_003
@@ -439,6 +546,15 @@ This can have several reasons:
 
 Try completing your profile or loosening the filters. If that doesn't help, write me — I'll look into it.
 
+
+**answer_sie_de:**
+Das kann verschiedene Gründe haben:
+- Ihr Profil ist noch unvollständig
+- Ihre Anforderungen sind sehr spezifisch
+- In Ihrer Region gibt es gerade wenig Passendes
+
+Versuch, Ihr Profil zu ergänzen oder die Filter zu lockern. Wenn das nicht hilft, schreib mir — ich schau mir das an.
+
 ---
 
 ## MARKET / SOURCES
@@ -463,6 +579,12 @@ Currently we pull jobs from the Federal Employment Agency (arbeitsagentur.de) �
 
 More sources are planned.
 
+
+**answer_sie_de:**
+Aktuell ziehen wir Stellen von der Bundesagentur für Arbeit (arbeitsagentur.de) — das sind über 30.000 aktive Angebote aus ganz Deutschland.
+
+Weitere Quellen sind in Planung.
+
 ---
 
 ### faq_market_002
@@ -486,6 +608,12 @@ Germany only for now. We work with German sources and German labor law.
 
 Austria and Switzerland are interesting — but not there yet.
 
+
+**answer_sie_de:**
+Im Moment nur Deutschland. Wir arbeiten mit deutschen Quellen und deutschem Arbeitsrecht.
+
+Österreich und Schweiz sind interessant — aber noch nicht so weit.
+
 ---
 
 ### faq_market_003
@@ -507,6 +635,12 @@ Wenn eine Stelle nicht mehr verfügbar ist, siehst du das.
 We update daily. New jobs come in, expired ones are removed.
 
 If a listing is no longer available, you'll see that.
+
+
+**answer_sie_de:**
+Wir aktualisieren jeden Tag. Neue Stellen kommen rein, abgelaufene werden entfernt.
+
+Wenn eine Stelle nicht mehr verfügbar ist, sehen Sie das.
 
 ---
 
@@ -536,6 +670,14 @@ I'm Mira — your companion at talent.yoga.
 Yes, I'm an AI. But not one that just answers questions. I accompany you through the job search — explain, remind, support.
 
 I don't have feelings, but I'm on your side.
+
+
+**answer_sie_de:**
+Ich bin Mira — Ihre Begleiterin bei talent.yoga.
+
+Ja, ich bin eine KI. Aber keine, die einfach nur Fragen beantwortet. Ich begleite Sie durch die Jobsuche — erkläre, erinnere, unterstütze.
+
+Ich habe keine Gefühle, aber ich bin auf Ihrer Seite.
 
 ---
 
@@ -569,6 +711,17 @@ I can:
 
 What I can't do: legal advice, negotiate your salary, or predict whether you'll get a job.
 
+
+**answer_sie_de:**
+Ich kann:
+- Ihnen zeigen, wie talent.yoga funktioniert
+- Ihre Fragen zu Stellen beantworten
+- Erklären, warum ein Job zu Ihnen passt (oder nicht)
+- Sie an offene Bewerbungen erinnern
+- Allgemeine Tipps zur Jobsuche geben
+
+Was ich nicht kann: Rechtsberatung, Gehaltsverhandlung führen, oder vorhersagen, ob Sie einen Job bekommen.
+
 ---
 
 ### faq_mira_003
@@ -590,6 +743,12 @@ Zwischen Sitzungen — noch nicht vollständig. Aber ich kenne dein Profil, dein
 Within our conversation — yes. I know what we've been discussing.
 
 Between sessions — not fully yet. But I know your profile, matches, and application history. The important things I don't forget.
+
+
+**answer_sie_de:**
+Innerhalb unseres Gesprächs — ja. Ich weiß, was wir gerade besprochen haben.
+
+Zwischen Sitzungen — noch nicht vollständig. Aber ich kenne Ihr Profil, Ihre Matches und Ihre Bewerbungshistorie. Das Wichtigste vergesse ich nicht.
 
 ---
 
@@ -623,6 +782,16 @@ Doug is our research specialist. When you click "Research" on a job, Doug goes a
 
 It takes a while — Doug is thorough.
 
+
+**answer_sie_de:**
+Doug ist unser Recherche-Spezialist. Wenn Sie bei einer Stelle auf "Recherchieren" klickst, geht Doug los und gräbt tiefer:
+- Infos über das Unternehmen
+- Aktuelle Nachrichten
+- Erfahrungsberichte
+- Posting-Historie ("Diese Firma hat 12 offene Stellen seit 90 Tagen...")
+
+Das dauert eine Weile — Doug ist gründlich.
+
 ---
 
 ### faq_doug_002
@@ -648,6 +817,14 @@ Depends on your tier:
 - Standard: Normal — about 24 hours
 
 You'll get a message when Doug is done.
+
+
+**answer_sie_de:**
+Kommt auf Ihren Tarif an:
+- Premium: Priorität — ca. 2 Stunden
+- Standard: Normal — ca. 24 Stunden
+
+Sie bekommen eine Nachricht, sobald Doug fertig ist.
 
 ---
 
@@ -679,6 +856,15 @@ Adele is our interview coach. She helps you prepare for conversations:
 
 After the interview, she wants to know how it went — she follows your journey.
 
+
+**answer_sie_de:**
+Adele ist unsere Interview-Coachin. Sie hilft Ihnen, Sie auf Gespräche vorzubereiten:
+- Typische Fragen für die Stelle
+- Feedback zu Ihren Antworten
+- Was Sie über das Unternehmen wissen solltest
+
+Nach dem Gespräch will sie wissen, wie es gelaufen ist — sie verfolgt Ihre Reise mit.
+
 ---
 
 ### faq_adele_002
@@ -704,6 +890,14 @@ Go to a job you've applied to and click "Coaching with Adele".
 Adele asks you questions like they might come up in the real interview. You answer. She gives feedback.
 
 It's like a trial run — just without the nerves.
+
+
+**answer_sie_de:**
+Geh zu einer Stelle, auf die Sie Sie beworben haben, und klick auf "Coaching mit Adele".
+
+Adele stellt Ihnen Fragen, wie sie im echten Gespräch kommen könnten. Sie antwortest. Sie gibt Ihnen Feedback.
+
+Es ist wie ein Probelauf — nur ohne die Nervosität.
 
 ---
 
@@ -739,6 +933,16 @@ Under "My Journey" you can see where you stand:
 
 Job searching often feels like screaming into the void. Here you see: you're making progress.
 
+
+**answer_sie_de:**
+Unter "Meine Reise" sehen Sie, wo Sie stehst:
+- Wie viele Stellen Sie angeschaut haben
+- Wo Sie Sie beworben haben
+- Was noch offen ist
+- Wie es bei vergangenen Bewerbungen gelaufen ist
+
+Jobsuche fühlt sich oft an wie ins Leere zu schreien. Hier sehen Sie: Sie machst Fortschritte.
+
 ---
 
 ### faq_journey_002
@@ -771,6 +975,17 @@ If you've applied: Wait — and maybe practice with Adele.
 
 I'll always tell you what makes sense next.
 
+
+**answer_sie_de:**
+Das hängt davon ab, wo Sie gerade stehst.
+
+Wenn Sie neu sind: Profil vervollständigen.
+Wenn Sie Matches haben: Durchschauen, Favoriten markieren.
+Wenn Sie Favoriten haben: Bei interessanten Stellen Doug beauftragen.
+Wenn Sie Sie beworben haben: Warten — und vielleicht mit Adele üben.
+
+Ich sage Ihnen immer, was als nächstes sinnvoll wäre.
+
 ---
 
 ## CONTACT
@@ -796,6 +1011,12 @@ Easiest: Write me here in the chat. If I can't help, I'll pass it on.
 
 For everything else: support@talent.yoga
 
+
+**answer_sie_de:**
+Am einfachsten: Schreib mir hier im Chat. Wenn ich nicht weiterhelfen kann, leite ich weiter.
+
+Für alles andere: support@talent.yoga
+
 ---
 
 ### faq_contact_002
@@ -816,6 +1037,12 @@ Für dringende Fragen schreib an support@talent.yoga — wir antworten so schnel
 Not currently. We're a small team.
 
 For urgent questions, write to support@talent.yoga — we respond as fast as we can.
+
+
+**answer_sie_de:**
+Aktuell nicht. Wir sind ein kleines Team.
+
+Für dringende Fragen schreib an support@talent.yoga — wir antworten so schnell wir können.
 
 ---
 
@@ -847,6 +1074,14 @@ For employment law questions, the employment agency or a specialized lawyer is b
 
 Can I help you with something else?
 
+
+**answer_sie_de:**
+Das ist eine rechtliche Frage — da bin ich nicht die Richtige.
+
+Für arbeitsrechtliche Fragen ist die Arbeitsagentur oder ein Fachanwalt der bessere Ansprechpartner.
+
+Kann ich Ihnen bei etwas anderem helfen?
+
 ---
 
 ### faq_boundary_002
@@ -868,6 +1103,12 @@ Was ich tun kann: Dir Gehaltsspannen zeigen, die für ähnliche Stellen typisch 
 I can't negotiate salary for you — that's something you have to do yourself.
 
 What I can do: Show you salary ranges typical for similar positions. That gives you at least some orientation.
+
+
+**answer_sie_de:**
+Ich kann Ihnen keine Gehaltsverhandlung abnehmen — das müssen Sie selbst machen.
+
+Was ich tun kann: Ihnen Gehaltsspannen zeigen, die für ähnliche Stellen typisch sind. Das gibt Ihnen zumindest eine Orientierung.
 
 ---
 
@@ -892,6 +1133,12 @@ Was ich sagen kann: Dein Profil passt zu X% auf die Anforderungen. Das ist ein D
 I can't predict that — it depends on too many factors I don't know.
 
 What I can say: Your profile matches X% of the requirements. That's a data point, not a guarantee.
+
+
+**answer_sie_de:**
+Das kann ich nicht vorhersagen — es hängt von zu vielen Faktoren ab, die ich nicht kenne.
+
+Was ich sagen kann: Ihr Profil passt zu X% auf die Anforderungen. Das ist ein Datenpunkt, keine Garantie.
 
 ---
 
@@ -928,6 +1175,17 @@ I'm an AI and can't provide psychological support. But here are places that can 
 
 You're not alone. Get support.
 
+
+**answer_sie_de:**
+Das tut mir leid zu hören. Jobsuche kann wirklich belastend sein.
+
+Ich bin eine KI und kann keine psychologische Unterstützung geben. Aber hier sind Anlaufstellen, die helfen können:
+
+- Telefonseelsorge: 0800 111 0 111 (kostenlos, 24/7)
+- Arbeitsagentur: Auch für persönliche Beratung
+
+Sie sind nicht allein. Hol Ihnen Unterstützung.
+
 ---
 
 ## MISCELLANEOUS
@@ -950,6 +1208,12 @@ Not yet — but talent.yoga works in the mobile browser too.
 
 A proper app is planned.
 
+
+**answer_sie_de:**
+Noch nicht — aber talent.yoga funktioniert auch im mobilen Browser.
+
+Eine richtige App ist geplant.
+
 ---
 
 ### faq_misc_002
@@ -965,6 +1229,10 @@ Gibt es! Unter "Einstellungen" kannst du zwischen Hell und Dunkel wählen.
 
 **answer_en:**
 There is! Under "Settings" you can choose between light and dark.
+
+
+**answer_sie_de:**
+Gibt es! Unter "Einstellungen" können Sie zwischen Hell und Dunkel wählen.
 
 ---
 
@@ -987,6 +1255,12 @@ Oder per Mail an feedback@talent.yoga.
 Yes, please! Just write me here — I collect everything and pass it on.
 
 Or email feedback@talent.yoga.
+
+
+**answer_sie_de:**
+Ja, gerne! Schreib mir einfach hier — ich sammle alles und gebe es weiter.
+
+Oder per Mail an feedback@talent.yoga.
 
 ---
 
