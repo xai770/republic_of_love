@@ -1,0 +1,563 @@
+#!/usr/bin/env python3
+"""
+Test Harness - Direct task_type/actor testing without daemon
+
+Enables fast iteration on workflow components:
+- Call script actors directly with controlled input
+- Test branch conditions against output
+- No queue, no daemon, no waiting
+
+Usage:
+    from tests.harness import Harness
+    
+    h = Harness()
+    
+    # Test a script actor directly
+    result = h.run_actor('wf2010_compare', {
+        'clara_a': {'folder_id': 39070, 'folder_name': 'programming'},
+        'clara_b': {'folder_id': 39071, 'folder_name': 'soft_skills'},
+        'skill_name': 'python'
+    })
+    assert result['match'] == False
+    
+    # Test which branch would be taken
+    branches = h.evaluate_branches('wf2010_compare', result)
+    assert branches[0]['next_task_type_name'] == 'wf2010_arbitrate'
+    
+    # Test full task_type chain
+    trace = h.run_chain('wf2010_classify', {'skill_name': 'python'}, max_steps=5)
+
+Author: Arden (GitHub Copilot)
+Date: January 1, 2026
+"""
+
+import os
+import sys
+import json
+import subprocess
+from pathlib import Path
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass, field
+
+# Ensure workspace root is in path
+WORKSPACE_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(WORKSPACE_ROOT))
+
+from core.database import get_connection
+
+
+@dataclass
+class BranchResult:
+    """Result of branch evaluation."""
+    route_id: int
+    route_name: str
+    branch_condition: str
+    branch_priority: int
+    matched: bool
+    next_task_type_id: Optional[int]
+    next_task_type_name: Optional[str]
+
+
+@dataclass 
+class TraceStep:
+    """One step in a task_type chain trace."""
+    task_type_name: str
+    actor_name: str
+    actor_type: str
+    input: Dict[str, Any]
+    output: Dict[str, Any]
+    branches_evaluated: List[BranchResult]
+    next_task_type: Optional[str]
+
+
+class Harness:
+    """Test harness for direct actor invocation and branch testing."""
+    
+    def __init__(self):
+        """Initialize harness with database connection."""
+        # get_connection() returns a context manager, need to enter it
+        self._conn_context = get_connection()
+        self.conn = self._conn_context.__enter__()
+        self._actor_cache = {}
+        self._task_type_cache = {}
+    
+    def close(self):
+        """Close database connection."""
+        if hasattr(self, '_conn_context'):
+            self._conn_context.__exit__(None, None, None)
+    
+    def run_actor(
+        self, 
+        actor_name: str, 
+        input_data: Dict[str, Any],
+        timeout: int = 60
+    ) -> Dict[str, Any]:
+        """
+        Run a script actor directly with given input.
+        
+        Args:
+            actor_name: Name of actor (e.g., 'wf2010_compare')
+            input_data: Input dict to pass to actor
+            timeout: Execution timeout in seconds
+            
+        Returns:
+            Actor output dict
+            
+        Raises:
+            ValueError: If actor not found or not a script actor
+            RuntimeError: If script execution fails
+        """
+        actor = self._get_actor(actor_name)
+        
+        if actor['actor_type'] not in ('script', 'thick'):
+            raise ValueError(f"Actor '{actor_name}' is type '{actor['actor_type']}', not 'script' or 'thick'")
+        
+        script_path = actor.get('script_file_path')
+        if not script_path:
+            raise ValueError(f"Actor '{actor_name}' has no script_file_path")
+        
+        full_path = WORKSPACE_ROOT / script_path
+        if not full_path.exists():
+            raise ValueError(f"Script not found: {full_path}")
+        
+        # Execute script with input via stdin
+        env = os.environ.copy()
+        env['PYTHONPATH'] = str(WORKSPACE_ROOT) + ':' + env.get('PYTHONPATH', '')
+        
+        try:
+            result = subprocess.run(
+                ['python3', full_path],
+                input=json.dumps(input_data),
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=True,
+                env=env
+            )
+            return json.loads(result.stdout)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Script failed (exit {e.returncode}):\n{e.stderr}")
+        except json.JSONDecodeError as e:
+            raise RuntimeError(f"Invalid JSON output: {e}\nStdout: {result.stdout[:500]}")
+        except subprocess.TimeoutExpired:
+            raise RuntimeError(f"Script timed out after {timeout}s")
+    
+    def run_task_type(
+        self,
+        task_type_name: str,
+        input_data: Dict[str, Any],
+        timeout: int = 60
+    ) -> Dict[str, Any]:
+        """
+        Run a task_type's actor directly.
+        
+        Looks up task_type → actor, then calls run_actor.
+        
+        Args:
+            task_type_name: Name of task_type (e.g., 'wf2010_compare')
+            input_data: Input dict
+            timeout: Execution timeout
+            
+        Returns:
+            Actor output dict
+        """
+        conv = self._get_task_type(task_type_name)
+        actor = self._get_actor_by_id(conv['actor_id'])
+        return self.run_actor(actor['actor_name'], input_data, timeout)
+    
+    def evaluate_branches(
+        self,
+        task_type_name: str,
+        output: Dict[str, Any]
+    ) -> List[BranchResult]:
+        """
+        Evaluate which branches would match given an output.
+        
+        Args:
+            task_type_name: Name of task_type
+            output: Output dict to evaluate against branch conditions
+            
+        Returns:
+            List of BranchResult with match status for each branch
+        """
+        conv = self._get_task_type(task_type_name)
+        
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT 
+                ist.route_id,
+                ist.route_name,
+                ist.branch_condition,
+                ist.branch_priority,
+                ist.next_task_type_id,
+                nc.task_type_name as next_task_type_name
+            FROM task_routes ist
+            JOIN instructions i ON ist.instruction_id = i.instruction_id
+            LEFT JOIN task_types nc ON ist.next_task_type_id = nc.task_type_id
+            WHERE i.task_type_id = %s AND ist.enabled = TRUE
+            ORDER BY ist.branch_priority DESC
+        """, (conv['task_type_id'],))
+        
+        steps = cursor.fetchall()
+        cursor.close()
+        
+        # Evaluate each branch
+        response_str = json.dumps(output)
+        results = []
+        
+        for step in steps:
+            matched = self._evaluate_condition(response_str, step['branch_condition'])
+            results.append(BranchResult(
+                route_id=step['route_id'],
+                route_name=step['route_name'],
+                branch_condition=step['branch_condition'],
+                branch_priority=step['branch_priority'],
+                matched=matched,
+                next_task_type_id=step['next_task_type_id'],
+                next_task_type_name=step['next_task_type_name']
+            ))
+        
+        return results
+    
+    def get_winning_branch(
+        self,
+        task_type_name: str,
+        output: Dict[str, Any]
+    ) -> Optional[BranchResult]:
+        """
+        Get the branch that would win (highest priority match).
+        
+        Uses same priority-based logic as the daemon.
+        
+        Args:
+            task_type_name: Name of task_type
+            output: Output dict
+            
+        Returns:
+            Winning BranchResult or None if no matches
+        """
+        branches = self.evaluate_branches(task_type_name, output)
+        for branch in branches:  # Already sorted by priority DESC
+            if branch.matched:
+                return branch
+        return None
+    
+    def run_chain(
+        self,
+        start_task_type: str,
+        input_data: Dict[str, Any],
+        max_steps: int = 10,
+        timeout: int = 60
+    ) -> List[TraceStep]:
+        """
+        Run a chain of task_types, following branches.
+        
+        Starts with start_task_type, runs actor, evaluates branches,
+        follows winning branch to next task_type, repeat.
+        
+        Args:
+            start_task_type: Name of starting task_type
+            input_data: Initial input
+            max_steps: Maximum steps to prevent infinite loops
+            timeout: Per-actor timeout
+            
+        Returns:
+            List of TraceStep showing the execution path
+        """
+        trace = []
+        current_conv = start_task_type
+        current_input = input_data
+        
+        for step in range(max_steps):
+            conv = self._get_task_type(current_conv)
+            actor = self._get_actor_by_id(conv['actor_id'])
+            
+            # Run actor
+            if actor['actor_type'] in ('script', 'thick'):
+                try:
+                    output = self.run_actor(actor['actor_name'], current_input, timeout)
+                except Exception as e:
+                    output = {'error': str(e)}
+            else:
+                output = {'skipped': f"Actor type '{actor['actor_type']}' not supported in harness"}
+            
+            # Evaluate branches
+            branches = self.evaluate_branches(current_conv, output)
+            winner = None
+            for b in branches:
+                if b.matched:
+                    winner = b
+                    break
+            
+            # Record trace step
+            trace.append(TraceStep(
+                task_type_name=current_conv,
+                actor_name=actor['actor_name'],
+                actor_type=actor['actor_type'],
+                input=current_input,
+                output=output,
+                branches_evaluated=branches,
+                next_task_type=winner.next_task_type_name if winner else None
+            ))
+            
+            # Follow winner or stop
+            if not winner or not winner.next_task_type_id:
+                break
+            
+            current_conv = winner.next_task_type_name
+            # Pass output as parent_output in next input
+            current_input = {
+                'parent_output': output,
+                **{k: v for k, v in input_data.items() if k not in ['parent_output']}
+            }
+        
+        return trace
+    
+    def _get_actor(self, actor_name: str) -> Dict[str, Any]:
+        """Get actor by name (cached)."""
+        if actor_name not in self._actor_cache:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                SELECT actor_id, actor_name, actor_type, script_file_path,
+                       execution_path, execution_config
+                FROM actors
+                WHERE actor_name = %s
+            """, (actor_name,))
+            row = cursor.fetchone()
+            cursor.close()
+            if not row:
+                raise ValueError(f"Actor '{actor_name}' not found")
+            self._actor_cache[actor_name] = dict(row)
+        return self._actor_cache[actor_name]
+    
+    def _get_actor_by_id(self, actor_id: int) -> Dict[str, Any]:
+        """Get actor by ID (cached)."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT actor_id, actor_name, actor_type, script_file_path,
+                   execution_path, execution_config
+            FROM actors
+            WHERE actor_id = %s
+        """, (actor_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        if not row:
+            raise ValueError(f"Actor ID {actor_id} not found")
+        actor = dict(row)
+        self._actor_cache[actor['actor_name']] = actor
+        return actor
+    
+    def _get_task_type(self, task_type_name: str) -> Dict[str, Any]:
+        """Get task_type by name (cached)."""
+        if task_type_name not in self._task_type_cache:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                SELECT task_type_id, task_type_name, actor_id
+                FROM task_types
+                WHERE task_type_name = %s
+            """, (task_type_name,))
+            row = cursor.fetchone()
+            cursor.close()
+            if not row:
+                raise ValueError(f"TaskType '{task_type_name}' not found")
+            self._task_type_cache[task_type_name] = dict(row)
+        return self._task_type_cache[task_type_name]
+    
+    def _evaluate_condition(self, response: str, condition: str) -> bool:
+        """
+        Evaluate branch condition against response.
+        
+        Same logic as task_log_creator._evaluate_branch_condition
+        """
+        if not condition:
+            return False
+        
+        condition = condition.strip()
+        
+        # Wildcard always matches
+        if condition == '*':
+            return True
+        
+        # Default always matches
+        if condition.lower() == 'default':
+            return True
+        
+        # Contains pattern: "contains:SOME_TEXT"
+        if condition.lower().startswith('contains:'):
+            search_text = condition[9:]
+            return search_text in response
+        
+        # JSON field check: "field": value or "field": true
+        # This handles conditions like '"match": true' or '"new_folder": true'
+        if condition.startswith('"') and ':' in condition:
+            return condition in response
+        
+        # Bracket markers: [PASS], [FAIL], etc.
+        if condition.startswith('[') and condition.endswith(']'):
+            return condition in response
+        
+        # Fallback: substring match
+        return condition in response
+
+
+# === CLI Interface ===
+
+def main():
+    """CLI for quick testing."""
+    import argparse
+    import random
+    
+    parser = argparse.ArgumentParser(
+        description='Test harness for workflow actors',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    turing-harness run my_actor --input '{"posting_id": 123}'
+    turing-harness run my_actor --sample 5       # Random sample of 5 subjects
+    turing-harness branches task_type --input '{"success": true}'
+    turing-harness chain start_task --max-steps 10
+        """
+    )
+    parser.add_argument('command', choices=['run', 'branches', 'chain', 'sample'],
+                       help='Command to run')
+    parser.add_argument('name', help='Actor or task_type name')
+    parser.add_argument('--input', '-i', help='JSON input (or @file.json)')
+    parser.add_argument('--sample', '-s', type=int,
+                       help='Run on N random samples from work_query')
+    parser.add_argument('--max-steps', type=int, default=10,
+                       help='Max steps for chain command')
+    parser.add_argument('--verbose', '-v', action='store_true',
+                       help='Verbose output')
+    
+    args = parser.parse_args()
+    
+    # Parse input
+    if args.input:
+        if args.input.startswith('@'):
+            with open(args.input[1:]) as f:
+                input_data = json.load(f)
+        else:
+            input_data = json.loads(args.input)
+    else:
+        input_data = {}
+    
+    h = Harness()
+    
+    try:
+        if args.command == 'run':
+            if args.sample:
+                # Run on N random samples from work_query
+                run_samples(h, args.name, args.sample, args.verbose)
+            else:
+                result = h.run_actor(args.name, input_data)
+                print(json.dumps(result, indent=2))
+        
+        elif args.command == 'sample':
+            # Alias for run --sample
+            count = args.sample or 3
+            run_samples(h, args.name, count, args.verbose)
+        
+        elif args.command == 'branches':
+            # For branches, input is the OUTPUT to evaluate
+            branches = h.evaluate_branches(args.name, input_data)
+            for b in branches:
+                status = '✓' if b.matched else '✗'
+                print(f"{status} [{b.branch_priority}] {b.branch_condition} → {b.next_task_type_name}")
+        
+        elif args.command == 'chain':
+            trace = h.run_chain(args.name, input_data, max_steps=args.max_steps)
+            for i, step in enumerate(trace):
+                print(f"\n=== Step {i+1}: {step.task_type_name} ===")
+                print(f"Actor: {step.actor_name} ({step.actor_type})")
+                print(f"Input: {json.dumps(step.input, indent=2)[:200]}...")
+                print(f"Output: {json.dumps(step.output, indent=2)[:200]}...")
+                if step.next_task_type:
+                    print(f"→ Next: {step.next_task_type}")
+                else:
+                    print("→ END")
+    finally:
+        h.close()
+
+
+def run_samples(harness: Harness, name: str, count: int, verbose: bool = False):
+    """Run actor on N random samples from its work_query."""
+    import random
+    
+    # Get task_type to find work_query
+    task_type = harness._get_task_type(name)
+    
+    # Get work_query
+    cur = harness.conn.cursor()
+    cur.execute("""
+        SELECT work_query FROM task_types WHERE task_type_id = %s
+    """, (task_type['task_type_id'],))
+    row = cur.fetchone()
+    
+    if not row or not row['work_query']:
+        print(f"❌ No work_query found for task_type '{name}'")
+        return
+    
+    work_query = row['work_query']
+    
+    # Execute work_query to get available subjects
+    try:
+        # Add LIMIT to avoid huge queries
+        if 'LIMIT' not in work_query.upper():
+            work_query = f"SELECT * FROM ({work_query}) sq LIMIT 1000"
+        cur.execute(work_query)
+        subjects = cur.fetchall()
+    except Exception as e:
+        print(f"❌ Error executing work_query: {e}")
+        return
+    
+    if not subjects:
+        print(f"⚠️  No subjects available from work_query")
+        return
+    
+    # Sample randomly
+    sample_size = min(count, len(subjects))
+    samples = random.sample(subjects, sample_size)
+    
+    print(f"\n🎲 Running {name} on {sample_size} random samples:")
+    print("=" * 60)
+    
+    successes = 0
+    failures = 0
+    
+    for i, subject in enumerate(samples, 1):
+        # Build input from subject row
+        subject_dict = dict(subject)
+        subject_id = subject_dict.get('subject_id') or subject_dict.get('posting_id') or list(subject_dict.values())[0]
+        
+        print(f"\n[{i}/{sample_size}] Subject: {subject_id}")
+        
+        try:
+            # Get actor and run
+            actor = harness._get_actor_by_id(task_type['actor_id'])
+            result = harness.run_actor(actor['actor_name'], subject_dict)
+            
+            success = result.get('success', False)
+            if success:
+                successes += 1
+                print(f"  ✅ Success")
+            else:
+                failures += 1
+                error = result.get('error', result.get('skip_reason', 'Unknown'))
+                print(f"  ❌ Failed: {error[:60]}")
+            
+            if verbose:
+                print(f"  Output: {json.dumps(result, indent=2)[:300]}...")
+                
+        except Exception as e:
+            failures += 1
+            print(f"  💥 Exception: {e}")
+    
+    # Summary
+    print("\n" + "=" * 60)
+    print(f"Summary: {successes} succeeded, {failures} failed")
+    if successes + failures > 0:
+        print(f"Success rate: {successes / (successes + failures) * 100:.1f}%")
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,77 @@
+{
+  "task_type_id": 9384,
+  "task_type_name": "requirements_extract",
+  "script_path": "thick_actors/postings__extracted_requirements_U.py",
+  "generated_at": "2026-01-18T17:10:27.700242",
+  "samples_per_quadrant": 2,
+  "schema": {
+    "actor_path": "/home/xai/Documents/ty_learn/thick_actors/postings__extracted_requirements_U.py",
+    "actor_name": "requirements_extract",
+    "input": {
+      "columns": [
+        "posting_id"
+      ],
+      "table": "postings"
+    },
+    "output": {
+      "columns": [
+        "extracted_requirements",
+        "source_language",
+        "job_description_en"
+      ],
+      "table": "postings"
+    },
+    "output_fields": [
+      {
+        "name": "success",
+        "type": "bool",
+        "description": "Whether extraction completed successfully"
+      },
+      {
+        "name": "posting_id",
+        "type": "int",
+        "description": "The posting that was processed"
+      },
+      {
+        "name": "source_language",
+        "type": "str",
+        "description": "Detected language code (en, de, etc.)"
+      },
+      {
+        "name": "requirements_count",
+        "type": "int",
+        "description": "Number of verified requirements extracted"
+      },
+      {
+        "name": "rejected_count",
+        "type": "int",
+        "description": "Number of quotes that failed verification"
+      },
+      {
+        "name": "requirements_json",
+        "type": "str",
+        "description": "JSON array of verified requirements"
+      },
+      {
+        "name": "skip_reason",
+        "type": "str",
+        "description": "Reason for skipping if not processed"
+      },
+      {
+        "name": "error",
+        "type": "str",
+        "description": "Error message if failed"
+      }
+    ],
+    "task_type_id": 9384,
+    "actor_class_name": "RequirementsExtractActor"
+  },
+  "fixtures": [],
+  "summary": {
+    "total": 0,
+    "success_long": 0,
+    "success_short": 0,
+    "failures": 0,
+    "edge_cases": 0
+  }
+}

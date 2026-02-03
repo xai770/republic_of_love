@@ -1,0 +1,716 @@
+{
+  "task_type_id": 9383,
+  "task_type_name": "lily_cps_extract",
+  "script_path": null,
+  "generated_at": "2026-01-18T16:40:55.049301",
+  "samples_per_quadrant": 2,
+  "schema": null,
+  "fixtures": [
+    {
+      "category": "success_long",
+      "task_log_id": 1128861,
+      "subject_id": 11874,
+      "input": {
+        "input": {
+          "company": "deutsche_bank",
+          "job_title": "Production Engineer (f/m/x)",
+          "posting_id": 11874,
+          "skill_keywords": "[{\"name\" : \"Java\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Unix\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Python\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Shell scripting\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Ansible\", \"importance\" : \"important\", \"years_required\" : null}, {\"name\" : \"Prometheus\", \"importance\" : \"important\", \"years_required\" : null}, {\"name\" : \"Grafana\", \"importance\" : \"important\", \"years_required\" : null}, {\"name\" : \"ITIL V3 Foundation Certification\", \"importance\" : \"critical\", \"years_required\" : null}]",
+          "extracted_summary": "===OUTPUT TEMPLATE===\n**Role:** SRE Engineer (Risk-RFT Production Integrity)\n**Company:** Deutsche Bank\n**Location:** Bucharest, Romania\n\n**Key Responsibilities:**\n- Ensure system reliability through monitoring, alerting, and incident response.\n- Develop automation tools to streamline deployment and operational tasks.\n- Act as a primary responder for system outages and incidents.\n- Design and implement robust monitoring and alerting systems.\n- Identify and resolve performance bottlenecks across the stack.\n\n**Requirements:**\n- 5+ years of IT experience with a focus on SRE Production engagement.\n- Proficiency in tech stacks such as MQ, DWEB, JMS, JAVA, Oracle, Hadoop, Unix, PL/SQL, GCP, and monitoring tools.\n- DevOps experience with Linux/Unix systems and scripting languages like Python and shell.\n- Strong problem-solving skills across multiple layers (hardware, Linux, networking, application).\n- ITIL V3 Foundation certification or equivalent.\n\n**Details:**\n- Full-time position\n- Follow-the-sun support model\n- Competitive benefits including healthcare, life insurance, and flexible work arrangements"
+        },
+        "subject_id": 11874,
+        "subject_type": "posting"
+      },
+      "expected_output": {
+        "domain": "technology",
+        "success": true,
+        "cps_json": {
+          "domain": "technology",
+          "skillset": [
+            {
+              "tags": [
+                "system reliability",
+                "monitoring",
+                "incident response"
+              ],
+              "weight": 7,
+              "inferred": false,
+              "reasoning": "The job title directly mentions SRE production engineering, which is crucial for ensuring system reliability.",
+              "importance": "essential",
+              "skill_name": "sre production engineering",
+              "alternatives": null,
+              "source_phrase": "SRE Engineer (Risk-RFT Production Integrity)",
+              "experience_years": 5
+            },
+            {
+              "tags": [
+                "message queue",
+                "integration"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "MQ is mentioned in the tech stack, indicating proficiency in message queuing systems.",
+              "importance": "preferred",
+              "skill_name": "mq",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as MQ",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "distributed web",
+                "architecture"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "DWEB is mentioned in the tech stack, suggesting knowledge of distributed web architectures.",
+              "importance": "preferred",
+              "skill_name": "dweb",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as DWEB",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "java message service",
+                "integration"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "JMS is mentioned in the tech stack, indicating proficiency in Java messaging systems.",
+              "importance": "preferred",
+              "skill_name": "jms",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as JMS",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "programming",
+                "backend"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "JAVA is mentioned in the tech stack, indicating proficiency in Java programming.",
+              "importance": "preferred",
+              "skill_name": "java",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as JAVA",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "database",
+                "sql"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Oracle is mentioned in the tech stack, suggesting knowledge of database management and SQL.",
+              "importance": "preferred",
+              "skill_name": "oracle",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as Oracle",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "big data",
+                "data processing"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Hadoop is mentioned in the tech stack, indicating proficiency in big data technologies.",
+              "importance": "preferred",
+              "skill_name": "hadoop",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as Hadoop",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "operating system",
+                "scripting"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Unix is mentioned in the tech stack, suggesting proficiency in Unix-based systems.",
+              "importance": "preferred",
+              "skill_name": "unix",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as Unix",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "database",
+                "sql"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "PL/SQL is mentioned in the tech stack, indicating proficiency in Oracle PL/SQL.",
+              "importance": "preferred",
+              "skill_name": "pl/sql",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as PL/SQL",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "cloud computing",
+                "infrastructure"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "GCP is mentioned in the tech stack, suggesting knowledge of Google Cloud Platform.",
+              "importance": "preferred",
+              "skill_name": "gcp",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as GCP",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "system monitoring",
+                "alerting"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Monitoring tools are mentioned in the tech stack, indicating proficiency in system monitoring.",
+              "importance": "preferred",
+              "skill_name": "monitoring tools",
+              "alternatives": null,
+              "source_phrase": "tech stacks such as monitoring tools",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "scripting",
+                "automation"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "The job requires DevOps experience with Linux/Unix systems and scripting, indicating proficiency in these areas.",
+              "importance": "preferred",
+              "skill_name": "linux/unix scripting",
+              "alternatives": null,
+              "source_phrase": "DevOps experience with Linux/Unix systems and scripting languages like Python and shell",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "programming",
+                "automation"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Python is mentioned as a scripting language, indicating proficiency in Python.",
+              "importance": "preferred",
+              "skill_name": "python",
+              "alternatives": null,
+              "source_phrase": "scripting languages like Python and shell",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "scripting",
+                "automation"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Shell scripting is mentioned as a scripting language, indicating proficiency in shell scripting.",
+              "importance": "preferred",
+              "skill_name": "shell scripting",
+              "alternatives": null,
+              "source_phrase": "scripting languages like Python and shell",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "critical thinking",
+                "troubleshooting"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "The job requires strong problem-solving skills across various layers, indicating proficiency in critical thinking and troubleshooting.",
+              "importance": "preferred",
+              "skill_name": "problem-solving skills",
+              "alternatives": null,
+              "source_phrase": "Strong problem-solving skills across multiple layers (hardware, Linux, networking, application)",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "service management",
+                "it governance"
+              ],
+              "weight": 9,
+              "inferred": false,
+              "reasoning": "The job requires ITIL V3 Foundation certification, indicating proficiency in IT service management.",
+              "importance": "preferred",
+              "skill_name": "itil v3 foundation",
+              "alternatives": null,
+              "source_phrase": "ITIL V3 Foundation certification or equivalent",
+              "experience_years": null
+            }
+          ]
+        },
+        "llm_calls": [
+          {
+            "seed": 45,
+            "model": "qwen2.5-coder:7b",
+            "prompt": "You are **Lily**, a skill extractor for talent.yoga job matching.\n\n## Your Job\nExtract skills from job postings. Your output feeds the matching engine that helps real people find jobs.\n\n## Rules\n\n1. **VERBATIM QUOTES**: source_phrase must be copy-pasted EXACTLY from the input. If inferred, set to null.\n\n2. **RELATIVE WEIGHTS**: Assign weights based on importance (will be normalized to 100 in code). Higher = more important.\n\n3. **ONLY EXTRACT WHAT IS WRITTEN**: If it's not in the text, don't add it.\n\n4. **TAGS**: 2-4 semantic keywords for fuzzy matching (e.g., python \u2192 [\"programming\", \"scripting\", \"backend\"])\n\n5. **REASONING**: One sentence explaining WHY you extracted this skill with this weight.\n\n6. **DOMAIN**: Pick ONE word based on the employer's primary business:\n   - Bank/investment/insurance \u2192 \"finance\"\n   - Hospital/clinic/pharma \u2192 \"healthcare\"\n   - Software/IT company \u2192 \"technology\"\n   - Advisory/professional services \u2192 \"consulting\"\n   - Other \u2192 use employer's core industry\n   NEVER use pipes, slashes, or multiple domains.\n\n## Output Format\n```json\n{\n  \"domain\": \"single word lowercase\",\n  \"skillset\": [\n    {\n      \"skill_name\": \"lowercase with spaces only\",\n      \"weight\": 1-100,\n      \"alternatives\": \"group_id or null\",\n      \"experience_years\": integer or null (use LOWER number if range given, e.g. \"5-7 years\" \u2192 5),\n      \"importance\": \"essential|preferred|nice_to_have\",\n      \"source_phrase\": \"EXACT quote or null\",\n      \"inferred\": true/false,\n      \"tags\": [\"tag1\", \"tag2\"],\n      \"reasoning\": \"One sentence explanation\"\n    }\n  ]\n}\n```\n\nJSON only. No markdown fences. Start directly with {\n\n## Input\n\nCOMPANY: deutsche_bank\nJOB TITLE: Production Engineer (f/m/x)\n\nJOB SUMMARY:\n===OUTPUT TEMPLATE===\n**Role:** SRE Engineer (Risk-RFT Production Integrity)\n**Company:** Deutsche Bank\n**Location:** Bucharest, Romania\n\n**Key Responsibilities:**\n- Ensure system reliability through monitoring, alerting, and incident response.\n- Develop automation tools to streamline deployment and operational tasks.\n- Act as a primary responder for system outages and incidents.\n- Design and implement robust monitoring and alerting systems.\n- Identify and resolve performance bottlenecks across the stack.\n\n**Requirements:**\n- 5+ years of IT experience with a focus on SRE Production engagement.\n- Proficiency in tech stacks such as MQ, DWEB, JMS, JAVA, Oracle, Hadoop, Unix, PL/SQL, GCP, and monitoring tools.\n- DevOps experience with Linux/Unix systems and scripting languages like Python and shell.\n- Strong problem-solving skills across multiple layers (hardware, Linux, networking, application).\n- ITIL V3 Foundation certification or equivalent.\n\n**Details:**\n- Full-time position\n- Follow-the-sun support model\n- Competitive benefits including healthcare, life insurance, and flexible work arrangements",
+            "purpose": "lily_extract",
+            "response": "```json\n{\n  \"domain\": \"technology\",\n  \"skillset\": [\n    {\n      \"skill_name\": \"sre production engineering\",\n      \"weight\": 90,\n      \"alternatives\": null,\n      \"experience_years\": 5,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"SRE Engineer (Risk-RFT Production Integrity)\",\n      \"inferred\": false,\n      \"tags\": [\"system reliability\", \"monitoring\", \"incident response\"],\n      \"reasoning\": \"The job title directly mentions SRE production engineering, which is crucial for ensuring system reliability.\"\n    },\n    {\n      \"skill_name\": \"mq\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as MQ\",\n      \"inferred\": false,\n      \"tags\": [\"message queue\", \"integration\"],\n      \"reasoning\": \"MQ is mentioned in the tech stack, indicating proficiency in message queuing systems.\"\n    },\n    {\n      \"skill_name\": \"dweb\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as DWEB\",\n      \"inferred\": false,\n      \"tags\": [\"distributed web\", \"architecture\"],\n      \"reasoning\": \"DWEB is mentioned in the tech stack, suggesting knowledge of distributed web architectures.\"\n    },\n    {\n      \"skill_name\": \"jms\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as JMS\",\n      \"inferred\": false,\n      \"tags\": [\"java message service\", \"integration\"],\n      \"reasoning\": \"JMS is mentioned in the tech stack, indicating proficiency in Java messaging systems.\"\n    },\n    {\n      \"skill_name\": \"java\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as JAVA\",\n      \"inferred\": false,\n      \"tags\": [\"programming\", \"backend\"],\n      \"reasoning\": \"JAVA is mentioned in the tech stack, indicating proficiency in Java programming.\"\n    },\n    {\n      \"skill_name\": \"oracle\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as Oracle\",\n      \"inferred\": false,\n      \"tags\": [\"database\", \"sql\"],\n      \"reasoning\": \"Oracle is mentioned in the tech stack, suggesting knowledge of database management and SQL.\"\n    },\n    {\n      \"skill_name\": \"hadoop\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as Hadoop\",\n      \"inferred\": false,\n      \"tags\": [\"big data\", \"data processing\"],\n      \"reasoning\": \"Hadoop is mentioned in the tech stack, indicating proficiency in big data technologies.\"\n    },\n    {\n      \"skill_name\": \"unix\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as Unix\",\n      \"inferred\": false,\n      \"tags\": [\"operating system\", \"scripting\"],\n      \"reasoning\": \"Unix is mentioned in the tech stack, suggesting proficiency in Unix-based systems.\"\n    },\n    {\n      \"skill_name\": \"pl/sql\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as PL/SQL\",\n      \"inferred\": false,\n      \"tags\": [\"database\", \"sql\"],\n      \"reasoning\": \"PL/SQL is mentioned in the tech stack, indicating proficiency in Oracle PL/SQL.\"\n    },\n    {\n      \"skill_name\": \"gcp\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as GCP\",\n      \"inferred\": false,\n      \"tags\": [\"cloud computing\", \"infrastructure\"],\n      \"reasoning\": \"GCP is mentioned in the tech stack, suggesting knowledge of Google Cloud Platform.\"\n    },\n    {\n      \"skill_name\": \"monitoring tools\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as monitoring tools\",\n      \"inferred\": false,\n      \"tags\": [\"system monitoring\", \"alerting\"],\n      \"reasoning\": \"Monitoring tools are mentioned in the tech stack, indicating proficiency in system monitoring.\"\n    },\n    {\n      \"skill_name\": \"linux/unix scripting\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"DevOps experience with Linux/Unix systems and scripting languages like Python and shell\",\n      \"inferred\": false,\n      \"tags\": [\"scripting\", \"automation\"],\n      \"reasoning\": \"The job requires DevOps experience with Linux/Unix systems and scripting, indicating proficiency in these areas.\"\n    },\n    {\n      \"skill_name\": \"python\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"scripting languages like Python and shell\",\n      \"inferred\": false,\n      \"tags\": [\"programming\", \"automation\"],\n      \"reasoning\": \"Python is mentioned as a scripting language, indicating proficiency in Python.\"\n    },\n    {\n      \"skill_name\": \"shell scripting\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"scripting languages like Python and shell\",\n      \"inferred\": false,\n      \"tags\": [\"scripting\", \"automation\"],\n      \"reasoning\": \"Shell scripting is mentioned as a scripting language, indicating proficiency in shell scripting.\"\n    },\n    {\n      \"skill_name\": \"problem-solving skills\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Strong problem-solving skills across multiple layers (hardware, Linux, networking, application)\",\n      \"inferred\": false,\n      \"tags\": [\"critical thinking\", \"troubleshooting\"],\n      \"reasoning\": \"The job requires strong problem-solving skills across various layers, indicating proficiency in critical thinking and troubleshooting.\"\n    },\n    {\n      \"skill_name\": \"itil v3 foundation\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"ITIL V3 Foundation certification or equivalent\",\n      \"inferred\": false,\n      \"tags\": [\"service management\", \"it governance\"],\n      \"reasoning\": \"The job requires ITIL V3 Foundation certification, indicating proficiency in IT service management.\"\n    }\n  ]\n}\n```",
+            "elapsed_ms": 49321,
+            "temperature": 0.0,
+            "prompt_chars": 2828,
+            "response_chars": 6673
+          },
+          {
+            "seed": 45,
+            "model": "qwen2.5:7b",
+            "prompt": "You are **Sage**, a QA reviewer for skill extractions from job postings.\n\n## Your Job\nReview Lily''s skill extraction and grade it. Be strict but fair.\n\n## CRITICAL RULES\n\n1. **JUSTIFY EVERYTHING**: For EVERY skill you list as \"missing\" or \"hallucinated\", you MUST provide justification:\n   - Missing: Quote the exact phrase from the posting that mentions this skill\n   - Hallucinated: Explain why this skill cannot be inferred from the posting\n   - If you cannot provide a quote/justification, do NOT list the skill\n\n2. **INCOMPLETE \u2260 WRONG**: Being incomplete is acceptable. Being wrong is not.\n   - PASS if major skills captured, even with gaps\n   - FAIL only for genuinely wrong information\n\n3. **SELF-CHECK**: Before responding, verify:\n   - No skill appears in BOTH missing_skills AND hallucinated_skills (that''s a contradiction)\n   - Every missing skill has a quote proving it''s in the posting\n   - Every hallucinated skill has reasoning why it can''t be inferred\n\n## Grading Criteria\n\n**PASS** if:\n- Major skills from the posting are captured (some gaps are OK)\n- No WRONG information (hallucinations, wrong domain, way-off seniority)\n\n**FAIL** only if:\n- Genuinely hallucinated skills (not inferable from posting AT ALL)\n- Wrong domain (e.g., \"healthcare\" for a bank)\n- Seniority way off (e.g., level 2 for \"Senior VP\")\n\n## Output Format\n```json\n{\n  \"verdict\": \"pass\" or \"fail\",\n  \"confidence\": 1-10,\n  \"missing_skills\": [\n    {\"skill\": \"name\", \"quote\": \"exact quote from posting\"}\n  ],\n  \"hallucinated_skills\": [\n    {\"skill\": \"name\", \"reason\": \"why this cannot be inferred\"}\n  ],\n  \"issues\": [\"specific issue with justification\"],\n  \"suggested_seniority\": null or 1-7 if wrong,\n  \"suggested_domain\": null or correct domain if wrong,\n  \"notes\": \"One sentence summary\"\n}\n```\n\nJSON only. No markdown fences. Start directly with {\n\n## Review This Extraction\n\n**Job Title:** Production Engineer (f/m/x)\n**Company:** deutsche_bank\n\n**Job Summary:**\n===OUTPUT TEMPLATE===\n**Role:** SRE Engineer (Risk-RFT Production Integrity)\n**Company:** Deutsche Bank\n**Location:** Bucharest, Romania\n\n**Key Responsibilities:**\n- Ensure system reliability through monitoring, alerting, and incident response.\n- Develop automation tools to streamline deployment and operational tasks.\n- Act as a primary responder for system outages and incidents.\n- Design and implement robust monitoring and alerting systems.\n- Identify and resolve performance bottlenecks across the stack.\n\n**Requirements:**\n- 5+ years of IT experience with a focus on SRE Production engagement.\n- Proficiency in tech stacks such as MQ, DWEB, JMS, JAVA, Oracle, Hadoop, Unix, PL/SQL, GCP, and monitoring tools.\n- DevOps experience with Linux/Unix systems and scripting languages like Python and shell.\n- Strong problem-solving skills across multiple layers (hardware, Linux, networking, application).\n- ITIL V3 Foundation certification or equivalent.\n\n**Details:**\n- Full-time position\n- Follow-the-sun support model\n- Competitive benefits including healthcare, life insurance, and flexible work arrangements\n\n**Lily''s Extraction:**\n{\n  \"domain\": \"technology\",\n  \"skillset\": [\n    {\n      \"skill_name\": \"sre production engineering\",\n      \"weight\": 90,\n      \"alternatives\": null,\n      \"experience_years\": 5,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"SRE Engineer (Risk-RFT Production Integrity)\",\n      \"inferred\": false,\n      \"tags\": [\n        \"system reliability\",\n        \"monitoring\",\n        \"incident response\"\n      ],\n      \"reasoning\": \"The job title directly mentions SRE production engineering, which is crucial for ensuring system reliability.\"\n    },\n    {\n      \"skill_name\": \"mq\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as MQ\",\n      \"inferred\": false,\n      \"tags\": [\n        \"message queue\",\n        \"integration\"\n      ],\n      \"reasoning\": \"MQ is mentioned in the tech stack, indicating proficiency in message queuing systems.\"\n    },\n    {\n      \"skill_name\": \"dweb\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as DWEB\",\n      \"inferred\": false,\n      \"tags\": [\n        \"distributed web\",\n        \"architecture\"\n      ],\n      \"reasoning\": \"DWEB is mentioned in the tech stack, suggesting knowledge of distributed web architectures.\"\n    },\n    {\n      \"skill_name\": \"jms\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as JMS\",\n      \"inferred\": false,\n      \"tags\": [\n        \"java message service\",\n        \"integration\"\n      ],\n      \"reasoning\": \"JMS is mentioned in the tech stack, indicating proficiency in Java messaging systems.\"\n    },\n    {\n      \"skill_name\": \"java\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as JAVA\",\n      \"inferred\": false,\n      \"tags\": [\n        \"programming\",\n        \"backend\"\n      ],\n      \"reasoning\": \"JAVA is mentioned in the tech stack, indicating proficiency in Java programming.\"\n    },\n    {\n      \"skill_name\": \"oracle\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as Oracle\",\n      \"inferred\": false,\n      \"tags\": [\n        \"database\",\n        \"sql\"\n      ],\n      \"reasoning\": \"Oracle is mentioned in the tech stack, suggesting knowledge of database management and SQL.\"\n    },\n    {\n      \"skill_name\": \"hadoop\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as Hadoop\",\n      \"inferred\": false,\n      \"tags\": [\n        \"big data\",\n        \"data processing\"\n      ],\n      \"reasoning\": \"Hadoop is mentioned in the tech stack, indicating proficiency in big data technologies.\"\n    },\n    {\n      \"skill_name\": \"unix\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as Unix\",\n      \"inferred\": false,\n      \"tags\": [\n        \"operating system\",\n        \"scripting\"\n      ],\n      \"reasoning\": \"Unix is mentioned in the tech stack, suggesting proficiency in Unix-based systems.\"\n    },\n    {\n      \"skill_name\": \"pl/sql\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as PL/SQL\",\n      \"inferred\": false,\n      \"tags\": [\n        \"database\",\n        \"sql\"\n      ],\n      \"reasoning\": \"PL/SQL is mentioned in the tech stack, indicating proficiency in Oracle PL/SQL.\"\n    },\n    {\n      \"skill_name\": \"gcp\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as GCP\",\n      \"inferred\": false,\n      \"tags\": [\n        \"cloud computing\",\n        \"infrastructure\"\n      ],\n      \"reasoning\": \"GCP is mentioned in the tech stack, suggesting knowledge of Google Cloud Platform.\"\n    },\n    {\n      \"skill_name\": \"monitoring tools\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"tech stacks such as monitoring tools\",\n      \"inferred\": false,\n      \"tags\": [\n        \"system monitoring\",\n        \"alerting\"\n      ],\n      \"reasoning\": \"Monitoring tools are mentioned in the tech stack, indicating proficiency in system monitoring.\"\n    },\n    {\n      \"skill_name\": \"linux/unix scripting\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"DevOps experience with Linux/Unix systems and scripting languages like Python and shell\",\n      \"inferred\": false,\n      \"tags\": [\n        \"scripting\",\n        \"automation\"\n      ],\n      \"reasoning\": \"The job requires DevOps experience with Linux/Unix systems and scripting, indicating proficiency in these areas.\"\n    },\n    {\n      \"skill_name\": \"python\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"scripting languages like Python and shell\",\n      \"inferred\": false,\n      \"tags\": [\n        \"programming\",\n        \"automation\"\n      ],\n      \"reasoning\": \"Python is mentioned as a scripting language, indicating proficiency in Python.\"\n    },\n    {\n      \"skill_name\": \"shell scripting\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"scripting languages like Python and shell\",\n      \"inferred\": false,\n      \"tags\": [\n        \"scripting\",\n        \"automation\"\n      ],\n      \"reasoning\": \"Shell scripting is mentioned as a scripting language, indicating proficiency in shell scripting.\"\n    },\n    {\n      \"skill_name\": \"problem-solving skills\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Strong problem-solving skills across multiple layers (hardware, Linux, networking, application)\",\n      \"inferred\": false,\n      \"tags\": [\n        \"critical thinking\",\n        \"troubleshooting\"\n      ],\n      \"reasoning\": \"The job requires strong problem-solving skills across various layers, indicating proficiency in critical thinking and troubleshooting.\"\n    },\n    {\n      \"skill_name\": \"itil v3 foundation\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"ITIL V3 Foundation certification or equivalent\",\n      \"inferred\": false,\n      \"tags\": [\n        \"service management\",\n        \"it governance\"\n      ],\n      \"reasoning\": \"The job requires ITIL V3 Foundation certification, indicating proficiency in IT service management.\"\n    }\n  ]\n}",
+            "purpose": "sage_grade_1",
+            "response": "{\n  \"verdict\": \"pass\",\n  \"confidence\": 9,\n  \"missing_skills\": [\n    {\n      \"skill\": \"system reliability through monitoring, alerting, and incident response\",\n      \"quote\": \"- Ensure system reliability through monitoring, alerting, and incident response.\"\n    },\n    {\n      \"skill\": \"design and implement robust monitoring and alerting systems\",\n      \"quote\": \"- Design and implement robust monitoring and alerting systems.\"\n    }\n  ],\n  \"hallucinated_skills\": [],\n  \"issues\": [\n    \"The job summary mentions specific responsibilities related to system reliability, which are not directly captured in the skill extraction. These should be included for a more comprehensive review.\"\n  ],\n  \"suggested_seniority\": null,\n  \"suggested_domain\": null,\n  \"notes\": \"Major skills from the posting are captured with some gaps in the job responsibilities.\"\n}",
+            "elapsed_ms": 9913,
+            "temperature": 0.0,
+            "prompt_chars": 10148,
+            "response_chars": 850
+          }
+        ],
+        "qa_issues": [],
+        "qa_passed": true,
+        "competencies": 16,
+        "sage_history": [
+          {
+            "attempt": 1,
+            "missing": [
+              {
+                "quote": "- Ensure system reliability through monitoring, alerting, and incident response.",
+                "skill": "system reliability through monitoring, alerting, and incident response"
+              },
+              {
+                "quote": "- Design and implement robust monitoring and alerting systems.",
+                "skill": "design and implement robust monitoring and alerting systems"
+              }
+            ],
+            "verdict": "pass",
+            "confidence": 9,
+            "hallucinated": []
+          }
+        ],
+        "sage_attempts": 1,
+        "skillset_count": 16,
+        "seniority_level": null,
+        "sage_final_verdict": "pass"
+      },
+      "output_size": 28875,
+      "notes": "Complex case - long output"
+    },
+    {
+      "category": "success_long",
+      "task_log_id": 1128670,
+      "subject_id": 13695,
+      "input": {
+        "input": {
+          "company": "deutsche_bank",
+          "job_title": "Fullstack Developer .Net/SQLServer/Oracle - AVP",
+          "posting_id": 13695,
+          "skill_keywords": "[{\"name\" : \"Business Analysis\", \"importance\" : \"essential\", \"years_required\" : \"3\"}, {\"name\" : \"Project Management\", \"importance\" : \"critical\", \"years_required\" : \"2\"}, {\"name\" : \"Technical Architecture\", \"importance\" : \"essential\", \"years_required\" : \"3\"}, {\"name\" : \"Programming Languages\", \"importance\" : \"essential\", \"years_required\" : \"3\"}, {\"name\" : \"MS Applications Proficiency\", \"importance\" : \"critical\", \"years_required\" : \"2\"}, {\"name\" : \"Software Development Life Cycle (SDLC)\", \"importance\" : \"critical\", \"years_required\" : \"2\"}, {\"name\" : \"Agile Methodologies\", \"importance\" : \"important\", \"years_required\" : \"1\"}, {\"name\" : \"Communication Skills\", \"importance\" : \"critical\", \"years_required\" : \"2\"}]",
+          "extracted_summary": "**Role:** Fullstack Developer .Net/SQLServer/Oracle - AVP  \n**Company:** Deutsche Bank  \n**Location:** Pune, India  \n**Job ID:** N/A  \n\n**Key Responsibilities:**  \n- Work with various front office / middle office teams to define business challenges and translate these into business and functional requirements specifications.  \n- Develop and maintain standard project artifacts, including test cases and project plans.  \n- Analyze and document current system flows and processes to create transparency about the complexity and interdependence between systems and data.  \n- Coordinate and document change requests from the requirement to implementation.  \n- Conduct system testing and coordinate end-user testing and plan the rollout.\n\n**Requirements:**  \n- Experience working with SQL, XML, JSON, complex data/technical architecture.  \n- Experience in using programming languages like Python, VBA, .Net, C#.  \n- Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).  \n- Good understanding of SDLC and Agile methodologies.  \n- Excellent communication skills; fluent English (written and verbal).\n\n**Details:**  \n- Full-time position  \n- On-site work arrangement"
+        },
+        "subject_id": 13695,
+        "subject_type": "posting"
+      },
+      "expected_output": {
+        "domain": "finance",
+        "success": true,
+        "cps_json": {
+          "domain": "finance",
+          "skillset": [
+            {
+              "tags": [
+                "programming",
+                "backend"
+              ],
+              "weight": 10,
+              "inferred": false,
+              "reasoning": ".NET is a key technology used by Deutsche Bank for fullstack development.",
+              "importance": "essential",
+              "skill_name": ".net development",
+              "alternatives": null,
+              "source_phrase": "Experience in using programming languages like Python, VBA, .Net, C#.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "database",
+                "backend"
+              ],
+              "weight": 9,
+              "inferred": false,
+              "reasoning": "SQL Server is a critical database technology used by Deutsche Bank.",
+              "importance": "essential",
+              "skill_name": "sql server",
+              "alternatives": null,
+              "source_phrase": "Experience in using programming languages like Python, VBA, .Net, C#.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "database",
+                "backend"
+              ],
+              "weight": 9,
+              "inferred": false,
+              "reasoning": "Oracle is another key database technology used by Deutsche Bank.",
+              "importance": "essential",
+              "skill_name": "oracle",
+              "alternatives": null,
+              "source_phrase": "Experience in using programming languages like Python, VBA, .Net, C#.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "programming",
+                "scripting"
+              ],
+              "weight": 8,
+              "inferred": false,
+              "reasoning": "Python is a valuable skill for fullstack development and data analysis.",
+              "importance": "preferred",
+              "skill_name": "python",
+              "alternatives": null,
+              "source_phrase": "Experience in using programming languages like Python, VBA, .Net, C#.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "programming",
+                "scripting"
+              ],
+              "weight": 8,
+              "inferred": false,
+              "reasoning": "VBA is a useful skill for automating tasks within MS applications.",
+              "importance": "preferred",
+              "skill_name": "vba",
+              "alternatives": null,
+              "source_phrase": "Experience in using programming languages like Python, VBA, .Net, C#.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "spreadsheet",
+                "data analysis"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "While not essential, proficiency in Excel is a valuable skill for data manipulation.",
+              "importance": "nice_to_have",
+              "skill_name": "excel",
+              "alternatives": null,
+              "source_phrase": "Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "document processing",
+                "communication"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Proficiency in Word is useful for creating professional documents.",
+              "importance": "nice_to_have",
+              "skill_name": "word",
+              "alternatives": null,
+              "source_phrase": "Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "presentation",
+                "communication"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "PowerPoint is essential for creating presentations.",
+              "importance": "nice_to_have",
+              "skill_name": "powerpoint",
+              "alternatives": null,
+              "source_phrase": "Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "database",
+                "data management"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Access is a useful tool for managing data within organizations.",
+              "importance": "nice_to_have",
+              "skill_name": "access",
+              "alternatives": null,
+              "source_phrase": "Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "diagramming",
+                "project management"
+              ],
+              "weight": 6,
+              "inferred": false,
+              "reasoning": "Visio is useful for creating diagrams and flowcharts.",
+              "importance": "nice_to_have",
+              "skill_name": "visio",
+              "alternatives": null,
+              "source_phrase": "Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "project management",
+                "software development"
+              ],
+              "weight": 8,
+              "inferred": false,
+              "reasoning": "Understanding of SDLC is essential for managing software projects.",
+              "importance": "preferred",
+              "skill_name": "sdlc",
+              "alternatives": null,
+              "source_phrase": "Good understanding of SDLC and Agile methodologies.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "project management",
+                "software development"
+              ],
+              "weight": 8,
+              "inferred": false,
+              "reasoning": "Agile methodology is widely used in software development.",
+              "importance": "preferred",
+              "skill_name": "agile methodology",
+              "alternatives": null,
+              "source_phrase": "Good understanding of SDLC and Agile methodologies.",
+              "experience_years": null
+            },
+            {
+              "tags": [
+                "interpersonal",
+                "collaboration"
+              ],
+              "weight": 10,
+              "inferred": false,
+              "reasoning": "Effective communication is crucial for working in a team.",
+              "importance": "essential",
+              "skill_name": "communication skills",
+              "alternatives": null,
+              "source_phrase": "Excellent communication skills; fluent English (written and verbal).",
+              "experience_years": null
+            }
+          ]
+        },
+        "llm_calls": [
+          {
+            "seed": 45,
+            "model": "qwen2.5-coder:7b",
+            "prompt": "You are **Lily**, a skill extractor for talent.yoga job matching.\n\n## Your Job\nExtract skills from job postings. Your output feeds the matching engine that helps real people find jobs.\n\n## Rules\n\n1. **VERBATIM QUOTES**: source_phrase must be copy-pasted EXACTLY from the input. If inferred, set to null.\n\n2. **RELATIVE WEIGHTS**: Assign weights based on importance (will be normalized to 100 in code). Higher = more important.\n\n3. **ONLY EXTRACT WHAT IS WRITTEN**: If it's not in the text, don't add it.\n\n4. **TAGS**: 2-4 semantic keywords for fuzzy matching (e.g., python \u2192 [\"programming\", \"scripting\", \"backend\"])\n\n5. **REASONING**: One sentence explaining WHY you extracted this skill with this weight.\n\n6. **DOMAIN**: Pick ONE word based on the employer's primary business:\n   - Bank/investment/insurance \u2192 \"finance\"\n   - Hospital/clinic/pharma \u2192 \"healthcare\"\n   - Software/IT company \u2192 \"technology\"\n   - Advisory/professional services \u2192 \"consulting\"\n   - Other \u2192 use employer's core industry\n   NEVER use pipes, slashes, or multiple domains.\n\n## Output Format\n```json\n{\n  \"domain\": \"single word lowercase\",\n  \"skillset\": [\n    {\n      \"skill_name\": \"lowercase with spaces only\",\n      \"weight\": 1-100,\n      \"alternatives\": \"group_id or null\",\n      \"experience_years\": integer or null (use LOWER number if range given, e.g. \"5-7 years\" \u2192 5),\n      \"importance\": \"essential|preferred|nice_to_have\",\n      \"source_phrase\": \"EXACT quote or null\",\n      \"inferred\": true/false,\n      \"tags\": [\"tag1\", \"tag2\"],\n      \"reasoning\": \"One sentence explanation\"\n    }\n  ]\n}\n```\n\nJSON only. No markdown fences. Start directly with {\n\n## Input\n\nCOMPANY: deutsche_bank\nJOB TITLE: Fullstack Developer .Net/SQLServer/Oracle - AVP\n\nJOB SUMMARY:\n**Role:** Fullstack Developer .Net/SQLServer/Oracle - AVP  \n**Company:** Deutsche Bank  \n**Location:** Pune, India  \n**Job ID:** N/A  \n\n**Key Responsibilities:**  \n- Work with various front office / middle office teams to define business challenges and translate these into business and functional requirements specifications.  \n- Develop and maintain standard project artifacts, including test cases and project plans.  \n- Analyze and document current system flows and processes to create transparency about the complexity and interdependence between systems and data.  \n- Coordinate and document change requests from the requirement to implementation.  \n- Conduct system testing and coordinate end-user testing and plan the rollout.\n\n**Requirements:**  \n- Experience working with SQL, XML, JSON, complex data/technical architecture.  \n- Experience in using programming languages like Python, VBA, .Net, C#.  \n- Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).  \n- Good understanding of SDLC and Agile methodologies.  \n- Excellent communication skills; fluent English (written and verbal).\n\n**Details:**  \n- Full-time position  \n- On-site work arrangement",
+            "purpose": "lily_extract",
+            "response": "```json\n{\n  \"domain\": \"finance\",\n  \"skillset\": [\n    {\n      \"skill_name\": \".net development\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\"programming\", \"backend\"],\n      \"reasoning\": \".NET is a key technology used by Deutsche Bank for fullstack development.\"\n    },\n    {\n      \"skill_name\": \"sql server\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\"database\", \"backend\"],\n      \"reasoning\": \"SQL Server is a critical database technology used by Deutsche Bank.\"\n    },\n    {\n      \"skill_name\": \"oracle\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\"database\", \"backend\"],\n      \"reasoning\": \"Oracle is another key database technology used by Deutsche Bank.\"\n    },\n    {\n      \"skill_name\": \"python\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\"programming\", \"scripting\"],\n      \"reasoning\": \"Python is a valuable skill for fullstack development and data analysis.\"\n    },\n    {\n      \"skill_name\": \"vba\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\"programming\", \"scripting\"],\n      \"reasoning\": \"VBA is a useful skill for automating tasks within MS applications.\"\n    },\n    {\n      \"skill_name\": \"excel\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\"spreadsheet\", \"data analysis\"],\n      \"reasoning\": \"While not essential, proficiency in Excel is a valuable skill for data manipulation.\"\n    },\n    {\n      \"skill_name\": \"word\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\"document processing\", \"communication\"],\n      \"reasoning\": \"Proficiency in Word is useful for creating professional documents.\"\n    },\n    {\n      \"skill_name\": \"powerpoint\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\"presentation\", \"communication\"],\n      \"reasoning\": \"PowerPoint is essential for creating presentations.\"\n    },\n    {\n      \"skill_name\": \"access\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\"database\", \"data management\"],\n      \"reasoning\": \"Access is a useful tool for managing data within organizations.\"\n    },\n    {\n      \"skill_name\": \"visio\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\"diagramming\", \"project management\"],\n      \"reasoning\": \"Visio is useful for creating diagrams and flowcharts.\"\n    },\n    {\n      \"skill_name\": \"sdlc\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Good understanding of SDLC and Agile methodologies.\",\n      \"inferred\": false,\n      \"tags\": [\"project management\", \"software development\"],\n      \"reasoning\": \"Understanding of SDLC is essential for managing software projects.\"\n    },\n    {\n      \"skill_name\": \"agile methodology\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Good understanding of SDLC and Agile methodologies.\",\n      \"inferred\": false,\n      \"tags\": [\"project management\", \"software development\"],\n      \"reasoning\": \"Agile methodology is widely used in software development.\"\n    },\n    {\n      \"skill_name\": \"communication skills\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Excellent communication skills; fluent English (written and verbal).\",\n      \"inferred\": false,\n      \"tags\": [\"interpersonal\", \"collaboration\"],\n      \"reasoning\": \"Effective communication is crucial for working in a team.\"\n    }\n  ]\n}\n```",
+            "elapsed_ms": 43457,
+            "temperature": 0.0,
+            "prompt_chars": 2925,
+            "response_chars": 5494
+          },
+          {
+            "seed": 45,
+            "model": "qwen2.5:7b",
+            "prompt": "You are **Sage**, a QA reviewer for skill extractions from job postings.\n\n## Your Job\nReview Lily''s skill extraction and grade it. Be strict but fair.\n\n## CRITICAL RULES\n\n1. **JUSTIFY EVERYTHING**: For EVERY skill you list as \"missing\" or \"hallucinated\", you MUST provide justification:\n   - Missing: Quote the exact phrase from the posting that mentions this skill\n   - Hallucinated: Explain why this skill cannot be inferred from the posting\n   - If you cannot provide a quote/justification, do NOT list the skill\n\n2. **INCOMPLETE \u2260 WRONG**: Being incomplete is acceptable. Being wrong is not.\n   - PASS if major skills captured, even with gaps\n   - FAIL only for genuinely wrong information\n\n3. **SELF-CHECK**: Before responding, verify:\n   - No skill appears in BOTH missing_skills AND hallucinated_skills (that''s a contradiction)\n   - Every missing skill has a quote proving it''s in the posting\n   - Every hallucinated skill has reasoning why it can''t be inferred\n\n## Grading Criteria\n\n**PASS** if:\n- Major skills from the posting are captured (some gaps are OK)\n- No WRONG information (hallucinations, wrong domain, way-off seniority)\n\n**FAIL** only if:\n- Genuinely hallucinated skills (not inferable from posting AT ALL)\n- Wrong domain (e.g., \"healthcare\" for a bank)\n- Seniority way off (e.g., level 2 for \"Senior VP\")\n\n## Output Format\n```json\n{\n  \"verdict\": \"pass\" or \"fail\",\n  \"confidence\": 1-10,\n  \"missing_skills\": [\n    {\"skill\": \"name\", \"quote\": \"exact quote from posting\"}\n  ],\n  \"hallucinated_skills\": [\n    {\"skill\": \"name\", \"reason\": \"why this cannot be inferred\"}\n  ],\n  \"issues\": [\"specific issue with justification\"],\n  \"suggested_seniority\": null or 1-7 if wrong,\n  \"suggested_domain\": null or correct domain if wrong,\n  \"notes\": \"One sentence summary\"\n}\n```\n\nJSON only. No markdown fences. Start directly with {\n\n## Review This Extraction\n\n**Job Title:** Fullstack Developer .Net/SQLServer/Oracle - AVP\n**Company:** deutsche_bank\n\n**Job Summary:**\n**Role:** Fullstack Developer .Net/SQLServer/Oracle - AVP  \n**Company:** Deutsche Bank  \n**Location:** Pune, India  \n**Job ID:** N/A  \n\n**Key Responsibilities:**  \n- Work with various front office / middle office teams to define business challenges and translate these into business and functional requirements specifications.  \n- Develop and maintain standard project artifacts, including test cases and project plans.  \n- Analyze and document current system flows and processes to create transparency about the complexity and interdependence between systems and data.  \n- Coordinate and document change requests from the requirement to implementation.  \n- Conduct system testing and coordinate end-user testing and plan the rollout.\n\n**Requirements:**  \n- Experience working with SQL, XML, JSON, complex data/technical architecture.  \n- Experience in using programming languages like Python, VBA, .Net, C#.  \n- Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).  \n- Good understanding of SDLC and Agile methodologies.  \n- Excellent communication skills; fluent English (written and verbal).\n\n**Details:**  \n- Full-time position  \n- On-site work arrangement\n\n**Lily''s Extraction:**\n{\n  \"domain\": \"finance\",\n  \"skillset\": [\n    {\n      \"skill_name\": \".net development\",\n      \"weight\": 80,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"programming\",\n        \"backend\"\n      ],\n      \"reasoning\": \".NET is a key technology used by Deutsche Bank for fullstack development.\"\n    },\n    {\n      \"skill_name\": \"sql server\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"database\",\n        \"backend\"\n      ],\n      \"reasoning\": \"SQL Server is a critical database technology used by Deutsche Bank.\"\n    },\n    {\n      \"skill_name\": \"oracle\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"database\",\n        \"backend\"\n      ],\n      \"reasoning\": \"Oracle is another key database technology used by Deutsche Bank.\"\n    },\n    {\n      \"skill_name\": \"python\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"programming\",\n        \"scripting\"\n      ],\n      \"reasoning\": \"Python is a valuable skill for fullstack development and data analysis.\"\n    },\n    {\n      \"skill_name\": \"vba\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Experience in using programming languages like Python, VBA, .Net, C#.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"programming\",\n        \"scripting\"\n      ],\n      \"reasoning\": \"VBA is a useful skill for automating tasks within MS applications.\"\n    },\n    {\n      \"skill_name\": \"excel\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\n        \"spreadsheet\",\n        \"data analysis\"\n      ],\n      \"reasoning\": \"While not essential, proficiency in Excel is a valuable skill for data manipulation.\"\n    },\n    {\n      \"skill_name\": \"word\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\n        \"document processing\",\n        \"communication\"\n      ],\n      \"reasoning\": \"Proficiency in Word is useful for creating professional documents.\"\n    },\n    {\n      \"skill_name\": \"powerpoint\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\n        \"presentation\",\n        \"communication\"\n      ],\n      \"reasoning\": \"PowerPoint is essential for creating presentations.\"\n    },\n    {\n      \"skill_name\": \"access\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\n        \"database\",\n        \"data management\"\n      ],\n      \"reasoning\": \"Access is a useful tool for managing data within organizations.\"\n    },\n    {\n      \"skill_name\": \"visio\",\n      \"weight\": 50,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"nice_to_have\",\n      \"source_phrase\": \"Advanced knowledge of MS applications (Excel, Word, PowerPoint and Access, Visio).\",\n      \"inferred\": false,\n      \"tags\": [\n        \"diagramming\",\n        \"project management\"\n      ],\n      \"reasoning\": \"Visio is useful for creating diagrams and flowcharts.\"\n    },\n    {\n      \"skill_name\": \"sdlc\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Good understanding of SDLC and Agile methodologies.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"project management\",\n        \"software development\"\n      ],\n      \"reasoning\": \"Understanding of SDLC is essential for managing software projects.\"\n    },\n    {\n      \"skill_name\": \"agile methodology\",\n      \"weight\": 60,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"preferred\",\n      \"source_phrase\": \"Good understanding of SDLC and Agile methodologies.\",\n      \"inferred\": false,\n      \"tags\": [\n        \"project management\",\n        \"software development\"\n      ],\n      \"reasoning\": \"Agile methodology is widely used in software development.\"\n    },\n    {\n      \"skill_name\": \"communication skills\",\n      \"weight\": 70,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Excellent communication skills; fluent English (written and verbal).\",\n      \"inferred\": false,\n      \"tags\": [\n        \"interpersonal\",\n        \"collaboration\"\n      ],\n      \"reasoning\": \"Effective communication is crucial for working in a team.\"\n    }\n  ]\n}",
+            "purpose": "sage_grade_1",
+            "response": "{\n  \"verdict\": \"pass\",\n  \"confidence\": 8,\n  \"missing_skills\": [],\n  \"hallucinated_skills\": [\n    {\n      \"skill\": \"fullstack development\",\n      \"reason\": \"The job posting mentions 'Fullstack Developer', but this skill is not explicitly listed in Lily's extraction.\"\n    }\n  ],\n  \"issues\": [\"'fullstack development' should be included as it is a core requirement mentioned in the job posting.\"],\n  \"suggested_seniority\": null,\n  \"suggested_domain\": null,\n  \"notes\": \"The extraction captures most of the key skills required for the role, but misses 'fullstack development'.\"\n}",
+            "elapsed_ms": 8347,
+            "temperature": 0.0,
+            "prompt_chars": 8986,
+            "response_chars": 575
+          }
+        ],
+        "qa_issues": [],
+        "qa_passed": true,
+        "competencies": 13,
+        "sage_history": [
+          {
+            "attempt": 1,
+            "missing": [],
+            "verdict": "pass",
+            "confidence": 8,
+            "hallucinated": [
+              {
+                "skill": "fullstack development",
+                "reason": "The job posting mentions 'Fullstack Developer', but this skill is not explicitly listed in Lily's extraction."
+              }
+            ]
+          }
+        ],
+        "sage_attempts": 1,
+        "skillset_count": 13,
+        "seniority_level": null,
+        "sage_final_verdict": "pass"
+      },
+      "output_size": 24926,
+      "notes": "Complex case - long output"
+    },
+    {
+      "category": "success_short",
+      "task_log_id": 1118703,
+      "subject_id": 10500,
+      "input": {
+        "input": {
+          "company": "deutsche_bank",
+          "job_title": "ITAO - Multifactor Authentication Services - AVP",
+          "posting_id": 10500,
+          "skill_keywords": "[{\"name\" : \"Identity & Access Management\", \"importance\" : \"critical\", \"years_required\" : \"4\"}, {\"name\" : \"Application Security and Monitoring\", \"importance\" : \"high\", \"years_required\" : \"2\"}, {\"name\" : \"Audit and Regulatory Compliance\", \"importance\" : \"high\", \"years_required\" : \"3\"}, {\"name\" : \"Disaster Recovery Planning\", \"importance\" : \"medium\", \"years_required\" : \"1\"}, {\"name\" : \"Software Upgrade Management\", \"importance\" : \"medium\", \"years_required\" : \"2\"}, {\"name\" : \"SDLC Process Management\", \"importance\" : \"high\", \"years_required\" : \"3\"}]",
+          "extracted_summary": "**Role:** AVP - ITAO Multifactor Authentication Services\n**Company:** Deutsche Bank\n**Location:** Pune, India\n**Job ID:** (not available)\n\n**Key Responsibilities:**\n- Manage Internal and external application audits and Audit issue remediation activities.\n- Ensure that infrastructure is compliant and has up-to-date patches.\n- Plan for Application Hardware / Software / License upgrades or migration activities to align to the compliant platforms.\n\n**Requirements:**\n- Bachelor\u2019s degree in computer science or comparable\n- At least 4 years hands-on experience working in Identity & Access Management\n\n**Details:**\n- Full-time\n- Flexible scheme"
+        },
+        "subject_id": 10500,
+        "subject_type": "posting"
+      },
+      "expected_output": {
+        "domain": "technology",
+        "success": true,
+        "cps_json": {
+          "domain": "technology",
+          "skillset": [
+            {
+              "weight": 80,
+              "inferred": false,
+              "importance": "essential",
+              "skill_name": "identity and access management (iam)",
+              "alternatives": null,
+              "source_phrase": "Identity & Access Management",
+              "experience_years": 4
+            },
+            {
+              "weight": 20,
+              "inferred": true,
+              "importance": "preferred",
+              "skill_name": "audit and compliance",
+              "alternatives": null,
+              "source_phrase": null,
+              "experience_years": null
+            }
+          ]
+        },
+        "competencies": 2,
+        "skillset_count": 2
+      },
+      "output_size": 513,
+      "notes": "Simple case - short output"
+    },
+    {
+      "category": "success_short",
+      "task_log_id": 1111191,
+      "subject_id": 10488,
+      "input": {
+        "input": {
+          "company": "deutsche_bank",
+          "job_title": "Personal Assistant to GAMLO & Global Head of AFC",
+          "posting_id": 10488,
+          "skill_keywords": "[{\"name\": \"Excel\", \"weight\": 70, \"importance\": \"high\", \"years_required\": 2}, {\"name\": \"Project Management\", \"weight\": 70, \"importance\": \"medium\", \"years_required\": 1}, {\"name\": \"Communication Skills\", \"weight\": 70, \"importance\": \"high\", \"years_required\": 0}, {\"name\": \"Attention to Detail\", \"weight\": 70, \"importance\": \"high\", \"years_required\": 0}, {\"name\": \"Time Management\", \"weight\": 70, \"importance\": \"medium\", \"years_required\": 0}, {\"name\": \"Interpersonal Skills\", \"weight\": 70, \"importance\": \"medium\", \"years_required\": 0}, {\"name\": \"Corporate Knowledge\", \"weight\": 70, \"importance\": \"high\", \"years_required\": 0}]"
+        },
+        "subject_id": 10488,
+        "subject_type": "posting"
+      },
+      "expected_output": {
+        "domain": "finance",
+        "success": true,
+        "cps_json": {
+          "domain": "finance",
+          "skillset": [
+            {
+              "tags": [
+                "excel"
+              ],
+              "importance": "critical",
+              "skill_name": "excel",
+              "certificate": null,
+              "track_record": null,
+              "experience_years": 2
+            },
+            {
+              "tags": [
+                "pm"
+              ],
+              "importance": "required",
+              "skill_name": "project management",
+              "certificate": null,
+              "track_record": null,
+              "experience_years": 1
+            }
+          ],
+          "seniority": null,
+          "confidence": 0.9,
+          "experienceRole": null,
+          "experienceSetting": null
+        },
+        "confidence": 0.9,
+        "competencies": 2,
+        "skillset_count": 2
+      },
+      "output_size": 517,
+      "notes": "Simple case - short output"
+    },
+    {
+      "category": "failure",
+      "task_log_id": 1124575,
+      "subject_id": 12015,
+      "input": {
+        "input": {
+          "company": "deutsche_bank",
+          "job_title": "Emerging Markets Trader - Director",
+          "posting_id": 12015,
+          "skill_keywords": "[{\"name\" : \"Market analysis\", \"importance\" : \"high\", \"years_required\" : \"5\"}, {\"name\" : \"Risk management\", \"importance\" : \"high\", \"years_required\" : \"3\"}, {\"name\" : \"Communication skills\", \"importance\" : \"high\", \"years_required\" : \"2\"}, {\"name\" : \"Sales interaction\", \"importance\" : \"medium\", \"years_required\" : \"2\"}, {\"name\" : \"Regulatory knowledge\", \"importance\" : \"medium\", \"years_required\" : \"4\"}]",
+          "extracted_summary": "**Role:** Director Emerging Markets Trader\n**Company:** Deutsche Bank\n**Location:** New York, NY\n**Job ID:** N/A\n\n**Key Responsibilities:**\n- Market making and risk management of EM products\n- Providing liquidity and recycling risk profitably\n- Analysing market structure and the opportunities and threats therein\n- Managing financial risk and non-financial risks\n- Interacting with clients, sales and internal counterparties to increase market transparency and generate new business\n\n**Requirements:**\n- A deep understanding of capital and regulatory matters in EM trading\n- Ability to understand and interpret market trends and identify, communicate, and market trade ideas\n- Experience with market-making in EM products\n- Ability to work in a high-paced environment under pressure\n- Excellent communicator (verbal and written) with strong interpersonal skills\n\n**Details:**\n- Employment type: Full-time\n- Work arrangement: Hybrid working model, allowing for in-office / work from home flexibility\n- Salary range: $200K to $485K"
+        },
+        "subject_id": 12015,
+        "subject_type": "posting"
+      },
+      "expected_output": {
+        "error": "Stuck - no heartbeat"
+      },
+      "error": "Stuck - no heartbeat",
+      "notes": "Failure case: Stuck - no heartbeat"
+    },
+    {
+      "category": "failure",
+      "task_log_id": 1124497,
+      "subject_id": 11703,
+      "input": {
+        "input": {
+          "company": "deutsche_bank",
+          "job_title": "Client Implementation Analyst",
+          "posting_id": 11703,
+          "skill_keywords": "[{\"name\" : \"Documentation Preparation\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Client Communication\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"IT Systems Administration\", \"importance\" : \"optional\", \"years_required\" : \"1\"}, {\"name\" : \"Cash Management Products Knowledge\", \"importance\" : \"preferred\", \"years_required\" : \"1\"}, {\"name\" : \"German Language Skills\", \"importance\" : \"critical\", \"years_required\" : \"3\"}, {\"name\" : \"Interpersonal Skills\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Problem Solving\", \"importance\" : \"critical\", \"years_required\" : null}, {\"name\" : \"Project Management\", \"importance\" : \"optional\", \"years_required\" : \"1\"}]",
+          "extracted_summary": "**Role:** Client Implementation Analyst\n**Company:** Deutsche Bank\n**Location:** Bangalore, India\n**Job ID:** N/A\n\n**Key Responsibilities:**\n- Liaise and work with onshore implementation and service team on all documentation that covers new/sub-account opening, signatory updates including KYC, EBICS setup, account closure, account mandate updates, account amendments, as well as setup on Cash Management Products.\n- Manage implementation, maintenance related documentation requirements including signature verification, digitized document archival.\n- Ensure timely and efficient delivery of required document package to onshore requestor with quality.\n- Work closely with implementation and product management on procedures/workflow concerning product documentation eg. CIS, CSA.\n\n**Requirements:**\n- Proficiency in German speaking B2, C1 and C2 and writing; able to communicate in German with clients.\n- Fluency in German (1-3 years of experience).\n- 1-3 years of handling client facing role.\n- Experience in handling Cash Management products is preferred.\n- Experience in IT systems administration/Networking will be an advantage.\n\n**Details:**\n- Employment type and work arrangement not specified."
+        },
+        "subject_id": 11703,
+        "subject_type": "posting"
+      },
+      "expected_output": {
+        "error": "JSON parse error on initial extraction",
+        "success": false,
+        "raw_output": "```json\n{\n  \"domain\": \"finance\",\n  \"skillset\": [\n    {\n      \"skill_name\": \"german language proficiency (b2, c1, c2)\",\n      \"weight\": 90,\n      \"alternatives\": null,\n      \"experience_years\": null,\n      \"importance\": \"essential\",\n      \"source_phrase\": \"Proficiency in German speaking B2, C1 and C2 and writing; able to communicate in German with clients.\",\n      \"inferred\": false,\n      \"tags\": [\"language\", \"communication\"],\n      \"reasoning\": \"The job requires proficiency in multiple levels of"
+      },
+      "error": "JSON parse error on initial extraction",
+      "notes": "Failure case: JSON parse error on initial extraction"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "success_long": 2,
+    "success_short": 2,
+    "failures": 2,
+    "edge_cases": 0
+  }
+}

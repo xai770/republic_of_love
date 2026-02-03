@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "language": "English",
+    "code": "en"
+  },
+  "common": {
+    "app_name": "talent.yoga",
+    "search_placeholder": "Search job postings...",
+    "logout": "Log out",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "days_ago": "{n} days ago",
+    "weeks_ago": "{n} weeks ago",
+    "months_ago": "{n} months ago"
+  },
+  "nav": {
+    "start": "Home",
+    "overview": "My Overview",
+    "resume": "My Resume",
+    "jobs": "My Job Matches",
+    "messages": "My Messages",
+    "help": "Help",
+    "chat": "Chat",
+    "account": "My Account",
+    "finances": "Finances"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}!",
+    "subtitle": "Here's your overview for today",
+    "stat_dashboard": "My Dashboard",
+    "stat_dashboard_unit": "active applications",
+    "stat_resume": "My Resume",
+    "stat_resume_unit": "profile completeness",
+    "stat_jobs": "My Job Matches",
+    "stat_jobs_unit": "matching job offers",
+    "recent_jobs": "Recent Job Postings",
+    "view_all": "View all",
+    "no_matches": "No matches yet.",
+    "complete_profile": "Complete your profile to get started!",
+    "strong_match": "Strong Match",
+    "partial_match": "Partial Match",
+    "details": "Details",
+    "unknown_company": "Unknown Company"
+  },
+  "quick_actions": {
+    "title": "Quick Actions",
+    "edit_profile": "Edit profile",
+    "view_matches": "View matches",
+    "finances": "Finances"
+  },
+  "profile": {
+    "title": "My Profile",
+    "personal_info": "Personal Information",
+    "full_name": "Full Name",
+    "email": "Email",
+    "current_title": "Current Position",
+    "job_preferences": "Job Preferences",
+    "desired_roles": "Desired Roles",
+    "desired_locations": "Preferred Locations",
+    "salary_expectations": "Salary Expectations",
+    "min_salary": "Minimum Salary",
+    "max_salary": "Target Salary",
+    "work_history": "Work History",
+    "add_position": "Add Position",
+    "company": "Company",
+    "role": "Role",
+    "start_date": "From",
+    "end_date": "To",
+    "present": "Present",
+    "description": "Description",
+    "save_success": "Profile saved!",
+    "save_error": "Error saving profile"
+  },
+  "matches": {
+    "title": "My Matches",
+    "filter_all": "All",
+    "filter_strong": "Strong Matches",
+    "filter_partial": "Partial Matches",
+    "match_score": "Match Score",
+    "posted": "Posted",
+    "location": "Location",
+    "salary_range": "Salary",
+    "view_details": "View details",
+    "generate_letter": "Generate cover letter"
+  },
+  "lobby": {
+    "hero_title": "Find the job that fits you",
+    "hero_subtitle": "AI-powered job matching based on competencies, not just keywords",
+    "cta_start": "Get started free",
+    "cta_learn": "Learn more",
+    "tier_basic": "Basic",
+    "tier_standard": "Standard",
+    "tier_sustainer": "Sustainer",
+    "tier_basic_price": "€0",
+    "tier_standard_price": "€5/month",
+    "tier_sustainer_price": "€10+/month",
+    "feature_matching": "AI-powered job matching",
+    "feature_alerts": "Weekly match alerts",
+    "feature_cover_letters": "Automatic cover letters",
+    "feature_priority": "Priority support"
+  },
+  "auth": {
+    "login": "Log in",
+    "login_with_google": "Sign in with Google",
+    "logout": "Log out",
+    "login_error": "Login failed"
+  },
+  "footer": {
+    "impressum": "Legal Notice",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

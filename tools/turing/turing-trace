@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""
+turing-trace: Trace a task execution chain
+==========================================
+
+Given a task_log_id or posting_id, show the full execution chain
+with prompts, outputs, branches taken, and timing.
+
+Usage:
+    turing-trace --task-log 12345     # Trace from task_log entry
+    turing-trace --posting 10467      # Find all task logs for posting
+    turing-trace --last lily_cps      # Last execution of task type
+"""
+
+import argparse
+import sys
+import os
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from core.database import get_connection
+
+def trace_task_log(task_log_id: int):
+    """Trace a single task log entry and its chain."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Get the task log
+    cur.execute("""
+        SELECT tl.id, tt.task_type_name, tl.subject_id, tl.subject_type,
+               tl.status, tl.started_at, tl.completed_at,
+               tl.prompt_tokens, tl.completion_tokens,
+               tl.branch_taken, tl.error_message
+        FROM task_logs tl
+        JOIN task_types tt ON tl.task_type_id = tt.id
+        WHERE tl.id = %s
+    """, (task_log_id,))
+    
+    row = cur.fetchone()
+    if not row:
+        print(f"❌ Task log {task_log_id} not found")
+        return
+    
+    print(f"\n{'='*60}")
+    print(f"Task Log #{row[0]}: {row[1]}")
+    print(f"{'='*60}")
+    print(f"Subject: {row[3]} #{row[2]}")
+    print(f"Status: {row[4]}")
+    print(f"Started: {row[5]}")
+    print(f"Completed: {row[6]}")
+    print(f"Tokens: {row[7]} prompt + {row[8]} completion")
+    if row[9]:
+        print(f"Branch: {row[9]}")
+    if row[10]:
+        print(f"Error: {row[10]}")
+    
+    # Get interactions
+    cur.execute("""
+        SELECT i.id, i.instruction_id, inst.instruction_name,
+               i.input_text, i.output_text, i.created_at
+        FROM interactions i
+        JOIN instructions inst ON i.instruction_id = inst.id
+        WHERE i.task_log_id = %s
+        ORDER BY i.created_at
+    """, (task_log_id,))
+    
+    interactions = cur.fetchall()
+    if interactions:
+        print(f"\n📝 Interactions ({len(interactions)}):")
+        for ix in interactions:
+            print(f"\n  --- {ix[2]} (#{ix[0]}) ---")
+            if ix[3]:
+                input_preview = ix[3][:200] + "..." if len(ix[3]) > 200 else ix[3]
+                print(f"  Input: {input_preview}")
+            if ix[4]:
+                output_preview = ix[4][:200] + "..." if len(ix[4]) > 200 else ix[4]
+                print(f"  Output: {output_preview}")
+    
+    cur.close()
+    conn.close()
+
+def trace_posting(posting_id: int):
+    """Find all task logs for a posting."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT tl.id, tt.task_type_name, tl.status, tl.started_at, tl.branch_taken
+        FROM task_logs tl
+        JOIN task_types tt ON tl.task_type_id = tt.id
+        WHERE tl.subject_id = %s AND tl.subject_type = 'posting'
+        ORDER BY tl.started_at DESC
+        LIMIT 20
+    """, (posting_id,))
+    
+    rows = cur.fetchall()
+    if not rows:
+        print(f"❌ No task logs found for posting {posting_id}")
+        return
+    
+    print(f"\n📋 Task logs for posting #{posting_id}:")
+    print(f"{'ID':<8} {'Task Type':<25} {'Status':<12} {'Branch':<15} {'Started'}")
+    print("-" * 80)
+    for row in rows:
+        print(f"{row[0]:<8} {row[1]:<25} {row[2]:<12} {row[4] or '-':<15} {row[3]}")
+    
+    cur.close()
+    conn.close()
+
+def trace_last(task_type_pattern: str):
+    """Find last execution of a task type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT tl.id, tt.task_type_name, tl.subject_id, tl.status, tl.started_at
+        FROM task_logs tl
+        JOIN task_types tt ON tl.task_type_id = tt.id
+        WHERE tt.task_type_name ILIKE %s
+        ORDER BY tl.started_at DESC
+        LIMIT 1
+    """, (f"%{task_type_pattern}%",))
+    
+    row = cur.fetchone()
+    if not row:
+        print(f"❌ No task logs found matching '{task_type_pattern}'")
+        return
+    
+    print(f"Last execution: {row[1]} on subject #{row[2]} at {row[4]}")
+    trace_task_log(row[0])
+    
+    cur.close()
+    conn.close()
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Trace task execution chains",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    turing-trace --task-log 12345     # Trace specific task log
+    turing-trace --posting 10467      # All logs for a posting
+    turing-trace --last lily_cps      # Last lily_cps execution
+        """
+    )
+    parser.add_argument("--task-log", "-t", type=int, help="Task log ID to trace")
+    parser.add_argument("--posting", "-p", type=int, help="Posting ID to find logs for")
+    parser.add_argument("--last", "-l", type=str, help="Last execution of task type (pattern)")
+    
+    args = parser.parse_args()
+    
+    if not any([args.task_log, args.posting, args.last]):
+        parser.print_help()
+        sys.exit(1)
+    
+    if args.task_log:
+        trace_task_log(args.task_log)
+    elif args.posting:
+        trace_posting(args.posting)
+    elif args.last:
+        trace_last(args.last)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,729 @@
+#!/usr/bin/env python3
+"""
+turing-nav - OWL Navigator
+==========================
+
+Navigate, search, and manage the OWL hierarchy.
+Used by actors (Alma, Clara) and humans for taxonomy operations.
+
+Usage:
+------
+  turing-nav                        # Interactive mode at ROOT
+  turing-nav search "python prog"   # Fuzzy search owl_names
+  turing-nav info 23882             # Show owl entity details
+  turing-nav path 23882             # Show ancestry path
+  turing-nav children 39056         # List children of a folder
+  turing-nav aliases 23882          # List all names for an entity
+  turing-nav create-alias 23882 "Python programming"  # Add alias
+  turing-nav roots                  # List taxonomy root folders
+
+API Mode (--json):
+------------------
+  turing-nav --json search "python"  # Returns JSON for programmatic use
+
+Author: Arden
+Date: January 19, 2026
+"""
+
+import argparse
+import json
+import sys
+import os
+from difflib import SequenceMatcher
+from typing import Optional, List, Dict, Any
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from core.database import get_connection
+
+
+# =============================================================================
+# CORE FUNCTIONS (Library API)
+# =============================================================================
+
+def normalize(s: str) -> str:
+    """Normalize string for comparison."""
+    return s.lower().replace('_', ' ').replace('-', ' ').strip()
+
+
+def similarity(a: str, b: str) -> float:
+    """Calculate similarity ratio between two strings."""
+    return SequenceMatcher(None, normalize(a), normalize(b)).ratio()
+
+
+def search_owl_names(conn, query: str, threshold: float = 0.5, limit: int = 20) -> List[Dict]:
+    """
+    Search owl_names for matches.
+    
+    Returns list of matches with:
+    - owl_id, display_name, name_type
+    - canonical_name (from owl)
+    - similarity score
+    - match_type: 'exact', 'normalized', 'fuzzy'
+    """
+    cursor = conn.cursor()
+    normalized_query = normalize(query)
+    
+    # Step 1: Try exact match (case-insensitive)
+    cursor.execute("""
+        SELECT n.owl_id, n.display_name, n.name_type, n.is_primary,
+               o.canonical_name, o.owl_type, o.status
+        FROM owl_names n
+        JOIN owl o USING (owl_id)
+        WHERE LOWER(n.display_name) = LOWER(%s)
+          AND o.status = 'active'
+        ORDER BY n.is_primary DESC, n.name_type
+    """, (query,))
+    
+    exact_matches = cursor.fetchall()
+    if exact_matches:
+        return [{
+            'owl_id': r['owl_id'],
+            'display_name': r['display_name'],
+            'name_type': r['name_type'],
+            'is_primary': r['is_primary'],
+            'canonical_name': r['canonical_name'],
+            'owl_type': r['owl_type'],
+            'status': r['status'],
+            'similarity': 1.0,
+            'match_type': 'exact'
+        } for r in exact_matches]
+    
+    # Step 2: Try normalized match
+    cursor.execute("""
+        SELECT n.owl_id, n.display_name, n.name_type, n.is_primary,
+               o.canonical_name, o.owl_type, o.status
+        FROM owl_names n
+        JOIN owl o USING (owl_id)
+        WHERE LOWER(REPLACE(REPLACE(n.display_name, '_', ' '), '-', ' ')) = %s
+          AND o.status = 'active'
+        ORDER BY n.is_primary DESC, n.name_type
+    """, (normalized_query,))
+    
+    normalized_matches = cursor.fetchall()
+    if normalized_matches:
+        return [{
+            'owl_id': r['owl_id'],
+            'display_name': r['display_name'],
+            'name_type': r['name_type'],
+            'is_primary': r['is_primary'],
+            'canonical_name': r['canonical_name'],
+            'owl_type': r['owl_type'],
+            'status': r['status'],
+            'similarity': 0.95,
+            'match_type': 'normalized'
+        } for r in normalized_matches]
+    
+    # Step 3: Fuzzy search - get candidates and score them
+    words = normalized_query.split()
+    if words:
+        like_pattern = '%' + '%'.join(words) + '%'
+        cursor.execute("""
+            SELECT n.owl_id, n.display_name, n.name_type, n.is_primary,
+                   o.canonical_name, o.owl_type, o.status
+            FROM owl_names n
+            JOIN owl o USING (owl_id)
+            WHERE LOWER(REPLACE(REPLACE(n.display_name, '_', ' '), '-', ' ')) LIKE %s
+              AND o.status = 'active'
+            LIMIT 200
+        """, (like_pattern,))
+    else:
+        cursor.execute("""
+            SELECT n.owl_id, n.display_name, n.name_type, n.is_primary,
+                   o.canonical_name, o.owl_type, o.status
+            FROM owl_names n
+            JOIN owl o USING (owl_id)
+            WHERE o.status = 'active'
+            LIMIT 200
+        """)
+    
+    candidates = cursor.fetchall()
+    
+    # Score candidates
+    results = []
+    for r in candidates:
+        display = r['display_name']
+        sim = similarity(query, display)
+        if sim >= threshold:
+            results.append({
+                'owl_id': r['owl_id'],
+                'display_name': r['display_name'],
+                'name_type': r['name_type'],
+                'is_primary': r['is_primary'],
+                'canonical_name': r['canonical_name'],
+                'owl_type': r['owl_type'],
+                'status': r['status'],
+                'similarity': round(sim, 3),
+                'match_type': 'fuzzy'
+            })
+    
+    # Also try matching against canonical_name
+    cursor.execute("""
+        SELECT DISTINCT o.owl_id, o.canonical_name, o.owl_type, o.status
+        FROM owl o
+        WHERE o.status = 'active'
+          AND (
+            LOWER(o.canonical_name) LIKE %s
+            OR LOWER(REPLACE(o.canonical_name, '_', ' ')) LIKE %s
+          )
+        LIMIT 100
+    """, (like_pattern, like_pattern))
+    
+    canonical_candidates = cursor.fetchall()
+    seen_owl_ids = {r['owl_id'] for r in results}
+    
+    for r in canonical_candidates:
+        if r['owl_id'] not in seen_owl_ids:
+            sim = similarity(query, r['canonical_name'])
+            if sim >= threshold:
+                results.append({
+                    'owl_id': r['owl_id'],
+                    'display_name': r['canonical_name'],
+                    'name_type': 'canonical',
+                    'is_primary': True,
+                    'canonical_name': r['canonical_name'],
+                    'owl_type': r['owl_type'],
+                    'status': r['status'],
+                    'similarity': round(sim, 3),
+                    'match_type': 'fuzzy'
+                })
+                seen_owl_ids.add(r['owl_id'])
+    
+    # Sort by similarity descending
+    results.sort(key=lambda x: x['similarity'], reverse=True)
+    return results[:limit]
+
+
+def get_entity_info(conn, owl_id: int) -> Optional[Dict]:
+    """Get full info about an owl entity."""
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT owl_id, canonical_name, owl_type, status, description, created_at
+        FROM owl
+        WHERE owl_id = %s
+    """, (owl_id,))
+    
+    row = cursor.fetchone()
+    if not row:
+        return None
+    
+    info = {
+        'owl_id': row['owl_id'],
+        'canonical_name': row['canonical_name'],
+        'owl_type': row['owl_type'],
+        'status': row['status'],
+        'description': row['description'],
+        'created_at': str(row['created_at']) if row['created_at'] else None
+    }
+    
+    # Get parent (is_a relationship)
+    cursor.execute("""
+        SELECT o.owl_id, o.canonical_name
+        FROM owl_relationships r
+        JOIN owl o ON r.related_owl_id = o.owl_id
+        WHERE r.owl_id = %s AND r.relationship = 'is_a'
+    """, (owl_id,))
+    parent = cursor.fetchone()
+    info['parent'] = {'owl_id': parent['owl_id'], 'canonical_name': parent['canonical_name']} if parent else None
+    
+    # Get children count
+    cursor.execute("""
+        SELECT COUNT(*) as cnt
+        FROM owl_relationships
+        WHERE related_owl_id = %s AND relationship = 'is_a'
+    """, (owl_id,))
+    info['children_count'] = cursor.fetchone()['cnt']
+    
+    # Get names count
+    cursor.execute("""
+        SELECT COUNT(*) as cnt FROM owl_names WHERE owl_id = %s
+    """, (owl_id,))
+    info['names_count'] = cursor.fetchone()['cnt']
+    
+    return info
+
+
+def get_entity_path(conn, owl_id: int) -> List[Dict]:
+    """Get the ancestry path from root to entity."""
+    cursor = conn.cursor()
+    path = []
+    current_id = owl_id
+    
+    for _ in range(15):  # Max depth protection
+        if current_id is None:
+            break
+        
+        cursor.execute("""
+            SELECT o.owl_id, o.canonical_name, o.owl_type,
+                   r.related_owl_id as parent_id
+            FROM owl o
+            LEFT JOIN owl_relationships r ON o.owl_id = r.owl_id AND r.relationship = 'is_a'
+            WHERE o.owl_id = %s
+        """, (current_id,))
+        
+        row = cursor.fetchone()
+        if not row:
+            break
+        
+        path.insert(0, {
+            'owl_id': row['owl_id'],
+            'canonical_name': row['canonical_name'],
+            'owl_type': row['owl_type']
+        })
+        current_id = row['parent_id']
+    
+    return path
+
+
+def get_children(conn, owl_id: int, include_skills: bool = False) -> List[Dict]:
+    """Get children of a folder (things with is_a pointing to it)."""
+    cursor = conn.cursor()
+    
+    type_filter = "" if include_skills else "AND o.owl_type = 'folder'"
+    
+    cursor.execute(f"""
+        SELECT o.owl_id, o.canonical_name, o.owl_type, o.status,
+               (SELECT COUNT(*) FROM owl_relationships r2 
+                WHERE r2.related_owl_id = o.owl_id AND r2.relationship = 'is_a') as child_count
+        FROM owl o
+        JOIN owl_relationships r ON o.owl_id = r.owl_id
+        WHERE r.related_owl_id = %s
+          AND r.relationship = 'is_a'
+          AND o.status = 'active'
+          {type_filter}
+        ORDER BY o.owl_type, o.canonical_name
+    """, (owl_id,))
+    
+    return [{
+        'owl_id': r['owl_id'],
+        'canonical_name': r['canonical_name'],
+        'owl_type': r['owl_type'],
+        'status': r['status'],
+        'child_count': r['child_count']
+    } for r in cursor.fetchall()]
+
+
+def get_aliases(conn, owl_id: int) -> List[Dict]:
+    """Get all names (aliases) for an entity."""
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT display_name, name_type, is_primary, 
+               observation_count, created_at
+        FROM owl_names
+        WHERE owl_id = %s
+        ORDER BY is_primary DESC, name_type, display_name
+    """, (owl_id,))
+    
+    return [{
+        'display_name': r['display_name'],
+        'name_type': r['name_type'],
+        'is_primary': r['is_primary'],
+        'observation_count': r['observation_count'],
+        'created_at': str(r['created_at']) if r['created_at'] else None
+    } for r in cursor.fetchall()]
+
+
+def get_roots(conn) -> List[Dict]:
+    """Get root folders (taxonomy_root type or folders with no parent)."""
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT o.owl_id, o.canonical_name, o.owl_type, o.description,
+               (SELECT COUNT(*) FROM owl_relationships r 
+                WHERE r.related_owl_id = o.owl_id AND r.relationship = 'is_a') as child_count
+        FROM owl o
+        WHERE o.status = 'active'
+          AND (
+            o.owl_type = 'taxonomy_root'
+            OR (o.owl_type = 'folder' AND NOT EXISTS (
+                SELECT 1 FROM owl_relationships r 
+                WHERE r.owl_id = o.owl_id AND r.relationship = 'is_a'
+            ))
+          )
+        ORDER BY o.canonical_name
+    """)
+    
+    return [{
+        'owl_id': r['owl_id'],
+        'canonical_name': r['canonical_name'],
+        'owl_type': r['owl_type'],
+        'description': r['description'],
+        'child_count': r['child_count']
+    } for r in cursor.fetchall()]
+
+
+def create_alias(conn, owl_id: int, display_name: str, name_type: str = 'alias') -> Dict:
+    """
+    Create a new alias (owl_names entry) for an existing entity.
+    
+    Returns the created entry or error.
+    """
+    cursor = conn.cursor()
+    
+    # Verify entity exists
+    cursor.execute("SELECT canonical_name FROM owl WHERE owl_id = %s", (owl_id,))
+    entity = cursor.fetchone()
+    if not entity:
+        return {'error': f'Entity owl_id={owl_id} not found'}
+    
+    # Check if alias already exists
+    cursor.execute("""
+        SELECT owl_id FROM owl_names 
+        WHERE LOWER(display_name) = LOWER(%s)
+    """, (display_name,))
+    existing = cursor.fetchone()
+    if existing:
+        if existing['owl_id'] == owl_id:
+            return {'error': f"Alias already exists for this entity"}
+        else:
+            return {'error': f"Display name already exists for different entity (owl_id={existing['owl_id']})"}
+    
+    # Create the alias
+    cursor.execute("""
+        INSERT INTO owl_names (owl_id, display_name, name_type, is_primary)
+        VALUES (%s, %s, %s, false)
+    """, (owl_id, display_name, name_type))
+    conn.commit()
+    
+    return {
+        'created': {
+            'owl_id': owl_id,
+            'display_name': display_name,
+            'name_type': name_type,
+            'canonical_name': entity['canonical_name']
+        }
+    }
+
+
+# =============================================================================
+# CLI COMMANDS
+# =============================================================================
+
+def cmd_search(args):
+    """Search command handler."""
+    with get_connection() as conn:
+        results = search_owl_names(
+            conn, 
+            args.query, 
+            threshold=args.threshold,
+            limit=args.limit
+        )
+        
+        if args.json:
+            print(json.dumps({'matches': results}, indent=2))
+        else:
+            if not results:
+                print(f"No matches found for '{args.query}'")
+                return
+            
+            print(f"\n🔍 Search results for '{args.query}':\n")
+            for r in results:
+                primary = "⭐" if r['is_primary'] else "  "
+                print(f"  {primary} [{r['owl_id']:>6}] {r['display_name']}")
+                print(f"           → {r['canonical_name']} ({r['owl_type']}) "
+                      f"[{r['match_type']}: {r['similarity']:.0%}]")
+            print()
+
+
+def cmd_info(args):
+    """Info command handler."""
+    with get_connection() as conn:
+        info = get_entity_info(conn, args.owl_id)
+        
+        if args.json:
+            print(json.dumps(info, indent=2))
+        else:
+            if not info:
+                print(f"Entity owl_id={args.owl_id} not found")
+                return
+            
+            print(f"\n📋 Entity: {info['canonical_name']}")
+            print(f"   owl_id: {info['owl_id']}")
+            print(f"   type: {info['owl_type']}")
+            print(f"   status: {info['status']}")
+            if info['description']:
+                print(f"   description: {info['description']}")
+            if info['parent']:
+                print(f"   parent: {info['parent']['canonical_name']} ({info['parent']['owl_id']})")
+            print(f"   children: {info['children_count']}")
+            print(f"   names/aliases: {info['names_count']}")
+            print()
+
+
+def cmd_path(args):
+    """Path command handler."""
+    with get_connection() as conn:
+        path = get_entity_path(conn, args.owl_id)
+        
+        if args.json:
+            print(json.dumps({'path': path}, indent=2))
+        else:
+            if not path:
+                print(f"Entity owl_id={args.owl_id} not found")
+                return
+            
+            print(f"\n📍 Path to {path[-1]['canonical_name']}:\n")
+            for i, node in enumerate(path):
+                indent = "  " * i
+                arrow = "└─" if i > 0 else "  "
+                print(f"  {indent}{arrow} {node['canonical_name']} ({node['owl_type']})")
+            print()
+
+
+def cmd_children(args):
+    """Children command handler."""
+    with get_connection() as conn:
+        children = get_children(conn, args.owl_id, include_skills=args.all)
+        info = get_entity_info(conn, args.owl_id)
+        
+        if args.json:
+            print(json.dumps({'parent': info, 'children': children}, indent=2))
+        else:
+            if not info:
+                print(f"Entity owl_id={args.owl_id} not found")
+                return
+            
+            print(f"\n📂 Children of {info['canonical_name']}:\n")
+            if not children:
+                print("   (no children)")
+            else:
+                for c in children:
+                    icon = "📁" if c['owl_type'] == 'folder' else "📄"
+                    count = f" ({c['child_count']} children)" if c['child_count'] else ""
+                    print(f"   {icon} [{c['owl_id']:>6}] {c['canonical_name']}{count}")
+            print()
+
+
+def cmd_aliases(args):
+    """Aliases command handler."""
+    with get_connection() as conn:
+        aliases = get_aliases(conn, args.owl_id)
+        info = get_entity_info(conn, args.owl_id)
+        
+        if args.json:
+            print(json.dumps({'entity': info, 'names': aliases}, indent=2))
+        else:
+            if not info:
+                print(f"Entity owl_id={args.owl_id} not found")
+                return
+            
+            print(f"\n🏷️  Names for {info['canonical_name']} (owl_id={args.owl_id}):\n")
+            for a in aliases:
+                primary = "⭐" if a['is_primary'] else "  "
+                count = f" (seen {a['observation_count']}x)" if a['observation_count'] else ""
+                print(f"   {primary} {a['display_name']}")
+                print(f"           type: {a['name_type']}{count}")
+            print()
+
+
+def cmd_roots(args):
+    """Roots command handler."""
+    with get_connection() as conn:
+        roots = get_roots(conn)
+        
+        if args.json:
+            print(json.dumps({'roots': roots}, indent=2))
+        else:
+            print(f"\n🌳 Taxonomy Roots:\n")
+            for r in roots:
+                desc = f" - {r['description']}" if r['description'] else ""
+                print(f"   📁 [{r['owl_id']:>6}] {r['canonical_name']} ({r['child_count']} children){desc}")
+            print()
+
+
+def cmd_create_alias(args):
+    """Create alias command handler."""
+    with get_connection() as conn:
+        result = create_alias(conn, args.owl_id, args.display_name, args.name_type)
+        
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            if 'error' in result:
+                print(f"❌ Error: {result['error']}")
+            else:
+                c = result['created']
+                print(f"\n✅ Created alias:")
+                print(f"   '{c['display_name']}' → {c['canonical_name']} (owl_id={c['owl_id']})")
+                print()
+
+
+def cmd_interactive(args):
+    """Interactive navigation mode."""
+    print("\n🧭 OWL Navigator - Interactive Mode")
+    print("   Type 'help' for commands, 'quit' to exit\n")
+    
+    with get_connection() as conn:
+        current_id = args.at
+        
+        while True:
+            # Show current location
+            if current_id:
+                info = get_entity_info(conn, current_id)
+                if info:
+                    path = get_entity_path(conn, current_id)
+                    path_str = " → ".join(p['canonical_name'] for p in path)
+                    print(f"\n📍 {path_str}")
+                    children = get_children(conn, current_id, include_skills=False)
+                    if children:
+                        print(f"   Subfolders:")
+                        for i, c in enumerate(children[:10]):
+                            print(f"     [{i+1}] {c['canonical_name']} ({c['child_count']})")
+                else:
+                    print(f"❌ Entity {current_id} not found")
+                    current_id = None
+                    continue
+            else:
+                print("\n📍 ROOT")
+                roots = get_roots(conn)
+                for i, r in enumerate(roots):
+                    print(f"   [{i+1}] {r['canonical_name']} ({r['child_count']})")
+            
+            # Get command
+            try:
+                cmd = input("\n> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\n👋 Goodbye!")
+                break
+            
+            if not cmd:
+                continue
+            
+            if cmd in ('quit', 'exit', 'q'):
+                print("👋 Goodbye!")
+                break
+            
+            if cmd == 'help':
+                print("""
+Commands:
+  [N]        - Navigate to subfolder N
+  up, u      - Go up one level
+  top, t     - Go to root
+  search Q   - Search for Q
+  info       - Show current entity info
+  aliases    - Show names for current entity
+  quit, q    - Exit
+                """)
+                continue
+            
+            if cmd in ('up', 'u'):
+                if current_id:
+                    info = get_entity_info(conn, current_id)
+                    if info and info['parent']:
+                        current_id = info['parent']['owl_id']
+                    else:
+                        current_id = None
+                continue
+            
+            if cmd in ('top', 't'):
+                current_id = None
+                continue
+            
+            if cmd == 'info':
+                if current_id:
+                    info = get_entity_info(conn, current_id)
+                    print(f"\n{json.dumps(info, indent=2)}")
+                continue
+            
+            if cmd == 'aliases':
+                if current_id:
+                    aliases = get_aliases(conn, current_id)
+                    for a in aliases:
+                        print(f"  {'⭐' if a['is_primary'] else '  '} {a['display_name']} ({a['name_type']})")
+                continue
+            
+            if cmd.startswith('search '):
+                query = cmd[7:].strip()
+                results = search_owl_names(conn, query, limit=10)
+                for r in results:
+                    print(f"  [{r['owl_id']:>6}] {r['display_name']} ({r['similarity']:.0%})")
+                continue
+            
+            # Try numeric navigation
+            try:
+                idx = int(cmd) - 1
+                if current_id:
+                    children = get_children(conn, current_id, include_skills=False)
+                    if 0 <= idx < len(children):
+                        current_id = children[idx]['owl_id']
+                else:
+                    roots = get_roots(conn)
+                    if 0 <= idx < len(roots):
+                        current_id = roots[idx]['owl_id']
+            except ValueError:
+                print(f"❓ Unknown command: {cmd}")
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='OWL Navigator - Browse, search, and manage the taxonomy',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument('--json', action='store_true', help='Output as JSON')
+    parser.add_argument('--at', type=int, help='Start at owl_id (interactive mode)')
+    
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    
+    # search
+    p_search = subparsers.add_parser('search', help='Search owl_names')
+    p_search.add_argument('query', help='Search query')
+    p_search.add_argument('--threshold', type=float, default=0.5, help='Similarity threshold')
+    p_search.add_argument('--limit', type=int, default=20, help='Max results')
+    
+    # info
+    p_info = subparsers.add_parser('info', help='Show entity info')
+    p_info.add_argument('owl_id', type=int, help='Entity owl_id')
+    
+    # path
+    p_path = subparsers.add_parser('path', help='Show ancestry path')
+    p_path.add_argument('owl_id', type=int, help='Entity owl_id')
+    
+    # children
+    p_children = subparsers.add_parser('children', help='List children')
+    p_children.add_argument('owl_id', type=int, help='Parent owl_id')
+    p_children.add_argument('--all', action='store_true', help='Include skills, not just folders')
+    
+    # aliases
+    p_aliases = subparsers.add_parser('aliases', help='List names/aliases')
+    p_aliases.add_argument('owl_id', type=int, help='Entity owl_id')
+    
+    # roots
+    p_roots = subparsers.add_parser('roots', help='List taxonomy roots')
+    
+    # create-alias
+    p_create = subparsers.add_parser('create-alias', help='Create new alias')
+    p_create.add_argument('owl_id', type=int, help='Target entity owl_id')
+    p_create.add_argument('display_name', help='New alias text')
+    p_create.add_argument('--name-type', default='alias', help='Name type (default: alias)')
+    
+    args = parser.parse_args()
+    
+    # Dispatch
+    if args.command == 'search':
+        cmd_search(args)
+    elif args.command == 'info':
+        cmd_info(args)
+    elif args.command == 'path':
+        cmd_path(args)
+    elif args.command == 'children':
+        cmd_children(args)
+    elif args.command == 'aliases':
+        cmd_aliases(args)
+    elif args.command == 'roots':
+        cmd_roots(args)
+    elif args.command == 'create-alias':
+        cmd_create_alias(args)
+    else:
+        # No command = interactive mode
+        cmd_interactive(args)
+
+
+if __name__ == '__main__':
+    main()

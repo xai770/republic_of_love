@@ -1,0 +1,11 @@
+# talent.yoga cron jobs
+# Install: sudo cp config/cron/talent-yoga /etc/cron.d/
+
+# Daily matching - 06:00 every day
+0 6 * * * xai cd /home/xai/Documents/ty_learn && python3 scripts/daily_match.py >> logs/matching.log 2>&1
+
+# Weekly digest emails - Sunday 09:00 (P2.2)
+# 0 9 * * 0 xai cd /home/xai/Documents/ty_learn && python3 scripts/weekly_digest.py >> logs/email.log 2>&1
+
+# AA job fetch - 20:00 daily (already scheduled manually)
+# 0 20 * * * xai cd /home/xai/Documents/ty_learn && python3 tools/aa_fetch.py --cities top20 --since 7 --max-jobs 1000 >> logs/aa_fetch.log 2>&1

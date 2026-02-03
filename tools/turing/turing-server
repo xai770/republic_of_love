@@ -1,0 +1,52 @@
+#!/bin/bash
+# Start/stop/status for talent.yoga API server
+# Usage: turing-server [start|stop|status|restart|logs]
+
+cd /home/xai/Documents/ty_learn
+source venv/bin/activate
+
+PORT=8000
+LOG_FILE="logs/api_server.log"
+
+case "${1:-status}" in
+    start)
+        if curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/ 2>/dev/null | grep -q 200; then
+            echo "Server already running on port $PORT"
+            exit 0
+        fi
+        echo "Starting talent.yoga server on port $PORT..."
+        nohup uvicorn api.main:app --host 0.0.0.0 --port $PORT </dev/null > $LOG_FILE 2>&1 &
+        sleep 2
+        if curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/ 2>/dev/null | grep -q 200; then
+            echo "✓ Server running: http://localhost:$PORT"
+        else
+            echo "✗ Failed to start. Check $LOG_FILE"
+            tail -20 $LOG_FILE
+            exit 1
+        fi
+        ;;
+    stop)
+        echo "Stopping server..."
+        pkill -f "uvicorn api.main:app" 2>/dev/null && echo "✓ Stopped" || echo "No server running"
+        ;;
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+    status)
+        if curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/ 2>/dev/null | grep -q 200; then
+            echo "✓ Server running: http://localhost:$PORT"
+            ps aux | grep "uvicorn api.main" | grep -v grep | awk '{print "  PID:", $2, "CPU:", $3"%", "MEM:", $4"%"}'
+        else
+            echo "✗ Server not running"
+        fi
+        ;;
+    logs)
+        tail -f $LOG_FILE
+        ;;
+    *)
+        echo "Usage: turing-server [start|stop|status|restart|logs]"
+        exit 1
+        ;;
+esac

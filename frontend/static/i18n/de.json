@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "language": "Deutsch",
+    "code": "de"
+  },
+  "common": {
+    "app_name": "talent.yoga",
+    "search_placeholder": "Stellenangebote durchsuchen...",
+    "logout": "Abmelden",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "days_ago": "vor {n} Tagen",
+    "weeks_ago": "vor {n} Wochen",
+    "months_ago": "vor {n} Monaten"
+  },
+  "nav": {
+    "start": "Start",
+    "overview": "Meine Übersicht",
+    "resume": "Mein Lebenslauf",
+    "jobs": "Meine Stellenangebote",
+    "messages": "Meine Nachrichten",
+    "help": "Hilfe",
+    "chat": "Chat",
+    "account": "Mein Konto",
+    "finances": "Finanzen"
+  },
+  "dashboard": {
+    "welcome": "Willkommen, {name}!",
+    "subtitle": "Hier ist deine Übersicht für heute",
+    "stat_dashboard": "Mein Dashboard",
+    "stat_dashboard_unit": "aktive Bewerbungen",
+    "stat_resume": "Mein Lebenslauf",
+    "stat_resume_unit": "Profil-Vollständigkeit",
+    "stat_jobs": "Meine Stellenangebote",
+    "stat_jobs_unit": "passende Jobangebote",
+    "recent_jobs": "Neueste Stellenangebote",
+    "view_all": "Alle anzeigen",
+    "no_matches": "Noch keine Matches.",
+    "complete_profile": "Vervollständige dein Profil um loszulegen!",
+    "strong_match": "Starker Match",
+    "partial_match": "Teilmatch",
+    "details": "Details",
+    "unknown_company": "Unbekanntes Unternehmen"
+  },
+  "quick_actions": {
+    "title": "Schnellaktionen",
+    "edit_profile": "Profil bearbeiten",
+    "view_matches": "Matches ansehen",
+    "finances": "Finanzen"
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "personal_info": "Persönliche Daten",
+    "full_name": "Vollständiger Name",
+    "email": "E-Mail",
+    "current_title": "Aktuelle Position",
+    "job_preferences": "Job-Präferenzen",
+    "desired_roles": "Gewünschte Rollen",
+    "desired_locations": "Bevorzugte Standorte",
+    "salary_expectations": "Gehaltsvorstellung",
+    "min_salary": "Mindestgehalt",
+    "max_salary": "Wunschgehalt",
+    "work_history": "Berufserfahrung",
+    "add_position": "Position hinzufügen",
+    "company": "Unternehmen",
+    "role": "Position",
+    "start_date": "Von",
+    "end_date": "Bis",
+    "present": "Heute",
+    "description": "Beschreibung",
+    "save_success": "Profil gespeichert!",
+    "save_error": "Fehler beim Speichern"
+  },
+  "matches": {
+    "title": "Meine Matches",
+    "filter_all": "Alle",
+    "filter_strong": "Starke Matches",
+    "filter_partial": "Teilmatches",
+    "match_score": "Match-Score",
+    "posted": "Veröffentlicht",
+    "location": "Standort",
+    "salary_range": "Gehalt",
+    "view_details": "Details ansehen",
+    "generate_letter": "Anschreiben erstellen"
+  },
+  "lobby": {
+    "hero_title": "Finde den Job, der zu dir passt",
+    "hero_subtitle": "KI-gestütztes Job-Matching basierend auf Kompetenzen, nicht nur Schlüsselwörtern",
+    "cta_start": "Kostenlos starten",
+    "cta_learn": "Mehr erfahren",
+    "tier_basic": "Basis",
+    "tier_standard": "Standard",
+    "tier_sustainer": "Unterstützer",
+    "tier_basic_price": "€0",
+    "tier_standard_price": "€5/Monat",
+    "tier_sustainer_price": "€10+/Monat",
+    "feature_matching": "KI-gestütztes Job-Matching",
+    "feature_alerts": "Wöchentliche Match-Benachrichtigungen",
+    "feature_cover_letters": "Automatische Anschreiben",
+    "feature_priority": "Prioritäts-Support"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "login_with_google": "Mit Google anmelden",
+    "logout": "Abmelden",
+    "login_error": "Anmeldung fehlgeschlagen"
+  },
+  "footer": {
+    "impressum": "Impressum",
+    "privacy": "Datenschutz",
+    "terms": "AGB"
+  }
+}

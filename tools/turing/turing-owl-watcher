@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+"""
+turing-owl-watcher - Auto-rebuild OWL export on changes
+
+Polls for changes to owl/owl_names/owl_relationships tables.
+Triggers export when changes detected. Max 4 rebuilds/hour.
+
+Usage:
+  turing-owl-watcher                     # Run daemon (foreground)
+  turing-owl-watcher --daemon            # Run in background
+  turing-owl-watcher --check             # One-shot: check and rebuild if needed
+  turing-owl-watcher --force             # Force rebuild now
+
+The watcher tracks changes via:
+  - owl.created_at / updated_at
+  - owl_names.created_at
+  - owl_relationships.created_at
+
+Author: Sandy
+Date: January 2026
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from core.database import get_connection
+
+# Config
+STATE_FILE = Path(__file__).parent.parent.parent / '.owl_watcher_state.json'
+EXPORT_DIR = Path(__file__).parent.parent.parent / 'owl_export'
+EXPORT_SCRIPT = Path(__file__).parent / 'turing-owl-export'
+MIN_INTERVAL_SECONDS = 900  # 15 minutes = max 4/hour
+LOG_FILE = Path(__file__).parent.parent.parent / 'logs' / 'owl_watcher.log'
+
+
+def log(msg: str, also_print: bool = True):
+    """Log message with timestamp."""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    line = f"[{timestamp}] {msg}"
+    if also_print:
+        print(line)
+    try:
+        LOG_FILE.parent.mkdir(exist_ok=True)
+        with open(LOG_FILE, 'a') as f:
+            f.write(line + '\n')
+    except:
+        pass
+
+
+def get_owl_fingerprint() -> dict:
+    """
+    Get a fingerprint of OWL state for change detection.
+    Returns counts and max timestamps for each table.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        
+        fingerprint = {}
+        
+        # owl table
+        cursor.execute("""
+            SELECT COUNT(*) as cnt, 
+                   MAX(created_at) as max_created
+            FROM owl
+            WHERE status = 'active'
+        """)
+        row = cursor.fetchone()
+        fingerprint['owl_count'] = row['cnt']
+        fingerprint['owl_max_created'] = str(row['max_created']) if row['max_created'] else None
+        
+        # owl_names table
+        cursor.execute("""
+            SELECT COUNT(*) as cnt,
+                   MAX(created_at) as max_created
+            FROM owl_names
+        """)
+        row = cursor.fetchone()
+        fingerprint['names_count'] = row['cnt']
+        fingerprint['names_max_created'] = str(row['max_created']) if row['max_created'] else None
+        
+        # owl_relationships table
+        cursor.execute("""
+            SELECT COUNT(*) as cnt,
+                   MAX(created_at) as max_created
+            FROM owl_relationships
+        """)
+        row = cursor.fetchone()
+        fingerprint['relationships_count'] = row['cnt']
+        fingerprint['relationships_max_created'] = str(row['max_created']) if row['max_created'] else None
+        
+        # Create hash for quick comparison
+        fingerprint['hash'] = hashlib.md5(
+            json.dumps(fingerprint, sort_keys=True).encode()
+        ).hexdigest()[:12]
+        
+        return fingerprint
+
+
+def load_state() -> dict:
+    """Load last known state from file."""
+    if STATE_FILE.exists():
+        try:
+            with open(STATE_FILE) as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+
+def save_state(state: dict):
+    """Save state to file."""
+    state['last_check'] = datetime.now().isoformat()
+    with open(STATE_FILE, 'w') as f:
+        json.dump(state, f, indent=2)
+
+
+def run_export() -> bool:
+    """Run the export script. Returns True on success."""
+    log("🔄 Running OWL export...")
+    try:
+        result = subprocess.run(
+            [sys.executable, str(EXPORT_SCRIPT), '--output', str(EXPORT_DIR), '--quiet'],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 min timeout
+        )
+        if result.returncode == 0:
+            log("✅ Export complete")
+            return True
+        else:
+            log(f"❌ Export failed: {result.stderr}")
+            return False
+    except subprocess.TimeoutExpired:
+        log("❌ Export timed out (5 min)")
+        return False
+    except Exception as e:
+        log(f"❌ Export error: {e}")
+        return False
+
+
+def check_and_rebuild(force: bool = False) -> dict:
+    """
+    Check for changes and rebuild if needed.
+    Returns status dict.
+    """
+    state = load_state()
+    current = get_owl_fingerprint()
+    
+    result = {
+        'changed': False,
+        'rebuilt': False,
+        'skipped_reason': None,
+        'fingerprint': current
+    }
+    
+    # Check if changed
+    last_hash = state.get('fingerprint', {}).get('hash')
+    if current['hash'] == last_hash and not force:
+        result['skipped_reason'] = 'no_changes'
+        log(f"📊 No changes detected (hash={current['hash']})")
+        save_state({**state, 'fingerprint': current})
+        return result
+    
+    result['changed'] = True
+    
+    # Check rate limit (unless forced)
+    if not force:
+        last_export = state.get('last_export')
+        if last_export:
+            last_export_time = datetime.fromisoformat(last_export)
+            seconds_since = (datetime.now() - last_export_time).total_seconds()
+            if seconds_since < MIN_INTERVAL_SECONDS:
+                wait_time = int(MIN_INTERVAL_SECONDS - seconds_since)
+                result['skipped_reason'] = f'rate_limited ({wait_time}s remaining)'
+                log(f"⏳ Rate limited - {wait_time}s until next allowed rebuild")
+                # Don't update fingerprint - keep tracking that changes are pending
+                save_state({**state, 'pending_fingerprint': current})
+                return result
+    
+    # Changes detected, run export
+    log(f"📝 Changes detected: {last_hash} → {current['hash']}")
+    log(f"   owl: {current['owl_count']} entities")
+    log(f"   names: {current['names_count']} aliases")
+    log(f"   relationships: {current['relationships_count']} links")
+    
+    if run_export():
+        result['rebuilt'] = True
+        save_state({
+            'fingerprint': current,
+            'last_export': datetime.now().isoformat(),
+            'export_count': state.get('export_count', 0) + 1
+        })
+    else:
+        save_state({**state, 'fingerprint': current, 'last_export_failed': datetime.now().isoformat()})
+    
+    return result
+
+
+def daemon_loop(interval: int = 900):
+    """Run as daemon, checking every interval seconds."""
+    log(f"🦉 OWL Watcher started (interval={interval}s, max 4/hour)")
+    log(f"   Export dir: {EXPORT_DIR}")
+    log(f"   State file: {STATE_FILE}")
+    
+    # Initial check
+    check_and_rebuild()
+    
+    while True:
+        time.sleep(interval)
+        try:
+            check_and_rebuild()
+        except KeyboardInterrupt:
+            log("👋 Watcher stopped")
+            break
+        except Exception as e:
+            log(f"❌ Error in check loop: {e}")
+            time.sleep(60)  # Wait a bit before retrying
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Watch OWL tables and auto-rebuild export on changes"
+    )
+    parser.add_argument(
+        '--daemon', '-d',
+        action='store_true',
+        help='Run as background daemon'
+    )
+    parser.add_argument(
+        '--check', '-c',
+        action='store_true',
+        help='One-shot check and rebuild if needed'
+    )
+    parser.add_argument(
+        '--force', '-f',
+        action='store_true',
+        help='Force rebuild now (ignore rate limit)'
+    )
+    parser.add_argument(
+        '--status', '-s',
+        action='store_true',
+        help='Show current state and exit'
+    )
+    parser.add_argument(
+        '--interval', '-i',
+        type=int,
+        default=900,
+        help='Check interval in seconds (default: 900 = 15 min)'
+    )
+    
+    args = parser.parse_args()
+    
+    if args.status:
+        state = load_state()
+        current = get_owl_fingerprint()
+        print("\n🦉 OWL Watcher Status\n")
+        print(f"Current fingerprint: {current['hash']}")
+        print(f"  owl: {current['owl_count']} entities")
+        print(f"  names: {current['names_count']} aliases")
+        print(f"  relationships: {current['relationships_count']} links")
+        print()
+        if state:
+            print(f"Last check: {state.get('last_check', 'never')}")
+            print(f"Last export: {state.get('last_export', 'never')}")
+            print(f"Total exports: {state.get('export_count', 0)}")
+            last_hash = state.get('fingerprint', {}).get('hash')
+            if last_hash == current['hash']:
+                print("Status: ✅ Up to date")
+            else:
+                print(f"Status: 📝 Changes pending ({last_hash} → {current['hash']})")
+        else:
+            print("Status: 🆕 Never run")
+        print()
+        return
+    
+    if args.force:
+        print("\n🔨 Forcing rebuild...\n")
+        result = check_and_rebuild(force=True)
+        if result['rebuilt']:
+            print(f"\n✅ Rebuilt: {EXPORT_DIR}/_INDEX.md\n")
+        return
+    
+    if args.check:
+        result = check_and_rebuild()
+        if result['rebuilt']:
+            print(f"\n✅ Rebuilt: {EXPORT_DIR}/_INDEX.md\n")
+        elif result['skipped_reason']:
+            print(f"\n⏭️  Skipped: {result['skipped_reason']}\n")
+        return
+    
+    if args.daemon:
+        # Fork to background
+        pid = os.fork()
+        if pid > 0:
+            print(f"🦉 OWL Watcher daemonized (PID={pid})")
+            print(f"   Log: {LOG_FILE}")
+            sys.exit(0)
+        else:
+            # Child process
+            os.setsid()
+            daemon_loop(args.interval)
+    else:
+        # Foreground mode
+        daemon_loop(args.interval)
+
+
+if __name__ == '__main__':
+    main()

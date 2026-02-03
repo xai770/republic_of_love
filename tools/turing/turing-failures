@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""
+turing-failures - Show recent task failures with details
+
+Usage:
+    turing-failures              # Last 10 failures
+    turing-failures --count 20   # Last 20 failures
+    turing-failures --task-type 9383  # Failures for specific task type
+    turing-failures --since 24h  # Failures in last 24 hours
+"""
+
+import sys
+import argparse
+from pathlib import Path
+from datetime import datetime, timedelta
+
+# Project setup
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from dotenv import load_dotenv
+load_dotenv(project_root / '.env')
+
+from core.database import get_connection
+
+# ANSI codes
+RESET, BOLD, DIM = '\033[0m', '\033[1m', '\033[2m'
+RED, YELLOW, CYAN, GREEN = '\033[31m', '\033[33m', '\033[36m', '\033[32m'
+
+
+def parse_since(since_str: str) -> timedelta:
+    """Parse duration string like '24h', '7d', '30m'."""
+    if not since_str:
+        return timedelta(days=7)
+    
+    unit = since_str[-1].lower()
+    try:
+        value = int(since_str[:-1])
+    except ValueError:
+        return timedelta(days=7)
+    
+    if unit == 'h':
+        return timedelta(hours=value)
+    elif unit == 'd':
+        return timedelta(days=value)
+    elif unit == 'm':
+        return timedelta(minutes=value)
+    else:
+        return timedelta(days=7)
+
+
+def show_failures(count: int = 10, task_type_id: int = None, since: str = None):
+    """Display recent failures."""
+    since_delta = parse_since(since) if since else timedelta(days=7)
+    since_time = datetime.now() - since_delta
+    
+    with get_connection() as conn:
+        cur = conn.cursor()
+        
+        # Build query
+        query = """
+            SELECT 
+                tl.task_log_id,
+                tl.task_type_id,
+                tt.task_type_name,
+                tl.subject_id,
+                tl.status,
+                tl.error_message,
+                tl.output,
+                tl.created_at,
+                tl.completed_at
+            FROM task_logs tl
+            JOIN task_types tt ON tl.task_type_id = tt.task_type_id
+            WHERE tl.status = 'failed'
+              AND tl.enabled = TRUE
+              AND tl.created_at > %s
+        """
+        params = [since_time]
+        
+        if task_type_id:
+            query += " AND tl.task_type_id = %s"
+            params.append(task_type_id)
+        
+        query += " ORDER BY tl.created_at DESC LIMIT %s"
+        params.append(count)
+        
+        cur.execute(query, params)
+        failures = cur.fetchall()
+        
+        if not failures:
+            print(f"{GREEN}✓ No failures found{RESET} (since {since_time.strftime('%Y-%m-%d %H:%M')})")
+            return
+        
+        print(f"\n{BOLD}Recent Failures{RESET} ({len(failures)} found)\n")
+        print(f"{'─'*78}")
+        
+        for f in failures:
+            task_log_id = f['task_log_id']
+            task_name = f['task_type_name']
+            subject_id = f['subject_id']
+            created = f['created_at'].strftime('%Y-%m-%d %H:%M') if f['created_at'] else 'unknown'
+            error = f['error_message'] or ''
+            output = f['output'] or {}
+            
+            # Try to get error from output if error_message is empty
+            if not error and isinstance(output, dict):
+                error = output.get('error', '')
+            
+            # Truncate long errors
+            if len(error) > 200:
+                error = error[:200] + '...'
+            
+            print(f"\n{RED}✗{RESET} {BOLD}task_log:{task_log_id}{RESET} | {task_name} | subject:{subject_id}")
+            print(f"  {DIM}Created:{RESET} {created}")
+            if error:
+                print(f"  {DIM}Error:{RESET} {error}")
+            
+            # Show output keys if interesting
+            if isinstance(output, dict):
+                if output.get('success') is False:
+                    print(f"  {YELLOW}Output: success=False{RESET}")
+                if output.get('skip_reason'):
+                    print(f"  {DIM}Skip reason:{RESET} {output['skip_reason']}")
+        
+        print(f"\n{'─'*78}")
+        
+        # Summary by task type
+        cur.execute("""
+            SELECT tt.task_type_name, COUNT(*) as cnt
+            FROM task_logs tl
+            JOIN task_types tt ON tl.task_type_id = tt.task_type_id
+            WHERE tl.status = 'failed' AND tl.enabled = TRUE AND tl.created_at > %s
+            GROUP BY tt.task_type_name
+            ORDER BY cnt DESC
+        """, (since_time,))
+        
+        summary = cur.fetchall()
+        if len(summary) > 1:
+            print(f"\n{BOLD}By Task Type:{RESET}")
+            for s in summary:
+                print(f"  {s['task_type_name']}: {s['cnt']}")
+        
+        print()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Show recent task failures')
+    parser.add_argument('--count', '-n', type=int, default=10, help='Number of failures to show')
+    parser.add_argument('--task-type', '-t', type=int, help='Filter by task_type_id')
+    parser.add_argument('--since', '-s', help='Time window (e.g., 24h, 7d, 30m)')
+    
+    args = parser.parse_args()
+    show_failures(count=args.count, task_type_id=args.task_type, since=args.since)
+
+
+if __name__ == '__main__':
+    main()
