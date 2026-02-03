@@ -1,0 +1,341 @@
+#!/usr/bin/env python3
+"""
+turing-browser — Playwright test harness with auto-login
+
+Usage:
+    turing-browser                    # Open dashboard as test user
+    turing-browser --url /matches     # Open specific page
+    turing-browser --user 1           # Login as specific user_id
+    turing-browser --snapshot         # Take accessibility snapshot
+    turing-browser --interact         # Interactive mode (keeps browser open)
+
+This tool:
+1. Starts headless (or headed) browser
+2. Generates JWT for test user
+3. Sets session cookie
+4. Navigates to requested page
+5. Optionally takes snapshot or runs tests
+"""
+import argparse
+import asyncio
+import sys
+import os
+import jwt
+from datetime import datetime, timedelta
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from playwright.async_api import async_playwright
+
+# Import config
+try:
+    from api.config import SECRET_KEY
+except ImportError:
+    SECRET_KEY = os.environ.get('JWT_SECRET', 'dev-secret-key')
+
+BASE_URL = os.environ.get('TURING_URL', 'http://localhost:8000')
+
+
+def generate_session_token(user_id: int, expires_hours: int = 24) -> str:
+    """Generate JWT session token for test user."""
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.utcnow() + timedelta(hours=expires_hours),
+        'iat': datetime.utcnow(),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+
+async def run_browser(args):
+    """Main browser automation."""
+    async with async_playwright() as p:
+        # Launch browser
+        browser = await p.chromium.launch(
+            headless=not args.interact,
+            slow_mo=100 if args.interact else 0,
+        )
+        
+        context = await browser.new_context(
+            viewport={'width': 1280, 'height': 900},
+            locale='de-DE',
+        )
+        
+        page = await context.new_page()
+        
+        # Generate and set session cookie
+        token = generate_session_token(args.user)
+        await context.add_cookies([{
+            'name': 'session',
+            'value': token,
+            'domain': 'localhost',
+            'path': '/',
+        }])
+        
+        print(f"🔐 Logged in as user_id={args.user}")
+        
+        # Navigate to page
+        url = BASE_URL + args.url
+        print(f"🌐 Navigating to {url}")
+        
+        try:
+            response = await page.goto(url, wait_until='networkidle', timeout=10000)
+            print(f"📄 Status: {response.status}")
+        except Exception as e:
+            print(f"❌ Navigation failed: {e}")
+            if not args.interact:
+                await browser.close()
+                return 1
+        
+        # Take screenshot
+        if args.screenshot:
+            screenshot_path = f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+            await page.screenshot(path=screenshot_path, full_page=True)
+            print(f"📸 Screenshot saved: {screenshot_path}")
+        
+        # Take accessibility snapshot
+        if args.snapshot:
+            snapshot = await page.accessibility.snapshot()
+            print("\n📊 Accessibility Snapshot:")
+            print_snapshot(snapshot, indent=0)
+        
+        # Run specific test
+        if args.test:
+            result = await run_test(page, args.test)
+            if not args.interact:
+                await browser.close()
+            return 0 if result else 1
+        
+        # Interactive mode - keep browser open
+        if args.interact:
+            print("\n🎮 Interactive mode. Press Ctrl+C to close.")
+            try:
+                while True:
+                    await asyncio.sleep(1)
+            except KeyboardInterrupt:
+                print("\n👋 Closing browser...")
+        
+        await browser.close()
+        return 0
+
+
+def print_snapshot(node, indent=0):
+    """Pretty print accessibility snapshot."""
+    if not node:
+        return
+    
+    prefix = "  " * indent
+    role = node.get('role', 'unknown')
+    name = node.get('name', '')
+    
+    if name:
+        print(f"{prefix}[{role}] {name[:60]}")
+    elif role not in ('generic', 'none'):
+        print(f"{prefix}[{role}]")
+    
+    for child in node.get('children', []):
+        print_snapshot(child, indent + 1)
+
+
+async def run_test(page, test_name: str) -> bool:
+    """Run a specific test."""
+    tests = {
+        'mira': test_mira_chat,
+        'home': test_home_page,
+        'matches': test_match_count,
+    }
+    
+    if test_name not in tests:
+        print(f"❌ Unknown test: {test_name}")
+        print(f"   Available: {', '.join(tests.keys())}")
+        return False
+    
+    return await tests[test_name](page)
+
+
+async def test_mira_chat(page) -> bool:
+    """Test Mira chat functionality."""
+    print("\n🧘 Testing Mira chat...")
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Test 1: Find Mira chat input
+    tests_total += 1
+    chat_input = page.locator('[data-testid="mira-input"], #mira-input, input[placeholder*="Mira"], .mira-input input')
+    if await chat_input.count() > 0:
+        print("  ✅ Mira chat input found")
+        tests_passed += 1
+    else:
+        print("  ❌ Mira chat input NOT found")
+        # Try to find inline chat
+        inline_input = page.locator('.inline-mira-input input')
+        if await inline_input.count() > 0:
+            print("  ℹ️  Found inline Mira input")
+            chat_input = inline_input
+            tests_passed += 1
+    
+    # Test 2: Send a message
+    tests_total += 1
+    try:
+        await chat_input.first.fill("Hallo Mira!")
+        await chat_input.first.press("Enter")
+        await page.wait_for_timeout(2000)  # Wait for response
+        
+        # Look for response
+        response = page.locator('.mira-message, .chat-message, [data-role="assistant"]')
+        if await response.count() > 0:
+            last_response = await response.last.text_content()
+            print(f"  ✅ Mira responded: {last_response[:80]}...")
+            tests_passed += 1
+        else:
+            print("  ❌ No response from Mira")
+    except Exception as e:
+        print(f"  ❌ Chat test failed: {e}")
+    
+    # Test 3: Language switch
+    tests_total += 1
+    try:
+        await chat_input.first.fill("Can we switch to English?")
+        await chat_input.first.press("Enter")
+        await page.wait_for_timeout(3000)
+        
+        response = page.locator('.mira-message, .chat-message, [data-role="assistant"]')
+        last_response = await response.last.text_content()
+        
+        if 'english' in last_response.lower() or 'sure' in last_response.lower():
+            print(f"  ✅ Language switch works: {last_response[:60]}...")
+            tests_passed += 1
+        else:
+            print(f"  ⚠️  Language switch unclear: {last_response[:60]}...")
+    except Exception as e:
+        print(f"  ❌ Language switch test failed: {e}")
+    
+    print(f"\n📊 Mira tests: {tests_passed}/{tests_total} passed")
+    return tests_passed == tests_total
+
+
+async def test_home_page(page) -> bool:
+    """Test home page layout (T004)."""
+    print("\n🏠 Testing home page...")
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Test 1: Mira greeting visible
+    tests_total += 1
+    greeting = page.locator('.mira-greeting-section, .mira-greeting-card, .welcome-section, [data-section="mira-greeting"]')
+    if await greeting.count() > 0:
+        print("  ✅ Mira greeting section found")
+        tests_passed += 1
+    else:
+        print("  ❌ Mira greeting section NOT found")
+    
+    # Test 2: No job posting cards on home
+    tests_total += 1
+    job_cards = page.locator('.job-card, .posting-card, [data-type="job-posting"]')
+    if await job_cards.count() == 0:
+        print("  ✅ No job posting cards on home (correct)")
+        tests_passed += 1
+    else:
+        count = await job_cards.count()
+        print(f"  ❌ Found {count} job posting cards on home (should be 0)")
+    
+    # Test 3: Summary cards present
+    tests_total += 1
+    summary_cards = page.locator('.summary-card, .stat-card, [data-section="summary"]')
+    if await summary_cards.count() > 0:
+        print(f"  ✅ Summary cards found ({await summary_cards.count()})")
+        tests_passed += 1
+    else:
+        print("  ❌ Summary cards NOT found")
+    
+    # Test 4: Match count is not 78K+
+    tests_total += 1
+    match_text = await page.locator('body').text_content()
+    if '78,140' in match_text or '78140' in match_text:
+        print("  ❌ Still showing 78K matches (T011 not fixed)")
+    else:
+        # Look for match count
+        import re
+        matches = re.findall(r'(\d{1,5})\s*(matches?|Matches|Treffer)', match_text)
+        if matches:
+            print(f"  ✅ Match count appears reasonable: {matches[0]}")
+            tests_passed += 1
+        else:
+            print("  ℹ️  Could not find match count")
+            tests_passed += 1  # Not a failure if no count shown
+    
+    print(f"\n📊 Home page tests: {tests_passed}/{tests_total} passed")
+    return tests_passed == tests_total
+
+
+async def test_match_count(page) -> bool:
+    """Test that match count is meaningful, not 78K firehose."""
+    print("\n🎯 Testing match count...")
+    
+    # Navigate to matches page
+    await page.goto(BASE_URL + '/matches', wait_until='networkidle')
+    await page.wait_for_timeout(1000)
+    
+    # Get page text
+    text = await page.locator('body').text_content()
+    
+    # Check for the 78K number
+    if '78,140' in text or '78140' in text:
+        print("  ❌ Match page still shows 78,140 (all postings)")
+        return False
+    
+    # Look for any match count
+    import re
+    matches = re.findall(r'(\d+)\s*(matches?|Matches|Treffer|passende|Stellen)', text)
+    if matches:
+        count = int(matches[0][0])
+        if count > 50000:
+            print(f"  ⚠️  Match count is {count} — suspiciously high")
+            return False
+        print(f"  ✅ Match count: {count}")
+        return True
+    
+    print("  ℹ️  Could not find explicit match count")
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Playwright test harness with auto-login',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    turing-browser                      # Open dashboard
+    turing-browser --url /matches       # Open matches page
+    turing-browser --interact           # Keep browser open
+    turing-browser --test mira          # Run Mira chat test
+    turing-browser --test home          # Test home page layout
+    turing-browser --test matches       # Test match count
+    turing-browser --snapshot           # Take accessibility snapshot
+"""
+    )
+    
+    parser.add_argument('--url', default='/dashboard', help='URL path to open (default: /dashboard)')
+    parser.add_argument('--user', type=int, default=2, help='User ID to login as (default: 2 = test@talent.yoga)')
+    parser.add_argument('--interact', '-i', action='store_true', help='Interactive mode (keeps browser open)')
+    parser.add_argument('--screenshot', '-s', action='store_true', help='Take screenshot')
+    parser.add_argument('--snapshot', action='store_true', help='Take accessibility snapshot')
+    parser.add_argument('--test', '-t', help='Run specific test (mira, home, matches)')
+    
+    args = parser.parse_args()
+    
+    try:
+        result = asyncio.run(run_browser(args))
+        sys.exit(result)
+    except KeyboardInterrupt:
+        print("\n👋 Interrupted")
+        sys.exit(0)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

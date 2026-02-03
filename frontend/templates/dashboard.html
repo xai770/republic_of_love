@@ -2062,7 +2062,7 @@ async function sendInlineMessage() {
         
         if (res.ok) {
             const data = await res.json();
-            document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = data.response;
+            document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = data.reply || data.response || 'Hmm...';
         } else {
             document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = 'Hmm, da ist etwas schiefgelaufen. Versuch es nochmal?';
         }

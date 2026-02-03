@@ -949,117 +949,36 @@ async def chat(
     user: dict = Depends(require_user),
     conn=Depends(get_db)
 ):
-    """Handle Mira chat messages with embedding-based FAQ matching and yogi context."""
+    """
+    Handle Mira chat messages — LLM-first approach.
+    
+    No pattern matching shortcuts. Everything goes through the LLM with
+    FAQ knowledge embedded in the system prompt.
+    
+    This ensures Mira:
+    - Always understands context (language switches, follow-ups)
+    - Never gives wrong-confidence matches
+    - Maintains consistent personality
+    """
+    from core.mira_llm import chat as mira_chat
+    
     message = request.message.strip()
     
-    # Detect formality from message, or use client hint, or default to du
-    detected_formality = detect_formality(message)
-    if request.uses_du is not None:
-        uses_du = request.uses_du  # Client explicitly set
-    elif detected_formality is not None:
-        uses_du = detected_formality  # Detected from message
-    else:
-        uses_du = True  # Default to informal
-    
-    # Detect language and language switch requests (T001)
-    lang_switch = detect_language_switch(message)
-    detected_lang = detect_language_from_message(message)
-    
-    # Default to German, switch if requested or detected
-    language = 'de'
-    if lang_switch == 'en':
-        language = 'en'
-    elif detected_lang == 'en' and lang_switch != 'de':
-        language = 'en'
-    
-    logger.info(f"Mira chat: formality={uses_du}, lang_switch={lang_switch}, detected_lang={detected_lang}, final_lang={language}, message={message[:50]}")
-    
     if not message:
-        if language == 'en':
-            return ChatResponse(
-                reply="I didn't catch that. Could you say that again?",
-                confidence='low',
-                language='en'
-            )
         return ChatResponse(
-            reply="Ich hab dich nicht verstanden. Kannst du das nochmal sagen?" if uses_du 
-                  else "Ich habe Sie nicht verstanden. Können Sie das bitte wiederholen?",
+            reply="I didn't catch that. Could you say that again?",
             confidence='low',
-            language='de'
-        )
-    
-    # 0. Check for explicit language switch request (T001)
-    if lang_switch == 'en':
-        return ChatResponse(
-            reply=LANGUAGE_SWITCH["to_english"]["response"],
-            confidence='high',
             language='en'
         )
-    elif lang_switch == 'de':
-        response = LANGUAGE_SWITCH["to_german"]["response_du" if uses_du else "response_sie"]
-        return ChatResponse(
-            reply=response,
-            confidence='high',
-            language='de'
-        )
     
-    # 1. Check for simple conversational patterns (greeting/thanks/bye)
-    conv_category = match_conversational(message)
-    if conv_category:
-        reply = get_conversational_response(conv_category, uses_du, language)
-        return ChatResponse(reply=reply, confidence='high', language=language)
+    # Use the new LLM-first module
+    response = await mira_chat(message, user['user_id'], conn)
     
-    # Build yogi context for personalized responses
-    yogi_ctx = build_yogi_context(user['user_id'], conn)
+    logger.info(f"Mira LLM response: lang={response.language}, fallback={response.fallback}, message={message[:50]}")
     
-    # 2. Try embedding-based FAQ matching (only for German - FAQ is in German)
-    if language == 'de':
-        try:
-            faq = get_faq()
-            match = faq.find_answer(message, uses_du=uses_du, language='de')
-            
-            logger.info(f"FAQ match: confidence={match.confidence}, score={match.score:.3f}, "
-                       f"faq_id={match.faq_entry.faq_id if match.faq_entry else 'none'}")
-            
-            # High confidence: return curated answer directly
-            if match.confidence == 'high' and match.answer:
-                return ChatResponse(
-                    reply=match.answer,
-                    confidence='high',
-                    faq_id=match.faq_entry.faq_id if match.faq_entry else None,
-                    language='de'
-                )
-            
-            # Medium confidence: use LLM with FAQ context + yogi context
-            if match.confidence == 'medium' and match.context:
-                llm_reply = await ask_llm(message, uses_du, context=match.context, yogi_context=yogi_ctx, language=language)
-                if llm_reply:
-                    return ChatResponse(
-                        reply=llm_reply,
-                        confidence='medium',
-                        faq_id=match.faq_entry.faq_id if match.faq_entry else None,
-                        language='de'
-                    )
-        
-        except Exception as e:
-            logger.error(f"FAQ matching error: {e}")
-    
-    # 3. Low confidence: freeform LLM with yogi context
-    llm_reply = await ask_llm(message, uses_du, yogi_context=yogi_ctx, language=language)
-    
-    if llm_reply:
-        return ChatResponse(reply=llm_reply, confidence='low', language=language)
-    
-    # 4. Ultimate fallback - log and acknowledge
-    await log_unanswered(user['user_id'], message, conn)
-    
-    if language == 'en':
-        fallback_msg = ("That's a good question! Let me check and get back to you. "
-                       "You can also write directly to hello@talent.yoga.")
-    else:
-        fallback_msg = ("Das ist eine gute Frage! Ich muss kurz nachfragen und melde mich. "
-                       "Du kannst auch direkt an hello@talent.yoga schreiben." if uses_du else
-                       "Das ist eine gute Frage! Ich muss kurz nachfragen und melde mich. "
-                       "Sie können auch direkt an hello@talent.yoga schreiben.")
-    
-    return ChatResponse(reply=fallback_msg, fallback=True, confidence='none', language=language)
+    return ChatResponse(
+        reply=response.reply,
+        confidence='llm' if not response.fallback else 'none',
+        language=response.language,
+        fallback=response.fallback
+    )
