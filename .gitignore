@@ -98,3 +98,53 @@ experiments/*/tmp/
 backups/*.sql
 backups/*.dump
 config/client_secret*.json
+# VPN configs (sensitive)
+config/wg-*.conf
+
+# Data files (large, regenerable)
+data/*.parquet
+data/*.npy
+data/*.npz
+data/*.db
+data/db_28_3_text/
+data/owl_templates/
+data/raq_tests/
+data/wf3021_prompts/
+data/berufenet*.csv
+data/uncategorizable_titles.csv
+data/mira_faq_embeddings.npz
+data/umap_coords_postings.parquet
+
+# Output (ephemeral, regenerable)
+output/*.md
+output/*.html
+output/*.json
+output/*.csv
+output/*.svg
+output/skill_qa/
+output/skills/
+output/workflows/
+
+# Temp files
+temp/
+*.db
+
+# Process state (ephemeral)
+.owl_watcher_state.json
+.pull_daemon.pid
+.pre-commit-config.yaml
+
+# Playwright screenshots
+.playwright-mcp/
+
+# Misc
+95876
+"Link to ty_learn archive"
+turing-lint
+turing.db
+# Backups (local only)
+backups/core_archive/
+backups/scripts_archive/
+backups/tickets_archive/
+backups/task_types_to_delete*.txt
+Link to ty_learn archive

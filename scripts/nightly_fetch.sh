@@ -183,12 +183,3 @@ with get_connection() as conn:
     print(f'  Embeddings:       {embeds:,}')
     print(f'  Pending embed:    {pending:,}')
 "
-
-# ============================================================================
-# WEEKLY: SCHEMA HEALTH CHECK (runs on Mondays)
-# ============================================================================
-if [ "$(date +%u)" = "1" ]; then
-    echo ""
-    echo "$LOG_PREFIX 📊 Weekly schema health check..."
-    python3 scripts/schema_audit.py --table postings --dead 2>/dev/null || true
-fi

@@ -567,7 +567,7 @@ class ArbeitsagenturJobFetcher:
             location_country = arbeitsort.get('land', 'Deutschland')
             
             title = raw_job.get('titel', '')
-            beruf = raw_job.get('beruf', '')  # Official AA occupation category (e.g., "Arzt/Ärztin")
+            beruf = raw_job.get('beruf', '')  # Occupation category
             employer = raw_job.get('arbeitgeber', '')
             
             # Try to fetch full description from HTML page
@@ -585,7 +585,6 @@ class ArbeitsagenturJobFetcher:
                 'refnr': refnr,
                 'external_id': f"aa-{refnr}",
                 'title': title,
-                'beruf': beruf,  # Official AA occupation category
                 'employer': employer,
                 'location_city': location_city,
                 'location_postal_code': location_postal_code,
@@ -663,9 +662,9 @@ class ArbeitsagenturJobFetcher:
                     INSERT INTO postings (
                         external_id, external_job_id, posting_name, job_title, 
                         location_city, location_postal_code, location_state, location_country, 
-                        source, external_url, source_metadata, job_description, beruf,
+                        source, external_url, source_metadata, job_description,
                         first_seen_at, last_seen_at, posting_status
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), 'active')
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), 'active')
                     RETURNING posting_id
                 """, (
                     job['external_id'],
@@ -685,7 +684,6 @@ class ArbeitsagenturJobFetcher:
                         'raw_api_response': job['raw_data'],  # Store full API response!
                     }),
                     job['job_description'],
-                    job.get('beruf'),  # Official AA occupation category
                 ))
                 
                 stats['new'] += 1
