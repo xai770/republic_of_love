@@ -434,11 +434,10 @@ class CompleteJobProcessingPipelineContract:
     3. Extracts skills & maps to taxonomy
     4. Performs IHL scoring (3-actor debate)
     
-    Input: API fetch parameters (user_id, max_jobs, source_id)
+    Input: API fetch parameters (user_id, max_jobs)
     Output: Complete processing results with summary, skills, IHL score
     
-    Note: This is the FULL pipeline. For just summary extraction,
-    use workflow 3002 (when created).
+    Note: This workflow is deprecated - use embedding-based matching instead.
     """
     
     @dataclass
@@ -447,7 +446,6 @@ class CompleteJobProcessingPipelineContract:
         posting_id: int          # Posting ID to update
         user_id: int = 1         # User requesting the work
         max_jobs: int = 1        # Number of jobs to process
-        source_id: int = 1       # Job source ID
     
     @dataclass
     class Output:

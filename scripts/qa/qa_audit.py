@@ -955,11 +955,9 @@ class QAAudit:
             # Clear the bad summary so it gets re-processed
             self.cur.execute("""
                 UPDATE postings 
-                SET extracted_summary = NULL,
-                    processing_notes = COALESCE(processing_notes || E'\n', '') || 
-                        'QA: Hallucination detected (finding #' || %s || '), summary cleared for re-processing'
+                SET extracted_summary = NULL
                 WHERE posting_id = %s
-            """, (f['finding_id'], f['posting_id']))
+            """, (f['posting_id'],))
         
         # For encoding: fix in place using shared utility and queue re-summarization
         for f in classified['encoding']:
@@ -971,11 +969,9 @@ class QAAudit:
                 self.cur.execute("""
                     UPDATE postings 
                     SET job_description = %s,
-                        extracted_summary = NULL,
-                        processing_notes = COALESCE(processing_notes || E'\n', '') || 
-                            'QA: Encoding fixed via core.text_utils, summary cleared (finding #' || %s || ')'
+                        extracted_summary = NULL
                     WHERE posting_id = %s
-                """, (fixed_desc, f['finding_id'], f['posting_id']))
+                """, (fixed_desc, f['posting_id']))
             
             self.cur.execute("""
                 UPDATE qa_findings 
@@ -1042,10 +1038,9 @@ class QAAudit:
                 f.description, f.evidence, f.pattern_matched, f.metric_value,
                 f.status, f.data_hash, f.detected_at,
                 p.posting_name, p.enabled, p.job_title, p.job_description,
-                p.location_city, p.location_country, p.skill_keywords,
-                p.source_id, p.ihl_score, p.external_job_id, p.external_url,
+                p.location_city, p.location_country,
+                p.source, p.ihl_score, p.external_job_id, p.external_url,
                 p.posting_status, p.extracted_summary,
-                p.created_by_interaction_id, p.updated_by_interaction_id,
                 LENGTH(p.job_description) as desc_length,
                 LENGTH(p.extracted_summary) as summary_length
             FROM qa_findings f

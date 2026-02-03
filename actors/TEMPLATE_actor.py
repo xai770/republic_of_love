@@ -39,8 +39,8 @@ flowchart TD
 PIPELINE POSITION:
 [Where this fits in the posting pipeline. What triggers downstream cascade.]
 ```
-job_description → extracted_summary → extracted_requirements → posting_facets
-                  [before me]         [THIS ACTOR]            [after me]
+job_description → extracted_summary → embedding → matching
+                  [before me]         [THIS ACTOR]  [after me]
 ```
 
 RAQ Config:
@@ -119,7 +119,7 @@ THICK ACTOR RULES:
       __ separates table from attribute
       _C = Create, _U = Update, _D = Delete, _CU = Upsert
       row = whole-row operations
-      Examples: postings__extracted_requirements_U.py, posting_facets__row_C.py
+      Examples: postings__extracted_summary_U.py, postings__embedding_U.py
 
 #13 - Belt & Suspenders (three phases)
       Pre-flight: Validate input, skip bad data

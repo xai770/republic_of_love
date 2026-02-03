@@ -6,34 +6,25 @@ Extracts structured summary from job posting description.
 Uses same model as posting_facets__row_C (qwen2.5-coder:7b) for GPU efficiency.
 Validates extraction via word overlap (summary words must exist in source).
 
-LANGUAGE HANDLING:
-- For English postings: summarize job_description directly
-- For non-English postings: summarize job_description_en (must exist)
-- Output (extracted_summary) is ALWAYS in English
+NOTE: This actor is only used for Deutsche Bank postings (see nightly_fetch.sh).
+For AA postings, we embed job_description directly without summarization.
 
-This ensures downstream actors don't need translation logic.
+DB postings are fluffy/marketing-heavy, so we extract the core info first.
 
 Pull architecture pattern:
 1. Receive subject from pull_daemon (posting_id in input)
-2. Detect language or use existing source_language
-3. If non-English, require job_description_en (translated by interrogator)
-4. Call LLM via Ollama to extract summary
-5. Validate: summary words must exist in source (word overlap check)
-6. Retry once if hallucinations detected
-7. Save to postings.extracted_summary (always English)
+2. Call LLM via Ollama to extract summary from job_description
+3. Validate: summary words must exist in source (word overlap check)
+4. Retry once if hallucinations detected
+5. Save to postings.extracted_summary
 
 Flow Diagram (Mermaid):
 ```mermaid
 flowchart TD
     A[📋 Posting] --> B{Has description?}
     B -->|No| Z1[⏭️ SKIP: NO_DESCRIPTION]
-    B -->|Yes| C{English?}
-    C -->|Yes| D[Use job_description]
-    C -->|No| E{Has job_description_en?}
-    E -->|No| Z2[⏭️ SKIP: NO_TRANSLATION]
-    E -->|Yes| F[Use job_description_en]
-    D --> G[🤖 LLM Extract Summary]
-    F --> G
+    B -->|Yes| G[🤖 LLM Extract Summary]
+    G --> H{Non-empty result?}
     G --> H{Non-empty result?}
     H -->|No| Z3[❌ FAIL: Empty response]
     H -->|Yes| I[🔍 Word Overlap Check]
@@ -47,7 +38,7 @@ flowchart TD
 ```
 
 Author: Arden
-Date: 2026-01-15 (updated 2026-01-19)
+Date: 2026-01-15 (updated 2026-02-03 - removed translation logic)
 """
 
 import sys
@@ -59,8 +50,6 @@ import requests
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-
-from core.text_utils import detect_language
 
 # Config
 TASK_TYPE_ID = 3335  # session_a_extract_summary
@@ -85,17 +74,11 @@ BAD_DATA_PATTERNS = [
     'cannot be determined from',
 ]
 
-# Translation prompt for non-English job postings
-TRANSLATION_PROMPT = '''Translate this job posting to English. Preserve all formatting, structure, and meaning exactly.
-Do not add any commentary or explanation. Output ONLY the English translation.
-
-{text}'''
-
 
 class SummaryExtractActor:
     """Thick actor for extracting job posting summaries."""
     
-    def __init__(self, db_conn=None, auto_translate: bool = True):
+    def __init__(self, db_conn=None):
         if db_conn:
             self.conn = db_conn
             self._owns_connection = False
@@ -103,7 +86,6 @@ class SummaryExtractActor:
             self.conn = None  # Will be set when needed
             self._owns_connection = False
         self.input_data = None
-        self.auto_translate = auto_translate  # If True, translate non-English descriptions
         # Track LLM calls for auditability (stored in tickets.output.llm_calls)
         self._llm_calls = []
     
@@ -134,39 +116,7 @@ class SummaryExtractActor:
                     'posting_id': posting_id
                 }
             
-            # 3. Determine language and get English source text
-            source_language = posting.get('source_language')
-            if not source_language:
-                source_language = detect_language(description)
-                self._save_language(posting_id, source_language)
-            
-            # Use English source for summarization (output is always English)
-            if source_language == 'en':
-                english_source = description
-            else:
-                english_source = posting.get('job_description_en')
-                if not english_source:
-                    # Auto-translate if enabled
-                    if self.auto_translate:
-                        english_source = self._translate_to_english(description)
-                        if english_source and len(english_source) > 100:
-                            self._save_translation(posting_id, english_source)
-                        else:
-                            return {
-                                'success': False,
-                                'skip_reason': 'TRANSLATION_FAILED',
-                                'error': f'Translation failed for {source_language} posting {posting_id}',
-                                'posting_id': posting_id
-                            }
-                    else:
-                        return {
-                            'success': False,
-                            'skip_reason': 'NO_TRANSLATION',
-                            'error': f'Posting {posting_id} is {source_language} but has no job_description_en',
-                            'posting_id': posting_id
-                        }
-            
-            # 4. Get instruction template
+            # 3. Get instruction template
             template = self._get_instruction_template()
             if not template:
                 return {'error': 'Instruction template not found', 'success': False}
@@ -180,10 +130,10 @@ class SummaryExtractActor:
             while retries <= MAX_RETRIES:
                 # Build prompt (stricter on retry)
                 if retries == 0:
-                    prompt = template.replace('{variations_param_1}', english_source)
+                    prompt = template.replace('{variations_param_1}', description)
                 else:
                     # Stricter prompt on retry - emphasize no hallucinations
-                    prompt = self._get_strict_prompt(template, english_source, hallucinations)
+                    prompt = self._get_strict_prompt(template, description, hallucinations)
                 
                 response = self._call_llm(prompt, purpose=f'summary_extract_attempt_{retries}')
                 
@@ -195,9 +145,9 @@ class SummaryExtractActor:
                         'llm_calls': self._llm_calls
                     }
                 
-                # 5. Semantic validation against English source
+                # 5. Semantic validation against source
                 validation_passed, hallucinations = self._validate_semantic_containment(
-                    source=english_source, 
+                    source=description, 
                     summary=response
                 )
                 
@@ -215,7 +165,6 @@ class SummaryExtractActor:
             result = {
                 'success': True,
                 'posting_id': posting_id,
-                'source_language': source_language,
                 'summary_length': len(response),
                 'summary_preview': response[:200] + '...' if len(response) > 200 else response,
                 'validation_passed': validation_passed,
@@ -250,34 +199,12 @@ class SummaryExtractActor:
         """Fetch posting data for summary extraction."""
         cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
-            SELECT posting_id, job_title, job_description,
-                   source_language, job_description_en
+            SELECT posting_id, job_title, job_description
             FROM postings
             WHERE posting_id = %s
         """, (posting_id,))
         row = cur.fetchone()
         return dict(row) if row else None
-    
-    def _save_language(self, posting_id: int, language: str):
-        """Save detected language."""
-        cur = self.conn.cursor()
-        cur.execute("""
-            UPDATE postings SET source_language = %s WHERE posting_id = %s
-        """, (language, posting_id))
-        self.conn.commit()
-    
-    def _translate_to_english(self, text: str) -> str | None:
-        """Translate text to English using LLM."""
-        prompt = TRANSLATION_PROMPT.replace('{text}', text)
-        return self._call_llm(prompt, 'translate_to_english')
-    
-    def _save_translation(self, posting_id: int, english_text: str):
-        """Save English translation."""
-        cur = self.conn.cursor()
-        cur.execute("""
-            UPDATE postings SET job_description_en = %s WHERE posting_id = %s
-        """, (english_text, posting_id))
-        self.conn.commit()
     
     def _get_instruction_template(self) -> str | None:
         """Fetch instruction template from database, with fallback."""
@@ -439,13 +366,12 @@ def main():
     
     parser = argparse.ArgumentParser(description='Extract summaries from job postings')
     parser.add_argument('posting_id', nargs='?', type=int, help='Single posting ID to process')
-    parser.add_argument('--source', type=str, help='Filter by source (e.g., arbeitsagentur)')
+    parser.add_argument('--source', type=str, help='Filter by source (e.g., deutsche_bank)')
     parser.add_argument('--batch', type=int, default=0, help='Process N postings in batch mode')
-    parser.add_argument('--no-translate', action='store_true', help='Skip translation (require job_description_en)')
     args = parser.parse_args()
     
     with get_connection() as conn:
-        actor = SummaryExtractActor(conn, auto_translate=not args.no_translate)
+        actor = SummaryExtractActor(conn)
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
         if args.posting_id:

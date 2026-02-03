@@ -340,7 +340,7 @@ def get_match_report(
         cur.execute("""
             SELECT m.*, 
                    p.job_title, p.posting_name as company, p.location_city,
-                   p.job_description, p.extracted_requirements,
+                   p.job_description, p.extracted_summary,
                    pr.full_name as profile_name, pr.user_id
             FROM profile_posting_matches m
             JOIN postings p ON m.posting_id = p.posting_id
