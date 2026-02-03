@@ -50,31 +50,31 @@
         <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="Collapse sidebar">‹</button>
         
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-item active">
+            <a href="/dashboard" class="nav-item active" data-tooltip="{{ t('nav.start') }}">
                 <span class="nav-icon-wrap" style="background: #fff3e0;">
                     <img src="/static/images/icons/icon-home.png" alt="" class="nav-icon-img">
                 </span>
                 <span class="nav-label">{{ t('nav.start') }}</span>
             </a>
-            <a href="/matches" class="nav-item">
+            <a href="/matches" class="nav-item" data-tooltip="{{ t('nav.overview') }}">
                 <span class="nav-icon-wrap" style="background: #e3f2fd;">
                     <img src="/static/images/icons/icon-dashboard.png" alt="" class="nav-icon-img">
                 </span>
                 <span class="nav-label">{{ t('nav.overview') }}</span>
             </a>
-            <a href="/profile" class="nav-item">
+            <a href="/profile" class="nav-item" data-tooltip="{{ t('nav.resume') }}">
                 <span class="nav-icon-wrap" style="background: #fff8e1;">
                     <img src="/static/images/icons/icon-profile.png" alt="" class="nav-icon-img">
                 </span>
                 <span class="nav-label">{{ t('nav.resume') }}</span>
             </a>
-            <a href="/matches" class="nav-item">
+            <a href="/matches" class="nav-item" data-tooltip="{{ t('nav.jobs') }}">
                 <span class="nav-icon-wrap" style="background: #e8f5e9;">
                     <img src="/static/images/icons/icon-jobs.png" alt="" class="nav-icon-img">
                 </span>
                 <span class="nav-label">{{ t('nav.jobs') }}</span>
             </a>
-            <a href="/messages" class="nav-item">
+            <a href="/messages" class="nav-item" data-tooltip="{{ t('nav.messages') }}">
                 <span class="nav-icon-wrap" style="background: #fff3e0;">
                     <img src="/static/images/icons/icon-inbox.png" alt="" class="nav-icon-img">
                 </span>
@@ -83,19 +83,19 @@
             
             <div class="nav-divider"></div>
             
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-tooltip="{{ t('nav.help') }}">
                 <span class="nav-icon-wrap" style="background: #fce4ec;">
                     <img src="/static/images/icons/icon-help.png" alt="" class="nav-icon-img">
                 </span>
                 <span class="nav-label">{{ t('nav.help') }}</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-tooltip="{{ t('nav.chat') }}">
                 <span class="nav-icon-wrap" style="background: #e8f5e9;">
                     <img src="/static/images/icons/icon-chat.png" alt="" class="nav-icon-img">
                 </span>
                 <span class="nav-label">{{ t('nav.chat') }}</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-tooltip="{{ t('nav.account') }}">
                 <span class="nav-icon-wrap" style="background: #ede7f6;">
                     <img src="/static/images/icons/icon-account.png" alt="" class="nav-icon-img">
                 </span>
@@ -104,7 +104,7 @@
         </nav>
         
         <div class="sidebar-footer">
-            <a href="/auth/logout" class="nav-item logout">
+            <a href="/auth/logout" class="nav-item logout" data-tooltip="{{ t('common.logout') }}">
                 <span class="nav-icon-wrap" style="background: #ffebee;">
                     <span class="nav-icon">🚪</span>
                 </span>
@@ -480,9 +480,9 @@ const I18N = {
     font-size: 1rem;
 }
 
-/* Sidebar - White with colorful icons */
+/* Sidebar - Icon-only with tooltips (T003 fix) */
 .sidebar {
-    width: 220px;
+    width: 70px;
     background: white;
     display: flex;
     flex-direction: column;
@@ -491,72 +491,64 @@ const I18N = {
     left: 0;
     height: calc(100vh - 80px);
     z-index: 1000;
-    transition: width 0.3s ease, transform 0.3s ease;
     box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    overflow: hidden;
+    overflow: visible;
 }
 
-/* Collapsed sidebar state */
-.sidebar.collapsed {
-    width: 60px;
+/* Hide labels by default - use tooltips instead */
+.nav-label {
+    display: none;
 }
 
-.sidebar.collapsed .nav-label,
-.sidebar.collapsed .logo-text {
+/* Tooltip on hover */
+.nav-item {
+    position: relative;
+}
+
+.nav-item::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 8px;
+    padding: 0.5rem 0.75rem;
+    background: #2d3748;
+    color: white;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    border-radius: 4px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    z-index: 1002;
+    pointer-events: none;
 }
 
-.sidebar.collapsed .nav-item {
-    justify-content: center;
-    padding: 0.625rem 0.5rem;
-}
-
-.sidebar.collapsed .nav-icon-wrap {
-    margin: 0;
-}
-
-/* Hover expand - only on desktop */
-@media (min-width: 769px) {
-    .sidebar.collapsed:hover {
-        width: 220px;
-    }
-    
-    .sidebar.collapsed:hover .nav-label {
-        opacity: 1;
-        visibility: visible;
-    }
-    
-    .sidebar.collapsed:hover .nav-item {
-        justify-content: flex-start;
-        padding: 0.625rem 1rem;
-    }
-}
-
-/* Collapse toggle button */
-.sidebar-collapse-btn {
+.nav-item::before {
+    content: '';
     position: absolute;
-    bottom: 70px;
-    right: -12px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #5a67d8;
-    color: white;
-    border: 2px solid white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    z-index: 1001;
-    transition: transform 0.3s ease;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #2d3748;
+    margin-left: -2px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    z-index: 1002;
 }
 
-.sidebar.collapsed .sidebar-collapse-btn {
-    transform: rotate(180deg);
+.nav-item:hover::after,
+.nav-item:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Hide the collapse button - not needed anymore */
+.sidebar-collapse-btn {
+    display: none;
 }
 
 .sidebar-close {
@@ -577,17 +569,18 @@ const I18N = {
     overflow-y: auto;
 }
 
+/* Nav item - centered for icon-only sidebar */
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 1rem;
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
     color: #4a5568;
     text-decoration: none;
     transition: all 0.2s;
     position: relative;
     font-size: 0.9rem;
-    margin: 0.25rem 0.75rem;
+    margin: 0.25rem 0.5rem;
     border-radius: 0.5rem;
 }
 
@@ -668,17 +661,11 @@ const I18N = {
 /* Main Content */
 .main-content {
     flex: 1;
-    margin-left: 220px;
+    margin-left: 70px;
     margin-top: 80px;
     background: #f5f7fb;
     min-height: calc(100vh - 80px);
     padding-bottom: 2rem;
-    transition: margin-left 0.3s ease;
-}
-
-.sidebar.collapsed ~ .main-content,
-body.sidebar-collapsed .main-content {
-    margin-left: 60px;
 }
 
 /* Greeting Section */

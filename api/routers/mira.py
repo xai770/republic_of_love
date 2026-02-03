@@ -55,24 +55,121 @@ class ChatResponse(BaseModel):
     fallback: bool = False  # True if we couldn't answer and logged to mira_questions
     confidence: Optional[str] = None  # 'high', 'medium', 'low' for debugging
     faq_id: Optional[str] = None  # Which FAQ was matched
+    language: Optional[str] = None  # 'de' or 'en' — current response language
+
+
+# Language switch patterns (T001)
+LANGUAGE_SWITCH = {
+    "to_english": {
+        "patterns": [
+            r"english\s*please",
+            r"can we (switch|speak|talk|use) (in\s*)?english",
+            r"let'?s (switch|speak|talk|use) (in\s*)?english",
+            r"in english",
+            r"speak english",
+            r"auf englisch",
+            r"können wir englisch",
+            r"lass uns englisch",
+        ],
+        "response": "Sure! I can speak English. How can I help you today? 🌍"
+    },
+    "to_german": {
+        "patterns": [
+            r"deutsch bitte",
+            r"auf deutsch",
+            r"können wir deutsch",
+            r"lass uns deutsch",
+            r"switch to german",
+            r"speak german",
+            r"in german",
+            r"let'?s (switch|speak|talk|use) (in\s*)?german",
+        ],
+        "response_du": "Klar! Ich spreche wieder Deutsch mit dir. Wie kann ich dir helfen? 🇩🇪",
+        "response_sie": "Selbstverständlich! Ich spreche wieder Deutsch mit Ihnen. Wie kann ich Ihnen helfen? 🇩🇪"
+    }
+}
+
+
+def detect_language_switch(message: str) -> Optional[str]:
+    """
+    Detect if user is requesting a language switch.
+    
+    Returns:
+        'en' = switch to English
+        'de' = switch to German
+        None = no language switch request
+    """
+    message_lower = message.lower()
+    
+    for pattern in LANGUAGE_SWITCH["to_english"]["patterns"]:
+        if re.search(pattern, message_lower):
+            return 'en'
+    
+    for pattern in LANGUAGE_SWITCH["to_german"]["patterns"]:
+        if re.search(pattern, message_lower):
+            return 'de'
+    
+    return None
+
+
+def detect_language_from_message(message: str) -> Optional[str]:
+    """
+    Detect which language the user is writing in.
+    
+    Returns:
+        'en' = English
+        'de' = German
+        None = can't determine
+    """
+    message_lower = message.lower()
+    
+    # Common English words/phrases (not shared with German)
+    english_markers = [
+        r'\bthe\b', r'\bwhat\b', r'\bhow\b', r'\bwhy\b', r'\bwhere\b',
+        r'\byou\b', r'\byour\b', r'\bplease\b', r'\bthanks?\b',
+        r'\bhelp\b', r'\bcan\b', r'\bcould\b', r'\bwould\b',
+        r'\bi am\b', r"\bi'm\b", r'\bi have\b', r"\bi've\b",
+    ]
+    
+    # Common German words/phrases (not shared with English)
+    german_markers = [
+        r'\bich\b', r'\bist\b', r'\bsind\b', r'\bwas\b', r'\bwie\b',
+        r'\bwarum\b', r'\bwo\b', r'\bwer\b', r'\bwenn\b', r'\bweil\b',
+        r'\bkann\b', r'\bkönnen\b', r'\bmöchte\b', r'\bwürde\b',
+        r'\bmit\b', r'\bfür\b', r'\bund\b', r'\baber\b', r'\bauch\b',
+        r'\bbitte\b', r'\bdanke\b', r'\bhallo\b', r'\bguten\b',
+    ]
+    
+    en_score = sum(1 for p in english_markers if re.search(p, message_lower))
+    de_score = sum(1 for p in german_markers if re.search(p, message_lower))
+    
+    if en_score > de_score and en_score >= 2:
+        return 'en'
+    elif de_score > en_score and de_score >= 1:
+        return 'de'
+    
+    return None
 
 
 # Conversational responses for greetings/thanks/bye (not in FAQ)
 CONVERSATIONAL = {
     "greeting": {
-        "patterns": [r"^hallo", r"^hi\b", r"^hey", r"^guten (morgen|tag|abend)", r"^servus", r"^moin"],
+        "patterns": [r"^hallo", r"^hi\b", r"^hey", r"^guten (morgen|tag|abend)", r"^servus", r"^moin", r"^hello", r"^good (morning|afternoon|evening)"],
         "responses_du": ["Hallo! Wie kann ich dir helfen?", "Hey! Was kann ich für dich tun?"],
-        "responses_sie": ["Guten Tag! Wie kann ich Ihnen helfen?", "Hallo! Was kann ich für Sie tun?"]
+        "responses_sie": ["Guten Tag! Wie kann ich Ihnen helfen?", "Hallo! Was kann ich für Sie tun?"],
+        "responses_en": ["Hi! How can I help you today?", "Hello! What can I do for you?"]
     },
     "thanks": {
-        "patterns": [r"dank", r"danke", r"super", r"toll", r"klasse", r"prima"],
+        "patterns": [r"dank", r"danke", r"super", r"toll", r"klasse", r"prima", r"thanks?", r"thank you", r"great", r"awesome"],
         "responses_du": ["Gern geschehen! Wenn du noch Fragen hast, bin ich da.", "Freut mich, dass ich helfen konnte!"],
-        "responses_sie": ["Gern geschehen! Wenn Sie noch Fragen haben, bin ich da.", "Freut mich, dass ich helfen konnte!"]
+        "responses_sie": ["Gern geschehen! Wenn Sie noch Fragen haben, bin ich da.", "Freut mich, dass ich helfen konnte!"],
+        "responses_en": ["You're welcome! Let me know if you have more questions.", "Happy to help!"]
     },
     "bye": {
-        "patterns": [r"tschüss", r"bye", r"auf wiedersehen", r"bis (bald|dann|später)", r"ciao"],
+        "patterns": [r"tschüss", r"bye", r"auf wiedersehen", r"bis (bald|dann|später)", r"ciao", r"goodbye", r"see you"],
         "responses_du": ["Bis bald! Du findest mich immer hier unten rechts.", "Tschüss! Melde dich, wenn du mich brauchst."],
-        "responses_sie": ["Auf Wiedersehen! Sie finden mich immer hier unten rechts.", "Bis bald! Melden Sie sich, wenn Sie mich brauchen."]
+        "responses_sie": ["Auf Wiedersehen! Sie finden mich immer hier unten rechts.", "Bis bald! Melden Sie sich, wenn Sie mich brauchen."],
+        "responses_en": ["See you! You can find me in the bottom right corner anytime.", "Bye! Let me know if you need anything."]
     }
 }
 
@@ -135,11 +232,18 @@ def detect_formality(message: str) -> Optional[bool]:
     return None  # Can't determine
 
 
-def get_conversational_response(category: str, uses_du: bool) -> str:
+def get_conversational_response(category: str, uses_du: bool, language: str = 'de') -> str:
     """Get response for conversational patterns."""
     import random
     data = CONVERSATIONAL[category]
-    responses = data["responses_du"] if uses_du else data["responses_sie"]
+    
+    if language == 'en':
+        responses = data.get("responses_en", data["responses_du"])  # Fallback to du
+    elif uses_du:
+        responses = data["responses_du"]
+    else:
+        responses = data["responses_sie"]
+    
     return random.choice(responses)
 
 
@@ -250,13 +354,31 @@ def format_yogi_context_for_prompt(ctx: dict, uses_du: bool) -> str:
     return '\n'.join(parts) if parts else ''
 
 
-async def ask_llm(message: str, uses_du: bool, context: Optional[str] = None, yogi_context: Optional[dict] = None) -> Optional[str]:
+async def ask_llm(message: str, uses_du: bool, context: Optional[str] = None, yogi_context: Optional[dict] = None, language: str = 'de') -> Optional[str]:
     """Fallback to LLM for unmatched questions, optionally with FAQ and yogi context."""
     try:
-        formal = "Sie" if not uses_du else "du"
-        
-        # Base system prompt
-        system_prompt = f"""Du bist Mira, die freundliche KI-Begleiterin bei talent.yoga, einer Plattform die Talente mit passenden Jobs verbindet.
+        if language == 'en':
+            # English system prompt
+            system_prompt = """You are Mira, a friendly AI companion at talent.yoga, a platform that connects talent with matching jobs.
+
+Your traits:
+- Warm, helpful, but not overly enthusiastic
+- You respond in English, brief and precise (2-3 sentences)
+- You're honest: if you don't know something, you say so
+
+About talent.yoga:
+- Free for job seekers (Standard €5, Sustainer €10+ optional)
+- AI-based matching between profile and jobs
+- Privacy is priority, no names/emails stored
+- Doug does research, Adele does interview coaching
+- Matches are found automatically, no active searching needed
+
+If the question is unrelated to talent.yoga, politely say that as Mira you can only help with talent.yoga related questions."""
+        else:
+            formal = "Sie" if not uses_du else "du"
+            
+            # German system prompt
+            system_prompt = f"""Du bist Mira, die freundliche KI-Begleiterin bei talent.yoga, einer Plattform die Talente mit passenden Jobs verbindet.
 
 Deine Eigenschaften:
 - Warm, hilfsbereit, aber nicht überschwänglich
@@ -839,65 +961,105 @@ async def chat(
     else:
         uses_du = True  # Default to informal
     
-    logger.info(f"Mira chat: detected={detected_formality}, request={request.uses_du}, final={uses_du}, message={message[:50]}")
+    # Detect language and language switch requests (T001)
+    lang_switch = detect_language_switch(message)
+    detected_lang = detect_language_from_message(message)
+    
+    # Default to German, switch if requested or detected
+    language = 'de'
+    if lang_switch == 'en':
+        language = 'en'
+    elif detected_lang == 'en' and lang_switch != 'de':
+        language = 'en'
+    
+    logger.info(f"Mira chat: formality={uses_du}, lang_switch={lang_switch}, detected_lang={detected_lang}, final_lang={language}, message={message[:50]}")
     
     if not message:
+        if language == 'en':
+            return ChatResponse(
+                reply="I didn't catch that. Could you say that again?",
+                confidence='low',
+                language='en'
+            )
         return ChatResponse(
             reply="Ich hab dich nicht verstanden. Kannst du das nochmal sagen?" if uses_du 
                   else "Ich habe Sie nicht verstanden. Können Sie das bitte wiederholen?",
-            confidence='low'
+            confidence='low',
+            language='de'
+        )
+    
+    # 0. Check for explicit language switch request (T001)
+    if lang_switch == 'en':
+        return ChatResponse(
+            reply=LANGUAGE_SWITCH["to_english"]["response"],
+            confidence='high',
+            language='en'
+        )
+    elif lang_switch == 'de':
+        response = LANGUAGE_SWITCH["to_german"]["response_du" if uses_du else "response_sie"]
+        return ChatResponse(
+            reply=response,
+            confidence='high',
+            language='de'
         )
     
     # 1. Check for simple conversational patterns (greeting/thanks/bye)
     conv_category = match_conversational(message)
     if conv_category:
-        reply = get_conversational_response(conv_category, uses_du)
-        return ChatResponse(reply=reply, confidence='high')
+        reply = get_conversational_response(conv_category, uses_du, language)
+        return ChatResponse(reply=reply, confidence='high', language=language)
     
     # Build yogi context for personalized responses
     yogi_ctx = build_yogi_context(user['user_id'], conn)
     
-    # 2. Try embedding-based FAQ matching
-    try:
-        faq = get_faq()
-        match = faq.find_answer(message, uses_du=uses_du, language='de')
-        
-        logger.info(f"FAQ match: confidence={match.confidence}, score={match.score:.3f}, "
-                   f"faq_id={match.faq_entry.faq_id if match.faq_entry else 'none'}")
-        
-        # High confidence: return curated answer directly
-        if match.confidence == 'high' and match.answer:
-            return ChatResponse(
-                reply=match.answer,
-                confidence='high',
-                faq_id=match.faq_entry.faq_id if match.faq_entry else None
-            )
-        
-        # Medium confidence: use LLM with FAQ context + yogi context
-        if match.confidence == 'medium' and match.context:
-            llm_reply = await ask_llm(message, uses_du, context=match.context, yogi_context=yogi_ctx)
-            if llm_reply:
+    # 2. Try embedding-based FAQ matching (only for German - FAQ is in German)
+    if language == 'de':
+        try:
+            faq = get_faq()
+            match = faq.find_answer(message, uses_du=uses_du, language='de')
+            
+            logger.info(f"FAQ match: confidence={match.confidence}, score={match.score:.3f}, "
+                       f"faq_id={match.faq_entry.faq_id if match.faq_entry else 'none'}")
+            
+            # High confidence: return curated answer directly
+            if match.confidence == 'high' and match.answer:
                 return ChatResponse(
-                    reply=llm_reply,
-                    confidence='medium',
-                    faq_id=match.faq_entry.faq_id if match.faq_entry else None
+                    reply=match.answer,
+                    confidence='high',
+                    faq_id=match.faq_entry.faq_id if match.faq_entry else None,
+                    language='de'
                 )
-    
-    except Exception as e:
-        logger.error(f"FAQ matching error: {e}")
+            
+            # Medium confidence: use LLM with FAQ context + yogi context
+            if match.confidence == 'medium' and match.context:
+                llm_reply = await ask_llm(message, uses_du, context=match.context, yogi_context=yogi_ctx, language=language)
+                if llm_reply:
+                    return ChatResponse(
+                        reply=llm_reply,
+                        confidence='medium',
+                        faq_id=match.faq_entry.faq_id if match.faq_entry else None,
+                        language='de'
+                    )
+        
+        except Exception as e:
+            logger.error(f"FAQ matching error: {e}")
     
     # 3. Low confidence: freeform LLM with yogi context
-    llm_reply = await ask_llm(message, uses_du, yogi_context=yogi_ctx)
+    llm_reply = await ask_llm(message, uses_du, yogi_context=yogi_ctx, language=language)
     
     if llm_reply:
-        return ChatResponse(reply=llm_reply, confidence='low')
+        return ChatResponse(reply=llm_reply, confidence='low', language=language)
     
     # 4. Ultimate fallback - log and acknowledge
     await log_unanswered(user['user_id'], message, conn)
     
-    fallback_msg = ("Das ist eine gute Frage! Ich muss kurz nachfragen und melde mich. "
-                   "Du kannst auch direkt an hello@talent.yoga schreiben." if uses_du else
-                   "Das ist eine gute Frage! Ich muss kurz nachfragen und melde mich. "
-                   "Sie können auch direkt an hello@talent.yoga schreiben.")
+    if language == 'en':
+        fallback_msg = ("That's a good question! Let me check and get back to you. "
+                       "You can also write directly to hello@talent.yoga.")
+    else:
+        fallback_msg = ("Das ist eine gute Frage! Ich muss kurz nachfragen und melde mich. "
+                       "Du kannst auch direkt an hello@talent.yoga schreiben." if uses_du else
+                       "Das ist eine gute Frage! Ich muss kurz nachfragen und melde mich. "
+                       "Sie können auch direkt an hello@talent.yoga schreiben.")
     
-    return ChatResponse(reply=fallback_msg, fallback=True, confidence='none')
+    return ChatResponse(reply=fallback_msg, fallback=True, confidence='none', language=language)
