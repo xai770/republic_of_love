@@ -83,14 +83,20 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
         if not profile:
             raise HTTPException(status_code=404, detail="No profile linked to this account")
         
-        # Get skills from profile_facets
+        # Get skills from profiles.skill_keywords (JSON array)
         cur.execute("""
-            SELECT DISTINCT skill_name
-            FROM profile_facets
-            WHERE profile_id = %s AND skill_name IS NOT NULL
-            ORDER BY skill_name
+            SELECT skill_keywords FROM profiles WHERE profile_id = %s
         """, (profile['profile_id'],))
-        skills = [row['skill_name'] for row in cur.fetchall()]
+        row = cur.fetchone()
+        skill_keywords = row['skill_keywords'] if row else None
+        
+        # Parse JSON if needed
+        skills = []
+        if skill_keywords:
+            import json
+            if isinstance(skill_keywords, str):
+                skill_keywords = json.loads(skill_keywords)
+            skills = sorted(set(skill_keywords)) if skill_keywords else []
         
         return ProfileResponse(
             profile_id=profile['profile_id'],
@@ -215,14 +221,17 @@ def get_profile(profile_id: int, user: dict = Depends(require_user), conn=Depend
         if profile['user_id'] != user['user_id']:
             raise HTTPException(status_code=403, detail="Cannot view other users' profiles")
         
-        # Get skills
-        cur.execute("""
-            SELECT DISTINCT skill
-            FROM profile_facets
-            WHERE profile_id = %s AND skill IS NOT NULL
-            ORDER BY skill
-        """, (profile_id,))
-        skills = [row['skill'] for row in cur.fetchall()]
+        # Get skills from profiles.skill_keywords
+        cur.execute("SELECT skill_keywords FROM profiles WHERE profile_id = %s", (profile_id,))
+        row = cur.fetchone()
+        skill_keywords = row['skill_keywords'] if row else None
+        
+        skills = []
+        if skill_keywords:
+            import json
+            if isinstance(skill_keywords, str):
+                skill_keywords = json.loads(skill_keywords)
+            skills = sorted(set(skill_keywords)) if skill_keywords else []
         
         return ProfileResponse(
             profile_id=profile['profile_id'],
@@ -481,63 +490,34 @@ async def parse_cv(
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 
-# --- Extracted Skills (Facets) ---
+# --- Skills Endpoint ---
+# Note: profile_facets table is deprecated. Skills come from profiles.skill_keywords.
+# This endpoint remains for backwards compatibility but returns skill_keywords data.
 
-class FacetResponse(BaseModel):
-    facet_id: int
-    skill: Optional[str]
-    domain: Optional[str]
-    seniority: Optional[str]
-    experience_years: Optional[int]
+class SkillResponse(BaseModel):
+    skill: str
 
 
-@router.get("/me/facets", response_model=List[FacetResponse])
-def get_my_facets(user: dict = Depends(require_user), conn=Depends(get_db)):
-    """Get extracted skills/facets for current user's profile."""
+@router.get("/me/skills", response_model=List[SkillResponse])
+def get_my_skills(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """Get skills for current user's profile."""
     with conn.cursor() as cur:
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        cur.execute("SELECT profile_id, skill_keywords FROM profiles WHERE user_id = %s", (user['user_id'],))
         profile = cur.fetchone()
         if not profile:
             return []
         
-        cur.execute("""
-            SELECT profile_facet_id AS facet_id, skill_name AS skill, industry_domain AS domain, seniority, experience_years
-            FROM profile_facets
-            WHERE profile_id = %s AND skill_name IS NOT NULL
-            ORDER BY skill_name
-        """, (profile['profile_id'],))
+        skill_keywords = profile['skill_keywords']
+        if not skill_keywords:
+            return []
+            
+        import json
+        if isinstance(skill_keywords, str):
+            skill_keywords = json.loads(skill_keywords)
         
-        return [FacetResponse(**row) for row in cur.fetchall()]
+        return [SkillResponse(skill=s) for s in sorted(set(skill_keywords))]
 
 
-@router.post("/me/reextract")
-def reextract_skills(user: dict = Depends(require_user), conn=Depends(get_db)):
-    """
-    Trigger re-extraction of skills from work history.
-    Marks all work history as pending for Clara processing.
-    """
-    with conn.cursor() as cur:
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
-        profile = cur.fetchone()
-        if not profile:
-            raise HTTPException(status_code=404, detail="No profile found")
-        
-        # Mark all work history as pending extraction
-        cur.execute("""
-            UPDATE profile_work_history 
-            SET extraction_status = 'pending'
-            WHERE profile_id = %s
-        """, (profile['profile_id'],))
-        
-        # Delete existing facets
-        cur.execute("DELETE FROM profile_facets WHERE profile_id = %s", (profile['profile_id'],))
-        
-        conn.commit()
-        
-    # Run extraction synchronously for immediate feedback
-    try:
-        from tools.run_pending_extractions import process_pending
-        results = process_pending(max_items=50)
-        return {"status": "ok", "extracted": results['succeeded']}
-    except Exception as e:
-        return {"status": "queued", "message": "Extraction queued for background processing"}
+# Note: /me/reextract endpoint removed (2026-02-03)
+# Clara/Diego profile facet extraction pipeline was deprecated.
+# Skills now come from profiles.skill_keywords which is populated during profile import.

@@ -354,19 +354,25 @@ def match_detail(match_id: int, request: Request, conn=Depends(get_db)):
         if not match or match['user_id'] != user['user_id']:
             return HTMLResponse(render_base('<p>Match not found</p>', user))
         
-        # Get posting requirements
+        # Get posting requirements (from posting_facets if available)
         cur.execute("""
             SELECT skill_owl_name FROM posting_facets 
             WHERE posting_id = %s AND skill_owl_name IS NOT NULL
         """, (match['posting_id'],))
         requirements = [r['skill_owl_name'] for r in cur.fetchall()]
         
-        # Get profile skills
+        # Get profile skills from profiles.skill_keywords
         cur.execute("""
-            SELECT DISTINCT skill_name FROM profile_facets 
-            WHERE profile_id = %s AND skill_name IS NOT NULL
+            SELECT skill_keywords FROM profiles WHERE profile_id = %s
         """, (match['profile_id'],))
-        skills = [s['skill_name'] for s in cur.fetchall()]
+        row = cur.fetchone()
+        skill_keywords = row['skill_keywords'] if row else None
+        skills = []
+        if skill_keywords:
+            import json
+            if isinstance(skill_keywords, str):
+                skill_keywords = json.loads(skill_keywords)
+            skills = sorted(set(skill_keywords)) if skill_keywords else []
     
     badge_class = "badge-apply" if match['recommendation'] == 'APPLY' else "badge-skip"
     badge_text = "✅ APPLY" if match['recommendation'] == 'APPLY' else "⏭️ SKIP"

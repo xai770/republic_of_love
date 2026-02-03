@@ -73,12 +73,12 @@ RESTRICTED_DOMAINS = {
 # DATA LOADING
 # ============================================================================
 def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
-    """Load profile with facets for LLM context."""
+    """Load profile with skills from profiles.skill_keywords."""
     cur = conn.cursor()
     
-    # Basic info
+    # Basic info with skills
     cur.execute("""
-        SELECT profile_id, full_name, current_title
+        SELECT profile_id, full_name, current_title, skill_keywords
         FROM profiles WHERE profile_id = %s
     """, (profile_id,))
     row = cur.fetchone()
@@ -90,37 +90,25 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
         'name': row['full_name'],
         'title': row['current_title'],
         'skills': [],
-        'domains': [],
-        'certificates': [],
-        'track_records': [],
-        'experience_years': 0,
-        'seniority': None,
+        'domains': [],  # Deprecated: was from profile_facets
+        'certificates': [],  # Deprecated: was from profile_facets
+        'track_records': [],  # Deprecated: was from profile_facets
+        'experience_years': 0,  # Could derive from profile later
+        'seniority': None,  # Could derive from title later
     }
     
-    # Get facets
-    cur.execute("""
-        SELECT DISTINCT skill_name, experience_years, certificate, 
-               track_record, industry_domain, seniority
-        FROM profile_facets
-        WHERE profile_id = %s
-    """, (profile_id,))
+    # Get skills from profiles.skill_keywords
+    skills = row['skill_keywords'] or []
+    if isinstance(skills, str):
+        import json
+        skills = json.loads(skills)
     
-    max_years = 0
-    for row in cur.fetchall():
-        if row['skill_name']:
-            profile['skills'].append(row['skill_name'])
-        if row['industry_domain'] and row['industry_domain'] not in profile['domains']:
-            profile['domains'].append(row['industry_domain'])
-        if row['certificate'] and row['certificate'] not in profile['certificates']:
-            profile['certificates'].append(row['certificate'])
-        if row['track_record'] and row['track_record'] not in profile['track_records']:
-            profile['track_records'].append(row['track_record'])
-        if row['experience_years'] and row['experience_years'] > max_years:
-            max_years = row['experience_years']
-        if row['seniority']:
-            profile['seniority'] = row['seniority']
+    for s in skills:
+        if isinstance(s, str):
+            profile['skills'].append(s)
+        elif isinstance(s, dict) and 'skill' in s:
+            profile['skills'].append(s['skill'])
     
-    profile['experience_years'] = max_years
     profile['skills'] = list(set(profile['skills']))  # dedupe
     
     return profile
