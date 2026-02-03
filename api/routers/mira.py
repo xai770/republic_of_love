@@ -454,6 +454,128 @@ async def get_tour(
     return TourResponse(steps=steps, total_steps=len(steps))
 
 
+# ============================================================================
+# CONSENT PROMPT — Notification Opt-in
+# ============================================================================
+
+class ConsentPromptResponse(BaseModel):
+    should_prompt: bool
+    message: Optional[str] = None
+    consent_given: bool = False
+
+
+@router.get("/consent-prompt", response_model=ConsentPromptResponse)
+async def get_consent_prompt(
+    uses_du: bool = True,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Check if user should be prompted for notification consent.
+    
+    Should prompt when:
+    - User has a profile with skills
+    - User has NOT yet given consent (notification_consent_at is NULL)
+    - We have matches to notify about
+    
+    Returns a personalized Mira prompt message.
+    """
+    with conn.cursor() as cur:
+        # Check user's consent status
+        cur.execute("""
+            SELECT u.notification_email, u.notification_consent_at,
+                   p.profile_id, p.skill_keywords
+            FROM users u
+            LEFT JOIN profiles p ON u.user_id = p.user_id
+            WHERE u.user_id = %s
+        """, (user['user_id'],))
+        row = cur.fetchone()
+        
+        if not row:
+            return ConsentPromptResponse(should_prompt=False)
+        
+        # Already has consent
+        if row['notification_consent_at']:
+            return ConsentPromptResponse(
+                should_prompt=False, 
+                consent_given=True
+            )
+        
+        # No profile yet - don't prompt
+        if not row['profile_id']:
+            return ConsentPromptResponse(should_prompt=False)
+        
+        # Check if has skills
+        skill_keywords = row['skill_keywords']
+        has_skills = (skill_keywords is not None and 
+                     skill_keywords != '[]' and 
+                     len(skill_keywords) > 2)
+        
+        if not has_skills:
+            return ConsentPromptResponse(should_prompt=False)
+        
+        # User has profile with skills but no consent - prompt!
+        if uses_du:
+            message = (
+                "Soll ich dir Bescheid sagen, wenn es neue passende Stellen gibt? 📬 "
+                "Dafür bräuchte ich deine E-Mail-Adresse. "
+                "Du kannst das jederzeit in den Einstellungen ändern."
+            )
+        else:
+            message = (
+                "Soll ich Ihnen Bescheid sagen, wenn es neue passende Stellen gibt? 📬 "
+                "Dafür bräuchte ich Ihre E-Mail-Adresse. "
+                "Sie können das jederzeit in den Einstellungen ändern."
+            )
+        
+        return ConsentPromptResponse(
+            should_prompt=True,
+            message=message,
+            consent_given=False
+        )
+
+
+class ConsentSubmission(BaseModel):
+    email: str
+    grant_consent: bool = True
+
+
+@router.post("/consent-submit")
+async def submit_consent(
+    data: ConsentSubmission,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Submit notification consent via Mira chat.
+    
+    This is a convenience endpoint that wraps the notifications/consent API.
+    """
+    import re
+    
+    # Validate email
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, data.email):
+        raise HTTPException(status_code=400, detail="Ungültige E-Mail-Adresse")
+    
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE users
+            SET notification_email = %s,
+                notification_consent_at = CASE WHEN %s THEN NOW() ELSE NULL END
+            WHERE user_id = %s
+            RETURNING notification_consent_at
+        """, (data.email, data.grant_consent, user['user_id']))
+        
+        row = cur.fetchone()
+        conn.commit()
+        
+        return {
+            "status": "ok",
+            "consent_given": row['notification_consent_at'] is not None
+        }
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
