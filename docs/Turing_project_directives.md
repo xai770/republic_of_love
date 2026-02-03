@@ -63,7 +63,7 @@ CPS decomposes requirements into provable dimensions — used alongside embeddin
 - **Domain** — industry (fintech, healthcare)
 - **Seniority** — level (Senior, VP)
 
-**Storage:** `profile_facets` — used for profile matching. `posting_facets` was deprecated 2026-02 (embeddings suffice for postings).
+**Storage:** `posting_facets`, `profile_facets` — both deprecated 2026-02 (embeddings suffice). Tables have legacy data, may be dropped later.
 
 ---
 
@@ -128,28 +128,12 @@ flowchart LR
 
 ### Profile Pipeline
 
-Profile work history → CPS facets:
+Profiles store skills directly in `profiles.skill_keywords` (JSON array). No separate extraction pipeline needed — embeddings handle skill matching directly.
 
-```mermaid
-flowchart LR
-    A[profile_work_history] --> B[Clara: Extract explicit facets]
-    B --> C[profile_facets]
-    C --> D[Diego: Add implied skills]
-    D --> E[profile_facets enriched]
-    E --> F[Matching]
-```
-
-| Stage | Actor | Purpose |
-|-------|-------|---------|
-| 1 | `profile_facets__extract_C__clara.py` | Extract explicit CPS facets from job descriptions |
-| 2 | `profile_facets__enrich_U__diego.py` | Add implied/enabler skills based on domain, role, seniority |
-
-**Implied skills:** Skills people don't mention because they're "obvious":
-- Banking domain → SharePoint, Outlook, Excel
-- Manager role → People management, Budget oversight
-- Senior seniority → Mentoring, Strategic thinking
-
-**Configuration:** [config/enabler_skills.json](../config/enabler_skills.json)
+**Deprecated (2026-02):** The Clara/Diego profile facet extraction pipeline was experimental. Removed because:
+- Embeddings handle skill matching without CPS decomposition
+- Domain detection uses Berufenet KLDB codes (postings) or embedding clusters
+- `profile_facets` table has 336 legacy rows, may be dropped later
 
 ---
 
@@ -171,7 +155,7 @@ An actor is a script that:
 
 | Type | Suffix | LLM? | Example |
 |------|--------|------|---------|
-| **Create** | `_C` | Usually | `profile_facets__extract_C__clara.py` — creates facet rows |
+| **Create** | `_C` | Usually | `postings__arbeitsagentur_CU.py` — creates posting rows |
 | **Update** | `_U` | Usually | `postings__extracted_summary_U.py` — updates column |
 | **Read** | `_R` | No | `owl_names__lookup_R__lucy.py` — lookup only |
 | **Create+Update** | `_CU` | Varies | `postings__row_CU.py` — fetches and inserts |
@@ -183,7 +167,7 @@ An actor is a script that:
 ```
 
 Examples:
-- `profile_facets__extract_C__clara.py` — Clara extracts profile facets
+- `postings__arbeitsagentur_CU.py` — fetches and creates AA postings
 - `postings__extracted_summary_U.py` — updates extracted_summary column
 - `postings__embedding_U.py` — updates embeddings for postings
 
@@ -314,8 +298,8 @@ Quick reminders:
 
 ### MVP (Complete 2026-01-27)
 
-1. ✅ CPS extraction for postings (posting_facets)
-2. ✅ CPS extraction for profiles (profile_facets via Clara + Diego)
+1. ✅ ~~CPS extraction for postings (posting_facets)~~ → deprecated, embeddings suffice
+2. ✅ ~~CPS extraction for profiles (profile_facets via Clara + Diego)~~ → deprecated, embeddings suffice
 3. ✅ Embedding-based skill matching with domain gates
 4. ✅ Match storage (profile_posting_matches table)
 5. ✅ Cover letter / No-go rationale generation

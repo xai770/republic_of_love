@@ -74,3 +74,51 @@ Moved to `archive/dead_actors_20260203/`:
 ## Commits
 
 - `23617ac` — chore: drop 10 dead columns from schema
+
+---
+
+## Part 2: Profile Facets Cleanup (09:15)
+
+### Analysis
+
+Checked `profile_facets` usage:
+- **Last ran:** 2026-01-27 11:57:04
+- **Data:** 336 rows for 4 profiles
+- **Actors:** Clara extracts facets, Diego enriches them
+
+**Finding:** The matching pipeline has fallback to `profiles.skill_keywords`. The CPS decomposition was experimental — embeddings handle skill matching directly.
+
+### Deleted Files
+
+**Actors:**
+- `profile_facets__extract_C__clara.py` — extracts CPS facets from work history
+- `profile_facets__enrich_U__diego.py` — adds implied skills
+
+**Tools:**
+- `run_pending_extractions.py` — ran Clara on pending work history
+- `clara_visualizer.py` — visualized Clara's facet extraction
+
+### Why Profile Facets Are Dead
+
+1. **Skills** — `profiles.skill_keywords` stores them directly, embeddings match them
+2. **Domains** — Berufenet KLDB codes for AA postings, embedding clusters for others
+3. **Certificates** — Rarely in AA postings, not a hard constraint
+4. **Experience years** — Embeddings handle seniority naturally
+
+### Remaining Work (TODO)
+
+Files still reference `profile_facets` but could use `profiles.skill_keywords`:
+- `api/routers/profiles.py` — returns skills from facets
+- `api/routers/dashboard.py` — skills list
+- `tools/profile_matcher.py` — has fallback already
+- `tools/batch_match_runner.py` — profile skills
+- `tools/match_report.py` — profile skills
+
+The `profile_facets` and `posting_facets` tables have legacy data (336 + some rows). Can be dropped after API refactoring.
+
+### Directives Updated
+
+- Marked Profile Pipeline section as deprecated
+- Updated actor examples from deleted Clara to active actors
+- Updated CPS storage note to show both tables deprecated
+- Updated MVP roadmap to strikethrough CPS items
