@@ -2089,7 +2089,8 @@ document.addEventListener('click', (e) => {
 const miraState = {
     isOpen: false,
     hasGreeted: false,
-    usesDu: null  // null = unknown, will mirror user
+    usesDu: null,  // null = unknown, will mirror user
+    history: []    // Conversation history for LLM context
 };
 
 function toggleMiraChat() {
@@ -2177,13 +2178,17 @@ async function sendMiraMessage() {
     // Show typing indicator
     showMiraTyping();
     
+    // Add to history before sending
+    miraState.history.push({ role: 'user', content: text });
+    
     try {
         const response = await fetch('/api/mira/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 message: text,
-                uses_du: miraState.usesDu
+                uses_du: miraState.usesDu,
+                history: miraState.history.slice(0, -1)  // Send history without current message
             })
         });
         
@@ -2192,12 +2197,22 @@ async function sendMiraMessage() {
         if (response.ok) {
             const data = await response.json();
             addMiraMessage(data.reply, false);
+            // Add assistant response to history
+            miraState.history.push({ role: 'assistant', content: data.reply });
+            // Keep history reasonable (last 10 exchanges = 20 messages)
+            if (miraState.history.length > 20) {
+                miraState.history = miraState.history.slice(-20);
+            }
         } else {
             addMiraMessage('Entschuldigung, da ist etwas schiefgelaufen. Versuch es bitte nochmal.', false);
+            // Remove failed message from history
+            miraState.history.pop();
         }
     } catch (error) {
         hideMiraTyping();
         addMiraMessage('Ich kann gerade nicht antworten. Bitte versuch es später nochmal.', false);
+        // Remove failed message from history
+        miraState.history.pop();
         console.error('Mira chat error:', error);
     }
 }

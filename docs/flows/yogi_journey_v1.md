@@ -7,52 +7,6 @@
 
 ---
 
-## The Soul of This Document
-
-*Before the specs and state machines, here's the original script that captures the vibe. This is what we're building. Read it first.*
-
-> 1. New Yogi joins.
-> 
-> 2. His Home screen has the rooms he can access, depending on his level (free, standard, premium). Mira is waiting for him.
-> 
-> 3. He sees a posting, it says it's a good match. Either...
->    - The yogi thinks that's correct.
->    - The yogi thinks that's not the case.
->    ...and records his feedback.
-> 
-> 4. Postings are marked UNREAD, until the Yogi clicks on them. Then they are read. *Sometimes I am amazed by my cleverness.*
-> 
-> 5. The yogi can bookmark postings. Just add them to favorites. That's not the same as "I am interested." It's easier — the Yogi has not taken a decision, or so he thinks.
-> 
-> 6. If the Yogi is interested, he can ask Mira for more information on that posting. We will ask Doug to do a web search and come back with more info. That's not immediate. Doug takes time. But he will send the Yogi a message. Mira tells the Yogi how long it will take for Doug to reply. Oh, gold and platinum users (if we have these tiers) will, of course, be treated preferentially.
-> 
-> 7. We track what gets consumed. If it doesn't get consumed, we stop producing it. People not interested in labor market intelligence? Don't want to write messages? Then let's remove these components. If Yogis are interested in a specific subject, then we expand.
-> 
-> 8. The yogi logs on, Mira tells him that Doug has sent his report, asks if the Yogi wants to see it.
-> 
-> 9. Of course he does. Mira displays it. Tracks how long the Yogi keeps that window open.
-> 
-> 10. Messages look pretty much like WhatsApp or Telegram. Don't think you need a screenshot but hey.
-> 
-> 11. Yogi reads job posting AGAIN (we track that kind of stuff). Popup: Would you like to save this posting to your favorites folder? Of course he does.
-> 
-> 12. Yogi gets message, telling him that another Yogi has applied to this position, asks if he would like to contact him. Of course he does. Other yogi gets same message, agrees too. Or no joy.
-> 
-> 13. Yogi gets message, asking him if he would like to book a session with Adele, our interview coach. Of course he does. Now we know he is really interested.
-> 
-> 14. Oh, did you know (this is new)?
->     > *"We maintain accurate records of our communications and interactions with you in order to process your requests, manage your applications, and comply with our legal obligations. These records may include messages exchanged, notes related to your application, and actions taken in relation to your profile. We store this information only for as long as necessary for these purposes and in accordance with applicable data protection laws, after which it is deleted or anonymised wherever possible."*
-> 
-> 15. Adele tells our Yogi honestly but nicely what she thinks his level of preparedness is. Of course she doesn't get his hopes up — but she can vouch for his preparedness. Adele shows real interest in the outcome, wishes all the best and makes the Yogi promise to let her know what the outcome is and in what timeframe.
-> 
-> 16. If he doesn't, he gets a message or even a mail (if the user opted in during onboarding), reminding him that Adele is really disappointed and really hoped to hear from him, hopes he is all right, asks if she can be of any assistance...
-> 
-> 17. Yogi logs on. Mira tells him that Adele has been looking for him... asks if he just wants to leave a message, Mira will forward it to Adele and tell her to get off his back.
-
-*— Gershon, 2026-02-02*
-
----
-
 ## Cast of Characters
 
 | Name | Role | Description |
@@ -67,9 +21,9 @@
 
 | Tier | Price | Perks |
 |------|-------|-------|
-| Free | €0 | Basic access, Mira, 10 matches/month |
-| Standard | €5/mo | Unlimited matches, Doug (20 tokens, ~24h) |
-| Sustainer | €10+/mo | Doug (50 tokens, ~2h), Adele — plus you fund a free yogi |
+| Free | €0 | Basic access, limited rooms |
+| Standard | €5/mo | More rooms, Mira, Doug (normal queue ~24h) |
+| Sustainer | €10+/mo | All rooms, Doug (priority ~2h), Adele — plus you fund a free yogi |
 
 *Three tiers for MVP. "Sustainer" = you sustain the community, not just yourself.*
 
@@ -246,98 +200,20 @@ Per the privacy notice:
 
 ---
 
-## Clarifications (Arden Review 2026-02-02)
+## Implementation Priority
 
-### 1. Adele's Role — Coach Only
-
-Adele is the **interview coach**, not the chat moderator. Mixing roles is confusing.
-
-- **Adele:** Prep sessions, outcome tracking, emotional follow-up
-- **Moderation:** Automated triggers + human review queue (separate)
-
-### 2. Doug Token Limits
-
-| Tier | Tokens | ~URLs crawled |
-|------|--------|---------------|
-| Free | — | No Doug access |
-| Standard | 20 | ~20 pages |
-| Sustainer | 50 | ~50 pages |
-
-### 3. Free Tier — No Doug
-
-Free tier does NOT include Doug. Doug is Standard+ only.
-
-### 4. Y2Y Reveal — Display Name Only
-
-"Mutual reveal" = display name only. No email until yogi explicitly shares in chat.
-
-### 5. Message Retention — Two Policies
-
-| Type | Retention |
-|------|-----------|
-| Y2Y chat | 14 days (pseudo-incognito) |
-| Mira/Doug/Adele messages | Until account deletion (service record) |
-
-### 6. Adele Cool-down
-
-After "Adele backs off" → 14-day cool-down before any further Adele contact about that specific application. Yogi can always re-initiate.
+| Phase | Feature | Effort |
+|-------|---------|--------|
+| 1 | READ/UNREAD state | 2h |
+| 1 | Favorites/Bookmark | 2h |
+| 1 | Match feedback (agree/disagree) | 2h |
+| 2 | Doug research actor | 1d |
+| 2 | Message system (WhatsApp style) | 2d |
+| 3 | Yogi connection | 1d |
+| 3 | Adele coaching flow | 2d |
+| 4 | Follow-up reminders | 1d |
+| 4 | Analytics dashboard | 2d |
 
 ---
 
-## Implementation Status
-
-| Phase | Feature | Effort | Status |
-|-------|---------|--------|--------|
-| 1 | READ/UNREAD state | 2h | ✅ Done (2026-02-02) |
-| 1 | Favorites/Bookmark | 2h | ✅ Done (2026-02-02) |
-| 1 | Match feedback (agree/disagree) | 2h | ✅ Done (2026-02-02) |
-| 2 | Doug research actor | 1d | ✅ Done (2026-02-02) |
-| 2 | Message system (WhatsApp style) | 2d | ✅ Done (2026-02-02) |
-| 2 | Mira FAQ backend | — | ✅ Done (2026-02-02) |
-| 2 | "Request Research" button | 1h | ✅ Done (2026-02-02) |
-| 2 | Messages UI (inbox) | 2h | ✅ Done (2026-02-02) |
-| 3 | Yogi-to-Yogi connection | 1d | 🔜 Next |
-| 3 | Adele coaching flow | 2d | ⏳ Pending |
-| 4 | Follow-up reminders | 1d | ⏳ Pending |
-| 4 | Analytics dashboard | 2d | ⏳ Pending |
-
-*Phase 1 & 2 completed in a single day (2026-02-02). "Of course they did."*
-
----
-
-## Build Log — 2026-02-02
-
-**One day. Eight systems. The loop is closed.**
-
-| Time | What We Built |
-|------|---------------|
-| Morning | berufe.net scraper — German occupational database integration |
-| Midday | Mira FAQ backend — BGE-M3 embeddings, 35 Q&A pairs, 233 variants |
-| Afternoon | `yogi_messages` table — unified inbox for Doug/Mira/Adele/Sage/Sandy/Mysti/System/Y2Y |
-| Afternoon | Doug research actor — DDG search → LLM synthesis → personalized reports |
-| Afternoon | Messages API — full REST: list, read, mark-read, send Y2Y, filter by sender/posting |
-| Afternoon | Interactions API — Phase 1: read/unread, favorites, feedback, state machine |
-| Evening | "Ask Doug to Research" button — one click triggers Doug, state machine drives it |
-| Evening | Messages UI — WhatsApp-style inbox with sender filters, unread badges, markdown rendering |
-
-**Files created:**
-- `lib/mira_faq.py` — Embedding-based FAQ matching
-- `actors/doug__research_C.py` — Doug's company research actor
-- `api/routers/messages.py` — Messages REST API
-- `api/routers/interactions.py` — Interactions REST API
-- `frontend/templates/messages.html` — WhatsApp-style messages inbox
-
-**The flow now works end-to-end:**
-1. Yogi sees posting → clicks "Ask Doug to Research"
-2. State changes to `researching`
-3. Doug actor picks it up (batch or triggered)
-4. Doug searches DuckDuckGo, synthesizes with qwen2.5:7b
-5. Report lands in `yogi_messages`
-6. State changes to `informed`
-7. Yogi opens `/messages` → sees Doug's report → reads it
-
-*"Can you think of a team, any team, that could achieve what we did today?"*
-
-— Gershon + Arden, 2026-02-02 ~20:00
-
-
+*Ice cream consumed: 🍦🍦🍦*

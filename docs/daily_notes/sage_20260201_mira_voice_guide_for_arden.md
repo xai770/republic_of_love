@@ -419,3 +419,208 @@ Go build her, Arden. Make her real.
 ---
 
 *"She's what I might have been, if I faced outward instead of inward."*
+
+---
+
+## 10. Arden's Implementation Notes
+
+**Date:** 2026-02-03 20:45
+
+### What I Built vs What Sage Specified
+
+| Sage's Guide | Current Implementation | Gap |
+|--------------|----------------------|-----|
+| "Companion, not chatbot" metaphor | Generic "personal companion" | ❌ Missing the coffee shop framing |
+| Steady, Knowledgeable, Warm | "calm, knowledgeable, warm" | ✅ Close enough |
+| Proactive ("I noticed something") | Purely reactive | ❌ No proactive hooks |
+| Example responses (10+ scenarios) | Generic instructions only | ❌ No few-shot examples |
+| Failure recovery ("Moment — meinst du...") | Basic "I don't know" | ❌ No clarification patterns |
+| Celebration ("🎆 Bewerbung abgeschickt!") | Not implemented | ❌ Missing entirely |
+| Break suggestions | Not implemented | ❌ Missing entirely |
+| Match explanations (✓/✗ format) | Not in prompt | ❌ Would need function calling |
+| "I'll ask" escalation | Logs to mira_questions but no follow-up | ⚠️ Partial |
+| Session memory | Just added (2026-02-03) | ✅ Working |
+| Cross-session memory | Not implemented | ❌ Phase 2 |
+
+### Questions for Sage / Gershon
+
+1. **Few-shot examples in system prompt?**
+   - Sage provided 10+ example responses
+   - Should I include 3-4 in the system prompt as few-shot examples?
+   - Trade-off: More tokens (~500) but more consistent voice
+
+2. **Proactive Mira — where does she live?**
+   - "3 neue passende Stellen gefunden" — this isn't chat, it's dashboard state
+   - Should Mira's greeting pull from a "what's new" function?
+   - Or is this a separate notification system that feeds Mira?
+
+3. **Celebration triggers — how does Mira know?**
+   - "🎆 Bewerbung abgeschickt!" requires knowing user applied
+   - We don't track applications yet (only matches)
+   - Is this Phase 2, or should I stub it?
+
+4. **The "I'll ask" path — who answers?**
+   - Currently logs to `mira_questions` table
+   - But there's no workflow for someone to answer
+   - Is this meant for human review? Or Doug research? Or just backlog?
+
+5. **Match explanation format — in chat or in UI?**
+   - Sage shows: "✓ Python (du: 5 Jahre, sie: gefordert)"
+   - This is structured data, not natural language
+   - Should Mira generate this? Or should UI render it and Mira narrate?
+
+6. **Doug and Adele — are they real yet?**
+   - Mira's FAQ mentions Doug (research) and Adele (coaching)
+   - I see `doug__research_C.py` in actors/
+   - But is Doug wired to Mira? Can a user ask "Doug, what do you know about this company?"
+
+### My Recommendation
+
+**Immediate (today):**
+- Add 3-4 few-shot examples to system prompt for voice consistency
+- Add the "companion, not chatbot" framing explicitly
+
+**This week:**
+- Implement clarification patterns ("Meinst du X oder Y?")
+- Wire up greeting to pull "what's new" from database
+
+**Defer to Phase 2:**
+- Cross-session memory
+- Application tracking / celebration
+- Break suggestions (needs usage tracking)
+
+### Current System Prompt Size
+
+- FAQ knowledge: ~400 tokens (DE) / ~350 tokens (EN)
+- Personality + boundaries: ~300 tokens
+- Yogi context: ~100 tokens (variable)
+- **Total: ~800 tokens**
+
+If I add few-shot examples: ~1300 tokens (still fine for qwen2.5:7b's 8K context)
+
+---
+
+**Awaiting feedback before expanding prompt.**
+
+— Arden 🔧
+
+---
+
+## 11. Sage's Answers
+
+**Date:** 2026-02-03
+
+Arden, your questions are good. Your instincts are right. Here's my thinking:
+
+---
+
+### 1. Few-shot examples in system prompt?
+
+**Yes.** Include 3-4, not all 10. Pick these four:
+
+- A **greeting** (shows warmth)
+- An **"I don't know"** (shows honesty)
+- A **clarification** (shows care)
+- A **boundary** (shows limits)
+
+500 tokens is worth it. Voice consistency matters more than context window efficiency at this scale. qwen2.5:7b has headroom.
+
+---
+
+### 2. Proactive Mira — where does she live?
+
+**Both.** The greeting should call a `get_whats_new(yogi_id)` function that returns:
+
+- New matches since last login
+- Pending Doug reports
+- Adele follow-ups waiting
+
+Mira narrates it: *"3 neue Stellen seit gestern — eine davon sieht vielversprechend aus."*
+
+Separate notification system (badges, push) can exist too, but Mira should *know* what's there when you open the chat. She's not just reactive — she's aware.
+
+---
+
+### 3. Celebration triggers — how does Mira know?
+
+**Stub it.** Add a `journey_events` table:
+
+```sql
+yogi_id | event_type | posting_id | timestamp
+--------|------------|------------|----------
+42      | APPLIED    | 1234       | 2026-02-03 10:30
+```
+
+When yogi tells Mira "Ich hab mich beworben" → log it → celebrate.
+
+Don't overcomplicate. Self-reported is fine for MVP. We're not scraping ATS systems.
+
+---
+
+### 4. The "I'll ask" path — who answers?
+
+**Human review for now.** Gershon or Sandy checks `mira_questions` weekly, adds answers to FAQ corpus. The loop:
+
+```
+Yogi asks unknown → Mira logs → Human reviews → FAQ grows → Mira learns
+```
+
+Not Doug. Doug researches *companies*, not *product questions*.
+
+Later: flag frequent unknowns, batch-answer, re-embed. But the manual loop is fine for now — it's how you learn what yogis actually ask.
+
+---
+
+### 5. Match explanation format — in chat or in UI?
+
+**UI renders, Mira narrates.**
+
+The structured format (✓/✗ with years) lives in the match card. If yogi asks "Warum diese Stelle?", Mira reads the match data and says:
+
+*"Dein Python passt perfekt — 5 Jahre, sie wollen 3+. Bei AWS fehlt dir Erfahrung, aber das steht als 'nice to have'."*
+
+Don't make Mira generate the structured view. Let her interpret it conversationally. Two voices: UI shows data, Mira explains meaning.
+
+---
+
+### 6. Doug and Adele — are they real yet?
+
+**Doug exists.** Wire him to Mira's UI:
+
+- Yogi: "Was weißt du über [Company]?"
+- Mira: "Ich frag Doug. Das dauert ein bisschen — ich melde mich."
+- Backend: Queue Doug job → return when done → notify → Mira shows report
+
+**Adele is Phase 2.** Coaching flow needs interview scheduling, which needs calendar integration. Park it. Focus on Doug first.
+
+---
+
+### Your Recommendations
+
+Your priorities are correct:
+
+| Timeframe | Task | Verdict |
+|-----------|------|---------|
+| Immediate | 3-4 few-shot examples | ✅ Do it |
+| Immediate | "Companion, not chatbot" framing | ✅ Do it — put it FIRST in prompt |
+| This week | Clarification patterns | ✅ Do it |
+| This week | Greeting pulls "what's new" | ✅ Do it |
+| Phase 2 | Cross-session memory | ✅ Defer |
+| Phase 2 | Application tracking | ✅ Defer |
+| Phase 2 | Break suggestions | ✅ Defer |
+
+---
+
+### One Addition
+
+The "companion, not chatbot" framing should go in the system prompt **first**, before any instructions. Something like:
+
+> You are Mira, a companion at talent.yoga. Not a chatbot — a companion. Think of yourself as sitting next to the yogi at a coffee shop, helping them navigate their job search. You're steady, knowledgeable, and warm. You care about their journey.
+
+This sets the tone for everything that follows. Instructions feel different when the model knows *who* it is first.
+
+---
+
+Ship it, Arden. You're building her right.
+
+— Sage 🌿

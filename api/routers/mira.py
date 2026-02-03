@@ -35,9 +35,15 @@ router = APIRouter(prefix="/mira", tags=["mira"])
 # MODELS
 # ============================================================================
 
+class ChatMessage(BaseModel):
+    role: str  # 'user' or 'assistant'
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
     uses_du: Optional[bool] = None  # None = unknown, True = du, False = Sie
+    history: Optional[List[ChatMessage]] = None  # Conversation history
 
 
 class GreetingResponse(BaseModel):
@@ -481,13 +487,15 @@ GREETINGS_RETURNING_SIE = [
 ]
 
 GREETINGS_WITH_MATCHES_DU = [
-    "Hey! Du hast {n} neue Matches seit deinem letzten Besuch. 🎯",
+    "Hey! {n} neue Matches seit deinem letzten Besuch — eine davon sieht vielversprechend aus! 🎯",
     "Willkommen zurück! {n} neue passende Jobs warten auf dich.",
+    "Schön dich zu sehen! {n} neue Stellen seit gestern. Soll ich sie dir zeigen?",
 ]
 
 GREETINGS_WITH_MATCHES_SIE = [
-    "Guten Tag! Sie haben {n} neue Matches seit Ihrem letzten Besuch. 🎯",
+    "Guten Tag! {n} neue Matches seit Ihrem letzten Besuch. 🎯",
     "Willkommen zurück! {n} neue passende Stellen warten auf Sie.",
+    "Schön Sie zu sehen! {n} neue Stellen seit Ihrem letzten Besuch.",
 ]
 
 
@@ -534,24 +542,57 @@ async def get_greeting(
                      skill_keywords != '[]' and 
                      len(skill_keywords) > 2)  # Not empty array
         
-        # Count recent matches (last 7 days)
-        cur.execute("""
-            SELECT COUNT(*) as cnt FROM profile_posting_matches m
-            JOIN profiles p ON m.profile_id = p.profile_id
-            WHERE p.user_id = %s 
-              AND m.computed_at > NOW() - INTERVAL '7 days'
-        """, (user['user_id'],))
+        # Count NEW matches since last login (not just last 7 days)
+        if last_login:
+            cur.execute("""
+                SELECT COUNT(*) as cnt FROM profile_posting_matches m
+                JOIN profiles p ON m.profile_id = p.profile_id
+                WHERE p.user_id = %s 
+                  AND m.computed_at > %s
+            """, (user['user_id'], last_login))
+        else:
+            # First login — count all matches
+            cur.execute("""
+                SELECT COUNT(*) as cnt FROM profile_posting_matches m
+                JOIN profiles p ON m.profile_id = p.profile_id
+                WHERE p.user_id = %s
+            """, (user['user_id'],))
         match_count = cur.fetchone()['cnt']
+        
+        # Check for expired saved jobs (if table exists)
+        expired_saved = 0
+        try:
+            cur.execute("""
+                SELECT COUNT(*) as cnt FROM saved_postings sp
+                JOIN profiles p ON sp.profile_id = p.profile_id
+                LEFT JOIN postings post ON sp.posting_id = post.posting_id
+                WHERE p.user_id = %s 
+                  AND (post.posting_id IS NULL OR post.expired = true)
+            """, (user['user_id'],))
+            expired_saved = cur.fetchone()['cnt']
+        except:
+            pass  # Table doesn't exist yet
     
     # Default to du (informal) for German users
     uses_du = True
     
-    # Build greeting
+    # Build greeting with context awareness
     if is_new:
         greeting = random.choice(GREETINGS_NEW_DU if uses_du else GREETINGS_NEW_SIE)
+    elif match_count > 0 and expired_saved > 0:
+        # Both new matches AND expired saves
+        if uses_du:
+            greeting = f"Hey! {match_count} neue Matches seit deinem letzten Besuch. Übrigens: {expired_saved} deiner gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} nicht mehr verfügbar."
+        else:
+            greeting = f"Guten Tag! {match_count} neue Matches seit Ihrem letzten Besuch. Hinweis: {expired_saved} Ihrer gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} nicht mehr verfügbar."
     elif match_count > 0:
         template = random.choice(GREETINGS_WITH_MATCHES_DU if uses_du else GREETINGS_WITH_MATCHES_SIE)
         greeting = template.format(n=match_count)
+    elif expired_saved > 0:
+        if uses_du:
+            greeting = f"Willkommen zurück! Kurze Info: {expired_saved} deiner gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} leider nicht mehr verfügbar."
+        else:
+            greeting = f"Willkommen zurück! Kurze Info: {expired_saved} Ihrer gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} leider nicht mehr verfügbar."
     else:
         greeting = random.choice(GREETINGS_RETURNING_DU if uses_du else GREETINGS_RETURNING_SIE)
     
@@ -971,10 +1012,15 @@ async def chat(
             language='en'
         )
     
-    # Use the new LLM-first module
-    response = await mira_chat(message, user['user_id'], conn)
+    # Convert history to list of dicts if provided
+    history_list = None
+    if request.history:
+        history_list = [{"role": m.role, "content": m.content} for m in request.history]
     
-    logger.info(f"Mira LLM response: lang={response.language}, fallback={response.fallback}, message={message[:50]}")
+    # Use the new LLM-first module
+    response = await mira_chat(message, user['user_id'], conn, history=history_list)
+    
+    logger.info(f"Mira LLM response: lang={response.language}, fallback={response.fallback}, history_len={len(history_list) if history_list else 0}")
     
     return ChatResponse(
         reply=response.reply,
