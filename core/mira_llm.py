@@ -629,13 +629,20 @@ async def handle_doug_request(
                 return MiraResponse(reply=reply, language=language)
             
             else:
-                # Queue for research
+                # Queue for research AND fire Doug immediately
                 cur.execute("""
                     UPDATE user_posting_interactions
                     SET state = 'researching', state_changed_at = NOW(), updated_at = NOW()
                     WHERE interaction_id = %s
                 """, (interaction_id,))
                 conn.commit()
+                
+                # Fire Doug async — don't block Mira's response
+                try:
+                    from actors.doug__research_C import research_fire_and_forget
+                    research_fire_and_forget(interaction_id)
+                except Exception as e:
+                    logger.warning(f"Failed to fire Doug async: {e}")
                 
                 if language == 'en':
                     reply = f"I've asked Doug to research {company} for the '{job_title}' position. He'll dig into company culture, reviews, and anything useful. This takes a few minutes — I'll notify you when it's ready!"

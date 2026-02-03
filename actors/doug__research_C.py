@@ -399,6 +399,74 @@ def process_single(interaction_id: int):
         return_connection(conn)
 
 
+# ============================================================================
+# ASYNC API — For Mira to call Doug directly
+# ============================================================================
+
+import asyncio
+import threading
+
+def _run_research_sync(interaction_id: int):
+    """Sync wrapper for process_single — runs in thread."""
+    conn = get_connection_raw()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT interaction_id, user_id, posting_id, state
+            FROM user_posting_interactions
+            WHERE interaction_id = %s
+        """, (interaction_id,))
+        interaction = cur.fetchone()
+        
+        if not interaction:
+            logger.error(f"Doug: Interaction {interaction_id} not found")
+            return
+        
+        if interaction['state'] != 'researching':
+            logger.warning(f"Doug: Interaction {interaction_id} not in 'researching' state")
+            return
+        
+        result = process_interaction(conn, dict(interaction))
+        
+        if result['success']:
+            logger.info(f"Doug: Research complete for {result.get('company', 'unknown')} - {result.get('job_title', 'unknown')}")
+        else:
+            logger.error(f"Doug: Research failed - {result.get('error', 'Unknown')}")
+            
+    except Exception as e:
+        logger.error(f"Doug: Exception during research - {e}")
+    finally:
+        return_connection(conn)
+
+
+async def research_async(interaction_id: int) -> None:
+    """
+    Queue Doug research to run in background thread.
+    Returns immediately — doesn't block Mira.
+    
+    Usage from Mira:
+        from actors.doug__research_C import research_async
+        asyncio.create_task(research_async(interaction_id))
+    """
+    loop = asyncio.get_event_loop()
+    # Run in thread pool to not block async loop
+    await loop.run_in_executor(None, _run_research_sync, interaction_id)
+
+
+def research_fire_and_forget(interaction_id: int) -> None:
+    """
+    Fire-and-forget Doug research — starts thread and returns immediately.
+    Use this when you don't want to await.
+    
+    Usage:
+        from actors.doug__research_C import research_fire_and_forget
+        research_fire_and_forget(interaction_id)
+    """
+    thread = threading.Thread(target=_run_research_sync, args=(interaction_id,), daemon=True)
+    thread.start()
+    logger.info(f"Doug: Research queued for interaction {interaction_id}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Doug's company research actor")
     parser.add_argument('interaction_id', nargs='?', type=int, help='Single interaction ID')
