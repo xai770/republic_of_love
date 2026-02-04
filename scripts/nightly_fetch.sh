@@ -7,12 +7,12 @@
 # ```mermaid
 # flowchart TD
 #     subgraph "1. FETCH (network-bound)"
-#         A1[🇩🇪 AA API<br/>--nationwide] --> A2[💼 DB API]
+#         A1[🇩🇪 AA API<br/>16 states] --> A2[💼 DB API]
 #         A2 --> A3[🔄 Backfill missing<br/>job_descriptions]
 #     end
 #     
 #     subgraph "2. ENRICH (GPU-bound)"
-#         B1[📝 Extract summaries<br/>DB only] --> B2[🚪 Domain gate<br/>regulated jobs]
+#         B1[📝 Extract summaries<br/>DB only]
 #     end
 #     
 #     subgraph "3. EMBED (GPU-bound, parallel)"
@@ -22,7 +22,7 @@
 #     end
 #     
 #     A3 --> B1
-#     B2 --> C1 & C2 & C3
+#     B1 --> C1 & C2 & C3
 #     C1 & C2 & C3 --> D[📊 Summary stats]
 # ```
 
@@ -100,30 +100,24 @@ python3 actors/postings__deutsche_bank_CU.py --max-jobs $MAX_JOBS
 
 # 1c. Backfill missing job descriptions (scrape retries for failed fetches)
 # ~30% of AA scrapes fail due to rate limiting - this catches them
-echo "$LOG_PREFIX [3/6] Backfilling missing job descriptions..."
-python3 actors/postings__job_description_U.py --batch 15000
+# Use high batch limit to catch up on backlog (rate limiting will naturally throttle)
+echo "$LOG_PREFIX [3/5] Backfilling missing job descriptions..."
+python3 actors/postings__job_description_U.py --batch 50000
 
 # ============================================================================
 # STEP 2: EXTRACT SUMMARIES (GPU-bound, LLM) - DB ONLY
 # ============================================================================
 # AA postings don't need summaries - we use job_description directly for matching
 # DB postings need summaries to strip corporate boilerplate
-echo "$LOG_PREFIX [4/6] Extracting summaries (DB only)..."
+echo "$LOG_PREFIX [4/5] Extracting summaries (DB only)..."
 python3 actors/postings__extracted_summary_U.py --batch 5000 --source deutsche_bank
 
 # ============================================================================
-# STEP 3: DOMAIN GATE (GPU-bound, LLM)
-# ============================================================================
-# Classify if jobs require regulated credentials (healthcare, legal, licensed trades)
-# This enables filtering out jobs users can't qualify for without certification
-echo "$LOG_PREFIX [5/6] Processing domain gate classifications..."
-python3 scripts/domain_gate_batch.py --limit 5000
-
-# ============================================================================
-# STEP 4: GENERATE EMBEDDINGS (GPU-bound, parallel)
+# STEP 5: GENERATE EMBEDDINGS (GPU-bound, parallel)
 # ============================================================================
 # Content-addressed design means workers don't conflict - they skip already-embedded text
-echo "$LOG_PREFIX [6/6] Starting 3 parallel embedding workers..."
+# NOTE: Embeddings use match_text = COALESCE(extracted_summary, job_description)
+echo "$LOG_PREFIX [5/5] Starting 3 parallel embedding workers..."
 python3 actors/postings__embedding_U.py --batch 20000 &
 PID1=$!
 python3 actors/postings__embedding_U.py --batch 20000 &
@@ -156,20 +150,16 @@ with get_connection() as conn:
     cur.execute('SELECT COUNT(*) as cnt FROM postings WHERE extracted_summary IS NOT NULL')
     with_summary = cur.fetchone()['cnt']
     
-    cur.execute('SELECT COUNT(*) as cnt FROM postings WHERE domain_gate IS NOT NULL')
-    with_domain_gate = cur.fetchone()['cnt']
-    
     cur.execute('SELECT COUNT(*) as cnt FROM embeddings')
     embeds = cur.fetchone()['cnt']
     
-    # Count unembedded (using our text_hash join pattern)
+    # Count unembedded - use postings_for_matching view (same as embedding actor)
+    # Embedding actor uses: e.text = p.match_text for existence check
     cur.execute('''
-        SELECT COUNT(*) as cnt FROM postings p 
-        WHERE p.job_description IS NOT NULL 
-        AND LENGTH(p.job_description) > 100
-        AND NOT EXISTS (
+        SELECT COUNT(*) as cnt FROM postings_for_matching p 
+        WHERE NOT EXISTS (
             SELECT 1 FROM embeddings e 
-            WHERE e.text_hash = md5(lower(trim(p.job_description)))
+            WHERE e.text = p.match_text
         )
     ''')
     pending = cur.fetchone()['cnt']
@@ -179,7 +169,6 @@ with get_connection() as conn:
     print(f'  Total postings:   {total_postings:,}')
     print(f'  With description: {with_desc:,}')
     print(f'  With summary:     {with_summary:,}')
-    print(f'  Domain gated:     {with_domain_gate:,}')
     print(f'  Embeddings:       {embeds:,}')
     print(f'  Pending embed:    {pending:,}')
 "

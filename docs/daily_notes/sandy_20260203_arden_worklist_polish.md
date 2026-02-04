@@ -22,7 +22,7 @@ Priority order is a suggestion. Use your judgment. If something unblocks other w
 ## 🔴 Priority 1: Broken Things
 
 ### T001: Mira Language Switch
-**Status:** 🟡 Open  
+**Status:** ✅ Done (2026-02-03, commit ff65af8)  
 **Effort:** Medium  
 **Problem:** User asked "can we switch to English?" and Mira responded in German with nonsense.  
 **Root cause:** Pattern matching FAQ can't handle this. Need real LLM.  
@@ -31,11 +31,12 @@ Priority order is a suggestion. Use your judgment. If something unblocks other w
 - Switch Mira's response language accordingly
 - Store language preference in session
 **Acceptance:** User says "English please" → Mira responds in English from then on.
+**Solution:** Implemented LLM-first Mira with language detection in system prompt.
 
 ---
 
 ### T002: Mira Nonsense Responses  
-**Status:** 🟡 Open  
+**Status:** ✅ Done (2026-02-03, commit ff65af8)  
 **Effort:** Medium  
 **Problem:** When FAQ doesn't match, Mira generates word salad. Example: "Ich verstehe, dass Sie in einer Situation sind, wo Sie sich auf eine Lösung freuen müssen..."  
 **Root cause:** Fallback to weak model without proper prompting.  
@@ -45,6 +46,7 @@ Priority order is a suggestion. Use your judgment. If something unblocks other w
 - Temperature 0.3 for consistency
 **Acceptance:** Mira gives coherent, on-brand responses even for unexpected questions. When she doesn't know, she says "Das weiß ich nicht, aber ich kann nachfragen."
 **Ref:** [sage_20260201_mira_voice_guide_for_arden.md](sage_20260201_mira_voice_guide_for_arden.md)
+**Solution:** qwen2.5:7b with few-shot examples, "companion not chatbot" framing per Sage's guide.
 
 ---
 
@@ -211,7 +213,7 @@ Priority order is a suggestion. Use your judgment. If something unblocks other w
 
 ## Parking Lot (Not Yet Specified)
 
-- **Doug web research** — Button exists, actor exists, but not wired up
+- ~~**Doug web research** — Button exists, actor exists, but not wired up~~ ✅ Done (2026-02-03, commits 3209d5a, 833d2c4) — Mira detects company research requests and fires Doug async
 - **Adele coaching flow** — UI not built
 - **Yogi-to-yogi chat** — Tab exists, no implementation
 - **Stripe integration** — Needs API keys first
