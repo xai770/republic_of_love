@@ -105,8 +105,11 @@ with get_connection() as conn:
     cur.execute('SELECT COUNT(*) as cnt FROM postings')
     total = cur.fetchone()['cnt']
     
-    cur.execute('SELECT COUNT(*) as cnt FROM postings WHERE job_description IS NOT NULL AND LENGTH(job_description) > 100')
+    cur.execute(\"\"\"SELECT COUNT(*) as cnt FROM postings WHERE job_description IS NOT NULL AND job_description != '[EXTERNAL_PARTNER]' AND LENGTH(job_description) > 100\"\"\")
     with_desc = cur.fetchone()['cnt']
+    
+    cur.execute(\"\"\"SELECT COUNT(*) as cnt FROM postings WHERE job_description = '[EXTERNAL_PARTNER]'\"\"\")
+    external_partner = cur.fetchone()['cnt']
     
     cur.execute('''SELECT COUNT(*) as cnt FROM postings WHERE source = 'arbeitsagentur' AND (job_description IS NULL OR LENGTH(COALESCE(job_description,'')) < 100) AND COALESCE(invalidated, false) = false''')
     missing_desc = cur.fetchone()['cnt']
@@ -119,6 +122,7 @@ with get_connection() as conn:
     
     print(f'   Total postings:       {total:,}')
     print(f'   With description:     {with_desc:,}')
+    print(f'   External partner:     {external_partner:,}')
     print(f'   Missing description:  {missing_desc:,}')
     print(f'   Eligible for match:   {eligible:,}')
     print(f'   Pending embeddings:   {pending_embed}')
