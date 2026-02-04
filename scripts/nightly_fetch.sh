@@ -117,12 +117,13 @@ python3 actors/postings__extracted_summary_U.py --batch 5000 --source deutsche_b
 # ============================================================================
 # Content-addressed design means workers don't conflict - they skip already-embedded text
 # NOTE: Embeddings use match_text = COALESCE(extracted_summary, job_description)
+# No batch limit - process ALL pending (content-addressed = no duplicates)
 echo "$LOG_PREFIX [5/5] Starting 3 parallel embedding workers..."
-python3 actors/postings__embedding_U.py --batch 20000 &
+python3 actors/postings__embedding_U.py --batch 100000 &
 PID1=$!
-python3 actors/postings__embedding_U.py --batch 20000 &
+python3 actors/postings__embedding_U.py --batch 100000 &
 PID2=$!
-python3 actors/postings__embedding_U.py --batch 20000 &
+python3 actors/postings__embedding_U.py --batch 100000 &
 PID3=$!
 
 wait $PID1 $PID2 $PID3
