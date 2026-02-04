@@ -134,6 +134,77 @@ with get_connection() as conn:
     exit 0
 fi
 
+# ============================================================================
+# DEBUG MODE - Low-level process info, live logs, file descriptors
+# ============================================================================
+if [ "$1" = "debug" ] || [ "$1" = "--debug" ]; then
+    echo "=== NIGHTLY FETCH DEBUG ==="
+    echo ""
+    
+    # Find all related processes
+    echo "🔍 ALL RELATED PROCESSES (full detail):"
+    ps aux | head -1
+    ps aux | grep -E "arbeitsagentur|deutsche_bank|job_description|embedding|extracted_summary|nightly_fetch" | grep -v grep
+    echo ""
+    
+    # Check lock file
+    echo "🔒 Lock file:"
+    if [ -f "$LOCKFILE" ]; then
+        echo "   EXISTS: $LOCKFILE"
+        echo "   PID: $(cat $LOCKFILE)"
+        echo "   Process alive: $(kill -0 $(cat $LOCKFILE) 2>/dev/null && echo 'YES' || echo 'NO')"
+    else
+        echo "   No lock file"
+    fi
+    echo ""
+    
+    # Show open files/connections for python processes
+    echo "📂 Open files (Python processes):"
+    for pid in $(pgrep -f "python3.*actors/"); do
+        echo "   PID $pid: $(ls /proc/$pid/fd 2>/dev/null | wc -l) open file descriptors"
+        # Show what it's doing
+        echo "   Command: $(cat /proc/$pid/cmdline 2>/dev/null | tr '\0' ' ' | cut -c1-100)"
+        # Show last few lines of stdout if available
+        if [ -f /proc/$pid/fd/1 ]; then
+            echo "   Writing to: $(readlink /proc/$pid/fd/1 2>/dev/null)"
+        fi
+    done
+    echo ""
+    
+    # Network connections
+    echo "🌐 Network connections (Python):"
+    ss -tp 2>/dev/null | grep python | head -10 || echo "   (none or ss not available)"
+    echo ""
+    
+    # Recent log files in logs/
+    echo "📜 Recent log files:"
+    ls -lt logs/*.log 2>/dev/null | head -5 | awk '{print "   " $6 " " $7 " " $8 " " $9}'
+    echo ""
+    
+    # Tail the most recent backfill log
+    LATEST_LOG=$(ls -t logs/desc_backfill*.log logs/embed_backfill*.log 2>/dev/null | head -1)
+    if [ -n "$LATEST_LOG" ]; then
+        echo "📄 Latest backfill log ($LATEST_LOG):"
+        echo "   --- last 20 lines ---"
+        tail -20 "$LATEST_LOG" 2>/dev/null | sed 's/^/   /'
+        echo ""
+    fi
+    
+    # Show /var/log/ty_nightly.log tail
+    if [ -f /var/log/ty_nightly.log ]; then
+        echo "📄 Cron log (/var/log/ty_nightly.log):"
+        echo "   --- last 30 lines ---"
+        tail -30 /var/log/ty_nightly.log | sed 's/^/   /'
+    fi
+    
+    # CPU/Memory of related processes
+    echo ""
+    echo "💻 Resource usage:"
+    ps -o pid,pcpu,pmem,etime,cmd --sort=-pcpu | grep -E "python3.*actors/|python3.*scripts/" | grep -v grep | head -5 | awk '{print "   " $0}'
+    
+    exit 0
+fi
+
 SINCE=${1:-1}        # Default: last 1 day
 MAX_JOBS=${2:-1000}  # Default: 1000 jobs per city (AA) / total (DB)
 FORCE=${3:-}         # Optional: pass "force" to skip preflight
