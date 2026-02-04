@@ -74,13 +74,16 @@ import psycopg2.extras
 import requests
 from bs4 import BeautifulSoup
 
+# Playwright for JavaScript-rendered pages (SPA)
+from playwright.sync_api import sync_playwright, Browser, BrowserContext
+
 # ============================================================================
 # SETUP
 # ============================================================================
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from core.database import get_connection
+from core.database import get_connection_raw, return_connection
 
 # ============================================================================
 # CONFIGURATION
@@ -114,6 +117,7 @@ SOURCE_SELECTORS = {
     'arbeitsagentur': {
         'url_pattern': 'arbeitsagentur.de/jobsuche/jobdetail/',
         'selector': {'id': 'detail-beschreibung-text-container'},
+        'use_playwright': True,  # AA is a SPA - requires JS rendering
     },
     # Add more sources here as needed
 }
@@ -186,7 +190,14 @@ class PostingsJobDescriptionU:
     1. PREFLIGHT: Validate posting exists and has external_url
     2. PROCESS: Fetch HTML and extract description
     3. QA: Validate description length and content
+    
+    Uses Playwright for JavaScript-rendered pages (SPAs like arbeitsagentur.de).
     """
+    
+    # Class-level browser instance for reuse across batch processing
+    _playwright = None
+    _browser: Optional[Browser] = None
+    _browser_context: Optional[BrowserContext] = None
     
     def __init__(self, db_conn=None):
         """Initialize with database connection."""
@@ -194,13 +205,37 @@ class PostingsJobDescriptionU:
             self.conn = db_conn
             self._owns_connection = False
         else:
-            self.conn = get_connection()
+            self.conn = get_connection_raw()
             self._owns_connection = True
         self.input_data: Dict[str, Any] = {}
     
     def __del__(self):
         if self._owns_connection and self.conn:
-            self.conn.close()
+            return_connection(self.conn)
+    
+    @classmethod
+    def _ensure_browser(cls) -> BrowserContext:
+        """Lazily initialize Playwright browser (shared across instances for batch efficiency)."""
+        if cls._browser_context is None:
+            cls._playwright = sync_playwright().start()
+            cls._browser = cls._playwright.chromium.launch(headless=True)
+            cls._browser_context = cls._browser.new_context(
+                user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            )
+        return cls._browser_context
+    
+    @classmethod
+    def _close_browser(cls):
+        """Clean up browser resources (call at end of batch processing)."""
+        if cls._browser_context:
+            cls._browser_context.close()
+            cls._browser_context = None
+        if cls._browser:
+            cls._browser.close()
+            cls._browser = None
+        if cls._playwright:
+            cls._playwright.stop()
+            cls._playwright = None
     
     # ========================================================================
     # MAIN ENTRY POINT
@@ -241,14 +276,38 @@ class PostingsJobDescriptionU:
             result = self._fetch_description(source, external_url)
             
             if not result['success']:
-                # Increment failure counter on posting
-                self._increment_failures(posting_id)
-                return {
-                    'success': False,
-                    'error': result.get('error', 'Fetch failed'),
-                    'http_status': result.get('http_status'),  # Pass through for 403/404 handling
-                    'posting_id': posting_id,
-                }
+                error = result.get('error', 'Fetch failed')
+                http_status = result.get('http_status')
+                
+                # Handle terminal failures (don't retry these)
+                if result.get('skip_external') or 'EXTERNAL_PARTNER' in error:
+                    # External partner redirect - description not on AA
+                    # Set job_description to marker so we don't keep retrying
+                    self._set_external_marker(posting_id)
+                    return {
+                        'success': False,
+                        'error': 'EXTERNAL_PARTNER',
+                        'skip_reason': 'EXTERNAL_PARTNER',
+                        'posting_id': posting_id,
+                    }
+                elif http_status == 404:
+                    # Job removed from AA - invalidate the posting
+                    self._invalidate_posting(posting_id, 'Job removed from AA (404)')
+                    return {
+                        'success': False,
+                        'error': 'Job removed (404)',
+                        'http_status': 404,
+                        'posting_id': posting_id,
+                    }
+                else:
+                    # Transient failure - increment counter for retry backoff
+                    self._increment_failures(posting_id)
+                    return {
+                        'success': False,
+                        'error': error,
+                        'http_status': http_status,
+                        'posting_id': posting_id,
+                    }
             
             description = result['description']
             
@@ -311,6 +370,8 @@ class PostingsJobDescriptionU:
         # Determine actual source from URL (AA links to external job boards)
         actual_source = _get_source_for_url(posting['external_url'])
         if not actual_source:
+            # URL points to external job board - mark and skip
+            self._set_external_marker(posting_id)
             return {
                 'ok': False, 
                 'reason': 'EXTERNAL_JOB_BOARD', 
@@ -338,12 +399,80 @@ class PostingsJobDescriptionU:
         """
         Fetch and parse job description from source website.
         
-        Uses exponential backoff retry (1s, 2s, 4s) for transient failures.
+        Dispatches to Playwright or requests based on source config.
         """
         config = SOURCE_SELECTORS.get(source)
         if not config:
             return {'success': False, 'error': f'No config for source: {source}'}
         
+        # Use Playwright for JavaScript-rendered pages (SPAs)
+        if config.get('use_playwright'):
+            return self._fetch_description_playwright(source, url, config)
+        else:
+            return self._fetch_description_requests(source, url, config)
+    
+    def _fetch_description_playwright(self, source: str, url: str, config: Dict) -> Dict:
+        """
+        Fetch description using Playwright for JavaScript-rendered pages.
+        
+        Handles AA's SPA which doesn't server-render the description container.
+        Also detects external partner redirects (job on external site, not scrapeable).
+        """
+        try:
+            context = self._ensure_browser()
+            page = context.new_page()
+            
+            try:
+                # Load page and wait for network to settle
+                response = page.goto(url, wait_until='domcontentloaded', timeout=30000)
+                
+                if response.status == 403:
+                    return {'success': False, 'error': 'HTTP 403', 'http_status': 403}
+                if response.status == 404:
+                    return {'success': False, 'error': 'HTTP 404 - Job removed from AA', 'http_status': 404}
+                if response.status != 200:
+                    return {'success': False, 'error': f'HTTP {response.status}', 'http_status': response.status}
+                
+                # Wait for SPA to hydrate (JavaScript to render content)
+                page.wait_for_timeout(2000)
+                
+                # Check for external partner redirect (job description on external site)
+                body_text = page.inner_text('body')
+                if 'Kooperationspartner' in body_text or 'Externe Seite öffnen' in body_text:
+                    return {
+                        'success': False, 
+                        'error': 'EXTERNAL_PARTNER - Description on external site, not AA',
+                        'skip_external': True
+                    }
+                
+                # Look for description container
+                selector_id = config['selector'].get('id')
+                container = page.query_selector(f'#{selector_id}')
+                
+                if container:
+                    description = container.inner_text()
+                    if description and len(description.strip()) >= MIN_DESCRIPTION_LENGTH:
+                        return {'success': True, 'description': description.strip()}
+                    else:
+                        return {'success': False, 'error': f'Description too short ({len(description.strip()) if description else 0} chars)'}
+                else:
+                    return {'success': False, 'error': 'Description container not found after JS render'}
+                    
+            finally:
+                page.close()
+                
+        except Exception as e:
+            error_str = str(e)
+            if 'Timeout' in error_str:
+                return {'success': False, 'error': 'Page load timeout'}
+            return {'success': False, 'error': f'Playwright error: {error_str[:200]}'}
+    
+    def _fetch_description_requests(self, source: str, url: str, config: Dict) -> Dict:
+        """
+        Fetch description using requests (for server-rendered pages).
+        
+        Uses exponential backoff retry (1s, 2s, 4s) for transient failures.
+        """
         last_error = None
         
         for attempt in range(MAX_FETCH_RETRIES):
@@ -376,19 +505,9 @@ class PostingsJobDescriptionU:
                 container = soup.find('div', selector)
                 
                 if container:
-                    # Primary: Server-side rendered description container
                     description = container.get_text(separator='\n', strip=True)
                 else:
-                    # Fallback: og:description meta tag (truncated but usable)
-                    # AA's SPA sometimes doesn't server-render the full container
-                    og_meta = soup.find('meta', {'property': 'og:description'})
-                    if og_meta and og_meta.get('content'):
-                        description = og_meta['content'].strip()
-                        # Clean up HTML entities
-                        description = description.replace('&nbsp;', ' ')
-                        description = description.replace('&#160;', ' ')
-                    else:
-                        return {'success': False, 'error': 'Description container not found'}
+                    return {'success': False, 'error': 'Description container not found'}
                 
                 if not description:
                     return {'success': False, 'error': 'Empty description'}
@@ -447,6 +566,22 @@ class PostingsJobDescriptionU:
                 updated_at = NOW()
             WHERE posting_id = %s
         """, (reason, posting_id))
+        self.conn.commit()
+    
+    def _set_external_marker(self, posting_id: int):
+        """
+        Mark posting as having external description (not on AA).
+        
+        Sets job_description to a marker value so we don't keep retrying.
+        These postings have descriptions on external job boards that we can't scrape.
+        """
+        cur = self.conn.cursor()
+        cur.execute("""
+            UPDATE postings
+            SET job_description = '[EXTERNAL_PARTNER]',
+                updated_at = NOW()
+            WHERE posting_id = %s
+        """, (posting_id,))
         self.conn.commit()
 
 
