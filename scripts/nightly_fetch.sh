@@ -205,6 +205,24 @@ if [ "$1" = "debug" ] || [ "$1" = "--debug" ]; then
     exit 0
 fi
 
+# ============================================================================
+# TAIL MODE - Live follow of latest backfill log (Ctrl+C to exit)
+# ============================================================================
+if [ "$1" = "tail" ] || [ "$1" = "--tail" ]; then
+    LATEST_LOG=$(ls -t logs/desc_backfill*.log logs/embed_backfill*.log 2>/dev/null | head -1)
+    
+    if [ -z "$LATEST_LOG" ]; then
+        echo "❌ No backfill log found in logs/"
+        exit 1
+    fi
+    
+    echo "📄 Tailing: $LATEST_LOG"
+    echo "   (Ctrl+C to exit)"
+    echo "   ─────────────────────────────────────"
+    tail -f "$LATEST_LOG"
+    exit 0
+fi
+
 SINCE=${1:-1}        # Default: last 1 day
 MAX_JOBS=${2:-1000}  # Default: 1000 jobs per city (AA) / total (DB)
 FORCE=${3:-}         # Optional: pass "force" to skip preflight
