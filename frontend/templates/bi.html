@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}My Overview — talent.yoga{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    <!-- Left Sidebar -->
+    {% set active_page = 'bi' %}
+    {% include "partials/sidebar.html" %}
+    
+    <!-- Main Content - Iframe for BI Dashboard -->
+    <main class="main-content bi-frame-container">
+        <iframe src="https://bi.talent.yoga" class="bi-iframe" frameborder="0" allowfullscreen></iframe>
+    </main>
+</div>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+}
+</script>
+{% endblock %}

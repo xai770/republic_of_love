@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Job Details - talent.yoga{% endblock %}
+
+{% block content %}
+<style>
+    .hidden {
+        display: none !important;
+    }
+    
+    .posting-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        min-height: 100vh;
+    }
+    
+    .posting-back {
+        margin-bottom: 1.5rem;
+    }
+    
+    .posting-back a {
+        color: var(--accent-color, #00d4aa);
+        text-decoration: none;
+    }
+    
+    .posting-back a:hover {
+        text-decoration: underline;
+    }
+    
+    .posting-card {
+        background: var(--card-bg, #1e1e2e);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    
+    .posting-header {
+        border-bottom: 1px solid var(--border-color, #333);
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .posting-title {
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
+        color: var(--text-primary, #fff);
+    }
+    
+    .posting-company {
+        font-size: 1.1rem;
+        color: var(--text-secondary, #a0a0a0);
+        margin-bottom: 1rem;
+    }
+    
+    .posting-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary, #888);
+    }
+    
+    .posting-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .posting-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .posting-section h3 {
+        color: var(--accent-color, #00d4aa);
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .posting-section p, .posting-section div {
+        color: var(--text-primary, #ddd);
+        line-height: 1.6;
+    }
+    
+    .posting-description {
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: var(--bg-darker, #161622);
+        border-radius: 8px;
+    }
+    
+    .posting-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .posting-tag {
+        background: var(--accent-color, #00d4aa);
+        color: var(--bg-color, #0d0d1a);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .posting-tag.secondary {
+        background: var(--bg-darker, #2a2a3e);
+        color: var(--text-secondary, #a0a0a0);
+    }
+    
+    .salary-highlight {
+        font-size: 1.25rem;
+        color: var(--accent-color, #00d4aa);
+        font-weight: 600;
+    }
+    
+    .posting-actions {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color, #333);
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .btn-primary {
+        background: var(--accent-color, #00d4aa);
+        color: var(--bg-color, #0d0d1a);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-darker, #2a2a3e);
+        color: var(--text-primary, #fff);
+        border: 1px solid var(--border-color, #444);
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 4rem;
+        color: var(--text-secondary, #888);
+    }
+    
+    .loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-color, #333);
+        border-top-color: var(--accent-color, #00d4aa);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .error-state {
+        text-align: center;
+        padding: 4rem;
+        color: var(--text-secondary, #888);
+    }
+    
+    .error-state h2 {
+        color: #ff6b6b;
+    }
+</style>
+
+<main class="posting-page">
+    <div class="posting-back">
+        <a href="javascript:history.back()">← Back</a>
+    </div>
+    
+    <div class="loading" id="loading-state">
+        <div class="spinner"></div>
+        <p>Loading posting details...</p>
+    </div>
+    
+    <div class="error-state hidden" id="error-state">
+        <h2>Posting Not Found</h2>
+        <p>This job posting may have been removed or is no longer available.</p>
+        <a href="/" class="btn btn-primary">Go Home</a>
+    </div>
+    
+    <div class="posting-card hidden" id="posting-content">
+        <header class="posting-header">
+            <h1 class="posting-title" id="posting-title">Loading...</h1>
+            <div class="posting-company" id="posting-company"></div>
+            <div class="posting-meta">
+                <span id="posting-location">📍 <span id="location-text"></span></span>
+                <span id="posting-source">🔗 <span id="source-text"></span></span>
+                <span id="posting-date">📅 <span id="date-text"></span></span>
+            </div>
+        </header>
+        
+        <div class="posting-section" id="profession-section">
+            <h3>Profession</h3>
+            <div class="posting-tags">
+                <span class="posting-tag" id="profession-tag"></span>
+                <span class="posting-tag secondary" id="qual-tag"></span>
+            </div>
+        </div>
+        
+        <div class="posting-section" id="domain-section">
+            <h3>Domain</h3>
+            <div class="posting-tags">
+                <span class="posting-tag secondary" id="domain-tag"></span>
+                <span class="posting-tag secondary" id="subdomain-tag"></span>
+            </div>
+        </div>
+        
+        <div class="posting-section" id="salary-section">
+            <h3>Typical Salary Range</h3>
+            <p class="salary-highlight" id="salary-text"></p>
+        </div>
+        
+        <div class="posting-section" id="summary-section">
+            <h3>Summary</h3>
+            <p id="summary-text"></p>
+        </div>
+        
+        <div class="posting-section" id="description-section">
+            <h3>Full Description</h3>
+            <div class="posting-description" id="description-text"></div>
+        </div>
+        
+        <div class="posting-actions">
+            <a href="#" target="_blank" class="btn btn-primary" id="original-link">View Original Posting</a>
+        </div>
+    </div>
+</main>
+
+<script>
+    const postingId = {{ posting_id }};
+    
+    async function loadPosting() {
+        try {
+            const response = await fetch(`/api/postings/detail/${postingId}`);
+            
+            if (!response.ok) {
+                throw new Error('Posting not found');
+            }
+            
+            const data = await response.json();
+            renderPosting(data);
+        } catch (error) {
+            console.error('Error loading posting:', error);
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
+    }
+    
+    function renderPosting(data) {
+        // Hide loading, show content
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('posting-content').classList.remove('hidden');
+        
+        // Header
+        document.getElementById('posting-title').textContent = data.title || 'Untitled Position';
+        document.getElementById('posting-company').textContent = data.company || 'Company not specified';
+        
+        // Location - deduplicate city/state (e.g., "Sonneberg, Thüringen, Thüringen" -> "Sonneberg, Thüringen")
+        let city = data.location_city || '';
+        let state = data.location_state || '';
+        // If city ends with ", State" and that matches state, strip it
+        if (city && state && city.toLowerCase().endsWith(', ' + state.toLowerCase())) {
+            city = city.slice(0, -(state.length + 2));
+        }
+        // If city equals state, just use city
+        const locationParts = (city && state && city.toLowerCase() === state.toLowerCase()) 
+            ? [city] 
+            : [city, state].filter(Boolean);
+        document.getElementById('location-text').textContent = locationParts.join(', ') || 'Not specified';
+        
+        // Source
+        document.getElementById('source-text').textContent = data.source || 'Unknown';
+        
+        // Date
+        if (data.created_at) {
+            const date = new Date(data.created_at);
+            document.getElementById('date-text').textContent = date.toLocaleDateString('de-DE');
+        } else {
+            document.getElementById('posting-date').style.display = 'none';
+        }
+        
+        // Profession
+        if (data.profession) {
+            document.getElementById('profession-tag').textContent = data.profession;
+            const qualLevels = {1: 'Helper', 2: 'Professional', 3: 'Specialist', 4: 'Expert'};
+            document.getElementById('qual-tag').textContent = qualLevels[data.qualification_level] || '';
+            if (!data.qualification_level) {
+                document.getElementById('qual-tag').style.display = 'none';
+            }
+        } else {
+            document.getElementById('profession-section').style.display = 'none';
+        }
+        
+        // Domain
+        if (data.domain) {
+            document.getElementById('domain-tag').textContent = data.domain;
+            if (data.sub_domain) {
+                document.getElementById('subdomain-tag').textContent = data.sub_domain;
+            } else {
+                document.getElementById('subdomain-tag').style.display = 'none';
+            }
+        } else {
+            document.getElementById('domain-section').style.display = 'none';
+        }
+        
+        // Salary
+        if (data.salary_range || data.salary_median) {
+            document.getElementById('salary-text').textContent = data.salary_range || 
+                `~${data.salary_median.toLocaleString('de-DE')} € median`;
+        } else {
+            document.getElementById('salary-section').style.display = 'none';
+        }
+        
+        // Summary
+        if (data.extracted_summary) {
+            document.getElementById('summary-text').textContent = data.extracted_summary;
+        } else {
+            document.getElementById('summary-section').style.display = 'none';
+        }
+        
+        // Description
+        if (data.job_description) {
+            document.getElementById('description-text').textContent = data.job_description;
+        } else {
+            document.getElementById('description-section').style.display = 'none';
+        }
+        
+        // Original link
+        if (data.url) {
+            document.getElementById('original-link').href = data.url;
+        } else {
+            document.getElementById('original-link').style.display = 'none';
+        }
+        
+        // Update page title
+        document.title = `${data.title} — talent.yoga`;
+    }
+    
+    // Load on page ready
+    loadPosting();
+</script>
+{% endblock %}
