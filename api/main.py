@@ -164,6 +164,23 @@ def dashboard_page(request: Request, conn=Depends(get_db)):
     })
 
 
+@app.get("/bi")
+def bi_page(request: Request, conn=Depends(get_db)):
+    """BI Overview page — requires authentication."""
+    if not templates:
+        return {"error": "Frontend not configured"}
+    
+    user = get_current_user(request, conn)
+    if not user:
+        return RedirectResponse(url="/", status_code=302)
+    
+    return templates.TemplateResponse("bi.html", {
+        "request": request,
+        "user": user,
+        **get_i18n_context(request)
+    })
+
+
 @app.get("/market")
 def market_page(request: Request):
     """Job market terrain visualization — public page."""
