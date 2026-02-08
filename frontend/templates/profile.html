@@ -3,22 +3,13 @@
 {% block title %}Edit Profile — talent.yoga{% endblock %}
 
 {% block content %}
-<nav class="navbar">
-    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
-    <div class="nav-links">
-        <a href="/profile" class="nav-link active">Profile</a>
-        <a href="/matches" class="nav-link">Matches</a>
-    </div>
-    <div class="nav-user">
-        {% if user.avatar_url %}
-        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
-        {% endif %}
-        <span>{{ user.display_name or user.email }}</span>
-        <a href="/auth/logout" class="logout-btn">Logout</a>
-    </div>
-</nav>
-
-<main class="profile-editor">
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    {% set active_page = 'profile' %}
+    {% include "partials/sidebar.html" %}
+    
+    <main class="main-content profile-editor">
     <h1>Your Profile</h1>
     
     {% if not profile %}
@@ -199,7 +190,8 @@
             </div>
         </section>
     </div>
-</main>
+    </main>
+</div><!-- /.app-layout -->
 
 <!-- Work History Modal -->
 <div class="modal" id="work-modal">

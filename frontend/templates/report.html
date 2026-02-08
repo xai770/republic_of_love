@@ -3,22 +3,13 @@
 {% block title %}Match Report — talent.yoga{% endblock %}
 
 {% block content %}
-<nav class="navbar">
-    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
-    <div class="nav-links">
-        <a href="/profile" class="nav-link">Profile</a>
-        <a href="/matches" class="nav-link">Matches</a>
-    </div>
-    <div class="nav-user">
-        {% if user.avatar_url %}
-        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
-        {% endif %}
-        <span>{{ user.display_name or user.email }}</span>
-        <a href="/auth/logout" class="logout-btn">Logout</a>
-    </div>
-</nav>
-
-<main class="report-page">
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    {% set active_page = 'matches' %}
+    {% include "partials/sidebar.html" %}
+    
+    <main class="main-content report-page">
     <div class="report-back">
         <a href="/matches">← Back to Dashboard</a>
     </div>
@@ -125,7 +116,8 @@
             <small id="generated-at">Generated: —</small>
         </footer>
     </div>
-</main>
+    </main>
+</div><!-- /.app-layout -->
     <!-- Styles moved to /static/css/style.css -->
 <script>
 const matchId = {{ match_id }};

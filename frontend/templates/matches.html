@@ -3,35 +3,13 @@
 {% block title %}Match Dashboard — talent.yoga{% endblock %}
 
 {% block content %}
-<nav class="navbar">
-    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
-    <div class="nav-links">
-        <a href="/profile" class="nav-link">Profile</a>
-        <a href="/matches" class="nav-link active">Matches</a>
-    </div>
-    <div class="nav-user">
-        <div class="nav-notifications" onclick="toggleNotifications(event)">
-            <span class="notification-bell">🔔</span>
-            <span class="notification-badge hidden" id="notif-badge">0</span>
-            <div class="notification-dropdown" id="notif-dropdown">
-                <div class="notification-header">
-                    <h4>Notifications</h4>
-                    <button class="mark-all-read" onclick="markAllRead(event)">Mark all read</button>
-                </div>
-                <ul class="notification-list" id="notif-list">
-                    <li class="notification-empty">No notifications</li>
-                </ul>
-            </div>
-        </div>
-        {% if user.avatar_url %}
-        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
-        {% endif %}
-        <span>{{ user.display_name or user.email }}</span>
-        <a href="/auth/logout" class="logout-btn">Logout</a>
-    </div>
-</nav>
-
-<main class="match-dashboard">
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    {% set active_page = 'matches' %}
+    {% include "partials/sidebar.html" %}
+    
+    <main class="main-content match-dashboard">
     <header class="dashboard-header">
         <h1>Your Matches</h1>
         <p class="subtitle">Jobs matched to your profile</p>
@@ -79,7 +57,8 @@
         <div class="spinner"></div>
         <p>Loading matches...</p>
     </div>
-</main>
+    </main>
+</div><!-- /.app-layout -->
 
 <!-- Report Modal -->
 <div class="modal-overlay hidden" id="report-modal">

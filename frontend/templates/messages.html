@@ -3,23 +3,13 @@
 {% block title %}Messages — talent.yoga{% endblock %}
 
 {% block content %}
-<nav class="navbar">
-    <div class="nav-brand"><a href="/dashboard">🎯 talent.yoga</a></div>
-    <div class="nav-links">
-        <a href="/profile" class="nav-link">Profile</a>
-        <a href="/matches" class="nav-link">Matches</a>
-        <a href="/messages" class="nav-link active">Messages</a>
-    </div>
-    <div class="nav-user">
-        {% if user.avatar_url %}
-        <img src="{{ user.avatar_url }}" alt="avatar" class="avatar">
-        {% endif %}
-        <span>{{ user.display_name or user.email }}</span>
-        <a href="/auth/logout" class="logout-btn">Logout</a>
-    </div>
-</nav>
-
-<main class="messages-container">
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    {% set active_page = 'messages' %}
+    {% include "partials/sidebar.html" %}
+    
+    <main class="main-content messages-container">
     <!-- Sidebar: Message List -->
     <aside class="message-list">
         <div class="message-list-header">
@@ -99,7 +89,8 @@
             </div>
         </div>
     </section>
-</main>
+    </main>
+</div><!-- /.app-layout -->
     <!-- Styles moved to /static/css/style.css -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>

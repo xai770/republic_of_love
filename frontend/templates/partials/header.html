@@ -1,0 +1,39 @@
+<!-- Shared header bar -->
+<header class="header-bar">
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">
+            <span></span><span></span><span></span>
+        </button>
+        <a href="/" class="header-logo">
+            <img src="/static/images/icons/logo.png?v=2" alt="talent.yoga" class="logo-img">
+            <span class="logo-text"><span class="talent">talent</span><span class="yoga">.yoga</span></span>
+        </a>
+    </div>
+    
+    <div class="header-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="{{ t('common.search_placeholder') }}" class="search-input">
+    </div>
+    
+    <div class="header-right">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+            <span class="theme-icon-light">☀️</span>
+            <span class="theme-icon-dark">🌙</span>
+        </button>
+        <!-- Language Toggle -->
+        <div class="lang-toggle">
+            {% for code in languages %}
+            <a href="/api/i18n/set/{{ code }}" class="lang-btn {{ 'active' if code == lang else '' }}">{{ code|upper }}</a>
+            {% endfor %}
+        </div>
+        <span class="user-name">{{ user.display_name or user.email }}</span>
+        <div class="user-avatar">
+            {% if user.avatar_url %}
+            <img src="{{ user.avatar_url }}" alt="Avatar">
+            {% else %}
+            <div class="avatar-placeholder">{{ (user.display_name or user.email)[0]|upper }}</div>
+            {% endif %}
+        </div>
+    </div>
+</header>
