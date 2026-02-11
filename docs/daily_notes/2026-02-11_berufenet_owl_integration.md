@@ -788,6 +788,56 @@ Commit `fb23cc5`, pushed.
 | 10 | Mira router split (1,162 → 8 files) | `fb23cc5` |
 | 11 | sys.path cleanup (18 actors) + pip install -e . | `fb23cc5` |
 
-**6 commits pushed.** 12 items shipped. 17/19 stinks resolved.
+### PostgreSQL tuning + ops cleanup
+
+**Cache hit ratio was 46%** — catastrophically bad for a production DB. Root cause: `shared_buffers = 128MB` (Ubuntu default) on a 33 GB machine. The entire 8 GB database was being read from disk.
+
+Tuned `/etc/postgresql/14/main/postgresql.conf`:
+
+| Setting | Before | After |
+|---|---|---|
+| shared_buffers | 128 MB | 8 GB |
+| effective_cache_size | 4 GB | 24 GB |
+| work_mem | 4 MB | 64 MB |
+| maintenance_work_mem | 64 MB | 512 MB |
+| wal_buffers | auto (~4 MB) | 64 MB |
+| random_page_cost | 4.0 | 1.1 (NVMe) |
+| effective_io_concurrency | 1 | 200 (NVMe) |
+
+Restarted PostgreSQL — cache hit ratio jumped to **74%** immediately on cold cache, will climb to 99%+ as buffer fills.
+
+**Dropped 185 MB of dead indexes:**
+- 5 indexes on `_archive_tickets_history` (archive table, never queried) — 105 MB
+- `idx_postings_source_metadata_gin` — GIN index on JSONB, but codebase only uses `->` / `->>` (arrow operators), never `@>` / `?` (containment). GIN useless — 80 MB
+
+**Fixed pipeline_health.py** — was reading `nightly_fetch.log` (doesn't exist), now reads `turing_fetch.log`.
+
+**Invalidated 179 stale postings** — all Deutsche Bank, not seen since Jan 8–15. Active postings: 194,506.
+
+Note: PG restart killed the running nightly fetch at 21:40. Restarted manually, picked up from step 3/4 (berufenet classification). Idempotent, no data loss.
+
+Commit `c86461d`, pushed.
+
+### Full-day session totals (final)
+
+| # | Task | Commit |
+|---|------|--------|
+| 1 | Combined domain × qualification chart | `052aa35` |
+| 2 | BI i18n (DE/EN toggle) | `052aa35` |
+| 3 | Nightly pipeline: cascade + qual backfill | `052aa35` |
+| 4 | Ollama URL centralization (24 files) | `052aa35` |
+| 5 | Admin.py template extraction (−50%) | `3b2977e` |
+| 6 | Qual backfill round 2 (+501 postings) | `ddf85b7` |
+| 7 | Fix null actor IDs (2 files) | `2236df5` |
+| 8 | Log rotation (logrotate + crontab) | `2236df5` |
+| 9 | Stale config cleanup (18 WG + membridge) | `2236df5` |
+| 10 | Mira router split (1,162 → 8 files) | `fb23cc5` |
+| 11 | sys.path cleanup (18 actors) + pip install -e . | `fb23cc5` |
+| 12 | PostgreSQL tuning (shared_buffers 128MB → 8GB) | `c86461d` |
+| 13 | Drop 185 MB dead indexes | `c86461d` |
+| 14 | Fix pipeline_health.py log path | `c86461d` |
+| 15 | Invalidate 179 stale postings | `c86461d` |
+
+**7 commits pushed.** 15 items shipped. 17/19 stinks resolved.
 
 *— ℵ*
