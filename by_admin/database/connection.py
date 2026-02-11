@@ -1,3 +1,4 @@
+import os
 """
 Database connection management for LLMCore V3.1 Admin GUI
 PostgreSQL (base.yoga) connection
@@ -12,7 +13,7 @@ from typing import Generator
 DB_CONFIG = {
     'dbname': 'base_yoga',
     'user': 'base_admin',
-    'password': 'base_yoga_secure_2025',
+    'password': os.getenv('DB_PASSWORD', ''),
     'host': 'localhost',
     'port': '5432'
 }

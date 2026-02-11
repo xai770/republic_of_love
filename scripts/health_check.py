@@ -95,7 +95,7 @@ def check_ollama_responsive() -> List[str]:
     
     try:
         result = subprocess.run(
-            ['curl', '-s', '-m', '5', 'http://localhost:11434/api/tags'],
+            ['curl', '-s', '-m', '5', os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/tags'],
             capture_output=True,
             text=True,
             timeout=10
@@ -283,7 +283,7 @@ def send_notification(message: str):
             ['notify-send', '-u', 'critical', 'Workflow Health Alert', message],
             timeout=5
         )
-    except:
+    except (subprocess.SubprocessError, OSError):
         pass  # Notification not critical
 
 

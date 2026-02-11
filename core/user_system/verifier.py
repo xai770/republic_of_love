@@ -175,7 +175,7 @@ Respond with ONLY a JSON object:
 """
             
             response = requests.post(
-                'http://localhost:11434/api/generate',
+                os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate',
                 json={
                     'model': 'mistral:latest',
                     'prompt': full_prompt,

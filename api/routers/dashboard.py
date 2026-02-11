@@ -2,12 +2,102 @@
 Dashboard routes — main user interface.
 """
 from fastapi import APIRouter, Depends, Request, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 import markdown
 
-from api.deps import get_db, get_current_user
+from api.deps import get_db, get_current_user, require_user
 
 router = APIRouter(tags=["dashboard"])
+
+
+# ============================================================
+# HOME STATS — single endpoint for all dashboard numbers
+# ============================================================
+
+@router.get("/api/home/stats")
+def get_home_stats(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    All stats the home page needs in one call:
+    - resume_complete: 0-100%
+    - new_matches: matches with no interaction (never seen)
+    - unread_matches: matches seen but not read (clicked < 5s)
+    - saved_matches: favorited
+    - open_applications: state = 'applied'
+    """
+    with conn.cursor() as cur:
+        user_id = user['user_id']
+
+        # Profile / resume completeness
+        cur.execute("""
+            SELECT profile_id, full_name, location, experience_level,
+                   skill_keywords, desired_locations, desired_roles
+            FROM profiles WHERE user_id = %s
+        """, (user_id,))
+        profile = cur.fetchone()
+
+        resume_complete = 0
+        profile_id = None
+        if profile:
+            profile_id = profile['profile_id']
+            if profile['full_name']: resume_complete += 10
+            if profile['location']: resume_complete += 10
+            if profile['experience_level']: resume_complete += 10
+            skills = profile['skill_keywords']
+            if skills and skills != '[]' and len(str(skills)) > 2: resume_complete += 30
+            if profile['desired_locations']: resume_complete += 20
+            if profile['desired_roles']: resume_complete += 20
+
+        if not profile_id:
+            return {
+                "resume_complete": 0,
+                "new_matches": 0,
+                "unread_matches": 0,
+                "saved_matches": 0,
+                "open_applications": 0,
+                "has_profile": False,
+            }
+
+        # All match counts in one query
+        cur.execute("""
+            SELECT
+                -- New: match exists but no interaction row at all (never seen)
+                COUNT(*) FILTER (
+                    WHERE i.interaction_id IS NULL
+                ) as new_matches,
+                -- Unread: has been seen (interaction exists) but viewed < 5s
+                COUNT(*) FILTER (
+                    WHERE i.interaction_id IS NOT NULL
+                      AND COALESCE(i.total_view_seconds, 0) < 5
+                      AND i.state NOT IN ('favorited', 'applied', 'hired', 'rejected')
+                ) as unread_matches,
+                -- Saved: favorited
+                COUNT(*) FILTER (
+                    WHERE i.is_favorited = true
+                ) as saved_matches,
+                -- Open applications
+                COUNT(*) FILTER (
+                    WHERE i.state = 'applied'
+                ) as open_applications
+            FROM profile_posting_matches m
+            LEFT JOIN user_posting_interactions i
+                ON i.user_id = %s AND i.posting_id = m.posting_id
+            WHERE m.profile_id = %s
+              AND m.skill_match_score > 30
+        """, (user_id, profile_id))
+
+        row = cur.fetchone()
+
+        return {
+            "resume_complete": resume_complete,
+            "new_matches": row['new_matches'] or 0,
+            "unread_matches": row['unread_matches'] or 0,
+            "saved_matches": row['saved_matches'] or 0,
+            "open_applications": row['open_applications'] or 0,
+            "has_profile": True,
+        }
 
 
 def render_base(content: str, user: dict = None) -> str:

@@ -585,6 +585,7 @@ class ArbeitsagenturJobFetcher:
                 'refnr': refnr,
                 'external_id': f"aa-{refnr}",
                 'title': title,
+                'beruf': beruf,
                 'employer': employer,
                 'location_city': location_city,
                 'location_postal_code': location_postal_code,
@@ -660,17 +661,18 @@ class ArbeitsagenturJobFetcher:
                 # Insert new posting
                 cur.execute("""
                     INSERT INTO postings (
-                        external_id, external_job_id, posting_name, job_title, 
+                        external_id, external_job_id, posting_name, job_title, beruf,
                         location_city, location_postal_code, location_state, location_country, 
                         source, external_url, source_metadata, job_description,
                         first_seen_at, last_seen_at, posting_status
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), 'active')
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), 'active')
                     RETURNING posting_id
                 """, (
                     job['external_id'],
                     job['refnr'],
                     job['employer'] or job['title'],  # posting_name = employer or title
                     job['title'],
+                    job.get('beruf', ''),  # Occupation category for berufenet lookup
                     job['location_city'],
                     job['location_postal_code'],
                     job['location_state'],
@@ -833,6 +835,24 @@ def main():
     # Run with database connection
     with get_connection() as conn:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Check if already ran today BEFORE creating ticket (avoid ticket spam)
+        if not args.force:
+            cur.execute("""
+                SELECT ticket_id, completed_at
+                FROM tickets
+                WHERE actor_id = %s
+                  AND status = 'completed'
+                  AND completed_at > NOW() - INTERVAL '20 hours'
+                ORDER BY completed_at DESC
+                LIMIT 1
+            """, (ACTOR_ID,))
+            row = cur.fetchone()
+            if row:
+                print(f"\n⏭️ SKIPPED: ALREADY_RAN_TODAY")
+                print(f"   Already ran at {row['completed_at']} (ticket {row['ticket_id']})")
+                print(f"\n{'='*60}\n")
+                return
         
         # Create ticket for auditability
         cur.execute("""

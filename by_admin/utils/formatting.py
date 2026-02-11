@@ -18,7 +18,7 @@ def format_timestamp(timestamp: Optional[str]) -> str:
             dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
             return dt.strftime('%Y-%m-%d %H:%M:%S')
         return str(timestamp)
-    except:
+    except (ValueError, TypeError, AttributeError):
         return str(timestamp)
 
 def format_duration(start_time: Optional[str], end_time: Optional[str]) -> str:
@@ -42,7 +42,7 @@ def format_duration(start_time: Optional[str], end_time: Optional[str]) -> str:
             return f"{minutes}m {seconds}s"
         else:
             return f"{seconds}s"
-    except:
+    except (ValueError, TypeError):
         return "N/A"
 
 def format_status_indicator(status: str) -> str:

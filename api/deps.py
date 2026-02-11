@@ -44,7 +44,8 @@ def get_current_user(request: Request, conn=Depends(get_db)) -> Optional[dict]:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT user_id, email, display_name, avatar_url, enabled,
-                       notification_email, notification_consent_at, notification_preferences
+                       notification_email, notification_consent_at, notification_preferences,
+                       is_admin
                 FROM users
                 WHERE user_id = %s AND enabled = TRUE
             """, (user_id,))

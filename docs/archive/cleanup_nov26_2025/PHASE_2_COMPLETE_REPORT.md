@@ -100,7 +100,7 @@
 # Real database connections
 dbname="turing"
 user="base_admin"
-password="base_yoga_secure_2025"  # From .env
+password="${DB_PASSWORD}"  # From .env
 
 # Real tables accessed:
 ✅ postings

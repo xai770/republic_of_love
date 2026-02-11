@@ -22,7 +22,7 @@ def fetch_page(offset, limit=100, retry=3):
                 time.sleep(2)  # Rate limited, wait
                 continue
             return data
-        except:
+        except Exception:
             time.sleep(1)
     return {'total': 0, 'jobPostings': []}
 

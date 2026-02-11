@@ -67,7 +67,7 @@ TOOLS INTEGRATION (from tools/turing/):
 These tools expect a specific contract from thick actors:
 
 turing-harness:
-    - Tests actors without pull_daemon
+    - Tests actors without turing_daemon
     - Expects: class with process() method, __init__(db_conn=None)
     - Example: ./tools/turing/turing-harness run my_actor --input '{"posting_id": 123}'
     - Use --sample N for random samples
@@ -86,7 +86,7 @@ turing-dashboard:
 turing-hash-scripts:
     - Run after ANY code change: ./tools/turing/turing-hash-scripts --update
     
-pull_daemon contract:
+turing_daemon contract:
     - Finds class with process() method
     - Sets actor.input_data before calling process()
     - Expects output dict with 'success': True/False
@@ -97,7 +97,7 @@ CODING RULES (moved from Turing_project_directives.md - these only matter when w
 
 INFRASTRUCTURE RULES:
 #7  - Task-type-agnostic infrastructure
-      pull_daemon.py must NOT contain task-type-specific logic.
+      turing_daemon.py must NOT contain task-type-specific logic.
       The daemon is generic; task types are data.
 
 #8  - Data is the queue
@@ -192,13 +192,15 @@ from core.constants import Status, Fields, OwlTypes  # USE THESE, not strings
 # get_connection_raw() - For actors/CLI, returns conn directly. MUST call return_connection(conn) when done!
 # return_connection()  - Return connection to pool (don't call conn.close()!)
 
+import os
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 TASK_TYPE_ID = None  # TODO: Set after creating task_type in DB
 INSTRUCTION_ID = None  # TODO: Set if using instructions table for prompt
 
-OLLAMA_URL = 'http://localhost:11434/api/generate'
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 MODEL = "qwen2.5-coder:7b"  # Standard model for extraction tasks
 
 # Input limits (P90 cutoff - reject outliers that overwhelm models)
@@ -269,7 +271,7 @@ class YourActorName:
     
     def process(self) -> Dict[str, Any]:
         """
-        Main entry point. Called by pull_daemon.
+        Main entry point. Called by turing_daemon.
         
         Returns:
             Dict with at minimum:
@@ -662,7 +664,7 @@ Please address these issues in your response.
         if isinstance(output, str):
             try:
                 output = json.loads(output)
-            except:
+            except (json.JSONDecodeError, ValueError):
                 return {'passed': False, 'reason': 'invalid_json_output'}
         
         if not output:
@@ -812,7 +814,7 @@ Please address these issues in your response.
 # ============================================================================
 def main():
     """
-    Test the actor directly (not via pull_daemon).
+    Test the actor directly (not via turing_daemon).
     
     Usage:
         python3 actors/your_actor.py              # random subject

@@ -54,6 +54,7 @@ import requests
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+import os
 from core.database import get_connection_raw, return_connection
 from core.logging_config import get_logger
 
@@ -62,7 +63,7 @@ logger = get_logger(__name__)
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 LLM_MODEL = "qwen2.5:7b"  # For summarizing search results
 
 # Doug's personality

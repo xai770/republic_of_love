@@ -348,5 +348,5 @@ if __name__ == '__main__':
     # Also run with pytest if available
     try:
         pytest.main([__file__, '-v'])
-    except:
+    except (ImportError, SystemExit):
         print("pytest not available, manual test execution completed")

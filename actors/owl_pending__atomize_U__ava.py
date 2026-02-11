@@ -73,6 +73,7 @@ import requests
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+import os
 from core.database import get_connection
 from core.text_utils import clean_json_from_llm
 
@@ -81,7 +82,7 @@ from core.text_utils import clean_json_from_llm
 # ============================================================================
 TASK_TYPE_ID = None  # Will be set after creating task_type
 
-OLLAMA_URL = 'http://localhost:11434/api/generate'
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 MODEL = "qwen2.5-coder:7b"
 
 # Threshold for "already atomic" - skip LLM for short items

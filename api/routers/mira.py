@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timedelta
+import os
 import httpx
 import json
 import re
@@ -286,17 +287,18 @@ def build_yogi_context(user_id: int, conn) -> dict:
                 import json
                 skills = json.loads(profile['skill_keywords'] or '[]')
                 context['skills'] = skills[:10]  # Limit to 10
-            except:
+            except (json.JSONDecodeError, KeyError, TypeError):
                 pass
         
-        # Get recent matches
+        # Get best matches (score > 30%, ordered by quality, not recency)
         cur.execute("""
             SELECT p.job_title, p.posting_name as company, m.skill_match_score as score
             FROM profile_posting_matches m
             JOIN profiles pr ON m.profile_id = pr.profile_id
             JOIN postings p ON m.posting_id = p.posting_id
             WHERE pr.user_id = %s
-            ORDER BY m.computed_at DESC
+              AND m.skill_match_score > 30
+            ORDER BY m.skill_match_score DESC
             LIMIT 3
         """, (user_id,))
         
@@ -335,8 +337,9 @@ def format_yogi_context_for_prompt(ctx: dict, uses_du: bool) -> str:
     
     if ctx['has_profile']:
         if ctx['skills']:
-            skills_str = ', '.join(ctx['skills'][:5])
-            parts.append(f"Skills: {skills_str}")
+            skills_str = ', '.join(ctx['skills'])
+            parts.append(f"""TATSÄCHLICHE SKILLS (aus dem Profil — NUR diese verwenden, niemals andere erfinden):
+[{skills_str}]""")
     else:
         if uses_du:
             parts.append("(Noch kein Profil hochgeladen)")
@@ -423,9 +426,9 @@ Nutze diese Information als Grundlage, aber passe die Antwort an die konkrete Fr
 
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(
-                "http://localhost:11434/api/chat",
+                os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/chat',
                 json={
-                    "model": "qwen2.5:7b",
+                    "model": "gemma3:4b",
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": message}
@@ -505,20 +508,18 @@ async def get_greeting(
     conn=Depends(get_db)
 ):
     """
-    Get personalized greeting for yogi based on their state.
+    Get personalized, LLM-generated greeting for the Home page.
     
-    Detects:
-    - New vs returning yogi (first login vs subsequent)
-    - Has profile with skills?
-    - Has any matches?
-    
-    Returns appropriate greeting + suggested next actions.
+    Mira remembers the yogi: loads recent conversation history from 
+    yogi_messages and profile state, then asks the LLM to generate a 
+    warm, personal greeting. Falls back to templates if LLM is unavailable.
     """
     with conn.cursor() as cur:
         # Get user state
         cur.execute("""
-            SELECT u.created_at, u.last_login_at,
-                   p.profile_id, p.skill_keywords
+            SELECT u.created_at, u.last_login_at, u.display_name,
+                   p.profile_id, p.skill_keywords, p.full_name,
+                   p.experience_level, p.location
             FROM users u
             LEFT JOIN profiles p ON u.user_id = p.user_id
             WHERE u.user_id = %s
@@ -528,11 +529,12 @@ async def get_greeting(
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Determine state
+        # Extract state
         created_at = row['created_at']
         last_login = row['last_login_at']
+        display_name = row['display_name'] or row['full_name'] or ''
+        first_name = display_name.split()[0] if display_name else ''
         
-        # New yogi: created within last hour OR first login
         is_new = (last_login is None or 
                   (datetime.now() - created_at) < timedelta(hours=1))
         
@@ -540,18 +542,16 @@ async def get_greeting(
         skill_keywords = row['skill_keywords']
         has_skills = (skill_keywords is not None and 
                      skill_keywords != '[]' and 
-                     len(skill_keywords) > 2)  # Not empty array
+                     len(skill_keywords) > 2)
         
-        # Count NEW matches since last login (not just last 7 days)
+        # Count matches
         if last_login:
             cur.execute("""
                 SELECT COUNT(*) as cnt FROM profile_posting_matches m
                 JOIN profiles p ON m.profile_id = p.profile_id
-                WHERE p.user_id = %s 
-                  AND m.computed_at > %s
+                WHERE p.user_id = %s AND m.computed_at > %s
             """, (user['user_id'], last_login))
         else:
-            # First login — count all matches
             cur.execute("""
                 SELECT COUNT(*) as cnt FROM profile_posting_matches m
                 JOIN profiles p ON m.profile_id = p.profile_id
@@ -559,47 +559,111 @@ async def get_greeting(
             """, (user['user_id'],))
         match_count = cur.fetchone()['cnt']
         
-        # Check for expired saved jobs (if table exists)
-        expired_saved = 0
+        # --- MEMORY: Load last few messages from yogi_messages ---
+        recent_messages = []
         try:
             cur.execute("""
-                SELECT COUNT(*) as cnt FROM saved_postings sp
-                JOIN profiles p ON sp.profile_id = p.profile_id
-                LEFT JOIN postings post ON sp.posting_id = post.posting_id
-                WHERE p.user_id = %s 
-                  AND (post.posting_id IS NULL OR post.expired = true)
+                SELECT sender_type, body, created_at
+                FROM yogi_messages
+                WHERE user_id = %s AND sender_type IN ('yogi', 'mira')
+                ORDER BY created_at DESC
+                LIMIT 6
             """, (user['user_id'],))
-            expired_saved = cur.fetchone()['cnt']
-        except:
-            pass  # Table doesn't exist yet
+            rows = cur.fetchall()
+            for r in reversed(rows):
+                speaker = 'Yogi' if r['sender_type'] == 'yogi' else 'Mira'
+                recent_messages.append(f"{speaker}: {r['body']}")
+        except Exception as e:
+            logger.warning(f"Failed to load greeting memory: {e}")
     
-    # Default to du (informal) for German users
     uses_du = True
     
-    # Build greeting with context awareness
-    if is_new:
-        greeting = random.choice(GREETINGS_NEW_DU if uses_du else GREETINGS_NEW_SIE)
-    elif match_count > 0 and expired_saved > 0:
-        # Both new matches AND expired saves
-        if uses_du:
-            greeting = f"Hey! {match_count} neue Matches seit deinem letzten Besuch. Übrigens: {expired_saved} deiner gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} nicht mehr verfügbar."
+    # --- LLM-GENERATED GREETING ---
+    llm_greeting = None
+    try:
+        hour = datetime.now().hour
+        if hour < 12:
+            time_ctx = "Morgen"
+        elif hour < 18:
+            time_ctx = "Nachmittag"
         else:
-            greeting = f"Guten Tag! {match_count} neue Matches seit Ihrem letzten Besuch. Hinweis: {expired_saved} Ihrer gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} nicht mehr verfügbar."
+            time_ctx = "Abend"
+        
+        # Build memory context — extract just topics, not raw messages
+        memory_block = ""
+        if recent_messages:
+            # Summarize recent topics instead of dumping raw history
+            # This prevents the LLM from garbling message content
+            yogi_topics = [m.split(': ', 1)[1][:60] for m in recent_messages if m.startswith('Yogi:')]
+            if yogi_topics:
+                memory_block = f"\n\nLETZTE THEMEN: {', '.join(yogi_topics[-3:])}"
+        
+        # Build yogi state
+        state_parts = []
+        if first_name:
+            state_parts.append(f"Name: {first_name}")
+        if is_new:
+            state_parts.append("Status: Ganz neu bei talent.yoga")
+        else:
+            state_parts.append("Status: Kehrt zurück")
+        if has_profile and has_skills:
+            state_parts.append("Profil: Vorhanden mit Skills")
+        elif has_profile:
+            state_parts.append("Profil: Vorhanden, braucht noch Skills")
+        else:
+            state_parts.append("Profil: Noch nicht hochgeladen")
+        if match_count > 0:
+            state_parts.append(f"Neue Matches: {match_count}")
+        state_block = "\n".join(state_parts)
+        
+        greeting_prompt = f"""Du bist Mira bei talent.yoga. Schreibe eine KURZE Begrüßung.
+
+STRENGE REGELN:
+- GENAU 1-2 Sätze. NIEMALS mehr. Maximal 120 Zeichen.
+- Duze den Yogi
+- Erwähne den Namen wenn bekannt
+- Wenn neue Matches: nenne die Anzahl
+- Wenn du Themen siehst: ein kurzer Bezug zeigt Erinnerung
+- Kein Emoji, keine Ausrufezeichen-Flut
+- Ende mit EINER kurzen Einladung (nicht mehrere Optionen auflisten!)
+- VERBOTEN: Fragen stapeln, Optionen auflisten, mehr als 2 Sätze
+
+KONTEXT:
+{state_block}{memory_block}
+
+Begrüßung (max 120 Zeichen):"""
+
+        response = await ask_llm(greeting_prompt, uses_du=True, language='de')
+        if response and len(response.strip()) > 10:
+            cleaned = response.strip().strip('"').strip()
+            # Hard limit: if LLM ignores the rules, keep only first 2 sentences
+            # Split on sentence boundaries (". " or "! " or end-of-string), NOT on every period
+            # This preserves "talent.yoga" and similar dotted names
+            import re
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', cleaned) if s.strip()]
+            if len(sentences) > 2:
+                cleaned = ' '.join(sentences[:2])
+                if not cleaned.endswith(('.', '!', '?')):
+                    cleaned += '.'
+            llm_greeting = cleaned
+    except Exception as e:
+        logger.warning(f"LLM greeting failed, falling back to template: {e}")
+    
+    # --- FALLBACK: Template-based greeting ---
+    if llm_greeting:
+        greeting = llm_greeting
+    elif is_new:
+        greeting = random.choice(GREETINGS_NEW_DU)
     elif match_count > 0:
-        template = random.choice(GREETINGS_WITH_MATCHES_DU if uses_du else GREETINGS_WITH_MATCHES_SIE)
+        template = random.choice(GREETINGS_WITH_MATCHES_DU)
         greeting = template.format(n=match_count)
-    elif expired_saved > 0:
-        if uses_du:
-            greeting = f"Willkommen zurück! Kurze Info: {expired_saved} deiner gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} leider nicht mehr verfügbar."
-        else:
-            greeting = f"Willkommen zurück! Kurze Info: {expired_saved} Ihrer gespeicherten Stellen {'ist' if expired_saved == 1 else 'sind'} leider nicht mehr verfügbar."
     else:
-        greeting = random.choice(GREETINGS_RETURNING_DU if uses_du else GREETINGS_RETURNING_SIE)
+        greeting = random.choice(GREETINGS_RETURNING_DU)
     
     # Build suggested actions
     actions = []
     if is_new:
-        actions.append("tour")  # Offer tour
+        actions.append("tour")
     if not has_profile:
         actions.append("upload_profile")
     elif not has_skills:
@@ -993,15 +1057,17 @@ async def chat(
     """
     Handle Mira chat messages — LLM-first approach.
     
-    No pattern matching shortcuts. Everything goes through the LLM with
-    FAQ knowledge embedded in the system prompt.
+    Memory: loads last 5 messages from yogi_messages (persistent DB history)
+    and prepends them before the current session history. This gives Mira
+    memory across browser refreshes / sessions.
     
-    This ensures Mira:
-    - Always understands context (language switches, follow-ups)
-    - Never gives wrong-confidence matches
-    - Maintains consistent personality
+    Everyone is a citizen: both user messages and Mira's replies are stored
+    in yogi_messages for future recall.
+    
+    FAQ candidate detection: Flags interesting exchanges for human review.
     """
     from core.mira_llm import chat as mira_chat
+    from lib.faq_candidate_detector import maybe_flag_exchange
     
     message = request.message.strip()
     
@@ -1012,15 +1078,81 @@ async def chat(
             language='en'
         )
     
-    # Convert history to list of dicts if provided
-    history_list = None
+    # --- MEMORY: Load persistent chat history from yogi_messages ---
+    db_history = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT sender_type, body, created_at
+                FROM yogi_messages
+                WHERE user_id = %s
+                  AND sender_type IN ('yogi', 'mira')
+                ORDER BY created_at DESC
+                LIMIT 10
+            """, (user['user_id'],))
+            rows = cur.fetchall()
+            # Reverse to chronological order
+            for row in reversed(rows):
+                role = 'user' if row['sender_type'] == 'yogi' else 'assistant'
+                db_history.append({"role": role, "content": row['body']})
+    except Exception as e:
+        logger.warning(f"Failed to load chat history: {e}")
+    
+    # --- Merge: DB history (older) + session history (current) ---
+    # Session history from frontend may overlap with DB, so we use DB as base
+    # and only append session messages not already in DB
+    history_list = db_history.copy()
     if request.history:
-        history_list = [{"role": m.role, "content": m.content} for m in request.history]
+        session_msgs = [{"role": m.role, "content": m.content} for m in request.history]
+        # Append only messages not already in db_history (by content match)
+        db_contents = {h['content'] for h in db_history}
+        for msg in session_msgs:
+            if msg['content'] not in db_contents:
+                history_list.append(msg)
+    
+    # Extract previous exchange for feedback detection
+    previous_exchange = None
+    if len(history_list) >= 2:
+        # Find last user message and its Mira response
+        for i in range(len(history_list) - 1, 0, -1):
+            if history_list[i]['role'] == 'assistant' and history_list[i-1]['role'] == 'user':
+                previous_exchange = (history_list[i-1]['content'], history_list[i]['content'])
+                break
     
     # Use the new LLM-first module
     response = await mira_chat(message, user['user_id'], conn, history=history_list)
     
-    logger.info(f"Mira LLM response: lang={response.language}, fallback={response.fallback}, history_len={len(history_list) if history_list else 0}")
+    # --- FAQ CANDIDATE DETECTION ---
+    try:
+        maybe_flag_exchange(
+            conn=conn,
+            user_id=user['user_id'],
+            user_message=message,
+            mira_response=response.reply,
+            was_fallback=response.fallback,
+            previous_exchange=previous_exchange
+        )
+    except Exception as e:
+        logger.warning(f"FAQ candidate detection failed: {e}")
+    
+    # --- PERSIST: Save both user message and Mira's reply to yogi_messages ---
+    try:
+        with conn.cursor() as cur:
+            # Save user message
+            cur.execute("""
+                INSERT INTO yogi_messages (user_id, sender_type, message_type, body, recipient_type)
+                VALUES (%s, 'yogi', 'chat', %s, 'mira')
+            """, (user['user_id'], message))
+            # Save Mira's reply
+            cur.execute("""
+                INSERT INTO yogi_messages (user_id, sender_type, message_type, body)
+                VALUES (%s, 'mira', 'chat', %s)
+            """, (user['user_id'], response.reply))
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Failed to persist chat messages: {e}")
+    
+    logger.info(f"Mira LLM response: lang={response.language}, fallback={response.fallback}, db_history={len(db_history)}, session_history={len(request.history) if request.history else 0}")
     
     return ChatResponse(
         reply=response.reply,

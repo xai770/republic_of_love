@@ -219,7 +219,7 @@ class WaveRunner:
             self.logger.error(f"Failed to update heartbeat: {e}")
             try:
                 self.conn.rollback()
-            except:
+            except Exception:
                 pass
     
     def _mark_workflows_interrupted(self, signal_name: str):
@@ -229,7 +229,7 @@ class WaveRunner:
             # Rollback any pending transaction first
             try:
                 self.conn.rollback()
-            except:
+            except Exception:
                 pass
             
             cursor = self.conn.cursor()
@@ -322,7 +322,7 @@ class WaveRunner:
             self.logger.error(f"Failed to update progress state: {e}")
             try:
                 self.conn.rollback()
-            except:
+            except Exception:
                 pass
     
     def run(

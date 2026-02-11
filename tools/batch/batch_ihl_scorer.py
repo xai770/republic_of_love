@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Batch IHL Scorer - Parallel Processing
@@ -21,7 +22,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'turing',
     'user': 'base_admin',
-    'password': 'base_yoga_secure_2025'
+    'password': os.getenv('DB_PASSWORD', '')
 }
 
 

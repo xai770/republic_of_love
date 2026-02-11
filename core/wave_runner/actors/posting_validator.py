@@ -17,7 +17,7 @@ Usage: Called by wave_runner as part of WF3001
 """
 
 import sys
-sys.path.insert(0, '/home/xai/Documents/ty_wave')
+sys.path.insert(0, '/home/xai/Documents/ty_learn')
 
 from core.wave_runner.script_actor_template import ScriptActorBase
 import requests

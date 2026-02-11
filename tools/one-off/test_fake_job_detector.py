@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Quick test of Fake Job Detector workflow
@@ -21,7 +22,7 @@ conn = psycopg2.connect(
     port=5432,
     database='turing',
     user='base_admin',
-    password='base_yoga_secure_2025'
+    password=os.getenv('DB_PASSWORD', '')
 )
 cursor = conn.cursor()
 

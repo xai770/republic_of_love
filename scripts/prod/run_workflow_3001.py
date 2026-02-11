@@ -137,7 +137,7 @@ def run_workflow(posting_id: int = None, start_from: str = None, max_iterations:
         port=5432,
         database="turing",
         user="base_admin",
-        password="base_yoga_secure_2025"
+        password=os.getenv('DB_PASSWORD', '')
     )
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     

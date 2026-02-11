@@ -5,6 +5,7 @@ Date: November 23, 2025
 Target: <100 lines
 """
 
+import os
 import subprocess
 import json
 import logging
@@ -228,7 +229,7 @@ class AIModelExecutor:
             
             # Call Ollama HTTP API
             response = requests.post(
-                "http://localhost:11434/api/generate",
+                os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate',
                 json=payload,
                 timeout=self.timeout
             )

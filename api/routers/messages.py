@@ -31,7 +31,7 @@ router = APIRouter(prefix="/messages", tags=["messages"])
 # Models
 # ============================================================
 
-SenderType = Literal["doug", "sage", "sandy", "mysti", "mira", "adele", "system", "yogi"]
+SenderType = Literal["doug", "sage", "sandy", "mysti", "mira", "adele", "arden", "system", "yogi"]
 
 class Message(BaseModel):
     message_id: int
@@ -52,6 +52,8 @@ class Message(BaseModel):
 class MessageSummary(BaseModel):
     message_id: int
     sender_type: str
+    recipient_type: Optional[str] = None  # Set when message is TO an actor
+    direction: str = "incoming"  # 'incoming' (from actor/user) or 'outgoing' (to actor)
     subject: Optional[str]
     preview: str  # First ~100 chars of body
     posting_id: Optional[int]
@@ -71,7 +73,8 @@ class UnreadCounts(BaseModel):
 
 
 class SendMessageRequest(BaseModel):
-    recipient_user_id: int
+    recipient_user_id: Optional[int] = None  # For Y2Y messages
+    recipient_type: Optional[SenderType] = None  # For messages to actors (doug, mira, etc.)
     subject: Optional[str] = None
     body: str
     posting_id: Optional[int] = None  # If discussing a specific posting
@@ -139,7 +142,7 @@ async def list_messages(
     # Get messages
     cur.execute(f"""
         SELECT 
-            message_id, sender_type, subject, body, posting_id,
+            message_id, sender_type, recipient_type, subject, body, posting_id,
             read_at IS NOT NULL as is_read, created_at
         FROM yogi_messages
         WHERE {where_sql}
@@ -153,9 +156,14 @@ async def list_messages(
         # Strip markdown for preview
         preview = preview.replace("#", "").replace("*", "").strip()
         
+        # Determine direction: outgoing if recipient_type is set (message TO actor)
+        direction = "outgoing" if row["recipient_type"] else "incoming"
+        
         messages.append(MessageSummary(
             message_id=row["message_id"],
-            sender_type=row["sender_type"],
+            sender_type=row["recipient_type"] or row["sender_type"],  # Show actor name for grouping
+            recipient_type=row["recipient_type"],
+            direction=direction,
             subject=row["subject"],
             preview=preview,
             posting_id=row["posting_id"],
@@ -306,43 +314,72 @@ async def send_message(
     conn = Depends(get_db)
 ):
     """
-    Send a Y2Y (yogi-to-yogi) message.
+    Send a message to another yogi OR to an actor.
     
-    For future: could add rate limiting, blocking, etc.
+    - recipient_user_id: Send to another human user (Y2Y)
+    - recipient_type: Send to an actor (doug, mira, etc.)
+    
+    Everyone is a citizen - humans and AIs alike can exchange messages.
     """
     cur = conn.cursor()
     sender_id = user["user_id"]
     
-    # Verify recipient exists
-    cur.execute("SELECT user_id FROM users WHERE user_id = %s", (request.recipient_user_id,))
-    if not cur.fetchone():
-        raise HTTPException(status_code=404, detail="Recipient not found")
+    # Must specify either recipient_user_id OR recipient_type
+    if not request.recipient_user_id and not request.recipient_type:
+        raise HTTPException(status_code=400, detail="Must specify recipient_user_id or recipient_type")
     
-    # Can't message yourself
-    if request.recipient_user_id == sender_id:
-        raise HTTPException(status_code=400, detail="Cannot send message to yourself")
+    if request.recipient_type:
+        # Message TO an actor (doug, mira, etc.)
+        # Store in sender's inbox with recipient_type set
+        cur.execute("""
+            INSERT INTO yogi_messages (
+                user_id, sender_type, sender_user_id, posting_id,
+                message_type, subject, body, recipient_type
+            ) VALUES (%s, 'yogi', %s, %s, 'to_actor', %s, %s, %s)
+            RETURNING message_id
+        """, (
+            sender_id,  # Stored in sender's inbox
+            sender_id,
+            request.posting_id,
+            request.subject,
+            request.body,
+            request.recipient_type
+        ))
+        
+        message_id = cur.fetchone()["message_id"]
+        conn.commit()
+        
+        logger.info(f"Message to actor: user {sender_id} → {request.recipient_type}, message_id={message_id}")
+        return {"message_id": message_id, "sent": True, "recipient_type": request.recipient_type}
     
-    # Insert message
-    cur.execute("""
-        INSERT INTO yogi_messages (
-            user_id, sender_type, sender_user_id, posting_id,
-            message_type, subject, body
-        ) VALUES (%s, 'yogi', %s, %s, 'y2y', %s, %s)
-        RETURNING message_id
-    """, (
-        request.recipient_user_id,
-        sender_id,
-        request.posting_id,
-        request.subject,
-        request.body
-    ))
-    
-    message_id = cur.fetchone()["message_id"]
-    conn.commit()
-    
-    logger.info(f"Y2Y message sent: {sender_id} → {request.recipient_user_id}, message_id={message_id}")
-    
-    return {"message_id": message_id, "sent": True}
+    else:
+        # Y2Y message to another user
+        cur.execute("SELECT user_id FROM users WHERE user_id = %s", (request.recipient_user_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Recipient not found")
+        
+        if request.recipient_user_id == sender_id:
+            raise HTTPException(status_code=400, detail="Cannot send message to yourself")
+        
+        cur.execute("""
+            INSERT INTO yogi_messages (
+                user_id, sender_type, sender_user_id, posting_id,
+                message_type, subject, body
+            ) VALUES (%s, 'yogi', %s, %s, 'y2y', %s, %s)
+            RETURNING message_id
+        """, (
+            request.recipient_user_id,
+            sender_id,
+            request.posting_id,
+            request.subject,
+            request.body
+        ))
+        
+        message_id = cur.fetchone()["message_id"]
+        conn.commit()
+        
+        logger.info(f"Y2Y message sent: {sender_id} → {request.recipient_user_id}, message_id={message_id}")
+        return {"message_id": message_id, "sent": True}
 
 
 @router.delete("/{message_id}")

@@ -415,7 +415,7 @@ LIMIT 10;"
 
 ## 📝 Final Notes
 
-**Database password:** `base_yoga_secure_2025` (not `baseYEAH!`)  
+**Database password:** `${DB_PASSWORD}` (not `baseYEAH!`)  
 **PostgreSQL user:** `base_admin`  
 **Database:** `turing`
 

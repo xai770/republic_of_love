@@ -213,7 +213,7 @@ class WaveRunnerDaemon:
                 if conn:
                     try:
                         conn.close()
-                    except:
+                    except Exception:
                         pass
                 conn = None
                 time.sleep(self.poll_interval)

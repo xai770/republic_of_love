@@ -25,7 +25,7 @@ The Turing system has excellent architectural foundations (wave processing, chec
 ```python
 # core/database.py - Password in version control!
 DEFAULT_CONFIG = {
-    'password': 'base_yoga_secure_2025'
+    'password': '${DB_PASSWORD}'
 }
 ```
 
@@ -54,7 +54,7 @@ if not DB_CONFIG['password']:
 
 **Validation:**
 ```bash
-export TURING_DB_PASSWORD=base_yoga_secure_2025
+export TURING_DB_PASSWORD=${DB_PASSWORD}
 python3 -m core.wave_batch_processor --workflow 3001 --limit 1
 ```
 
@@ -506,7 +506,7 @@ Every database operation creates a new connection. With checkpoint saves per pos
 **Benchmark Current:**
 ```bash
 # Watch connection creation
-watch -n 1 "PGPASSWORD=base_yoga_secure_2025 psql -U base_admin -d turing -c \
+watch -n 1 "PGPASSWORD=${DB_PASSWORD} psql -U base_admin -d turing -c \
 'SELECT count(*) FROM pg_stat_activity WHERE usename = '\''base_admin'\'';'"
 
 # Typically: 1-2 connections (wasteful, constantly creating/destroying)
@@ -649,13 +649,13 @@ with get_connection() as conn:
 **Validation:**
 ```bash
 # Set env var
-export TURING_DB_PASSWORD=base_yoga_secure_2025
+export TURING_DB_PASSWORD=${DB_PASSWORD}
 
 # Run workflow
 python3 -m core.wave_batch_processor --workflow 3001 --limit 10
 
 # Watch connections (should stay 2-10, not spike)
-watch -n 1 "PGPASSWORD=base_yoga_secure_2025 psql -U base_admin -d turing -c \
+watch -n 1 "PGPASSWORD=${DB_PASSWORD} psql -U base_admin -d turing -c \
 'SELECT count(*) FROM pg_stat_activity WHERE usename = '\''base_admin'\'';'"
 ```
 
@@ -849,10 +849,10 @@ COMMIT;
 bash sql/apply_migration_017.sh
 
 # Check scheduled jobs
-PGPASSWORD=base_yoga_secure_2025 psql -U base_admin -d turing -c "SELECT * FROM cron.job;"
+PGPASSWORD=${DB_PASSWORD} psql -U base_admin -d turing -c "SELECT * FROM cron.job;"
 
 # Manual refresh test
-PGPASSWORD=base_yoga_secure_2025 psql -U base_admin -d turing -c "SELECT refresh_performance_views();"
+PGPASSWORD=${DB_PASSWORD} psql -U base_admin -d turing -c "SELECT refresh_performance_views();"
 ```
 
 ---
@@ -980,7 +980,7 @@ def _get_pending_postings(self, limit: Optional[int] = None) -> List[PostingStat
 bash sql/apply_migration_018.sh
 
 # Verify entry points set correctly
-PGPASSWORD=base_yoga_secure_2025 psql -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -U base_admin -d turing -c "
 SELECT wc.execution_order, c.canonical_name, wc.is_entry_point
 FROM workflow_conversations wc
 JOIN conversations c ON wc.conversation_id = c.conversation_id

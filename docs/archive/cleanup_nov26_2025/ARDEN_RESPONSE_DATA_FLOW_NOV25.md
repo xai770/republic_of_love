@@ -697,7 +697,7 @@ from psycopg2.extras import RealDictCursor
 
 conn = psycopg2.connect(
     dbname='turing', user='base_admin', 
-    password='base_yoga_secure_2025', host='localhost',
+    password='${DB_PASSWORD}', host='localhost',
     cursor_factory=RealDictCursor
 )
 
@@ -1287,7 +1287,7 @@ The "ignore it" approach is unacceptable. Here's how we methodically solve this.
 **Check interaction 266 status RIGHT NOW:**
 
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     i.interaction_id,
     i.status,
@@ -1343,7 +1343,7 @@ WHERE i.interaction_id = 266;
 
 **Step 1: Database Status**
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     interaction_id,
     status,
@@ -1548,7 +1548,7 @@ cursor.execute("""
 
 **1. Verify interaction 266 completed:**
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT status, output->'jobs_fetched' as jobs_fetched 
 FROM interactions WHERE interaction_id = 266;
 "
@@ -1558,7 +1558,7 @@ FROM interactions WHERE interaction_id = 266;
 
 **2. Check if child interactions were created:**
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     i.interaction_id,
     i.status,
@@ -1585,7 +1585,7 @@ from psycopg2.extras import RealDictCursor
 conn = psycopg2.connect(
     dbname='turing',
     user='base_admin',
-    password='base_yoga_secure_2025',
+    password='${DB_PASSWORD}',
     host='localhost',
     cursor_factory=RealDictCursor
 )
@@ -2392,7 +2392,7 @@ Make sure `interaction` dict includes `workflow_run_id`, or modify `create_child
 python3 tests/test_conversation_chain.py 3335 8
 
 # Check workflow state in database
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     workflow_run_id,
     state->>'extract_summary' as extract_summary_preview,
@@ -2907,7 +2907,7 @@ cursor.execute("""
 
 **1. Check what's stored in interaction 295's input:**
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     interaction_id,
     input->>'prompt' LIKE '%{current_summary}%' as has_placeholder,
@@ -3154,7 +3154,7 @@ python core/wave_runner/runner.py --posting-id 176 --workflow-id 3001
 cat reports/trace_chain_run_150.md | grep -A 10 "Format Standardization"
 
 # 3. Verify Format output NOT repetitive
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     i.interaction_id,
     c.conversation_name,
@@ -3168,7 +3168,7 @@ WHERE i.workflow_run_id = (SELECT MAX(workflow_run_id) FROM workflow_runs WHERE 
 "
 
 # 4. Verify Skills got correct input
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     i.interaction_id,
     i.input->>'prompt' LIKE '%{conversation_3341_output}%' as has_correct_var,
@@ -3182,7 +3182,7 @@ WHERE i.workflow_run_id = (SELECT MAX(workflow_run_id) FROM workflow_runs WHERE 
 "
 
 # 5. Check workflow state
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     workflow_run_id,
     state ? 'current_summary' as has_current_summary,
@@ -3408,7 +3408,7 @@ for posting_id in 176 177 178 179 180; do
 done
 
 # Check success rate
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     posting_id,
     workflow_run_id,
@@ -3433,7 +3433,7 @@ ORDER BY started_at DESC;
 Check that summaries are accurate and well-formatted:
 
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     posting_id,
     LEFT(summary, 200) as summary_preview,
@@ -3459,7 +3459,7 @@ WHERE posting_id BETWEEN 176 AND 180
 Check that skills are relevant and not hallucinated:
 
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     p.posting_id,
     LEFT(p.job_title, 50) as job_title,
@@ -3486,7 +3486,7 @@ ORDER BY p.posting_id;
 Verify state is being saved correctly across runs:
 
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     workflow_run_id,
     posting_id,
@@ -3512,7 +3512,7 @@ ORDER BY workflow_run_id DESC;
 Create summary of CRAWL phase results:
 
 ```bash
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c "
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c "
 SELECT 
     COUNT(DISTINCT wr.workflow_run_id) as total_runs,
     COUNT(DISTINCT CASE WHEN wr.status = 'completed' THEN wr.workflow_run_id END) as successful_runs,

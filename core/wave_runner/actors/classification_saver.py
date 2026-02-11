@@ -40,7 +40,7 @@ def get_db_connection():
         host=os.getenv('DB_HOST', 'localhost'),
         dbname=os.getenv('DB_NAME', 'turing'),
         user=os.getenv('DB_USER', 'base_admin'),
-        password=os.getenv('DB_PASSWORD', 'base_yoga_secure_2025')
+        password=os.getenv('DB_PASSWORD', '')
     )
 
 
@@ -335,7 +335,7 @@ def execute(interaction_data: dict, db_conn=None) -> dict:
                 arr = json.loads(response_text)
                 if isinstance(arr, list):
                     decisions = arr
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
         
         # Try single JSON in whole response
@@ -420,7 +420,7 @@ if __name__ == "__main__":
     if not sys.stdin.isatty():
         try:
             input_data = json.load(sys.stdin)
-        except:
+        except (json.JSONDecodeError, ValueError):
             pass
     
     result = execute(input_data)

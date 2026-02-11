@@ -68,6 +68,22 @@ RESTRICTED_DOMAINS = {
     },
 }
 
+# Berufenet KLDB Qualification Levels
+# 1 = Helfer (no training), 2 = Fachkraft (vocational), 3 = Spezialist (advanced), 4 = Experte (degree)
+# Constraint: Never match a yogi at level N to jobs at level < N (without consent)
+EXPERIENCE_TO_KLDB = {
+    'executive': 4,
+    'senior': 4,
+    'expert': 4,
+    'specialist': 3,
+    'mid': 2,
+    'fachkraft': 2,
+    'junior': 2,
+    'entry': 1,
+    'helfer': 1,
+    None: None,  # unknown = no constraint
+}
+
 
 # ============================================================================
 # DATA LOADING
@@ -76,9 +92,9 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
     """Load profile with skills from profiles.skill_keywords."""
     cur = conn.cursor()
     
-    # Basic info with skills
+    # Basic info with skills + experience level for qualification gate
     cur.execute("""
-        SELECT profile_id, full_name, current_title, skill_keywords
+        SELECT profile_id, full_name, current_title, skill_keywords, experience_level
         FROM profiles WHERE profile_id = %s
     """, (profile_id,))
     row = cur.fetchone()
@@ -95,6 +111,8 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
         'track_records': [],  # Deprecated: was from profile_facets
         'experience_years': 0,  # Could derive from profile later
         'seniority': None,  # Could derive from title later
+        'experience_level': row['experience_level'],
+        'qualification_level': EXPERIENCE_TO_KLDB.get(row['experience_level']),
     }
     
     # Get skills from profiles.skill_keywords
@@ -120,7 +138,7 @@ def get_posting_data(conn, posting_id: int) -> Optional[Dict]:
     
     # Basic info
     cur.execute("""
-        SELECT posting_id, job_title, source, extracted_summary
+        SELECT posting_id, job_title, source, extracted_summary, qualification_level
         FROM postings WHERE posting_id = %s
     """, (posting_id,))
     row = cur.fetchone()
@@ -133,6 +151,7 @@ def get_posting_data(conn, posting_id: int) -> Optional[Dict]:
         'company': row['source'] or 'Unknown',
         'summary': row['extracted_summary'],
         'requirements': [],  # Embeddings handle skill matching, no facets needed
+        'qualification_level': row['qualification_level'],
     }
     
     return posting
@@ -176,6 +195,30 @@ def check_domain_gate(profile: Dict, posting: Dict) -> Tuple[bool, str]:
             return True, f"Profile has {posting_domain} domain experience"
     
     return False, f"Posting requires {posting_domain} domain experience"
+
+
+def check_qualification_gate(profile: Dict, posting: Dict) -> Tuple[bool, str]:
+    """Check if posting's qualification level is appropriate for the profile.
+    
+    Berufenet KLDB constraint: never match a skilled worker to unskilled jobs.
+    A yogi at level 4 (Experte) should not see level 1 (Helfer) jobs.
+    
+    Returns (passed, reason).
+    """
+    profile_level = profile.get('qualification_level')
+    posting_level = posting.get('qualification_level')
+    
+    # If either is unknown, skip the gate
+    if profile_level is None or posting_level is None:
+        return True, "Qualification level unknown — gate skipped"
+    
+    if posting_level < profile_level:
+        level_names = {1: 'Helfer', 2: 'Fachkraft', 3: 'Spezialist', 4: 'Experte'}
+        profile_name = level_names.get(profile_level, str(profile_level))
+        posting_name = level_names.get(posting_level, str(posting_level))
+        return False, f"Qualification mismatch: yogi is {profile_name} (level {profile_level}), posting requires only {posting_name} (level {posting_level})"
+    
+    return True, "Qualification level appropriate"
 
 
 # ============================================================================
@@ -453,6 +496,38 @@ def process_match(conn, profile_id: int, posting_id: int) -> Dict:
             'match_id': match_id,
             'gated': True,
             'gate_reason': gate_reason,
+        }
+    
+    # Check qualification gate (Berufenet KLDB constraint)
+    qual_passed, qual_reason = check_qualification_gate(profile, posting)
+    
+    if not qual_passed:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO profile_posting_matches 
+            (profile_id, posting_id, domain_gate_passed, gate_reason,
+             skill_match_score, recommendation, nogo_narrative, model_version)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (profile_id, posting_id) DO UPDATE SET
+                domain_gate_passed = EXCLUDED.domain_gate_passed,
+                gate_reason = EXCLUDED.gate_reason,
+                skill_match_score = EXCLUDED.skill_match_score,
+                recommendation = EXCLUDED.recommendation,
+                nogo_narrative = EXCLUDED.nogo_narrative,
+                computed_at = NOW()
+            RETURNING match_id
+        """, (
+            profile_id, posting_id, False, qual_reason,
+            0.0, 'skip', f'Qualification gate failed: {qual_reason}', 'gate_only'
+        ))
+        match_id = cur.fetchone()['match_id']
+        conn.commit()
+        
+        return {
+            'success': True,
+            'match_id': match_id,
+            'gated': True,
+            'gate_reason': qual_reason,
         }
     
     # Compute embedding matches

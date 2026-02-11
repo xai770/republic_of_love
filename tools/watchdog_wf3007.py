@@ -57,7 +57,7 @@ def get_gpu_util():
             capture_output=True, text=True, timeout=5
         )
         return int(result.stdout.strip())
-    except:
+    except (subprocess.SubprocessError, ValueError, OSError):
         return -1
 
 def is_process_running():

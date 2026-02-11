@@ -96,7 +96,7 @@ MAX_STALE_PERCENTAGE = 0.50  # Skip staleness if >50% would be invalidated (like
 # ============================================================================
 # ACTOR CLASS
 # ============================================================================
-class DBJobFetcher:
+class BeesiteDBJobFetcher:
     """
     Deutsche Bank Job Fetcher - Source actor for the pipeline.
     
@@ -570,6 +570,22 @@ def main():
     with get_connection() as conn:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
+        # Check if already ran today BEFORE creating ticket (avoid ticket spam)
+        cur.execute("""
+            SELECT ticket_id, completed_at
+            FROM tickets
+            WHERE actor_id = %s
+              AND status = 'completed'
+              AND completed_at > NOW() - INTERVAL '20 hours'
+            ORDER BY completed_at DESC
+            LIMIT 1
+        """, (ACTOR_ID,))
+        row = cur.fetchone()
+        if row:
+            print(f"\n⏭️ SKIPPED: ALREADY_RAN_TODAY")
+            print(f"\n{'='*60}\n")
+            return
+        
         # Create ticket for auditability
         cur.execute("""
             INSERT INTO tickets (
@@ -594,7 +610,7 @@ def main():
         print(f"  ticket_id: {ticket_id}")
         
         # Run the actor
-        actor = DBJobFetcher(conn, max_jobs=args.max_jobs)
+        actor = BeesiteDBJobFetcher(conn, max_jobs=args.max_jobs)
         result = actor.process()
         
         # Record result

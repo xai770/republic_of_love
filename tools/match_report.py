@@ -29,7 +29,7 @@ def get_embedding(text: str, model: str = "bge-m3:567m") -> list:
     """Get embedding from Ollama."""
     try:
         response = requests.post(
-            "http://localhost:11434/api/embed",
+            os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embed',
             json={"model": model, "input": text},
             timeout=30
         )

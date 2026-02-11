@@ -71,11 +71,6 @@ from typing import Dict, Any, Optional
 
 import psycopg2
 import psycopg2.extras
-import requests
-from bs4 import BeautifulSoup
-
-# Playwright for JavaScript-rendered pages (SPA)
-from playwright.sync_api import sync_playwright, Browser, BrowserContext
 
 # ============================================================================
 # SETUP
@@ -83,7 +78,9 @@ from playwright.sync_api import sync_playwright, Browser, BrowserContext
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from core.database import get_connection_raw, return_connection
+from core.database import get_connection, get_connection_raw, return_connection
+from lib.scrapers.arbeitsagentur import ArbeitsagenturScraper
+from lib.scrapers.base import BaseScraper
 
 # ============================================================================
 # CONFIGURATION
@@ -92,35 +89,19 @@ ACTOR_ID = None  # TODO: Set after registering in actors table
 TASK_TYPE_ID = None  # TODO: Set after creating task_type
 
 # Scraping settings
-REQUEST_TIMEOUT = 30
 MIN_DESCRIPTION_LENGTH = 100
-USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
-MAX_FETCH_RETRIES = 3  # Exponential backoff: 1s, 2s, 4s
-RETRY_BASE_DELAY = 1.0  # Base delay in seconds
 
 # Rate limit handling
 CONSECUTIVE_403_THRESHOLD = 3  # Pause after this many 403s in a row
-RATE_LIMIT_PAUSE_SECONDS = 300  # 5 minute pause when rate limited
-MAX_RATE_LIMIT_RETRIES = 3     # Try this many VPN rotations before giving up
+RATE_LIMIT_PAUSE_SECONDS = 30   # Shorter pause - VPN rotation gives new IP
+MAX_RATE_LIMIT_RETRIES = 10    # More retries - ProtonVPN has many IPs
 
-# WireGuard configs - German endpoints for AA (prefer DE, fallback to others)
-WIREGUARD_CONFIGS = [
-    'wg-DE-13.conf', 'wg-DE-17.conf', 'wg-DE-190.conf', 'wg-DE-194.conf',
-    'wg-DE-198.conf', 'wg-DE-222.conf', 'wg-DE-226.conf', 'wg-DE-232.conf',
-    'wg-DE-236.conf', 'wg-DE-263.conf', 'wg-DE-363.conf', 'wg-DE-580.conf',
-    'wg-DE-667.conf', 'wg-DE-680.conf', 'wg-DE-767.conf', 'wg-DE-780.conf',
-]
-WIREGUARD_CONFIG_DIR = PROJECT_ROOT / 'config'
+# VPN script location (OpenVPN via vpn.sh)
+VPN_SCRIPT = PROJECT_ROOT / "scripts" / "vpn.sh"
 
-# Source-specific selectors
-SOURCE_SELECTORS = {
-    'arbeitsagentur': {
-        'url_pattern': 'arbeitsagentur.de/jobsuche/jobdetail/',
-        'selector': {'id': 'detail-beschreibung-text-container'},
-        'use_playwright': True,  # AA is a SPA - requires JS rendering
-    },
-    # Add more sources here as needed
-}
+# Supported sources for this actor (AA-native postings only)
+# External partner sites are handled by postings__external_description_U.py
+SUPPORTED_SOURCES = {'arbeitsagentur'}
 
 def _get_source_for_url(url: str) -> str:
     """Determine the actual source based on URL, not the source column."""
@@ -131,52 +112,42 @@ def _get_source_for_url(url: str) -> str:
     return None
 
 
-def _rotate_wireguard(current_index: int) -> int:
+def _rotate_vpn() -> bool:
     """
-    Switch to next WireGuard config. Returns new index.
+    Rotate VPN via vpn.sh rotate (OpenVPN to ProtonVPN German servers).
     
-    Uses wg-quick to bring down current interface and bring up next one.
-    Requires sudoers NOPASSWD for wg-quick commands.
+    ProtonVPN's de config load-balances across German servers.
+    Each reconnect gets a new IP address.
+    
+    Returns True on success, False on failure.
     """
     import subprocess
-    import random
     
-    # If first rotation, pick random starting point to spread load
-    if current_index < 0:
-        next_index = random.randint(0, len(WIREGUARD_CONFIGS) - 1)
-    else:
-        next_index = (current_index + 1) % len(WIREGUARD_CONFIGS)
+    if not VPN_SCRIPT.exists():
+        print("  ⚠️  VPN script not found - cannot rotate")
+        return False
     
-    next_config = WIREGUARD_CONFIGS[next_index]
-    config_path = WIREGUARD_CONFIG_DIR / next_config
-    interface_name = next_config.replace('.conf', '')
+    print("\n🔄 ROTATING VPN (reconnect for new IP)")
     
-    print(f"\n🔄 ROTATING VPN → {next_config}")
-    
-    # Bring down any existing WG interface (ignore errors)
-    for cfg in WIREGUARD_CONFIGS:
-        iface = cfg.replace('.conf', '')
-        subprocess.run(['sudo', 'wg-quick', 'down', iface], 
-                      capture_output=True, timeout=10)
-    
-    # Bring up new interface
     try:
         result = subprocess.run(
-            ['sudo', 'wg-quick', 'up', str(config_path)],
-            capture_output=True, text=True, timeout=30
+            ["bash", str(VPN_SCRIPT), "rotate"],
+            capture_output=True,
+            text=True,
+            timeout=60
         )
-        if result.returncode != 0:
-            print(f"  ⚠️  wg-quick up failed: {result.stderr}")
-            return next_index  # Return index anyway, will try next on failure
-        print(f"  ✅ VPN active: {interface_name}")
-        time.sleep(2)  # Let connection stabilize
-        return next_index
+        if result.returncode == 0:
+            print("  ✅ VPN rotated - new IP")
+            return True
+        else:
+            print(f"  ⚠️  VPN rotation failed: {result.stderr[:100]}")
+            return False
     except subprocess.TimeoutExpired:
-        print(f"  ⚠️  wg-quick timed out")
-        return next_index
+        print("  ⚠️  VPN rotation timed out")
+        return False
     except Exception as e:
         print(f"  ⚠️  VPN rotation error: {e}")
-        return next_index
+        return False
 
 
 # ============================================================================
@@ -191,13 +162,9 @@ class PostingsJobDescriptionU:
     2. PROCESS: Fetch HTML and extract description
     3. QA: Validate description length and content
     
-    Uses Playwright for JavaScript-rendered pages (SPAs like arbeitsagentur.de).
+    Uses ArbeitsagenturScraper (lib/scrapers/) for AA's SPA pages.
+    Browser lifecycle managed by BaseScraper — no inline Playwright.
     """
-    
-    # Class-level browser instance for reuse across batch processing
-    _playwright = None
-    _browser: Optional[Browser] = None
-    _browser_context: Optional[BrowserContext] = None
     
     def __init__(self, db_conn=None):
         """Initialize with database connection."""
@@ -208,34 +175,16 @@ class PostingsJobDescriptionU:
             self.conn = get_connection_raw()
             self._owns_connection = True
         self.input_data: Dict[str, Any] = {}
+        self._scraper = ArbeitsagenturScraper(db_conn=db_conn)
     
     def __del__(self):
         if self._owns_connection and self.conn:
             return_connection(self.conn)
     
     @classmethod
-    def _ensure_browser(cls) -> BrowserContext:
-        """Lazily initialize Playwright browser (shared across instances for batch efficiency)."""
-        if cls._browser_context is None:
-            cls._playwright = sync_playwright().start()
-            cls._browser = cls._playwright.chromium.launch(headless=True)
-            cls._browser_context = cls._browser.new_context(
-                user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            )
-        return cls._browser_context
-    
-    @classmethod
     def _close_browser(cls):
         """Clean up browser resources (call at end of batch processing)."""
-        if cls._browser_context:
-            cls._browser_context.close()
-            cls._browser_context = None
-        if cls._browser:
-            cls._browser.close()
-            cls._browser = None
-        if cls._playwright:
-            cls._playwright.stop()
-            cls._playwright = None
+        BaseScraper.cleanup()
     
     # ========================================================================
     # MAIN ENTRY POINT
@@ -360,9 +309,11 @@ class PostingsJobDescriptionU:
         if not posting:
             return {'ok': False, 'reason': 'NOT_FOUND', 'message': f'Posting {posting_id} not found'}
         
-        # Already has description - skip (idempotency)
-        if posting['job_description']:
-            return {'ok': False, 'reason': 'ALREADY_HAS_DESCRIPTION', 'message': 'Posting already has description'}
+        # Already has sufficient description - skip (idempotency)
+        # Match work_query threshold: only process if NULL or < MIN_DESCRIPTION_LENGTH
+        desc = posting['job_description'] or ''
+        if len(desc) >= MIN_DESCRIPTION_LENGTH:
+            return {'ok': False, 'reason': 'ALREADY_HAS_DESCRIPTION', 'message': f'Posting already has description ({len(desc)} chars)'}
         
         if not posting['external_url']:
             return {'ok': False, 'reason': 'NO_URL', 'message': 'Posting has no external_url'}
@@ -378,7 +329,7 @@ class PostingsJobDescriptionU:
                 'message': f"URL points to external job board, not scrapeable: {posting['external_url'][:50]}..."
             }
         
-        if actual_source not in SOURCE_SELECTORS:
+        if actual_source not in SUPPORTED_SOURCES:
             return {'ok': False, 'reason': 'UNSUPPORTED_SOURCE', 'message': f'Source {actual_source} not supported'}
         
         # Override source with actual source for fetching
@@ -399,135 +350,36 @@ class PostingsJobDescriptionU:
         """
         Fetch and parse job description from source website.
         
-        Dispatches to Playwright or requests based on source config.
+        Delegates to ArbeitsagenturScraper (lib/scrapers/) which handles
+        Playwright lifecycle, SPA hydration, and external partner detection.
         """
-        config = SOURCE_SELECTORS.get(source)
-        if not config:
-            return {'success': False, 'error': f'No config for source: {source}'}
+        if source != 'arbeitsagentur':
+            return {'success': False, 'error': f'Unsupported source: {source}'}
         
-        # Use Playwright for JavaScript-rendered pages (SPAs)
-        if config.get('use_playwright'):
-            return self._fetch_description_playwright(source, url, config)
-        else:
-            return self._fetch_description_requests(source, url, config)
-    
-    def _fetch_description_playwright(self, source: str, url: str, config: Dict) -> Dict:
-        """
-        Fetch description using Playwright for JavaScript-rendered pages.
+        result = self._scraper.fetch_description(url)
         
-        Handles AA's SPA which doesn't server-render the description container.
-        Also detects external partner redirects (job on external site, not scrapeable).
-        """
-        try:
-            context = self._ensure_browser()
-            page = context.new_page()
-            
-            try:
-                # Load page and wait for network to settle
-                response = page.goto(url, wait_until='domcontentloaded', timeout=30000)
-                
-                if response.status == 403:
-                    return {'success': False, 'error': 'HTTP 403', 'http_status': 403}
-                if response.status == 404:
-                    return {'success': False, 'error': 'HTTP 404 - Job removed from AA', 'http_status': 404}
-                if response.status != 200:
-                    return {'success': False, 'error': f'HTTP {response.status}', 'http_status': response.status}
-                
-                # Wait for SPA to hydrate (JavaScript to render content)
-                page.wait_for_timeout(2000)
-                
-                # Check for external partner redirect (job description on external site)
-                body_text = page.inner_text('body')
-                if 'Kooperationspartner' in body_text or 'Externe Seite öffnen' in body_text:
-                    return {
-                        'success': False, 
-                        'error': 'EXTERNAL_PARTNER - Description on external site, not AA',
-                        'skip_external': True
-                    }
-                
-                # Look for description container
-                selector_id = config['selector'].get('id')
-                container = page.query_selector(f'#{selector_id}')
-                
-                if container:
-                    description = container.inner_text()
-                    if description and len(description.strip()) >= MIN_DESCRIPTION_LENGTH:
-                        return {'success': True, 'description': description.strip()}
-                    else:
-                        return {'success': False, 'error': f'Description too short ({len(description.strip()) if description else 0} chars)'}
-                else:
-                    return {'success': False, 'error': 'Description container not found after JS render'}
-                    
-            finally:
-                page.close()
-                
-        except Exception as e:
-            error_str = str(e)
-            if 'Timeout' in error_str:
-                return {'success': False, 'error': 'Page load timeout'}
-            return {'success': False, 'error': f'Playwright error: {error_str[:200]}'}
-    
-    def _fetch_description_requests(self, source: str, url: str, config: Dict) -> Dict:
-        """
-        Fetch description using requests (for server-rendered pages).
+        # Convert ScraperResult to the dict format the actor expects
+        if result.success:
+            return {
+                'success': True,
+                'description': result.description,
+            }
         
-        Uses exponential backoff retry (1s, 2s, 4s) for transient failures.
-        """
-        last_error = None
+        # Map scraper metadata to actor-level fields
+        meta = result.metadata or {}
+        out = {
+            'success': False,
+            'error': result.error or 'Fetch failed',
+        }
         
-        for attempt in range(MAX_FETCH_RETRIES):
-            try:
-                response = requests.get(
-                    url,
-                    timeout=REQUEST_TIMEOUT,
-                    headers={'User-Agent': USER_AGENT}
-                )
-                
-                if response.status_code == 429:  # Rate limited
-                    last_error = 'Rate limited (429)'
-                    time.sleep(RETRY_BASE_DELAY * (2 ** attempt))
-                    continue
-                
-                # Return HTTP status for 403/404 handling by batch processor
-                if response.status_code == 403:
-                    return {'success': False, 'error': 'HTTP 403', 'http_status': 403}
-                
-                if response.status_code == 404:
-                    return {'success': False, 'error': 'HTTP 404 - Job removed from AA', 'http_status': 404}
-                
-                if response.status_code != 200:
-                    return {'success': False, 'error': f'HTTP {response.status_code}', 'http_status': response.status_code}
-                
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                # Find description container using source-specific selector
-                selector = config['selector']
-                container = soup.find('div', selector)
-                
-                if container:
-                    description = container.get_text(separator='\n', strip=True)
-                else:
-                    return {'success': False, 'error': 'Description container not found'}
-                
-                if not description:
-                    return {'success': False, 'error': 'Empty description'}
-                
-                return {'success': True, 'description': description}
-                
-            except requests.Timeout:
-                last_error = 'Request timeout'
-                time.sleep(RETRY_BASE_DELAY * (2 ** attempt))
-                continue
-            except requests.RequestException as e:
-                last_error = f'Request error: {e}'
-                time.sleep(RETRY_BASE_DELAY * (2 ** attempt))
-                continue
-            except Exception as e:
-                # Parse errors don't retry - the page structure is wrong
-                return {'success': False, 'error': f'Parse error: {e}'}
+        if meta.get('http_status'):
+            out['http_status'] = meta['http_status']
         
-        # All retries exhausted
-        return {'success': False, 'error': f'Failed after {MAX_FETCH_RETRIES} attempts: {last_error}'}
+        if meta.get('is_external_partner'):
+            out['skip_external'] = True
+            out['error'] = 'EXTERNAL_PARTNER'
+        
+        return out
     
     # ========================================================================
     # SAVE
@@ -643,7 +495,6 @@ def main():
             # Rate limit tracking
             consecutive_403s = 0
             vpn_rotation_count = 0
-            current_vpn_index = -1  # -1 = not using VPN yet
             
             for i, row in enumerate(rows, 1):
                 actor.input_data = {'posting_id': row['posting_id']}
@@ -690,7 +541,7 @@ def main():
                         print(f"⏳ Pausing {RATE_LIMIT_PAUSE_SECONDS}s before VPN rotation #{vpn_rotation_count}...")
                         time.sleep(RATE_LIMIT_PAUSE_SECONDS)
                         
-                        current_vpn_index = _rotate_wireguard(current_vpn_index)
+                        _rotate_vpn()
                         consecutive_403s = 0  # Reset counter after VPN change
                         
                         # Retry current posting

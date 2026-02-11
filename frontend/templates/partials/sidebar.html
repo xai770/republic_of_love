@@ -1,40 +1,51 @@
 {# Sidebar Partial - include with: {% include "partials/sidebar.html" %} #}
-{# Set active_page before including: dashboard, bi, profile, matches, messages #}
+{# Set active_page before including: dashboard, profile, bi, matches, messages #}
 
 <aside class="sidebar" id="sidebar">
     <button class="sidebar-close" onclick="toggleSidebar()">×</button>
     
     <nav class="sidebar-nav">
+        {# 1. Home #}
         <a href="/dashboard" class="nav-item {{ 'active' if active_page == 'dashboard' else '' }}" data-tooltip="{{ t('nav.start') }}">
             <span class="nav-icon-wrap" style="background: #fff3e0;">
                 <img src="/static/images/icons/icon-home.png" alt="" class="nav-icon-img">
             </span>
             <span class="nav-label">{{ t('nav.start') }}</span>
         </a>
-        <a href="/bi" class="nav-item {{ 'active' if active_page == 'bi' else '' }}" data-tooltip="{{ t('nav.overview') }}">
-            <span class="nav-icon-wrap" style="background: #e3f2fd;">
-                <img src="/static/images/icons/icon-dashboard.png" alt="" class="nav-icon-img">
-            </span>
-            <span class="nav-label">{{ t('nav.overview') }}</span>
-        </a>
+        
+        {# 2. My Resume #}
         <a href="/profile" class="nav-item {{ 'active' if active_page == 'profile' else '' }}" data-tooltip="{{ t('nav.resume') }}">
             <span class="nav-icon-wrap" style="background: #fff8e1;">
                 <img src="/static/images/icons/icon-profile.png" alt="" class="nav-icon-img">
             </span>
             <span class="nav-label">{{ t('nav.resume') }}</span>
         </a>
+        
+        {# 3. My Search (was "Overview") #}
+        <a href="/bi" class="nav-item {{ 'active' if active_page == 'bi' else '' }}" data-tooltip="{{ t('nav.overview') }}">
+            <span class="nav-icon-wrap" style="background: #e3f2fd;">
+                <img src="/static/images/icons/icon-dashboard.png" alt="" class="nav-icon-img">
+            </span>
+            <span class="nav-label">{{ t('nav.overview') }}</span>
+        </a>
+        
+        {# 4. My Active Postings (Jobs/Matches) #}
         <a href="/matches" class="nav-item {{ 'active' if active_page == 'matches' else '' }}" data-tooltip="{{ t('nav.jobs') }}">
             <span class="nav-icon-wrap" style="background: #e8f5e9;">
                 <img src="/static/images/icons/icon-jobs.png" alt="" class="nav-icon-img">
             </span>
             <span class="nav-label">{{ t('nav.jobs') }}</span>
         </a>
+        
+        {# 5. Messages #}
         <a href="/messages" class="nav-item {{ 'active' if active_page == 'messages' else '' }}" data-tooltip="{{ t('nav.messages') }}">
             <span class="nav-icon-wrap" style="background: #fff3e0;">
                 <img src="/static/images/icons/icon-inbox.png" alt="" class="nav-icon-img">
             </span>
             <span class="nav-label">{{ t('nav.messages') }}</span>
         </a>
+        
+        {# 6. Documents #}
         <a href="/documents" class="nav-item {{ 'active' if active_page == 'documents' else '' }}" data-tooltip="Documents">
             <span class="nav-icon-wrap" style="background: #e8eaf6;">
                 <span class="nav-icon">📄</span>
@@ -42,29 +53,24 @@
             <span class="nav-label">Documents</span>
         </a>
         
-        <div class="nav-divider"></div>
-        
-        <a href="#" class="nav-item" data-tooltip="{{ t('nav.help') }}">
-            <span class="nav-icon-wrap" style="background: #fce4ec;">
-                <img src="/static/images/icons/icon-help.png" alt="" class="nav-icon-img">
-            </span>
-            <span class="nav-label">{{ t('nav.help') }}</span>
-        </a>
-        <a href="#" class="nav-item" data-tooltip="{{ t('nav.chat') }}">
-            <span class="nav-icon-wrap" style="background: #e8f5e9;">
-                <img src="/static/images/icons/icon-chat.png" alt="" class="nav-icon-img">
-            </span>
-            <span class="nav-label">{{ t('nav.chat') }}</span>
-        </a>
-        <a href="#" class="nav-item" data-tooltip="{{ t('nav.account') }}">
+        {# 7. Account #}
+        <a href="/account" class="nav-item {{ 'active' if active_page == 'account' else '' }}" data-tooltip="{{ t('nav.account') }}">
             <span class="nav-icon-wrap" style="background: #ede7f6;">
-                <img src="/static/images/icons/icon-account.png" alt="" class="nav-icon-img">
+                <span class="nav-icon">👤</span>
             </span>
             <span class="nav-label">{{ t('nav.account') }}</span>
         </a>
     </nav>
     
     <div class="sidebar-footer">
+        {# Tour - replay onboarding #}
+        <a href="javascript:void(0)" onclick="resetMiraTour(); startMiraTour();" class="nav-item" data-tooltip="Tour starten">
+            <span class="nav-icon-wrap" style="background: #e0f7fa;">
+                <span class="nav-icon">🎓</span>
+            </span>
+            <span class="nav-label">Tour</span>
+        </a>
+        
         <a href="/auth/logout" class="nav-item logout" data-tooltip="{{ t('common.logout') }}">
             <span class="nav-icon-wrap" style="background: #ffebee;">
                 <span class="nav-icon">🚪</span>

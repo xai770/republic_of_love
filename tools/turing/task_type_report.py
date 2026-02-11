@@ -200,7 +200,7 @@ def generate_report(identifier: str) -> str:
                     try:
                         d = (log['completed_at'] - log['created_at']).total_seconds()
                         duration = f"{d:.1f}s"
-                    except:
+                    except (KeyError, TypeError, AttributeError):
                         pass
                 lines.append(f"| {log['ticket_id']} | {log.get('subject_id', 'N/A')} | {log['status']} | {log.get('consistency', '1/1')} | {duration} |")
         

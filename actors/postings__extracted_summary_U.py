@@ -6,7 +6,7 @@ Extracts structured summary from job posting description.
 Uses qwen2.5-coder:7b for efficient GPU processing.
 Validates extraction via word overlap (summary words must exist in source).
 
-NOTE: This actor is only used for Deutsche Bank postings (see nightly_fetch.sh).
+NOTE: This actor is only used for Deutsche Bank postings (see turing_fetch.sh).
 For AA postings, we embed job_description directly without summarization.
 
 DB postings are fluffy/marketing-heavy, so we extract the core info first.
@@ -44,6 +44,7 @@ Date: 2026-01-15 (updated 2026-02-03 - removed translation logic)
 import sys
 from pathlib import Path
 
+import os
 import psycopg2.extras
 import requests
 
@@ -54,7 +55,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Config
 TASK_TYPE_ID = 3335  # session_a_extract_summary
 INSTRUCTION_ID = 3328  # Extract with gemma3:1b (but we'll use qwen2.5-coder:7b)
-OLLAMA_URL = 'http://localhost:11434/api/generate'
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 
 # Model - same as lily_cps_extract for GPU efficiency (directive #14)
 MODEL = "qwen2.5-coder:7b"

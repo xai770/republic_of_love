@@ -39,7 +39,7 @@ def get_db_connection():
     return psycopg2.connect(
         dbname="turing",
         user="base_admin",
-        password="base_yoga_secure_2025",
+        password=os.getenv('DB_PASSWORD', ''),
         host="localhost",
         port=5432
     )

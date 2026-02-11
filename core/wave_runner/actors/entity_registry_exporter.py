@@ -225,7 +225,7 @@ if __name__ == "__main__":
     if not sys.stdin.isatty():
         try:
             input_data = json.load(sys.stdin)
-        except:
+        except (json.JSONDecodeError, ValueError):
             pass
     
     conn = psycopg2.connect(

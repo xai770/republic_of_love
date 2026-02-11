@@ -62,7 +62,7 @@ def get_tables_from_code() -> Set[str]:
                                 and not table.startswith('pg_')
                                 and len(table) > 2):
                                 table_refs.add(table)
-                except:
+                except Exception:
                     pass
     
     return table_refs

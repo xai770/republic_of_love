@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+
+{% block title %}My Documents — talent.yoga{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    <!-- Left Sidebar -->
+    {% set active_page = 'documents' %}
+    {% include "partials/sidebar.html" %}
+    
+    <!-- Main Content -->
+    <main class="main-content documents-page">
+        <div class="documents-container">
+            <!-- Header -->
+            <div class="documents-header">
+                <h1>📄 My Documents</h1>
+                <p class="documents-subtitle">Reports, analyses, and content created for you</p>
+            </div>
+            
+            <!-- Type Filters -->
+            <div class="doc-type-filters">
+                <button class="doc-filter active" data-type="all" onclick="setTypeFilter('all')">
+                    📁 All
+                    <span class="filter-count" id="count-all">0</span>
+                </button>
+                <button class="doc-filter" data-type="doug_report" onclick="setTypeFilter('doug_report')">
+                    📊 Doug Reports
+                    <span class="filter-count" id="count-doug_report">0</span>
+                </button>
+                <button class="doc-filter" data-type="newsletter" onclick="setTypeFilter('newsletter')">
+                    📰 Newsletters
+                    <span class="filter-count" id="count-newsletter">0</span>
+                </button>
+                <button class="doc-filter" data-type="match_analysis" onclick="setTypeFilter('match_analysis')">
+                    🎯 Match Analysis
+                    <span class="filter-count" id="count-match_analysis">0</span>
+                </button>
+                <button class="doc-filter" data-type="cover_letter" onclick="setTypeFilter('cover_letter')">
+                    ✉️ Cover Letters
+                    <span class="filter-count" id="count-cover_letter">0</span>
+                </button>
+            </div>
+            
+            <!-- Documents Grid -->
+            <div class="documents-grid" id="documents-grid">
+                <!-- Populated by JS -->
+            </div>
+            
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>No documents yet</h3>
+                <p>As you use talent.yoga, Doug and other actors will create reports and documents for you here.</p>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="loading-state" id="loading-state">
+                <div class="spinner"></div>
+                <p>Loading documents...</p>
+            </div>
+        </div>
+        
+        <!-- Document Viewer Modal -->
+        <div class="doc-viewer-modal hidden" id="doc-viewer">
+            <div class="doc-viewer-content">
+                <div class="doc-viewer-header">
+                    <div class="doc-viewer-title">
+                        <span class="doc-type-badge" id="viewer-type"></span>
+                        <h2 id="viewer-title">Document Title</h2>
+                    </div>
+                    <button class="btn-close" onclick="closeViewer()">✕</button>
+                </div>
+                <div class="doc-viewer-meta">
+                    <span id="viewer-author">By Doug</span>
+                    <span id="viewer-date">Feb 8, 2026</span>
+                </div>
+                <div class="doc-viewer-body" id="viewer-body">
+                    <!-- Markdown rendered content -->
+                </div>
+                <div class="doc-viewer-actions">
+                    <button class="btn" onclick="downloadDocument()">📥 Download</button>
+                    <button class="btn btn-secondary" onclick="closeViewer()">Close</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+/* Documents Page Styles */
+.documents-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.documents-container {
+    width: 100%;
+}
+
+.documents-header {
+    margin-bottom: 1.5rem;
+}
+
+.documents-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+    color: var(--text);
+}
+
+.documents-subtitle {
+    color: var(--text-muted);
+    margin: 0.5rem 0 0;
+}
+
+/* Type Filters */
+.doc-type-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.doc-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.doc-filter:hover {
+    background: var(--bg-hover);
+}
+
+.doc-filter.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.doc-filter .filter-count {
+    font-size: 0.75rem;
+    background: rgba(0,0,0,0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+}
+
+.doc-filter.active .filter-count {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Documents Grid */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.doc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.doc-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.doc-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.doc-type-icon {
+    font-size: 1.5rem;
+    background: var(--bg-hover);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.doc-card-title {
+    flex: 1;
+}
+
+.doc-card-title h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.doc-type-badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.doc-card-preview {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.doc-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+}
+
+.doc-author {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Empty & Loading States */
+.empty-state, .loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Document Viewer Modal */
+.doc-viewer-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+}
+
+.doc-viewer-modal.hidden {
+    display: none;
+}
+
+.doc-viewer-content {
+    background: var(--bg-card);
+    border-radius: 16px;
+    max-width: calc(100% - 4rem);
+    max-height: 90vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.doc-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.doc-viewer-title h2 {
+    margin: 0.5rem 0 0;
+    font-size: 1.25rem;
+}
+
+.doc-viewer-meta {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-hover);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.doc-viewer-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+    line-height: 1.7;
+}
+
+.doc-viewer-body h1, .doc-viewer-body h2, .doc-viewer-body h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.doc-viewer-body p {
+    margin-bottom: 1rem;
+}
+
+.doc-viewer-body ul, .doc-viewer-body ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.doc-viewer-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.25rem;
+}
+
+.btn-close:hover {
+    color: var(--text);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .documents-page {
+        padding: 1rem;
+    }
+    
+    .documents-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .doc-type-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+    }
+    
+    .doc-filter {
+        white-space: nowrap;
+    }
+}
+
+/* Theme Toggle Icons */
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: inline; }
+[data-theme="dark"] .theme-toggle { background: rgba(255,255,255,0.1); }
+[data-theme="dark"] .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+/* Language Toggle */
+.lang-toggle {
+    display: flex;
+    gap: 0.25rem;
+    background: rgba(255,255,255,0.6);
+    border-radius: 1rem;
+    padding: 0.25rem;
+}
+
+.lang-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+}
+
+.lang-btn:hover {
+    color: #2d3748;
+}
+
+.lang-btn.active {
+    background: white;
+    color: #2d3748;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// State
+let allDocuments = [];
+let currentTypeFilter = 'all';
+let searchQuery = '';
+let currentDocument = null;
+
+// Doc type config
+const DOC_TYPE_CONFIG = {
+    doug_report: { icon: '📊', label: 'Doug Report' },
+    newsletter: { icon: '📰', label: 'Newsletter' },
+    match_analysis: { icon: '🎯', label: 'Match Analysis' },
+    cover_letter: { icon: '✉️', label: 'Cover Letter' },
+    resume: { icon: '📃', label: 'Resume' },
+    other: { icon: '📄', label: 'Document' }
+};
+
+// Load documents on page load
+document.addEventListener('DOMContentLoaded', loadDocuments);
+
+async function loadDocuments() {
+    showLoading(true);
+    
+    try {
+        const res = await fetch('/api/documents/');
+        if (!res.ok) throw new Error('Failed to load');
+        
+        const data = await res.json();
+        allDocuments = data.documents || [];
+        
+        updateTypeCounts();
+        renderDocuments();
+        
+    } catch (err) {
+        console.error('Failed to load documents:', err);
+        showEmpty(true);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function updateTypeCounts() {
+    // Count by type
+    const counts = { all: allDocuments.length };
+    
+    allDocuments.forEach(doc => {
+        const type = doc.doc_type;
+        counts[type] = (counts[type] || 0) + 1;
+    });
+    
+    // Update UI
+    document.getElementById('count-all').textContent = counts.all;
+    
+    Object.keys(DOC_TYPE_CONFIG).forEach(type => {
+        const el = document.getElementById(`count-${type}`);
+        if (el) el.textContent = counts[type] || 0;
+    });
+}
+
+function setTypeFilter(type) {
+    currentTypeFilter = type;
+    
+    // Update active state
+    document.querySelectorAll('.doc-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    
+    renderDocuments();
+}
+
+function filterDocuments() {
+    searchQuery = document.getElementById('doc-search').value.toLowerCase();
+    renderDocuments();
+}
+
+function renderDocuments() {
+    const grid = document.getElementById('documents-grid');
+    
+    // Filter documents
+    let filtered = allDocuments;
+    
+    if (currentTypeFilter !== 'all') {
+        filtered = filtered.filter(d => d.doc_type === currentTypeFilter);
+    }
+    
+    if (searchQuery) {
+        filtered = filtered.filter(d => 
+            d.title.toLowerCase().includes(searchQuery) ||
+            (d.preview && d.preview.toLowerCase().includes(searchQuery))
+        );
+    }
+    
+    // Show empty state if no docs
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        showEmpty(true);
+        return;
+    }
+    
+    showEmpty(false);
+    
+    // Render cards
+    grid.innerHTML = filtered.map(doc => {
+        const config = DOC_TYPE_CONFIG[doc.doc_type] || DOC_TYPE_CONFIG.other;
+        const date = new Date(doc.created_at).toLocaleDateString('de-DE', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        });
+        const preview = doc.preview ? stripMarkdown(doc.preview) : 'No preview available';
+        
+        return `
+            <div class="doc-card" onclick="openDocument(${doc.document_id})">
+                <div class="doc-card-header">
+                    <div class="doc-type-icon">${config.icon}</div>
+                    <div class="doc-card-title">
+                        <span class="doc-type-badge">${config.label}</span>
+                        <h3>${escapeHtml(doc.title)}</h3>
+                    </div>
+                </div>
+                <p class="doc-card-preview">${escapeHtml(preview)}</p>
+                <div class="doc-card-footer">
+                    <span class="doc-author">By ${escapeHtml(doc.created_by)}</span>
+                    <span class="doc-date">${date}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function openDocument(docId) {
+    try {
+        const res = await fetch(`/api/documents/${docId}`);
+        if (!res.ok) throw new Error('Failed to load document');
+        
+        currentDocument = await res.json();
+        const config = DOC_TYPE_CONFIG[currentDocument.doc_type] || DOC_TYPE_CONFIG.other;
+        
+        document.getElementById('viewer-type').textContent = config.label;
+        document.getElementById('viewer-title').textContent = currentDocument.title;
+        document.getElementById('viewer-author').textContent = `By ${currentDocument.created_by}`;
+        document.getElementById('viewer-date').textContent = new Date(currentDocument.created_at)
+            .toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('viewer-body').innerHTML = marked.parse(currentDocument.content || '');
+        
+        document.getElementById('doc-viewer').classList.remove('hidden');
+        
+    } catch (err) {
+        console.error('Failed to open document:', err);
+        alert('Could not load document');
+    }
+}
+
+function closeViewer() {
+    document.getElementById('doc-viewer').classList.add('hidden');
+    currentDocument = null;
+}
+
+function downloadDocument() {
+    if (!currentDocument) return;
+    
+    // Create blob and download
+    const blob = new Blob([currentDocument.content || ''], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentDocument.title.replace(/[^a-z0-9]/gi, '_')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function showLoading(show) {
+    document.getElementById('loading-state').classList.toggle('hidden', !show);
+    document.getElementById('documents-grid').classList.toggle('hidden', show);
+}
+
+function showEmpty(show) {
+    document.getElementById('empty-state').classList.toggle('hidden', !show);
+}
+
+function stripMarkdown(text) {
+    return text
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/`([^`]+)`/g, '$1');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Close modal on escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeViewer();
+});
+
+// Close modal on backdrop click
+document.getElementById('doc-viewer').addEventListener('click', (e) => {
+    if (e.target.id === 'doc-viewer') closeViewer();
+});
+</script>
+{% endblock %}

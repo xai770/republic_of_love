@@ -26,7 +26,7 @@ def get_conn():
         host=os.getenv('DB_HOST', 'localhost'),
         database=os.getenv('DB_NAME', 'turing'),
         user=os.getenv('DB_USER', 'base_admin'),
-        password=os.getenv('DB_PASSWORD', 'base_yoga_secure_2025'),
+        password=os.getenv('DB_PASSWORD', ''),
         cursor_factory=RealDictCursor
     )
 

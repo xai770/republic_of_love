@@ -6,7 +6,7 @@ Queries previous interaction outputs to get the formatted summary.
 """
 
 import sys
-sys.path.insert(0, '/home/xai/Documents/ty_wave')
+sys.path.insert(0, '/home/xai/Documents/ty_learn')
 
 from core.wave_runner.script_actor_template import ScriptActorBase
 

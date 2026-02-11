@@ -19,7 +19,7 @@ import requests
 from collections import defaultdict
 from core.database import get_connection
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 MODEL = "qwen2.5:7b"
 
 def ask_llm(prompt: str) -> str:

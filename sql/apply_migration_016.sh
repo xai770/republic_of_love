@@ -24,7 +24,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-PGPASSWORD=base_yoga_secure_2025 psql -U base_admin -d turing -h localhost \
+PGPASSWORD=${DB_PASSWORD} psql -U base_admin -d turing -h localhost \
     -f /home/xai/Documents/ty_learn/sql/migrations/016_operational_observability.sql
 
 echo ""

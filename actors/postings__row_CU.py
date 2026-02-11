@@ -98,7 +98,7 @@ MAX_STALE_PERCENTAGE = 0.50  # Skip staleness if >50% would be invalidated (like
 # ============================================================================
 # ACTOR CLASS
 # ============================================================================
-class DBJobFetcher:
+class WorkdayDBJobFetcher:
     """
     Deutsche Bank Job Fetcher - Source actor for the pipeline.
     
@@ -729,7 +729,7 @@ def main():
         print(f"  ticket_id: {ticket_id}")
         
         # Run the actor
-        actor = DBJobFetcher(conn, max_jobs=args.max_jobs)
+        actor = WorkdayDBJobFetcher(conn, max_jobs=args.max_jobs)
         result = actor.process()
         
         # Record result

@@ -218,7 +218,7 @@ def run_workflow(args):
                 print(f"🔪 Killed existing process (PID {existing_pid})")
                 import time
                 time.sleep(1)
-            except:
+            except (ProcessLookupError, PermissionError, OSError):
                 pass
     
     if not _pid_manager.acquire():

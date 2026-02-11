@@ -84,7 +84,7 @@ DB_CONFIG = {
     ''port'': 5432,
     ''database'': ''turing'',
     ''user'': ''base_admin'',
-    ''password'': ''base_yoga_secure_2025''
+    ''password'': ''${DB_PASSWORD}''
 }
 
 # Parse HR verdict

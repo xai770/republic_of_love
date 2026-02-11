@@ -218,7 +218,7 @@ def batch_rebuild_projections(posting_ids, batch_size=100):
         port=5432,
         database='turing',
         user='base_admin',
-        password='base_yoga_secure_2025'
+        password='${DB_PASSWORD}'
     )
     
     cursor = conn.cursor()

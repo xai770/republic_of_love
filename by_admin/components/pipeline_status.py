@@ -412,7 +412,7 @@ def execute_selected_tests(recipe_run_ids: List[int]):
             # Cleanup temp file
             try:
                 os.unlink(temp_file)
-            except:
+            except OSError:
                 pass
             
             if st.button("🔄 Refresh Page"):

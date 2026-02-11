@@ -9,143 +9,499 @@
     {% set active_page = 'messages' %}
     {% include "partials/sidebar.html" %}
     
-    <main class="main-content messages-container">
-    <!-- Sidebar: Message List -->
-    <aside class="message-list">
-        <div class="message-list-header">
-            <h2>📬 Messages</h2>
-            <div class="unread-badge" id="total-unread">0</div>
-        </div>
+    <main class="main-content chat-container">
+        <!-- Left: Chat List (Conversations) -->
+        <aside class="chat-list">
+            <div class="chat-list-header">
+                <h2>📬 Messages</h2>
+                <div class="unread-badge" id="total-unread">0</div>
+            </div>
+            
+            <div class="chat-items" id="chat-items">
+                <!-- Conversations populated by JS -->
+            </div>
+        </aside>
         
-        <!-- Sender Filters -->
-        <div class="sender-filters">
-            <button class="sender-filter active" data-sender="all">
-                All
-                <span class="filter-count" id="count-all">0</span>
-            </button>
-            <button class="sender-filter" data-sender="doug">
-                🔍 Doug
-                <span class="filter-count" id="count-doug">0</span>
-            </button>
-            <button class="sender-filter" data-sender="mira">
-                💬 Mira
-                <span class="filter-count" id="count-mira">0</span>
-            </button>
-            <button class="sender-filter" data-sender="adele">
-                🎯 Adele
-                <span class="filter-count" id="count-adele">0</span>
-            </button>
-            <button class="sender-filter" data-sender="system">
-                ⚙️ System
-                <span class="filter-count" id="count-system">0</span>
-            </button>
-            <button class="sender-filter" data-sender="yogi">
-                👤 Yogis
-                <span class="filter-count" id="count-yogi">0</span>
-            </button>
-        </div>
-        
-        <!-- Message Items -->
-        <div class="message-items" id="message-items">
-            <!-- Populated by JS -->
-        </div>
-        
-        <!-- Mark All Read -->
-        <div class="list-actions">
-            <button class="btn-link" onclick="markAllRead()">Mark all as read</button>
-        </div>
-    </aside>
-    
-    <!-- Main: Message Detail -->
-    <section class="message-detail" id="message-detail">
-        <div class="empty-detail" id="empty-detail">
-            <span class="empty-icon">💬</span>
-            <p>Select a message to read</p>
-        </div>
-        
-        <div class="message-content hidden" id="message-content">
-            <div class="message-header">
-                <div class="sender-avatar" id="sender-avatar">🔍</div>
-                <div class="sender-info">
-                    <span class="sender-name" id="sender-name">Doug</span>
-                    <span class="sender-role" id="sender-role">Research Assistant</span>
+        <!-- Right: Chat Window -->
+        <section class="chat-window" id="chat-window">
+            <!-- Empty state -->
+            <div class="chat-empty" id="chat-empty">
+                <div class="empty-icon">💬</div>
+                <h3>Select a conversation</h3>
+                <p>Choose a conversation to view messages</p>
+            </div>
+            
+            <!-- Chat content (hidden until conversation selected) -->
+            <div class="chat-content hidden" id="chat-content">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="chat-avatar" id="chat-avatar">🔍</div>
+                    <div class="chat-info">
+                        <div class="chat-name" id="chat-name">Doug</div>
+                        <div class="chat-role" id="chat-role">Research Assistant</div>
+                    </div>
                 </div>
-                <span class="message-time" id="message-time">Just now</span>
+                
+                <!-- Messages Area (Chat Bubbles) -->
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages populated by JS -->
+                </div>
+                
+                <!-- Input Area -->
+                <div class="chat-input-area" id="chat-input-area">
+                    <textarea class="chat-input" 
+                              id="chat-input" 
+                              placeholder="Type a message... (Enter to send, Ctrl+Enter for new line)"
+                              rows="1"
+                              onkeydown="handleKeyDown(event)"></textarea>
+                    <button class="chat-send-btn" onclick="sendMessage()">
+                        <span>➤</span>
+                    </button>
+                </div>
             </div>
-            
-            <h2 class="message-subject" id="message-subject">Subject</h2>
-            
-            <div class="message-body" id="message-body">
-                <!-- Rendered markdown -->
-            </div>
-            
-            <div class="message-actions">
-                <button class="btn" onclick="viewPosting()" id="view-posting-btn">
-                    📋 View Related Posting
-                </button>
-                <button class="btn btn-secondary" onclick="deleteMessage()">
-                    🗑️ Delete
-                </button>
-            </div>
-        </div>
-    </section>
+        </section>
     </main>
-</div><!-- /.app-layout -->
-    <!-- Styles moved to /static/css/style.css -->
+</div>
+
+<style>
+/* WhatsApp-style Chat Layout */
+.chat-container {
+    display: flex;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+}
+
+/* Chat List (Left Sidebar) */
+.chat-list {
+    width: 320px;
+    min-width: 280px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.chat-list-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+
+.unread-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.chat-items {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light, rgba(255,255,255,0.05));
+    transition: background 0.15s;
+}
+
+.chat-item:hover {
+    background: var(--bg-hover);
+}
+
+.chat-item.active {
+    background: var(--primary-soft, rgba(79, 70, 229, 0.15));
+    border-left: 3px solid var(--primary);
+}
+
+.chat-item-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.chat-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-item-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.125rem;
+}
+
+.chat-item-preview {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.chat-item-time {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.chat-item-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Chat Window (Right Panel) */
+.chat-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    min-width: 0;
+}
+
+.chat-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
+}
+
+.chat-empty .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.chat-empty h3 {
+    margin: 0 0 0.5rem;
+    color: var(--text);
+}
+
+/* Chat Content */
+.chat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-content.hidden {
+    display: none;
+}
+
+/* Chat Header */
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.chat-info {
+    flex: 1;
+}
+
+.chat-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.chat-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Messages Area */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* WhatsApp-style background pattern */
+    background-color: var(--chat-bg, #0b141a);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="light"] .chat-messages {
+    --chat-bg: #e5ddd5;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Message Bubbles */
+.message-bubble {
+    max-width: 70%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.message-bubble.received {
+    align-self: flex-start;
+    background: var(--bubble-received, #202c33);
+    color: var(--text-primary, var(--text));
+    border-top-left-radius: 0;
+}
+
+.message-bubble.sent {
+    align-self: flex-end;
+    background: var(--bubble-sent, #005c4b);
+    color: white;
+    border-top-right-radius: 0;
+}
+
+[data-theme="light"] .message-bubble.received {
+    --bubble-received: white;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+}
+
+[data-theme="light"] .message-bubble.sent {
+    --bubble-sent: #d9fdd3;
+    color: var(--text);
+}
+
+.message-bubble .msg-subject {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    color: var(--primary-light, #7c9edc);
+}
+
+.message-bubble.sent .msg-subject {
+    color: rgba(255,255,255,0.9);
+}
+
+[data-theme="light"] .message-bubble.sent .msg-subject {
+    color: var(--primary);
+}
+
+.message-bubble .msg-text {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.message-bubble .msg-text p {
+    margin: 0 0 0.5rem;
+}
+
+.message-bubble .msg-text p:last-child {
+    margin-bottom: 0;
+}
+
+.message-bubble .msg-meta {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.message-bubble.sent .msg-meta {
+    color: rgba(255,255,255,0.7);
+}
+
+[data-theme="light"] .message-bubble.sent .msg-meta {
+    color: var(--text-muted);
+}
+
+.message-bubble .msg-check {
+    color: #53bdeb;
+}
+
+/* Date Separator */
+.date-separator {
+    display: flex;
+    justify-content: center;
+    margin: 0.75rem 0;
+}
+
+.date-separator span {
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Chat Input Area */
+.chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+}
+
+.chat-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 24px;
+    background: var(--bg-hover);
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+    font-family: inherit;
+    line-height: 1.4;
+    -webkit-text-fill-color: var(--text);  /* Fix for autofill/dark mode */
+}
+
+[data-theme="dark"] .chat-input {
+    color: #e5e7eb;
+    -webkit-text-fill-color: #e5e7eb;
+}
+
+.chat-input::placeholder {
+    color: var(--text-muted);
+}
+
+.chat-send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 1.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.chat-send-btn:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.chat-send-btn:active {
+    transform: scale(0.95);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chat-container {
+        flex-direction: column;
+    }
+    
+    .chat-list {
+        width: 100%;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .message-bubble {
+        max-width: 85%;
+    }
+}
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-// State
-let allMessages = [];
-let currentFilter = 'all';
-let currentMessageId = null;
-let unreadCounts = {};
-
-// Sender display info
-const senderInfo = {
+// Actor/sender configuration
+const ACTORS = {
     doug: { name: 'Doug', role: 'Research Assistant', emoji: '🔍' },
-    mira: { name: 'Mira', role: 'Your Guide', emoji: '💬' },
+    mira: { name: 'Mira', role: 'Your Guide', emoji: '🧘' },
     adele: { name: 'Adele', role: 'Interview Coach', emoji: '🎯' },
     sage: { name: 'Sage', role: 'Skills Advisor', emoji: '📚' },
     sandy: { name: 'Sandy', role: 'Market Analyst', emoji: '📊' },
     mysti: { name: 'Mysti', role: 'Encouragement', emoji: '✨' },
-    system: { name: 'System', role: 'Notifications', emoji: '⚙️' },
-    yogi: { name: 'Yogi', role: 'Fellow Traveler', emoji: '👤' }
+    arden: { name: 'Arden', role: 'Your Assistant', emoji: '🦄' },
+    yogi: { name: 'Yogi', role: 'Fellow Traveler', emoji: '👤' },
+    system: { name: 'System', role: 'Notifications', emoji: '🔔' }
 };
+
+// State
+let allMessages = [];
+let currentSender = null;
+let messagesBySender = {};
+let unreadCounts = {};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check URL params for posting filter
-    const params = new URLSearchParams(window.location.search);
-    const postingId = params.get('posting');
-    
-    await loadMessages(postingId);
+    await loadMessages();
     await loadUnreadCounts();
+    buildConversations();
+    renderChatList();
     
-    setupFilters();
-    
-    // Auto-select first unread or first message
-    const firstUnread = allMessages.find(m => !m.is_read);
-    if (firstUnread) {
-        selectMessage(firstUnread.message_id);
-    } else if (allMessages.length > 0) {
-        selectMessage(allMessages[0].message_id);
+    // Auto-select first conversation with unread, or just first
+    const firstWithUnread = Object.keys(messagesBySender).find(s => 
+        (unreadCounts[s] || 0) > 0
+    );
+    const firstSender = firstWithUnread || Object.keys(messagesBySender)[0];
+    if (firstSender) {
+        selectConversation(firstSender);
     }
 });
 
-async function loadMessages(postingId = null) {
+async function loadMessages() {
     try {
-        let url = '/api/messages/?limit=100';
-        if (postingId) {
-            url += `&posting_id=${postingId}`;
-        }
-        
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to load messages');
-        
+        const res = await fetch('/api/messages/?limit=200');
+        if (!res.ok) throw new Error('Failed to load');
         const data = await res.json();
-        allMessages = data.messages;
-        
-        renderMessageList();
+        allMessages = data.messages || [];
     } catch (err) {
         console.error('Failed to load messages:', err);
     }
@@ -155,217 +511,361 @@ async function loadUnreadCounts() {
     try {
         const res = await fetch('/api/messages/unread-counts');
         if (!res.ok) return;
-        
         const data = await res.json();
-        unreadCounts = data.by_sender;
-        
-        // Update badges
-        document.getElementById('total-unread').textContent = data.total;
-        document.getElementById('count-all').textContent = data.total;
-        
-        ['doug', 'mira', 'adele', 'system', 'yogi'].forEach(sender => {
-            const el = document.getElementById(`count-${sender}`);
-            if (el) el.textContent = unreadCounts[sender] || 0;
-        });
+        unreadCounts = data.by_sender || {};
+        document.getElementById('total-unread').textContent = data.total || 0;
     } catch (err) {
         console.error('Failed to load unread counts:', err);
     }
 }
 
-function setupFilters() {
-    document.querySelectorAll('.sender-filter').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.sender-filter').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentFilter = btn.dataset.sender;
-            renderMessageList();
-        });
+function buildConversations() {
+    messagesBySender = {};
+    
+    // Group messages by sender
+    allMessages.forEach(msg => {
+        const sender = msg.sender_type || 'system';
+        if (!messagesBySender[sender]) {
+            messagesBySender[sender] = [];
+        }
+        messagesBySender[sender].push(msg);
+    });
+    
+    // Sort each conversation by date (oldest first for chat view)
+    Object.keys(messagesBySender).forEach(sender => {
+        messagesBySender[sender].sort((a, b) => 
+            new Date(a.created_at) - new Date(b.created_at)
+        );
     });
 }
 
-function renderMessageList() {
-    const container = document.getElementById('message-items');
+function renderChatList() {
+    const container = document.getElementById('chat-items');
+    const senders = Object.keys(messagesBySender);
     
-    // Filter messages
-    const filtered = allMessages.filter(m => {
-        if (currentFilter === 'all') return true;
-        return m.sender_type === currentFilter;
-    });
-    
-    if (filtered.length === 0) {
+    if (senders.length === 0) {
         container.innerHTML = `
-            <div class="no-messages">
-                <span class="empty-icon">📭</span>
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
                 <p>No messages yet</p>
             </div>
         `;
         return;
     }
     
-    container.innerHTML = filtered.map(m => {
-        const info = senderInfo[m.sender_type] || senderInfo.system;
-        const isActive = m.message_id === currentMessageId;
-        const isUnread = !m.is_read;
-        const time = formatTime(m.created_at);
+    // Sort senders by most recent message
+    senders.sort((a, b) => {
+        const aLast = messagesBySender[a][messagesBySender[a].length - 1];
+        const bLast = messagesBySender[b][messagesBySender[b].length - 1];
+        return new Date(bLast.created_at) - new Date(aLast.created_at);
+    });
+    
+    container.innerHTML = senders.map(senderKey => {
+        const actor = ACTORS[senderKey] || ACTORS.system;
+        const messages = messagesBySender[senderKey];
+        const lastMsg = messages[messages.length - 1];
+        const preview = lastMsg.subject || lastMsg.preview || 'No subject';
+        const time = formatTime(lastMsg.created_at);
+        const unread = unreadCounts[senderKey] || 0;
+        const isActive = senderKey === currentSender;
         
         return `
-            <div class="message-item ${isActive ? 'active' : ''} ${isUnread ? 'unread' : ''}" 
-                 onclick="selectMessage(${m.message_id})">
-                <div class="item-avatar ${m.sender_type}">${info.emoji}</div>
-                <div class="item-content">
-                    <div class="item-header">
-                        <span class="item-sender">${info.name}</span>
-                        <span class="item-time">${time}</span>
-                    </div>
-                    <div class="item-subject">${escapeHtml(m.subject || 'No subject')}</div>
-                    <div class="item-preview">${escapeHtml(m.preview)}</div>
+            <div class="chat-item ${isActive ? 'active' : ''}" onclick="selectConversation('${senderKey}')">
+                <div class="chat-item-avatar">${actor.emoji}</div>
+                <div class="chat-item-info">
+                    <div class="chat-item-name">${actor.name}</div>
+                    <div class="chat-item-preview">${escapeHtml(preview)}</div>
+                </div>
+                <div class="chat-item-meta">
+                    <div class="chat-item-time">${time}</div>
+                    ${unread > 0 ? `<div class="chat-item-badge">${unread}</div>` : ''}
                 </div>
             </div>
         `;
     }).join('');
 }
 
-async function selectMessage(messageId) {
-    currentMessageId = messageId;
+async function selectConversation(senderKey) {
+    currentSender = senderKey;
     
-    // Update list selection
-    document.querySelectorAll('.message-item').forEach(item => {
+    // Update chat list selection
+    document.querySelectorAll('.chat-item').forEach(item => {
         item.classList.remove('active');
     });
-    const activeItem = document.querySelector(`.message-item[onclick="selectMessage(${messageId})"]`);
-    if (activeItem) {
-        activeItem.classList.add('active');
-        activeItem.classList.remove('unread');
+    const activeItem = document.querySelector(`.chat-item[onclick="selectConversation('${senderKey}')"]`);
+    if (activeItem) activeItem.classList.add('active');
+    
+    // Show chat content
+    document.getElementById('chat-empty').classList.add('hidden');
+    document.getElementById('chat-content').classList.remove('hidden');
+    
+    // Update header
+    const actor = ACTORS[senderKey] || ACTORS.system;
+    document.getElementById('chat-avatar').textContent = actor.emoji;
+    document.getElementById('chat-name').textContent = actor.name;
+    document.getElementById('chat-role').textContent = actor.role;
+    
+    // Everyone is a citizen - enable messaging for ALL conversations
+    const inputArea = document.getElementById('chat-input-area');
+    inputArea.innerHTML = `
+        <textarea class="chat-input" 
+                  id="chat-input" 
+                  placeholder="Type a message to ${actor.name}... (Enter to send, Ctrl+Enter for new line)"
+                  rows="1"
+                  onkeydown="handleKeyDown(event)"></textarea>
+        <button class="chat-send-btn" onclick="sendMessage()">
+            <span>➤</span>
+        </button>
+    `;
+    // Re-attach auto-resize
+    const input = document.getElementById('chat-input');
+    if (input) {
+        input.addEventListener('input', () => autoResize(input));
     }
     
-    // Fetch full message (auto-marks as read)
-    try {
-        const res = await fetch(`/api/messages/${messageId}`);
-        if (!res.ok) throw new Error('Failed to load message');
+    // Mark messages as read
+    await markConversationRead(senderKey);
+    
+    // Render chat bubbles
+    renderChatMessages();
+}
+
+async function markConversationRead(senderKey) {
+    const messages = messagesBySender[senderKey] || [];
+    const unreadIds = messages.filter(m => !m.is_read).map(m => m.message_id);
+    
+    // Mark each as read via API (fetching marks as read)
+    for (const id of unreadIds) {
+        try {
+            await fetch(`/api/messages/${id}`);
+        } catch (e) { /* ignore */ }
+    }
+    
+    // Update local state
+    messages.forEach(m => m.is_read = true);
+    
+    // Refresh unread counts
+    await loadUnreadCounts();
+    renderChatList();
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('chat-messages');
+    const messages = messagesBySender[currentSender] || [];
+    
+    if (messages.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <p>No messages yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    let lastDate = null;
+    
+    messages.forEach(msg => {
+        const msgDate = new Date(msg.created_at).toDateString();
         
-        const msg = await res.json();
-        renderMessageDetail(msg);
+        // Add date separator if new day
+        if (msgDate !== lastDate) {
+            html += `
+                <div class="date-separator">
+                    <span>${formatDate(msg.created_at)}</span>
+                </div>
+            `;
+            lastDate = msgDate;
+        }
         
-        // Update local state
-        const localMsg = allMessages.find(m => m.message_id === messageId);
-        if (localMsg) localMsg.is_read = true;
+        // Determine if sent by user or received from actor
+        const isSent = msg.direction === 'outgoing' || msg.sender_type === 'user';
+        const bubbleClass = isSent ? 'sent' : 'received';
         
-        // Refresh unread counts
-        loadUnreadCounts();
-    } catch (err) {
-        console.error('Failed to load message:', err);
+        // Parse body with markdown
+        const bodyHtml = marked.parse(msg.body || msg.preview || '');
+        
+        html += `
+            <div class="message-bubble ${bubbleClass}">
+                ${msg.subject ? `<div class="msg-subject">${escapeHtml(msg.subject)}</div>` : ''}
+                <div class="msg-text">${bodyHtml}</div>
+                <div class="msg-meta">
+                    <span>${formatTimeShort(msg.created_at)}</span>
+                    ${isSent ? '<span class="msg-check">✓✓</span>' : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+function handleKeyDown(event) {
+    const input = document.getElementById('chat-input');
+    
+    // Ctrl+Enter inserts newline
+    if (event.key === 'Enter' && event.ctrlKey) {
+        event.preventDefault();
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.substring(0, start) + '\n' + input.value.substring(end);
+        input.selectionStart = input.selectionEnd = start + 1;
+        autoResize(input);
+        return;
+    }
+    
+    // Enter alone sends message
+    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+        event.preventDefault();
+        sendMessage();
+        return;
     }
 }
 
-function renderMessageDetail(msg) {
-    document.getElementById('empty-detail').classList.add('hidden');
-    document.getElementById('message-content').classList.remove('hidden');
-    
-    const info = senderInfo[msg.sender_type] || senderInfo.system;
-    
-    document.getElementById('sender-avatar').textContent = info.emoji;
-    document.getElementById('sender-avatar').className = `sender-avatar ${msg.sender_type}`;
-    document.getElementById('sender-name').textContent = info.name;
-    document.getElementById('sender-role').textContent = info.role;
-    document.getElementById('message-time').textContent = formatTime(msg.created_at);
-    document.getElementById('message-subject').textContent = msg.subject || 'No subject';
-    
-    // Render markdown body
-    document.getElementById('message-body').innerHTML = marked.parse(msg.body);
-    
-    // Show/hide posting button
-    const postingBtn = document.getElementById('view-posting-btn');
-    if (msg.posting_id) {
-        postingBtn.classList.remove('hidden');
-        postingBtn.onclick = () => window.location.href = `/matches?posting=${msg.posting_id}`;
-    } else {
-        postingBtn.classList.add('hidden');
-    }
-    
-    // Store for delete
-    window.currentMessage = msg;
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 }
 
-async function deleteMessage() {
-    if (!window.currentMessage) return;
-    
-    if (!confirm('Delete this message?')) return;
-    
-    try {
-        const res = await fetch(`/api/messages/${window.currentMessage.message_id}`, {
-            method: 'DELETE'
-        });
-        if (!res.ok) throw new Error('Failed to delete');
-        
-        // Remove from local state
-        allMessages = allMessages.filter(m => m.message_id !== window.currentMessage.message_id);
-        currentMessageId = null;
-        
-        // Clear detail view
-        document.getElementById('empty-detail').classList.remove('hidden');
-        document.getElementById('message-content').classList.add('hidden');
-        
-        renderMessageList();
-        loadUnreadCounts();
-    } catch (err) {
-        console.error('Failed to delete message:', err);
+// Auto-resize on input
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('chat-input');
+    if (input) {
+        input.addEventListener('input', () => autoResize(input));
     }
-}
+});
 
-async function markAllRead() {
-    try {
-        const url = currentFilter === 'all' 
-            ? '/api/messages/mark-all-read'
-            : `/api/messages/mark-all-read?sender_type=${currentFilter}`;
-        
-        const res = await fetch(url, { method: 'POST' });
-        if (!res.ok) throw new Error('Failed to mark all read');
-        
-        // Update local state
-        allMessages.forEach(m => {
-            if (currentFilter === 'all' || m.sender_type === currentFilter) {
-                m.is_read = true;
+async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message || !currentSender) return;
+    
+    // Clear input
+    input.value = '';
+    
+    // Optimistically add to UI
+    const tempMsg = {
+        message_id: Date.now(),
+        sender_type: 'user',
+        direction: 'outgoing',
+        subject: null,
+        body: message,
+        preview: message,
+        created_at: new Date().toISOString(),
+        is_read: true
+    };
+    
+    messagesBySender[currentSender].push(tempMsg);
+    renderChatMessages();
+    
+    // Mira is special — route through /api/mira/chat so she actually replies
+    if (currentSender === 'mira') {
+        try {
+            const res = await fetch('/api/mira/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                const replyMsg = {
+                    message_id: Date.now() + 1,
+                    sender_type: 'mira',
+                    direction: 'incoming',
+                    subject: null,
+                    body: data.reply || 'Hmm...',
+                    preview: (data.reply || 'Hmm...').substring(0, 100),
+                    created_at: new Date().toISOString(),
+                    is_read: true
+                };
+                messagesBySender[currentSender].push(replyMsg);
+                renderChatMessages();
             }
+        } catch (err) {
+            console.warn('Mira chat failed:', err);
+        }
+        return;
+    }
+    
+    // All other actors — send via messages API
+    try {
+        const res = await fetch('/api/messages/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient_type: currentSender,
+                body: message
+            })
         });
         
-        renderMessageList();
-        loadUnreadCounts();
+        if (!res.ok) {
+            console.warn('Message may not have been persisted');
+        }
     } catch (err) {
-        console.error('Failed to mark all read:', err);
+        console.warn('Could not send message:', err);
     }
 }
 
-function formatTime(isoString) {
-    const date = new Date(isoString);
+// Utility functions
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatTime(dateStr) {
+    const date = new Date(dateStr);
     const now = new Date();
-    const diff = now - date;
+    const isToday = date.toDateString() === now.toDateString();
     
-    // Today
-    if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
-        return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    if (isToday) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
     
-    // Yesterday
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    if (date.getDate() === yesterday.getDate()) {
+    if (date.toDateString() === yesterday.toDateString()) {
         return 'Yesterday';
     }
     
-    // This week
-    if (diff < 7 * 24 * 60 * 60 * 1000) {
-        return date.toLocaleDateString('de-DE', { weekday: 'short' });
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+        return date.toLocaleDateString([], { weekday: 'short' });
     }
     
-    // Older
-    return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+function formatTimeShort(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    
+    if (date.toDateString() === now.toDateString()) {
+        return 'Today';
+    }
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    }
+    
+    return date.toLocaleDateString([], { 
+        weekday: 'long',
+        month: 'long', 
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
 }
 </script>
 {% endblock %}

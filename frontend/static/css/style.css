@@ -536,7 +536,7 @@ body {
 /* Expand sidebar on hover (desktop only) */
 @media (min-width: 769px) {
     .sidebar:hover {
-        width: 220px;
+        width: 320px !important;  /* Wide enough for 'Meine Stellenangebote' */
     }
     
     .sidebar:hover .nav-label {
@@ -722,6 +722,33 @@ body {
     --text-primary: #f7fafc;
     --text-secondary: #a0aec0;
     --border-color: #4a5568;
+    color-scheme: dark;  /* Tell Chrome we handle dark mode — don't auto-invert */
+}
+
+/* Force emoji icons to render in original colors (Chrome dark mode fix) */
+/* NOTE: .summary-icon now uses PNGs, so only next-step-icon needs this */
+[data-theme="dark"] .next-step-icon,
+[data-theme="dark"] .feature-icon,
+[data-theme="dark"] .empty-icon {
+    color: initial !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    forced-color-adjust: none;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", sans-serif;
+}
+
+[data-theme="dark"] .mira-fab,
+[data-theme="dark"] .nav-icon-img {
+    filter: none !important;
+    -webkit-filter: none !important;
+    forced-color-adjust: none;
+}
+
+/* Ensure PNG icons in sidebar stay visible in dark mode */
+[data-theme="dark"] .nav-icon-wrap {
+    filter: none !important;
+    -webkit-filter: none !important;
+    forced-color-adjust: none;
 }
 
 [data-theme="dark"] .header-bar {
@@ -852,7 +879,7 @@ body {
 [data-theme="dark"] .job-title { color: var(--text-primary); }
 [data-theme="dark"] .job-location { color: var(--text-muted); }
 [data-theme="dark"] .search-input { background: rgba(255,255,255,0.1); color: var(--text-primary); border-color: var(--border-color); }
-[data-theme="dark"] .search-input::placeholder { color: var(--text-muted); }
+[data-theme="dark"] .search-input::placeholder { color: #cbd5e1 !important; opacity: 1 !important; }  /* Lighter placeholder for visibility */
 [data-theme="dark"] .user-name { color: var(--text-secondary); }
 [data-theme="dark"] .nav-divider { background: var(--border-color); }
 [data-theme="dark"] .sidebar-footer { border-color: var(--border-color); }
@@ -1044,7 +1071,7 @@ body {
 /* Expand sidebar on hover (desktop only) */
 @media (min-width: 769px) {
     .sidebar:hover {
-        width: 220px;
+        width: 320px !important;  /* Wide enough for 'Meine Stellenangebote' */
     }
     
     .sidebar:hover .nav-label {
@@ -1659,6 +1686,20 @@ body {
     box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
 }
 
+/* Incoming message vibrate animation */
+.mira-fab.mira-incoming {
+    animation: mira-vibrate 0.15s ease-in-out 6;
+    box-shadow: 0 4px 30px rgba(102, 126, 234, 0.7), 0 0 0 0 rgba(102, 126, 234, 0.4);
+}
+
+@keyframes mira-vibrate {
+    0% { transform: rotate(0deg) scale(1.1); }
+    25% { transform: rotate(-12deg) scale(1.15); }
+    50% { transform: rotate(0deg) scale(1.1); }
+    75% { transform: rotate(12deg) scale(1.15); }
+    100% { transform: rotate(0deg) scale(1.1); }
+}
+
 .mira-fab-icon, .mira-fab-close {
     font-size: 1.5rem;
     color: white;
@@ -2034,11 +2075,16 @@ body {
 /* Summary Cards */
 .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem;
     padding: 0 2rem 2rem;
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
+}
+
+/* Home stats: 5 cards in a row on wide screens */
+.summary-cards.home-stats {
+    grid-template-columns: repeat(5, 1fr);
 }
 
 .summary-card {
@@ -2065,6 +2111,12 @@ body {
 
 .summary-icon {
     font-size: 2.5rem;
+}
+
+.summary-icon img {
+    width: 2.5rem;
+    height: 2.5rem;
+    object-fit: contain;
 }
 
 .summary-content {
@@ -2246,6 +2298,10 @@ body {
     
     .summary-cards {
         padding: 0 1rem 1.5rem;
+    }
+    
+    .summary-cards.home-stats {
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .next-steps-section {
@@ -2732,6 +2788,12 @@ body {
     font-size: 4rem;
     display: block;
     margin-bottom: 1rem;
+}
+
+.empty-icon img {
+    width: 4rem;
+    height: 4rem;
+    object-fit: contain;
 }
 
 .empty-state h2 {
@@ -3996,3 +4058,305 @@ body {
     }
 }
 
+
+/* ===== Reply Box ===== */
+.reply-box {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.reply-box.hidden {
+    display: none;
+}
+
+.reply-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.reply-header .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+}
+
+.reply-header .btn-close:hover {
+    color: #333;
+}
+
+#reply-body {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 100px;
+}
+
+#reply-body:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.reply-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* Dark mode for reply box */
+[data-theme="dark"] .reply-box {
+    background: #2d2d2d;
+    border-color: #444;
+}
+
+[data-theme="dark"] .reply-header {
+    color: #ccc;
+}
+
+[data-theme="dark"] .reply-header .btn-close {
+    color: #888;
+}
+
+[data-theme="dark"] .reply-header .btn-close:hover {
+    color: #fff;
+}
+
+[data-theme="dark"] #reply-body {
+    background: #1e1e1e;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] #reply-body:focus {
+    border-color: #7c3aed;
+}
+
+/* ===== Dark Mode Fixes for Messages Page ===== */
+[data-theme="dark"] .message-list {
+    background: #1e1e1e;
+    border-color: #333;
+}
+
+[data-theme="dark"] .message-item {
+    background: #252525;
+    border-color: #333;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .message-item:hover {
+    background: #2d2d2d;
+}
+
+[data-theme="dark"] .message-item.active {
+    background: #333;
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .message-excerpt {
+    color: #aaa;
+}
+
+[data-theme="dark"] .message-meta {
+    color: #888;
+}
+
+[data-theme="dark"] .message-sender {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .message-content h2 {
+    color: #fff;
+}
+
+[data-theme="dark"] .message-body {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .message-header {
+    border-color: #333;
+}
+
+[data-theme="dark"] .message-filter-btn {
+    color: #ccc;
+    background: #333;
+    border-color: #444;
+}
+
+[data-theme="dark"] .message-filter-btn:hover,
+[data-theme="dark"] .message-filter-btn.active {
+    background: #444;
+    color: #fff;
+}
+
+[data-theme="dark"] .no-message-selected {
+    color: #888;
+}
+
+[data-theme="dark"] .empty-state {
+    color: #888;
+}
+
+/* ============================================
+   MIRA INTERACTIVE TOUR (Driver.js)
+   ============================================ */
+
+/* Tour popover styling */
+.mira-tour-popover {
+    --driver-popover-bg: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+}
+
+.driver-popover.mira-tour-popover {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 16px 20px 8px;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-description {
+    padding: 0 20px 16px;
+    color: #444;
+}
+
+/* Mira tour content inside popover */
+.mira-tour-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.mira-tour-content p {
+    margin: 0 0 12px 0;
+}
+
+.mira-tour-content ul {
+    margin: 8px 0 12px 0;
+    padding-left: 20px;
+}
+
+.mira-tour-content li {
+    margin: 4px 0;
+}
+
+.mira-tour-content strong {
+    color: var(--primary, #FF6B35);
+}
+
+.mira-tour-action {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 12px !important;
+    font-weight: 500;
+    border-left: 3px solid var(--primary, #FF6B35);
+}
+
+/* Navigation buttons */
+.driver-popover.mira-tour-popover .driver-popover-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #eee;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-prev-btn,
+.driver-popover.mira-tour-popover .driver-popover-next-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-next-btn {
+    background: var(--primary, #FF6B35);
+    color: white;
+    border: none;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-next-btn:hover {
+    background: #e55a2a;
+    transform: translateY(-1px);
+}
+
+.driver-popover.mira-tour-popover .driver-popover-prev-btn {
+    background: #f5f5f5;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-prev-btn:hover {
+    background: #eee;
+}
+
+/* Progress indicator */
+.driver-popover.mira-tour-popover .driver-popover-progress-text {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+/* Close button */
+.driver-popover.mira-tour-popover .driver-popover-close-btn {
+    color: #888;
+    font-size: 1.2rem;
+}
+
+.driver-popover.mira-tour-popover .driver-popover-close-btn:hover {
+    color: #333;
+}
+
+/* Highlight stage */
+.driver-active-element {
+    outline: 3px solid var(--primary, #FF6B35) !important;
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .driver-popover.mira-tour-popover {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+}
+
+[data-theme="dark"] .driver-popover.mira-tour-popover .driver-popover-title {
+    color: #fff;
+}
+
+[data-theme="dark"] .driver-popover.mira-tour-popover .driver-popover-description {
+    color: #ccc;
+}
+
+[data-theme="dark"] .mira-tour-action {
+    background: linear-gradient(135deg, #3d2a1a 0%, #4a3020 100%);
+    color: #ffcc80;
+}
+
+[data-theme="dark"] .driver-popover.mira-tour-popover .driver-popover-footer {
+    border-top-color: #444;
+}
+
+[data-theme="dark"] .driver-popover.mira-tour-popover .driver-popover-prev-btn {
+    background: #444;
+    color: #ccc;
+    border-color: #555;
+}
+
+[data-theme="dark"] .driver-popover.mira-tour-popover .driver-popover-prev-btn:hover {
+    background: #555;
+}

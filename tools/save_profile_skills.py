@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Save Profile Skills Actor
@@ -27,7 +28,7 @@ def get_connection():
         host='localhost',
         database='turing',
         user='base_admin',
-        password='base_yoga_secure_2025'
+        password=os.getenv('DB_PASSWORD', '')
     )
 
 

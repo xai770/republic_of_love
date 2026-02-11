@@ -8,22 +8,16 @@
 # flowchart TD
 #     subgraph "1. FETCH (network-bound)"
 #         A1[🇩🇪 AA API<br/>16 states] --> A2[💼 DB API]
-#         A2 --> A3[🔄 Backfill missing<br/>job_descriptions]
 #     end
 #     
-#     subgraph "2. ENRICH (GPU-bound)"
-#         B1[📝 Extract summaries<br/>DB only]
+#     subgraph "2. ENRICH (pull_daemon --run-once)"
+#         B1[job_description_backfill] --> B2[external_partner_scrape]
+#         B2 --> B3[extracted_summary] --> B4[embedding_generator x3]
+#         B4 --> B5[domain_gate_classifier x10]
 #     end
 #     
-#     subgraph "3. EMBED (GPU-bound, parallel)"
-#         C1[Worker 1] 
-#         C2[Worker 2]
-#         C3[Worker 3]
-#     end
-#     
-#     A3 --> B1
-#     B1 --> C1 & C2 & C3
-#     C1 & C2 & C3 --> D[📊 Summary stats]
+#     A2 --> B1
+#     B5 --> D[📊 Summary stats]
 # ```
 
 set -e
@@ -62,12 +56,38 @@ else
 fi
 
 # Cleanup function to resume Berufenet on exit (even on error)
+# ============================================================================
+# NOTIFICATION HELPER - Push alerts via ntfy.sh
+# ============================================================================
+# Subscribe on phone: ntfy.sh/ty-pipeline (install ntfy app from F-Droid/Play/App Store)
+NTFY_TOPIC="ty-pipeline"
+
+notify() {
+    local title="$1"
+    local message="$2"
+    local priority="${3:-default}"  # low, default, high, urgent
+    local tags="${4:-}"             # emoji tags: warning, white_check_mark, etc.
+    
+    curl -s \
+        -H "Title: $title" \
+        -H "Priority: $priority" \
+        ${tags:+-H "Tags: $tags"} \
+        -d "$message" \
+        "https://ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || true
+}
+
 cleanup() {
+    local EXIT_CODE=$?
     if [ "$BERUFENET_PAUSED" = "1" ]; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] ▶️  Resuming Berufenet job..."
         kill -CONT $BERUFENET_PIDS 2>/dev/null || true
     fi
     rm -f "$LOCKFILE"
+    
+    # Send notification on failure
+    if [ $EXIT_CODE -ne 0 ]; then
+        notify "Pipeline FAILED" "nightly_fetch.sh crashed with exit code $EXIT_CODE at $(date '+%H:%M'). Check logs." "urgent" "rotating_light"
+    fi
 }
 trap cleanup EXIT
 
@@ -240,6 +260,23 @@ fi
 echo "$LOG_PREFIX Starting nightly fetch pipeline (since=$SINCE days, max_jobs=$MAX_JOBS${FORCE:+, FORCED})"
 
 # ============================================================================
+# PRE-FLIGHT SMOKE TESTS - Catch import errors before they kill a 2-hour run
+# ============================================================================
+echo "$LOG_PREFIX [0/3] Pre-flight smoke tests..."
+python3 -c "
+from actors.postings__arbeitsagentur_CU import main; print('  ✅ arbeitsagentur_CU')
+from actors.postings__deutsche_bank_CU import main; print('  ✅ deutsche_bank_CU')
+from core.pull_daemon import PullDaemon; print('  ✅ pull_daemon')
+from tools.populate_domain_gate import main; print('  ✅ populate_domain_gate')
+from core.database import get_connection, get_connection_raw; print('  ✅ core.database')
+print('All imports OK')
+"
+if [ $? -ne 0 ]; then
+    echo "$LOG_PREFIX ❌ PRE-FLIGHT FAILED - aborting pipeline"
+    exit 1
+fi
+
+# ============================================================================
 # STEP 1: FETCH POSTINGS (network-bound)
 # ============================================================================
 
@@ -247,43 +284,27 @@ echo "$LOG_PREFIX Starting nightly fetch pipeline (since=$SINCE days, max_jobs=$
 # Using --states (16 Bundesländer) instead of --nationwide for better progress tracking
 # and more reliable batching (smaller queries, less likely to timeout)
 # NOTE: Using --no-descriptions for speed - descriptions are backfilled in step 1c
-echo "$LOG_PREFIX [1/6] Fetching Arbeitsagentur (16 states, metadata only)..."
+echo "$LOG_PREFIX [1/3] Fetching Arbeitsagentur (16 states, metadata only)..."
 python3 actors/postings__arbeitsagentur_CU.py --since $SINCE --states --max-jobs $MAX_JOBS --no-descriptions $FORCE_FLAG
 
 # 1b. Deutsche Bank (corporate careers API - ~1 minute)
-echo "$LOG_PREFIX [2/6] Fetching Deutsche Bank..."
+echo "$LOG_PREFIX [2/3] Fetching Deutsche Bank..."
 python3 actors/postings__deutsche_bank_CU.py --max-jobs $MAX_JOBS
 
-# 1c. Backfill missing job descriptions (scrape retries for failed fetches)
-# ~30% of AA scrapes fail due to rate limiting - this catches them
-# Use high batch limit to catch up on backlog (rate limiting will naturally throttle)
-echo "$LOG_PREFIX [3/5] Backfilling missing job descriptions..."
-python3 actors/postings__job_description_U.py --batch 50000
-
 # ============================================================================
-# STEP 2: EXTRACT SUMMARIES (GPU-bound, LLM) - DB ONLY
+# STEP 3: ENRICHMENT via Pull Daemon (replaces old steps 3–5)
 # ============================================================================
-# AA postings don't need summaries - we use job_description directly for matching
-# DB postings need summaries to strip corporate boilerplate
-echo "$LOG_PREFIX [4/5] Extracting summaries (DB only)..."
-python3 actors/postings__extracted_summary_U.py --batch 5000 --source deutsche_bank
-
-# ============================================================================
-# STEP 5: GENERATE EMBEDDINGS (GPU-bound, parallel)
-# ============================================================================
-# Content-addressed design means workers don't conflict - they skip already-embedded text
-# NOTE: Embeddings use match_text = COALESCE(extracted_summary, job_description)
-# No batch limit - process ALL pending (content-addressed = no duplicates)
-echo "$LOG_PREFIX [5/5] Starting 3 parallel embedding workers..."
-python3 actors/postings__embedding_U.py --batch 100000 &
-PID1=$!
-python3 actors/postings__embedding_U.py --batch 100000 &
-PID2=$!
-python3 actors/postings__embedding_U.py --batch 100000 &
-PID3=$!
-
-wait $PID1 $PID2 $PID3
-echo "$LOG_PREFIX All embedding workers complete"
+# Pull daemon runs all enrichment actors in priority order:
+#   - job_description_backfill (prio 60): scrape missing descriptions
+#   - external_partner_scrape  (prio 55): partner site descriptions
+#   - extracted_summary        (prio 40): LLM summaries for DB postings
+#   - embedding_generator      (prio 30): bge-m3 embeddings, 3 concurrent
+#   - domain_gate_classifier   (prio 20): KldB → domain mapping, 10 concurrent
+# Each actor has a work_query that self-discovers pending items.
+# Tickets track completion so nothing is processed twice.
+# --run-once exits when all actors report zero pending work.
+echo "$LOG_PREFIX [3/3] Running enrichment pipeline (pull_daemon --run-once)..."
+python3 core/pull_daemon.py --run-once --limit 50000
 
 # Summary
 echo "$LOG_PREFIX Pipeline complete. Summary:"
@@ -329,3 +350,10 @@ with get_connection() as conn:
     print(f'  Embeddings:       {embeds:,}')
     print(f'  Pending embed:    {pending:,}')
 "
+
+# Send success notification
+notify "Pipeline OK" "$(date '+%H:%M') — Pipeline complete. Check logs for stats." "low" "white_check_mark"
+
+# Post pipeline summary to talent.yoga messages
+echo "$LOG_PREFIX Sending pipeline health report to talent.yoga..."
+python3 tools/pipeline_health.py --notify

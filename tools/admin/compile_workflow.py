@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Turing Workflow Compiler
@@ -40,7 +41,7 @@ def get_workflow_definition(workflow_id: int):
     conn = psycopg2.connect(
         dbname='turing',
         user='base_admin',
-        password='base_yoga_secure_2025',
+        password=os.getenv('DB_PASSWORD', ''),
         host='localhost'
     )
     

@@ -304,7 +304,7 @@ ps aux | grep wave_processor
 tail -50 logs/workflow_3001_*.log | grep "posting_completed"
 
 # Check projection state
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c \
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c \
 "SELECT current_step, current_status, COUNT(*) FROM posting_state_projection GROUP BY current_step, current_status;"
 ```
 
@@ -824,7 +824,7 @@ ps aux | grep wave_processor | grep -v grep
 tail -100 logs/workflow_3001_*.log | grep "posting_completed"
 
 # Current state
-PGPASSWORD=base_yoga_secure_2025 psql -h localhost -U base_admin -d turing -c \
+PGPASSWORD=${DB_PASSWORD} psql -h localhost -U base_admin -d turing -c \
 "SELECT current_step, current_status, COUNT(*) FROM posting_state_projection GROUP BY current_step, current_status;"
 ```
 

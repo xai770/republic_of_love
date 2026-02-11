@@ -330,7 +330,7 @@ conn = psycopg2.connect(
     port=5432,
     dbname='turing',
     user='base_admin',
-    password='base_yoga_secure_2025',
+    password='${DB_PASSWORD}',
     cursor_factory=psycopg2.extras.RealDictCursor
 )
 
@@ -435,7 +435,7 @@ conn = psycopg2.connect(
     port=5432,
     dbname='turing',
     user='base_admin',
-    password='base_yoga_secure_2025',
+    password='${DB_PASSWORD}',
     cursor_factory=psycopg2.extras.RealDictCursor
 )
 
@@ -534,7 +534,7 @@ conn = psycopg2.connect(
     port=5432,
     dbname='turing',
     user='base_admin',
-    password='base_yoga_secure_2025',
+    password='${DB_PASSWORD}',
     cursor_factory=psycopg2.extras.RealDictCursor
 )
 

@@ -32,3 +32,9 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8000')
 
 # App
 DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
+
+# Security guard: refuse to start with default SECRET_KEY in production
+if not DEBUG and SECRET_KEY == 'change-me-in-production-use-openssl-rand-hex-32':
+    raise RuntimeError(
+        "FATAL: SECRET_KEY is not set. Generate one with: openssl rand -hex 32"
+    )

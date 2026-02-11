@@ -104,7 +104,7 @@ def get_ollama_status():
     """Check if Ollama is running and what model is loaded."""
     try:
         result = subprocess.run(
-            ['curl', '-s', 'http://localhost:11434/api/tags'],
+            ['curl', '-s', os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/tags'],
             capture_output=True, text=True, timeout=2
         )
         if result.returncode == 0:
@@ -112,7 +112,7 @@ def get_ollama_status():
             data = json.loads(result.stdout)
             models = [m['name'] for m in data.get('models', [])]
             return {'status': 'running', 'models': len(models)}
-    except:
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
         pass
     return {'status': 'not running'}
 
@@ -126,7 +126,7 @@ def get_daemon_status():
         if result.returncode == 0:
             pids = result.stdout.strip().split('\n')
             return {'status': 'running', 'pids': pids}
-    except:
+    except (subprocess.SubprocessError, OSError):
         pass
     return {'status': 'stopped'}
 

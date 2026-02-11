@@ -76,7 +76,7 @@ def save_debate_reasoning(entity_id: int, debate_result: dict):
         host=os.environ.get('DB_HOST', 'localhost'),
         dbname=os.environ.get('DB_NAME', 'turing'),
         user=os.environ.get('DB_USER', 'base_admin'),
-        password=os.environ.get('DB_PASSWORD', 'base_yoga_secure_2025')
+        password=os.environ.get('DB_PASSWORD', '')
     )
     
     try:
@@ -227,7 +227,7 @@ def process_pending_proposals() -> dict:
         host=os.environ.get('DB_HOST', 'localhost'),
         dbname=os.environ.get('DB_NAME', 'turing'),
         user=os.environ.get('DB_USER', 'base_admin'),
-        password=os.environ.get('DB_PASSWORD', 'base_yoga_secure_2025')
+        password=os.environ.get('DB_PASSWORD', '')
     )
     cur = conn.cursor(cursor_factory=RealDictCursor)
     

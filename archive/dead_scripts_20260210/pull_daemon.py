@@ -23,7 +23,9 @@ import atexit
 import fcntl
 import logging
 import os
+import random
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -38,6 +40,42 @@ import psycopg2.extras
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# ============================================================================
+# VPN ROTATION CONFIG (for handling 403 rate limits from AA)
+# Note: WireGuard didn't work on this system, switched to OpenVPN (Feb 2026)
+# ProtonVPN's de config load-balances across German servers - reconnect = new IP
+# ============================================================================
+CONSECUTIVE_403_THRESHOLD = 3  # Trigger VPN rotation after this many 403s
+MAX_VPN_ROTATIONS = 5          # Give up after this many rotations
+
+VPN_SCRIPT = PROJECT_ROOT / 'scripts' / 'vpn.sh'
+
+
+def _rotate_openvpn(current_index: int, logger) -> int:
+    """
+    Rotate VPN to get new IP. Returns incremented index for tracking.
+    
+    ProtonVPN's de config load-balances across German servers.
+    Reconnecting gives a new IP automatically.
+    """
+    logger.info("🔄 ROTATING VPN (reconnect for new IP)")
+    
+    try:
+        result = subprocess.run(
+            [str(VPN_SCRIPT), 'rotate'],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode != 0:
+            logger.warning(f"  ⚠️  VPN rotate failed: {result.stderr}")
+        else:
+            logger.info(f"  ✅ VPN rotated")
+            time.sleep(2)  # Let connection stabilize
+    except subprocess.TimeoutExpired:
+        logger.warning(f"  ⚠️  VPN rotate timed out")
+    except Exception as e:
+        logger.warning(f"  ⚠️  VPN rotation error: {e}")
+    
+    return current_index + 1  # Just increment for tracking rotation count
 from core.database import get_connection
 # Note: WaveRunner no longer used here - batcher.py handles execution
 
@@ -105,6 +143,11 @@ class PullDaemon:
         self.last_reap = 0
         self.last_heartbeat = 0
         self.total_processed = 0  # Track for --limit
+        
+        # VPN rotation state (for handling 403 rate limits)
+        self._consecutive_403s = 0
+        self._vpn_rotation_count = 0
+        self._current_vpn_index = -1  # -1 = not using VPN yet
         
         self.logger = self._setup_logging()
         
@@ -441,7 +484,7 @@ class PullDaemon:
                 WHERE i.task_type_id = {conv['task_type_id']}
                   AND i.subject_id = c.subject_id
                   AND i.subject_type = '{subject_type}'
-                  AND i.status IN ('pending', 'running', 'completed')
+                  AND i.status IN ('pending', 'running', 'completed', 'failed')
                   AND i.enabled = TRUE
             )
             LIMIT {limit}
@@ -475,7 +518,7 @@ class PullDaemon:
                 SELECT 1 FROM tickets i
                 WHERE i.task_type_id = {conv['task_type_id']}
                   AND i.subject_id = p.posting_id
-                  AND i.status IN ('pending', 'running', 'completed')
+                  AND i.status IN ('pending', 'running', 'completed', 'failed')
                   AND i.enabled = TRUE
             )
             LIMIT {limit}
@@ -539,12 +582,34 @@ class PullDaemon:
                     # Check for soft failures (actor returned success: False)
                     if isinstance(result, dict) and result.get('success') is False:
                         error_msg = result.get('error', 'Actor returned success: False')
+                        http_status = result.get('http_status')
+                        
+                        # Track 403s for VPN rotation
+                        if http_status == 403 or '403' in str(error_msg):
+                            self._consecutive_403s += 1
+                            self.logger.warning(
+                                f"  ⚠️ HTTP 403 detected ({self._consecutive_403s}/{CONSECUTIVE_403_THRESHOLD})"
+                            )
+                            
+                            # Trigger VPN rotation if threshold reached
+                            if self._consecutive_403s >= CONSECUTIVE_403_THRESHOLD:
+                                if not self._handle_rate_limit():
+                                    # VPN rotation exhausted - stop processing
+                                    self._fail_ticket(ticket_id, f"Rate limit: VPN rotation exhausted")
+                                    return False
+                                # Retry this subject after VPN rotation
+                                self._fail_ticket(ticket_id, f"Retrying after VPN rotation")
+                                continue
+                        
                         raise RuntimeError(f"Actor failed: {error_msg}")
                     
                     self._complete_ticket(ticket_id, result)
                 else:
                     # TaskTypeal: WaveRunner claims and processes
                     self._execute_task_typeal(conv, subject, ticket_id)
+                
+                # Success - reset 403 counter
+                self._consecutive_403s = 0
                 
                 self.logger.info(
                     f"  ✅ {conv['task_type_name']} completed for {subject_type}:{subject_id}"
@@ -553,6 +618,20 @@ class PullDaemon:
             except Exception as e:
                 # Rollback any aborted transaction before recording failure
                 self.conn.rollback()
+                
+                # Check for 403 in exception message too
+                error_str = str(e)
+                if '403' in error_str or 'rate limit' in error_str.lower():
+                    self._consecutive_403s += 1
+                    if self._consecutive_403s >= CONSECUTIVE_403_THRESHOLD:
+                        if self._handle_rate_limit():
+                            # VPN rotated - retry
+                            self._fail_ticket(ticket_id, f"Retrying after VPN rotation")
+                            continue
+                        else:
+                            # Exhausted
+                            self._fail_ticket(ticket_id, f"Rate limit: VPN rotation exhausted")
+                            return False
                 
                 if attempt == 0:
                     # First failure - log warning and retry
@@ -567,14 +646,37 @@ class PullDaemon:
         
         return False  # Should not reach here
     
+    def _handle_rate_limit(self) -> bool:
+        """
+        Handle rate limiting by rotating VPN.
+        
+        Returns True if VPN rotated successfully, False if exhausted.
+        """
+        self._vpn_rotation_count += 1
+        
+        if self._vpn_rotation_count > MAX_VPN_ROTATIONS:
+            self.logger.error(
+                f"🛑 RATE LIMIT: Exhausted all {MAX_VPN_ROTATIONS} VPN rotations, giving up"
+            )
+            return False
+        
+        self.logger.warning(
+            f"🛑 RATE LIMIT HIT - {self._consecutive_403s} consecutive 403s, rotating VPN #{self._vpn_rotation_count}..."
+        )
+        
+        self._current_vpn_index = _rotate_openvpn(self._current_vpn_index, self.logger)
+        self._consecutive_403s = 0  # Reset counter after rotation
+        
+        return True
+    
     def _is_thick_actor(self, conv: Dict) -> bool:
         """
         Determine if task_type uses thick actor pattern.
         
-        Thick actors have execution_type='thick' or 'script' and execute directly.
-        'thin' actors require WaveRunner infrastructure.
+        Thick actors have execution_type='thick', 'script', or 'python_script'
+        and execute directly. 'thin' actors require WaveRunner infrastructure.
         """
-        return conv.get('execution_type') in ('thick', 'script')
+        return conv.get('execution_type') in ('thick', 'script', 'python_script')
     
     def _check_lint_gate(self, conv: Dict) -> bool:
         """

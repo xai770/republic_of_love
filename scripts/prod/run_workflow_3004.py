@@ -98,7 +98,7 @@ def call_llm(skills_batch, conn):
     # Call Ollama API directly
     try:
         response = requests.post(
-            'http://localhost:11434/api/generate',
+            os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate',
             json={
                 'model': 'qwen2.5:7b',
                 'prompt': prompt,

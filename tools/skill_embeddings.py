@@ -42,6 +42,8 @@ from typing import List, Dict, Tuple, Optional
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+import os
+
 from core.database import get_connection
 import psycopg2.extras
 
@@ -49,7 +51,7 @@ import psycopg2.extras
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-OLLAMA_URL = "http://localhost:11434/api/embeddings"
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
 DEFAULT_MODEL = "bge-m3:567m"
 SIMILARITY_THRESHOLD_CONFIDENT = 0.70  # "Same concept"
 SIMILARITY_THRESHOLD_RELATED = 0.60    # "Related concept"

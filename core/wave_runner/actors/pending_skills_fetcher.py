@@ -135,7 +135,7 @@ if __name__ == "__main__":
     if not sys.stdin.isatty():
         try:
             input_data = json.load(sys.stdin)
-        except:
+        except (json.JSONDecodeError, ValueError):
             pass
     
     # Load .env if exists
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         host=os.getenv('DB_HOST', 'localhost'),
         dbname=os.getenv('DB_NAME', 'turing'),
         user=os.getenv('DB_USER', 'base_admin'),
-        password=os.getenv('DB_PASSWORD', 'base_yoga_secure_2025')
+        password=os.getenv('DB_PASSWORD', '')
     )
     
     try:

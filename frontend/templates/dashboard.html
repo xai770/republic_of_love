@@ -12,58 +12,51 @@
     <main class="main-content">
         <!-- T004: Home Redesign — Mira-centered, no job cards -->
         
-        <!-- Mira Greeting (Front and Center) -->
-        <section class="mira-greeting-section">
-            <div class="mira-greeting-card">
-                <div class="mira-avatar-large">🧘</div>
-                <div class="mira-greeting-content">
-                    <h1 class="mira-greeting-text">{{ t('dashboard.welcome', name=(user.display_name.split()[0] if user.display_name else 'there')) }}</h1>
-                    <p class="mira-subtext" id="mira-status-text">{{ t('dashboard.mira_checking') }}</p>
-                </div>
-            </div>
-            
-            <!-- Inline Mira Chat -->
-            <div class="mira-inline-chat">
-                <div class="mira-inline-messages" id="mira-inline-messages">
-                    <div class="mira-message mira-message-bot">
-                        <span class="mira-msg-avatar">🧘</span>
-                        <div class="mira-msg-bubble">{{ t('dashboard.mira_intro') }}</div>
-                    </div>
-                </div>
-                <div class="mira-inline-input">
-                    <input type="text" id="mira-inline-input" placeholder="{{ t('dashboard.mira_placeholder') }}" onkeydown="if(event.key==='Enter')sendInlineMessage()">
-                    <button onclick="sendInlineMessage()">➤</button>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Summary Cards (No job lists, just stats) -->
-        <section class="summary-cards">
-            <a href="/matches" class="summary-card">
-                <div class="summary-icon">🎯</div>
+        <!-- Home Stats — 5 cards, large friendly letters -->
+        <section class="summary-cards home-stats">
+            <a href="/profile" class="summary-card">
+                <div class="summary-icon"><img src="/static/images/icons/clipboard.png" alt="📋"></div>
                 <div class="summary-content">
-                    <span class="summary-number" id="stat-matches">—</span>
-                    <span class="summary-label">{{ t('dashboard.matches_found') }}</span>
+                    <span class="summary-number"><span id="stat-resume">—</span>%</span>
+                    <span class="summary-label">{{ t('dashboard.resume_complete') if t('dashboard.resume_complete') != 'dashboard.resume_complete' else 'Lebenslauf' }}</span>
                 </div>
-                <div class="summary-detail" id="match-detail">{{ t('dashboard.click_to_review') }}</div>
+                <div class="summary-detail" id="resume-detail">{{ t('dashboard.click_to_complete') }}</div>
             </a>
             
-            <a href="/profile" class="summary-card">
-                <div class="summary-icon">📋</div>
+            <a href="/matches" class="summary-card">
+                <div class="summary-icon"><img src="/static/images/icons/sparkles.png" alt="✨"></div>
                 <div class="summary-content">
-                    <span class="summary-number"><span id="stat-profile">—</span>%</span>
-                    <span class="summary-label">{{ t('dashboard.profile_complete') }}</span>
+                    <span class="summary-number" id="stat-new">—</span>
+                    <span class="summary-label">{{ t('dashboard.new_matches') if t('dashboard.new_matches') != 'dashboard.new_matches' else 'Neue Matches' }}</span>
                 </div>
-                <div class="summary-detail">{{ t('dashboard.click_to_complete') }}</div>
+                <div class="summary-detail" id="new-detail"></div>
+            </a>
+            
+            <a href="/matches?filter=unread" class="summary-card">
+                <div class="summary-icon"><img src="/static/images/icons/eyes.png" alt="👀"></div>
+                <div class="summary-content">
+                    <span class="summary-number" id="stat-unread">—</span>
+                    <span class="summary-label">{{ t('dashboard.unread_matches') if t('dashboard.unread_matches') != 'dashboard.unread_matches' else 'Ungelesene' }}</span>
+                </div>
+                <div class="summary-detail" id="unread-detail"></div>
+            </a>
+            
+            <a href="/matches?filter=saved" class="summary-card">
+                <div class="summary-icon"><img src="/static/images/icons/purple_heart.png" alt="💜"></div>
+                <div class="summary-content">
+                    <span class="summary-number" id="stat-saved">—</span>
+                    <span class="summary-label">{{ t('dashboard.saved_matches') if t('dashboard.saved_matches') != 'dashboard.saved_matches' else 'Gespeicherte' }}</span>
+                </div>
+                <div class="summary-detail"></div>
             </a>
             
             <a href="/journey" class="summary-card">
-                <div class="summary-icon">🗺️</div>
+                <div class="summary-icon"><img src="/static/images/icons/envelope.png" alt="📨"></div>
                 <div class="summary-content">
-                    <span class="summary-number" id="journey-stage">—</span>
-                    <span class="summary-label">{{ t('dashboard.your_journey') }}</span>
+                    <span class="summary-number" id="stat-applied">—</span>
+                    <span class="summary-label">{{ t('dashboard.open_applications') if t('dashboard.open_applications') != 'dashboard.open_applications' else 'Bewerbungen' }}</span>
                 </div>
-                <div class="summary-detail">{{ t('dashboard.view_progress') }}</div>
+                <div class="summary-detail"></div>
             </a>
         </section>
         
@@ -175,47 +168,43 @@ function timeAgo(dateStr) {
     return I18N.common.months_ago.replace('{n}', Math.floor(days / 30));
 }
 
-// Load stats
+// Load home stats — single call for all 5 numbers
 async function loadStats() {
     try {
-        // Matches count (T011: use stats endpoint with proper filtering)
-        const matchRes = await fetch('/api/matches/stats');
-        if (matchRes.ok) {
-            const stats = await matchRes.json();
-            document.getElementById('stat-matches').textContent = stats.total_count;
-            // Update match detail text
-            const detail = document.getElementById('match-detail');
-            if (detail && stats.strong_count > 0) {
-                detail.textContent = `${stats.strong_count} starke Matches`;
-            }
+        const res = await fetch('/api/home/stats');
+        if (!res.ok) return;
+        const s = await res.json();
+        
+        // Resume completeness
+        document.getElementById('stat-resume').textContent = s.resume_complete;
+        const resumeDetail = document.getElementById('resume-detail');
+        if (resumeDetail) {
+            if (s.resume_complete === 100) resumeDetail.textContent = 'Vollständig ✓';
+            else if (s.resume_complete >= 50) resumeDetail.textContent = 'Fast fertig!';
+            else resumeDetail.textContent = 'Jetzt ergänzen';
         }
         
-        // Profile completeness (T010: use server-calculated value)
-        const profileRes = await fetch('/api/profiles/me');
-        if (profileRes.ok) {
-            const profile = await profileRes.json();
-            document.getElementById('stat-profile').textContent = profile.completeness;
-            // Update Mira status based on profile
-            const statusText = document.getElementById('mira-status-text');
-            if (statusText) {
-                if (profile.completeness < 50) {
-                    statusText.textContent = 'Lass uns dein Profil vervollständigen!';
-                } else if (profile.completeness < 100) {
-                    statusText.textContent = 'Dein Profil sieht gut aus! Noch ein paar Details?';
-                } else {
-                    statusText.textContent = 'Super! Dein Profil ist vollständig.';
-                }
-            }
-        } else {
-            document.getElementById('stat-profile').textContent = '0';
+        // New matches (never seen)
+        document.getElementById('stat-new').textContent = s.new_matches;
+        const newDetail = document.getElementById('new-detail');
+        if (newDetail && s.new_matches > 0) {
+            newDetail.textContent = 'Jetzt ansehen →';
         }
         
-        // Journey stage placeholder
-        const journeyEl = document.getElementById('journey-stage');
-        if (journeyEl) journeyEl.textContent = 'Start';
+        // Unread matches (seen < 5s)
+        document.getElementById('stat-unread').textContent = s.unread_matches;
+        const unreadDetail = document.getElementById('unread-detail');
+        if (unreadDetail && s.unread_matches > 0) {
+            unreadDetail.textContent = 'Noch nicht gelesen';
+        }
         
+        // Saved matches
+        document.getElementById('stat-saved').textContent = s.saved_matches;
+        
+        // Open applications
+        document.getElementById('stat-applied').textContent = s.open_applications;
     } catch (err) {
-        console.error('Failed to load stats:', err);
+        console.error('Failed to load home stats:', err);
     }
 }
 
@@ -364,7 +353,46 @@ document.addEventListener('DOMContentLoaded', () => {
     loadNextSteps();
     loadDailyQuote();
     loadNotifications();
+    triggerMiraGreeting();
 });
+
+// Mira greeting → vibrate the FAB, then auto-open with LLM greeting
+async function triggerMiraGreeting() {
+    const widget = document.getElementById('mira-widget');
+    const fab = widget.querySelector('.mira-fab');
+    
+    // Mark greeted immediately to prevent duplicate from toggleMiraChat
+    miraState.hasGreeted = true;
+    
+    // Step 1: Fetch the greeting in background
+    let greetingText = 'Hallo! Wie kann ich dir helfen?';
+    try {
+        const res = await fetch('/api/mira/greeting');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.greeting) greetingText = data.greeting;
+        }
+    } catch (e) { /* fallback */ }
+    
+    // Step 2: After a beat, vibrate the FAB to signal incoming
+    setTimeout(() => {
+        fab.classList.add('mira-incoming');
+        
+        // Step 3: After vibration, dramatically open and show greeting
+        setTimeout(() => {
+            fab.classList.remove('mira-incoming');
+            miraState.isOpen = true;
+            widget.classList.add('open');
+            addMiraMessage(greetingText, false);
+            
+            // Focus input after animation
+            setTimeout(() => {
+                const input = document.getElementById('mira-input');
+                if (input) input.focus();
+            }, 400);
+        }, 1200);
+    }, 800);
+}
 
 // T004: Load suggested next steps based on user state
 async function loadNextSteps() {
@@ -461,52 +489,6 @@ function loadDailyQuote() {
     if (el) el.textContent = quote;
 }
 
-// T004: Inline Mira chat (simpler version of floating widget)
-async function sendInlineMessage() {
-    const input = document.getElementById('mira-inline-input');
-    const messagesContainer = document.getElementById('mira-inline-messages');
-    const message = input.value.trim();
-    
-    if (!message) return;
-    
-    // Add user message
-    messagesContainer.innerHTML += `
-        <div class="mira-message mira-message-user">
-            <div class="mira-msg-bubble">${escapeHtml(message)}</div>
-        </div>
-    `;
-    input.value = '';
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
-    // Add thinking indicator
-    const thinkingId = 'mira-thinking-' + Date.now();
-    messagesContainer.innerHTML += `
-        <div class="mira-message mira-message-bot" id="${thinkingId}">
-            <span class="mira-msg-avatar">🧘</span>
-            <div class="mira-msg-bubble">...</div>
-        </div>
-    `;
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
-    try {
-        const res = await fetch('/api/mira/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
-        });
-        
-        if (res.ok) {
-            const data = await res.json();
-            document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = data.reply || data.response || 'Hmm...';
-        } else {
-            document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = 'Hmm, da ist etwas schiefgelaufen. Versuch es nochmal?';
-        }
-    } catch (err) {
-        document.getElementById(thinkingId).querySelector('.mira-msg-bubble').textContent = 'Verbindungsproblem. Bitte später nochmal versuchen.';
-    }
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
 // Close sidebar on outside click (mobile)
 document.addEventListener('click', (e) => {
     if (window.innerWidth <= 768) {
@@ -546,25 +528,19 @@ function toggleMiraChat() {
 }
 
 function loadMiraGreeting() {
-    const userName = "{{ current_user.name if current_user else '' }}".split(' ')[0];
-    const hour = new Date().getHours();
-    
-    let timeGreeting;
-    if (hour < 12) {
-        timeGreeting = 'Guten Morgen';
-    } else if (hour < 18) {
-        timeGreeting = 'Guten Tag';
-    } else {
-        timeGreeting = 'Guten Abend';
-    }
-    
-    const greetings = [
-        `${timeGreeting}${userName ? ', ' + userName : ''}! Ich bin Mira, deine Begleiterin hier bei talent.yoga. Wie kann ich dir heute helfen?`,
-        `Hallo${userName ? ' ' + userName : ''}! Schön, dich zu sehen. Ich bin Mira – wenn du Fragen hast, bin ich für dich da.`,
-    ];
-    
-    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-    addMiraMessage(greeting, false);
+    // Fetch LLM-generated greeting from Mira (with memory)
+    fetch('/api/mira/greeting')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+            if (data && data.greeting) {
+                addMiraMessage(data.greeting, false);
+            } else {
+                addMiraMessage('Hallo! Wie kann ich dir helfen?', false);
+            }
+        })
+        .catch(() => {
+            addMiraMessage('Hallo! Wie kann ich dir helfen?', false);
+        });
 }
 
 function addMiraMessage(content, isUser) {

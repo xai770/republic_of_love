@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey Board Prototype — talent.yoga</title>
+    <style>
+        :root {
+            --bg: #fefefe;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --path-color: #e2e8f0;
+            --path-complete: #22c55e;
+            --orange: #f97316;
+            --purple: #8b5cf6;
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --yellow: #eab308;
+            --pink: #ec4899;
+        }
+        
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --path-color: #334155;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--purple);
+            color: white;
+        }
+        
+        /* ===== JOURNEY BOARD ===== */
+        .journey-board {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #fef3e2 0%, #f0fdf4 50%, #faf5ff 100%);
+            border-radius: 24px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: visible;
+        }
+        
+        [data-theme="dark"] .journey-board {
+            background: linear-gradient(135deg, #1e1b4b 0%, #134e4a 50%, #1e1b4b 100%);
+        }
+        
+        /* Decorative elements */
+        .journey-board::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .journey-board::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        /* ===== PATH LAYOUT ===== */
+        .journey-path {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* SVG Path connecting the stops */
+        .path-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: visible;
+        }
+        
+        .path-line {
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        /* Outline/glow layer */
+        .path-line-outline {
+            stroke-width: 22;
+            filter: url(#line-shadow);
+        }
+        
+        /* Main solid line (no animation) */
+        .path-line-main {
+            stroke-width: 14;
+        }
+        
+        .path-line-main.completed {
+            stroke: #22c55e;
+        }
+        
+        .path-line-main.current {
+            stroke: var(--purple);
+        }
+        
+        .path-line-main.future {
+            stroke: #94a3b8;
+        }
+        
+        /* Outline colors */
+        .path-line-outline.completed {
+            stroke: #fbbf24;
+        }
+        
+        .path-line-outline.current {
+            stroke: #c4b5fd;
+        }
+        
+        .path-line-outline.future {
+            stroke: #cbd5e1;
+        }
+        
+        /* Chevron images on paths */
+        .chevron-img {
+            opacity: 0.9;
+        }
+        
+        /* ===== JOURNEY STOPS ===== */
+        .journey-stop {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .journey-stop:hover {
+            transform: scale(1.05);
+        }
+        
+        .stop-bubble {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .stop-bubble.orange { background: linear-gradient(135deg, #fb923c, #f97316); }
+        .stop-bubble.purple { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
+        .stop-bubble.green { background: linear-gradient(135deg, #4ade80, #22c55e); }
+        .stop-bubble.blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+        .stop-bubble.yellow { background: linear-gradient(135deg, #fde047, #eab308); }
+        .stop-bubble.pink { background: linear-gradient(135deg, #f472b6, #ec4899); }
+        
+        .stop-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            max-width: 100px;
+            line-height: 1.2;
+        }
+        
+        /* Number badge */
+        .stop-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        }
+        
+        .stop-count.green-badge {
+            background: #22c55e;
+            box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+        }
+        
+        .stop-count.hidden {
+            display: none;
+        }
+        
+        /* Current position marker */
+        .journey-stop.current .stop-bubble {
+            box-shadow: 0 0 0 4px white, 0 0 0 8px var(--purple);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 4px white, 0 0 0 8px var(--purple); }
+            50% { box-shadow: 0 0 0 4px white, 0 0 0 12px rgba(139, 92, 246, 0.5); }
+        }
+        
+        /* Completed stops */
+        .journey-stop.completed .stop-bubble::after {
+            content: '✓';
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 22px;
+            height: 22px;
+            background: #22c55e;
+            color: white;
+            font-size: 0.75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+        
+        /* Future stops (dimmed) */
+        .journey-stop.future .stop-bubble {
+            opacity: 0.5;
+            filter: grayscale(0.3);
+        }
+        
+        .journey-stop.future .stop-label {
+            color: var(--text-muted);
+        }
+        
+        /* ===== BYPASS PATHS ===== */
+        .bypass-indicator {
+            position: absolute;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        
+        /* ===== ROW LAYOUTS (serpentine) ===== */
+        .row {
+            display: contents;
+        }
+        
+        /* Row 1: left to right */
+        .row-1 .stop-1 { grid-column: 1; grid-row: 1; }
+        .row-1 .stop-2 { grid-column: 2; grid-row: 1; }
+        .row-1 .stop-3 { grid-column: 3; grid-row: 1; }
+        .row-1 .stop-4 { grid-column: 4; grid-row: 1; }
+        
+        /* Row 2: right to left (serpentine) */
+        .row-2 .stop-5 { grid-column: 4; grid-row: 2; }
+        .row-2 .stop-6 { grid-column: 3; grid-row: 2; }
+        .row-2 .stop-7 { grid-column: 2; grid-row: 2; }
+        .row-2 .stop-8 { grid-column: 1; grid-row: 2; }
+        
+        /* Row 3: left to right */
+        .row-3 .stop-9 { grid-column: 1; grid-row: 3; }
+        .row-3 .stop-10 { grid-column: 2; grid-row: 3; }
+        .row-3 .stop-11 { grid-column: 3; grid-row: 3; }
+        .row-3 .stop-12 { grid-column: 4; grid-row: 3; }
+        
+        /* Row 4: finish */
+        .row-4 .stop-13 { grid-column: 4; grid-row: 4; }
+        .row-4 .stop-14 { grid-column: 3; grid-row: 4; }
+        
+        /* ===== FINISH CELEBRATION ===== */
+        .finish-stop .stop-bubble {
+            width: 90px;
+            height: 90px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #fde047, #f59e0b, #22c55e);
+            animation: celebrate 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes celebrate {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+        
+        /* ===== LEGEND ===== */
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .legend-dot.current {
+            background: var(--purple);
+            box-shadow: 0 0 0 2px white, 0 0 0 4px var(--purple);
+        }
+        
+        .legend-dot.complete {
+            background: var(--green);
+        }
+        
+        .legend-dot.pending {
+            background: var(--path-color);
+        }
+        
+        /* ===== DECORATIVE ELEMENTS ===== */
+        .deco {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .cloud-1 { top: 10%; left: 5%; font-size: 2rem; }
+        .cloud-2 { top: 60%; right: 3%; font-size: 1.5rem; }
+        .plant-1 { bottom: 5%; left: 10%; font-size: 1.5rem; }
+        .plant-2 { bottom: 15%; right: 8%; font-size: 1.25rem; }
+        .sparkle-1 { top: 25%; right: 15%; font-size: 1.25rem; }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .journey-path {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stop-bubble {
+                width: 55px;
+                height: 55px;
+                font-size: 1.25rem;
+            }
+            
+            .stop-label {
+                font-size: 0.75rem;
+            }
+            
+            /* Adjust grid positions for mobile */
+            .row-1 .stop-1 { grid-column: 1; grid-row: 1; }
+            .row-1 .stop-2 { grid-column: 2; grid-row: 1; }
+            .row-1 .stop-3 { grid-column: 2; grid-row: 2; }
+            .row-1 .stop-4 { grid-column: 1; grid-row: 2; }
+            
+            .row-2 .stop-5 { grid-column: 1; grid-row: 3; }
+            .row-2 .stop-6 { grid-column: 2; grid-row: 3; }
+            .row-2 .stop-7 { grid-column: 2; grid-row: 4; }
+            .row-2 .stop-8 { grid-column: 1; grid-row: 4; }
+            
+            .row-3 .stop-9 { grid-column: 1; grid-row: 5; }
+            .row-3 .stop-10 { grid-column: 2; grid-row: 5; }
+            .row-3 .stop-11 { grid-column: 2; grid-row: 6; }
+            .row-3 .stop-12 { grid-column: 1; grid-row: 6; }
+            
+            .row-4 .stop-13 { grid-column: 1; grid-row: 7; }
+            .row-4 .stop-14 { grid-column: 2; grid-row: 7; }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+    
+    <h1>Deine Reise bei talent.yoga</h1>
+    <p class="subtitle">Du bist hier: <strong>Neue Matches ansehen</strong></p>
+    
+    <div class="journey-board">
+        <!-- Decorative elements -->
+        <span class="deco cloud-1">☁️</span>
+        <span class="deco cloud-2">☁️</span>
+        <span class="deco plant-1">🌿</span>
+        <span class="deco plant-2">🌱</span>
+        <span class="deco sparkle-1">✨</span>
+        
+        <!-- SVG Connecting Paths (drawn by JS) -->
+        <svg class="path-svg" id="path-svg">
+            <defs>
+                <!-- Drop shadow filter -->
+                <filter id="line-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"/>
+                </filter>
+            </defs>
+            <!-- Paths will be drawn by JavaScript -->
+        </svg>
+        
+        <div class="journey-path">
+            <!-- Row 1: Getting Started (completed) -->
+            <div class="row row-1">
+                <div class="journey-stop completed stop-1">
+                    <div class="stop-bubble orange">📝</div>
+                    <span class="stop-label">Profil erstellt</span>
+                </div>
+                
+                <div class="journey-stop completed stop-2">
+                    <div class="stop-bubble purple">📄</div>
+                    <span class="stop-label">Lebenslauf hochgeladen</span>
+                </div>
+                
+                <div class="journey-stop completed stop-3">
+                    <div class="stop-bubble green">⚙️</div>
+                    <span class="stop-label">Präferenzen gesetzt</span>
+                </div>
+                
+                <div class="journey-stop current stop-4">
+                    <div class="stop-bubble blue">
+                        🔍
+                        <span class="stop-count">24</span>
+                    </div>
+                    <span class="stop-label">Neue Matches</span>
+                </div>
+            </div>
+            
+            <!-- Row 2: Discovery (serpentine - right to left) -->
+            <div class="row row-2">
+                <div class="journey-stop future stop-5">
+                    <div class="stop-bubble purple">
+                        👀
+                        <span class="stop-count hidden">0</span>
+                    </div>
+                    <span class="stop-label">Angesehen</span>
+                </div>
+                
+                <div class="journey-stop future stop-6">
+                    <div class="stop-bubble pink">
+                        💜
+                        <span class="stop-count hidden">0</span>
+                    </div>
+                    <span class="stop-label">Interessiert</span>
+                </div>
+                
+                <div class="journey-stop future stop-7">
+                    <div class="stop-bubble yellow">🎯</div>
+                    <span class="stop-label">Interview-Vorbereitung</span>
+                </div>
+                
+                <div class="journey-stop future stop-8">
+                    <div class="stop-bubble orange">
+                        ✍️
+                        <span class="stop-count hidden">0</span>
+                    </div>
+                    <span class="stop-label">Beworben</span>
+                </div>
+            </div>
+            
+            <!-- Row 3: Process -->
+            <div class="row row-3">
+                <div class="journey-stop future stop-9">
+                    <div class="stop-bubble green">
+                        📅
+                        <span class="stop-count hidden">0</span>
+                    </div>
+                    <span class="stop-label">Interview geplant</span>
+                </div>
+                
+                <div class="journey-stop future stop-10">
+                    <div class="stop-bubble blue">🎤</div>
+                    <span class="stop-label">Interview-Coaching</span>
+                </div>
+                
+                <div class="journey-stop future stop-11">
+                    <div class="stop-bubble purple">💬</div>
+                    <span class="stop-label">Interview geführt</span>
+                </div>
+                
+                <div class="journey-stop future stop-12">
+                    <div class="stop-bubble yellow">⏳</div>
+                    <span class="stop-label">Warte auf Entscheidung</span>
+                </div>
+            </div>
+            
+            <!-- Row 4: Finish -->
+            <div class="row row-4">
+                <div class="journey-stop future stop-13">
+                    <div class="stop-bubble green">
+                        📨
+                        <span class="stop-count green-badge hidden">0</span>
+                    </div>
+                    <span class="stop-label">Angebot erhalten</span>
+                </div>
+                
+                <div class="journey-stop future finish-stop stop-14">
+                    <div class="stop-bubble">🎉</div>
+                    <span class="stop-label">Arbeit begonnen!</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-dot current"></span>
+                Du bist hier
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot complete"></span>
+                Abgeschlossen
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot pending"></span>
+                Vor dir
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = '';
+                btn.textContent = '🌙 Dark Mode';
+            } else {
+                body.dataset.theme = 'dark';
+                btn.textContent = '☀️ Light Mode';
+            }
+        }
+        
+        // Draw connecting arrows between stops
+        function drawPaths() {
+            const svg = document.getElementById('path-svg');
+            const board = document.querySelector('.journey-board');
+            const boardRect = board.getBoundingClientRect();
+            
+            // Clear existing paths and chevrons (keep defs)
+            svg.querySelectorAll('path.path-line, image.chevron-img').forEach(p => p.remove());
+            
+            // Connection order (serpentine): 1→2→3→4, then 4↓5, 5→6→7→8, 8↓9, 9→10→11→12, 12↓13, 13→14
+            const connections = [
+                // Row 1 (left to right) - completed
+                { from: 1, to: 2, status: 'completed' },
+                { from: 2, to: 3, status: 'completed' },
+                { from: 3, to: 4, status: 'completed' },
+                // Turn down - current
+                { from: 4, to: 5, status: 'current' },
+                // Row 2 (right to left) - future
+                { from: 5, to: 6, status: 'future' },
+                { from: 6, to: 7, status: 'future' },
+                { from: 7, to: 8, status: 'future' },
+                // Turn down
+                { from: 8, to: 9, status: 'future' },
+                // Row 3 (left to right)
+                { from: 9, to: 10, status: 'future' },
+                { from: 10, to: 11, status: 'future' },
+                { from: 11, to: 12, status: 'future' },
+                // Turn down
+                { from: 12, to: 13, status: 'future' },
+                // Row 4
+                { from: 13, to: 14, status: 'future' }
+            ];
+            
+            connections.forEach(conn => {
+                const fromEl = document.querySelector(`.stop-${conn.from} .stop-bubble`);
+                const toEl = document.querySelector(`.stop-${conn.to} .stop-bubble`);
+                
+                if (!fromEl || !toEl) return;
+                
+                const fromRect = fromEl.getBoundingClientRect();
+                const toRect = toEl.getBoundingClientRect();
+                
+                // Calculate center points relative to SVG
+                const x1 = fromRect.left + fromRect.width/2 - boardRect.left;
+                const y1 = fromRect.top + fromRect.height/2 - boardRect.top;
+                const x2 = toRect.left + toRect.width/2 - boardRect.left;
+                const y2 = toRect.top + toRect.height/2 - boardRect.top;
+                
+                // Calculate edge points (from edge of circle, not center)
+                const radius = fromRect.width / 2;
+                const angle = Math.atan2(y2 - y1, x2 - x1);
+                
+                const startX = x1 + Math.cos(angle) * (radius + 10);
+                const startY = y1 + Math.sin(angle) * (radius + 10);
+                const endX = x2 - Math.cos(angle) * (radius + 12);  // Small gap for arrow tip
+                const endY = y2 - Math.sin(angle) * (radius + 12);
+                
+                const pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
+                
+                // Create outline path first (yellow glow)
+                const outline = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                outline.setAttribute('d', pathD);
+                outline.classList.add('path-line', 'path-line-outline', conn.status);
+                svg.appendChild(outline);
+                
+                // Create main solid color path
+                const main = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                main.setAttribute('d', pathD);
+                main.classList.add('path-line', 'path-line-main', conn.status);
+                svg.appendChild(main);
+                
+                // Draw chevron images along the path
+                const dx = endX - startX;
+                const dy = endY - startY;
+                const pathLen = Math.sqrt(dx*dx + dy*dy);
+                const chevronSpacing = 24;
+                const chevronCount = Math.floor((pathLen - 10) / chevronSpacing);
+                const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                for (let i = 0; i < chevronCount; i++) {
+                    const t = (i + 0.5) / chevronCount;  // Position along path (0-1)
+                    const cx = startX + dx * t;
+                    const cy = startY + dy * t;
+                    
+                    const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                    img.setAttribute('href', '/static/images/icons/chevron_right.png');
+                    img.setAttribute('width', '16');
+                    img.setAttribute('height', '16');
+                    img.setAttribute('x', cx - 8);
+                    img.setAttribute('y', cy - 8);
+                    img.setAttribute('transform', `rotate(${angleDeg} ${cx} ${cy})`);
+                    img.classList.add('chevron-img');
+                    svg.appendChild(img);
+                }
+            });
+        }
+        
+        // Draw on load and resize
+        window.addEventListener('load', () => {
+            setTimeout(drawPaths, 100);
+        });
+        window.addEventListener('resize', drawPaths);
+        
+        // Simulate dynamic data
+        function updateCounts() {
+            // These would come from API in real implementation
+            const data = {
+                new_matches: 24,
+                viewed: 12,
+                interested: 5,
+                applied: 2,
+                interviews: 1,
+                offers: 0
+            };
+            
+            // Update badges
+            document.querySelectorAll('.stop-count').forEach(badge => {
+                // Would map to real data
+            });
+        }
+    </script>
+</body>
+</html>

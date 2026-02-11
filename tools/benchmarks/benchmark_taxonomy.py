@@ -109,7 +109,7 @@ def parse_response(response: str) -> dict:
         if match:
             try:
                 return json.loads(match.group())
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
         return None
 

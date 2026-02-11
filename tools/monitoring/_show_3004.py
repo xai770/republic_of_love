@@ -42,7 +42,7 @@ def load_progress():
         try:
             with open(PROGRESS_FILE) as f:
                 return json.load(f)
-        except:
+        except (OSError, json.JSONDecodeError):
             pass
     return None
 
@@ -131,7 +131,7 @@ def display_dashboard(conn, progress):
                     eta_finish = datetime.now() + timedelta(seconds=remaining_secs)
                     eta_str = f"ETA: {eta_mins} min"
                     eta_time_str = f"@ {eta_finish.strftime('%H:%M')}"
-            except:
+            except (ValueError, TypeError, ZeroDivisionError):
                 pass
         
         line1 = f"Batch: {batch:4d}        Last Update: {last_update[11:19] if len(last_update) > 11 else 'N/A'}"

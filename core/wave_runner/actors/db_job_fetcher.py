@@ -5,7 +5,7 @@ Fetches job postings from Deutsche Bank Workday API and stores in postings_stagi
 """
 
 import sys
-sys.path.insert(0, '/home/xai/Documents/ty_wave')
+sys.path.insert(0, '/home/xai/Documents/ty_learn')
 
 from core.wave_runner.script_actor_template import ScriptActorBase
 import requests
@@ -256,7 +256,7 @@ class DBJobFetcher(ScriptActorBase):
                     # Log response for debugging
                     try:
                         error_detail = response.json()
-                    except:
+                    except (json.JSONDecodeError, ValueError):
                         error_detail = response.text[:200]
                         
                     return {
@@ -418,7 +418,7 @@ class DBJobFetcher(ScriptActorBase):
                         # Rollback to recover from aborted transaction
                         try:
                             self.db_conn.rollback()
-                        except:
+                        except Exception:
                             pass
                         continue
                 

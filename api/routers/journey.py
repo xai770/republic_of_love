@@ -416,7 +416,7 @@ def get_badges(
     try:
         import json
         skill_count = len(json.loads(skills)) if skills else 0
-    except:
+    except (json.JSONDecodeError, TypeError):
         skill_count = 0
     
     badge_checks = {

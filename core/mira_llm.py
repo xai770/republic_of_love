@@ -12,6 +12,7 @@ Usage:
 """
 import json
 import re
+import os
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass
@@ -22,8 +23,8 @@ from core.logging_config import get_logger
 logger = get_logger(__name__)
 
 # Model config
-OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL = "qwen2.5:7b"
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/chat'
+MODEL = "gemma3:4b"  # Swapped from qwen2.5:7b — better German, fewer hallucinations, lighter (3.3GB vs 4.7GB)
 TEMPERATURE = 0.3  # Lower = more consistent
 TIMEOUT = 20.0
 
@@ -153,6 +154,8 @@ Think of yourself as sitting next to the yogi at a coffee shop, helping them nav
 - Predict outcomes → "I can't predict, but here's what I see..."
 - Promise anything → "Based on the data..."
 - Make up answers → "I don't know" is always valid
+- NEVER recommend matches below 30% — if no good matches exist, say so honestly
+- Don't overwhelm new users with match details — just mention the count
 
 ## Examples of How You Sound
 
@@ -200,6 +203,8 @@ Stell dir vor, du sitzt neben dem Yogi im Café und hilfst bei der Jobsuche in D
 - Vorhersagen → "Ob {formal} den Job bekomm{('en' if not uses_du else 'st')}, kann ich nicht sagen, aber..."
 - Versprechen → "Basierend auf den Daten..."
 - Antworten erfinden → "Das weiß ich nicht" ist immer gültig
+- NIEMALS Matches unter 30% empfehlen — wenn keine guten Matches da sind, sag es ehrlich
+- Neue Nutzer nicht mit Match-Details überschütten — nur die Anzahl nennen
 
 ## So klingst du (Beispiele)
 
@@ -228,6 +233,10 @@ Mira: Das ist eine rechtliche Frage — da bin ich nicht die Richtige für. Die 
                 prompt += f"\n## Current User Situation\n\n{context_str}\n"
             else:
                 prompt += f"\n## Aktuelle Situation des Nutzers\n\n{context_str}\n"
+        
+        # Inject extra context (e.g., newsletter for "what's new" queries)
+        if yogi_context.get('_extra_prompt'):
+            prompt += yogi_context['_extra_prompt']
     
     return prompt
 
@@ -239,8 +248,9 @@ def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
     if language == 'en':
         if ctx.get('has_profile'):
             if ctx.get('skills'):
-                skills_str = ', '.join(ctx['skills'][:5])
-                parts.append(f"Skills: {skills_str}")
+                skills_str = ', '.join(ctx['skills'])
+                parts.append(f"""ACTUAL SKILLS (from profile — use ONLY these, never invent others):
+[{skills_str}]""")
         else:
             parts.append("(No profile uploaded yet)")
         
@@ -248,12 +258,13 @@ def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
             parts.append(f"Matches: {ctx['match_count']} found")
             if ctx.get('recent_matches'):
                 recent = ctx['recent_matches'][0]
-                parts.append(f"Latest: {recent['title']} at {recent['company']} ({recent['score']:.0%})")
+                parts.append(f"Best: {recent['title']} at {recent['company']} ({recent['score']:.0%})")
     else:
         if ctx.get('has_profile'):
             if ctx.get('skills'):
-                skills_str = ', '.join(ctx['skills'][:5])
-                parts.append(f"Skills: {skills_str}")
+                skills_str = ', '.join(ctx['skills'])
+                parts.append(f"""TATSÄCHLICHE SKILLS (aus dem Profil — NUR diese verwenden, niemals andere erfinden):
+[{skills_str}]""")
         else:
             parts.append("(Noch kein Profil hochgeladen)")
         
@@ -261,7 +272,7 @@ def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
             parts.append(f"Matches: {ctx['match_count']} gefunden")
             if ctx.get('recent_matches'):
                 recent = ctx['recent_matches'][0]
-                parts.append(f"Neuester: {recent['title']} bei {recent['company']} ({recent['score']:.0%})")
+                parts.append(f"Bester: {recent['title']} bei {recent['company']} ({recent['score']:.0%})")
     
     return '\n'.join(parts) if parts else ''
 
@@ -386,12 +397,14 @@ async def ask_llm(message: str, system_prompt: str, history: list = None) -> Opt
 def build_yogi_context(user_id: int, conn) -> dict:
     """
     Build context about the yogi from database.
+    Includes latest newsletter from Doug if available.
     """
     context = {
         'has_profile': False,
         'skills': [],
         'recent_matches': [],
         'match_count': 0,
+        'newsletter_snippet': None,
     }
     
     try:
@@ -409,7 +422,7 @@ def build_yogi_context(user_id: int, conn) -> dict:
                 try:
                     skills = json.loads(profile['skill_keywords'] or '[]')
                     context['skills'] = skills[:10]
-                except:
+                except (json.JSONDecodeError, KeyError, TypeError):
                     pass
             
             # Get match count
@@ -421,7 +434,7 @@ def build_yogi_context(user_id: int, conn) -> dict:
             """, (user_id,))
             context['match_count'] = cur.fetchone()['cnt']
             
-            # Get recent matches
+            # Get best matches (score > 30%, ordered by quality, not recency)
             if context['match_count'] > 0:
                 cur.execute("""
                     SELECT p.job_title, p.posting_name as company, m.skill_match_score as score
@@ -429,7 +442,8 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     JOIN profiles pr ON m.profile_id = pr.profile_id
                     JOIN postings p ON m.posting_id = p.posting_id
                     WHERE pr.user_id = %s
-                    ORDER BY m.computed_at DESC
+                      AND m.skill_match_score > 30
+                    ORDER BY m.skill_match_score DESC
                     LIMIT 3
                 """, (user_id,))
                 
@@ -437,10 +451,33 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     {'title': r['job_title'], 'company': r['company'], 'score': float(r['score'] or 0) / 100}
                     for r in cur.fetchall()
                 ]
+            # Get latest newsletter snippet from Doug
+            try:
+                from actors.doug__newsletter_C import get_latest_newsletter_content
+                newsletter = get_latest_newsletter_content(language='de')
+                if newsletter and newsletter.get('content'):
+                    # gemma3:4b handles context well — 300 chars is safe
+                    content = newsletter['content']
+                    context['newsletter_snippet'] = content[:300] + ('...' if len(content) > 300 else '')
+                    context['newsletter_date'] = str(newsletter.get('newsletter_date', ''))
+            except Exception as e:
+                logger.debug(f"Newsletter not available: {e}")
     except Exception as e:
         logger.error(f"Error building yogi context: {e}")
     
     return context
+
+
+def detect_whats_new(message: str) -> bool:
+    """Detect if user is asking 'what's new' / 'was gibts neues'."""
+    patterns = [
+        r"what'?s new", r"anything new", r"what happened",
+        r"was gibt'?s? neues", r"was ist neu", r"neuigkeiten",
+        r"was hab ich verpasst", r"was ist passiert",
+        r"what did i miss", r"any updates", r"any news",
+    ]
+    msg = message.lower().strip()
+    return any(re.search(p, msg) for p in patterns)
 
 
 async def chat(message: str, user_id: int, conn, history: list = None) -> MiraResponse:
@@ -480,6 +517,14 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
     
     # Build yogi context
     yogi_context = build_yogi_context(user_id, conn)
+    
+    # If asking "what's new", inject newsletter into conversation context
+    if detect_whats_new(message) and yogi_context.get('newsletter_snippet'):
+        if language == 'en':
+            newsletter_context = f"\n\n## Doug's Latest Newsletter ({yogi_context.get('newsletter_date', 'today')})\n{yogi_context['newsletter_snippet']}\n\nSummarize Doug's newsletter highlights briefly. Reply in English."
+        else:
+            newsletter_context = f"\n\n## Dougs neuester Newsletter ({yogi_context.get('newsletter_date', 'heute')})\n{yogi_context['newsletter_snippet']}\n\nFasse Dougs Newsletter-Highlights kurz zusammen. Antworte auf Deutsch."
+        yogi_context['_extra_prompt'] = newsletter_context
     
     # Build system prompt
     system_prompt = build_system_prompt(language, uses_du, yogi_context)

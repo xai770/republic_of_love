@@ -136,8 +136,9 @@ def return_connection(conn):
     """
     Explicitly return connection to pool.
     
-    Note: Calling conn.close() also returns it to pool.
-    This function is provided for clarity.
+    CRITICAL: Use this instead of conn.close()!
+    In psycopg2 pools, conn.close() DESTROYS the connection.
+    Only putconn() returns it to the pool.
     
     Args:
         conn: Connection to return to pool

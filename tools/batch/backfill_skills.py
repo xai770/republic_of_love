@@ -37,7 +37,7 @@ def extract_skills(prompt_template: str, summary: str, job_title: str, model: st
     prompt = prompt.replace('{{job_title}}', job_title or 'Unknown')
     
     response = requests.post(
-        'http://localhost:11434/api/generate',
+        os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate',
         json={'model': model, 'prompt': prompt, 'stream': False},
         timeout=180
     )

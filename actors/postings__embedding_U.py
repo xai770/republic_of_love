@@ -43,12 +43,13 @@ import psycopg2.extras
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+import os
 from core.database import get_connection_raw, return_connection
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-OLLAMA_URL = "http://localhost:11434/api/embeddings"
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
 MODEL = "bge-m3:567m"
 BATCH_SIZE = 100  # Commit every N embeddings
 
@@ -75,6 +76,8 @@ def get_embedding(text: str, model: str = MODEL) -> Optional[List[float]]:
 
 def save_embedding(conn, text: str, embedding: List[float], model: str):
     """Save embedding to database (content-addressed)."""
+    # Strip and lowercase text to match hash computation and work_query
+    text = text.strip().lower()
     text_hash = compute_text_hash(text)
     cur = conn.cursor()
     cur.execute("""
@@ -188,6 +191,76 @@ def process_single(posting_id: int):
             
     finally:
         return_connection(conn)
+
+
+# ============================================================================
+# PULL DAEMON ACTOR CLASS
+# ============================================================================
+# Wrapper class so core/pull_daemon.py can import and call process() per subject.
+
+class PostingsEmbeddingU:
+    """Pull daemon-compatible wrapper for single-posting embedding."""
+
+    def __init__(self, db_conn=None):
+        self.conn = db_conn
+        self.input_data = {}
+
+    def process(self) -> Dict[str, Any]:
+        posting_id = self.input_data.get('subject_id') or self.input_data.get('posting_id')
+        if not posting_id:
+            return {'success': False, 'error': 'No posting_id/subject_id'}
+
+        conn = self.conn
+        own_conn = False
+        if conn is None:
+            conn = get_connection_raw()
+            own_conn = True
+
+        try:
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("""
+                SELECT match_text FROM postings_for_matching WHERE posting_id = %s
+            """, (posting_id,))
+            row = cur.fetchone()
+
+            if not row or not row['match_text']:
+                return {'success': False, 'skip_reason': 'no_match_text'}
+
+            text = row['match_text']
+            # bge-m3 returns NaN for texts under ~150 chars - skip these
+            if len(text) < 150:
+                return {'success': False, 'skip_reason': 'text_too_short'}
+
+            # bge-m3 context window is ~8K tokens. HTML-bloated postings exceed this.
+            # Mark them invalid - they're usually staffing agency boilerplate anyway.
+            MAX_TEXT_LENGTH = 6000  # chars (conservative, smallest failure was 6464)
+            if len(text) > MAX_TEXT_LENGTH:
+                cur.execute("""
+                    UPDATE postings SET posting_status = 'invalid', updated_at = NOW()
+                    WHERE posting_id = %s
+                """, (posting_id,))
+                conn.commit()
+                return {'success': False, 'skip_reason': 'text_too_long_invalidated'}
+
+            embedding = get_embedding(text)
+            if not embedding:
+                return {'success': False, 'error': 'Embedding computation failed'}
+
+            save_embedding(conn, text, embedding, MODEL)
+            conn.commit()
+
+            return {
+                'success': True,
+                'posting_id': posting_id,
+                'dims': len(embedding),
+            }
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+        finally:
+            if own_conn and conn:
+                return_connection(conn)
 
 
 def main():

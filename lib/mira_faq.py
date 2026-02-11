@@ -17,6 +17,7 @@ Usage:
     else:
         # Freeform LLM
 """
+import os
 import re
 import json
 import hashlib
@@ -27,7 +28,7 @@ from typing import Optional, Literal
 from dataclasses import dataclass
 
 # Embedding config
-OLLAMA_URL = "http://localhost:11434/api/embeddings"
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
 EMBED_MODEL = "bge-m3:567m"
 
 # Matching thresholds (from Sage's spec)

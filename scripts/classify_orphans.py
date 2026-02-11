@@ -29,7 +29,7 @@ DB_CONFIG = {
     'port': os.getenv('DB_PORT', '5432'),
     'dbname': os.getenv('DB_NAME', 'turing'),
     'user': os.getenv('DB_USER', 'base_admin'),
-    'password': os.getenv('DB_PASSWORD', 'base_yoga_secure_2025'),
+    'password': os.getenv('DB_PASSWORD', ''),
 }
 
 # Ollama config

@@ -34,7 +34,7 @@ import json
 import sys
 from datetime import datetime
 
-sys.path.insert(0, '/home/xai/Documents/ty_wave')
+sys.path.insert(0, '/home/xai/Documents/ty_learn')
 
 from core.wave_runner.script_actor_template import ScriptActorBase
 

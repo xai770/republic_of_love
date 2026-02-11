@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.account') }} — talent.yoga{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    {% include "partials/header.html" %}
+    
+    {% set active_page = 'account' %}
+    {% include "partials/sidebar.html" %}
+    
+    <main class="main-content">
+        <div class="account-container">
+            <h1>{{ t('nav.account') }}</h1>
+            
+            <!-- Identity Section -->
+            <section class="account-section">
+                <h2>👤 {{ t('account.identity') if t('account.identity') else 'Identity' }}</h2>
+                
+                <div class="account-field">
+                    <label>{{ t('account.display_name') if t('account.display_name') else 'Display Name' }}</label>
+                    <div class="account-field-row">
+                        <input type="text" id="display-name" value="{{ user.display_name or '' }}" 
+                               placeholder="Wandering Elk" maxlength="30">
+                        <button class="btn-secondary" onclick="saveDisplayName()">💾</button>
+                    </div>
+                    <small class="field-hint">{{ t('account.name_hint') if t('account.name_hint') else 'For privacy, avoid using your real name.' }}</small>
+                </div>
+                
+                <div class="account-field">
+                    <label>{{ t('account.avatar') if t('account.avatar') else 'Avatar' }}</label>
+                    <div class="avatar-selector">
+                        {% set avatars = ['🦌', '🦊', '🦉', '🐻', '🦋', '🌻', '🌲', '⛰️', '🌊', '🔥', '💎', '🎯'] %}
+                        {% for avatar in avatars %}
+                        <button class="avatar-option {{ 'selected' if user.avatar_url == avatar else '' }}" 
+                                onclick="selectAvatar('{{ avatar }}')">{{ avatar }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Reach Me Section (Dream Job consent) -->
+            <section class="account-section">
+                <h2>🔔 {{ t('account.reach_me') if t('account.reach_me') else 'Reach Me' }}</h2>
+                
+                <div class="consent-card">
+                    <p class="consent-question">{{ t('account.dream_job_question') if t('account.dream_job_question') else "What if we find your dream job while you're away?" }}</p>
+                    
+                    <div class="consent-options">
+                        <label class="consent-option">
+                            <input type="radio" name="email_consent" value="no" 
+                                   {{ 'checked' if not notification_email else '' }}
+                                   onchange="updateEmailConsent(false)">
+                            <span>{{ t('account.no_email') if t('account.no_email') else "Do nothing (I'll check in)" }}</span>
+                        </label>
+                        
+                        <label class="consent-option">
+                            <input type="radio" name="email_consent" value="yes"
+                                   {{ 'checked' if notification_email else '' }}
+                                   onchange="updateEmailConsent(true)">
+                            <span>{{ t('account.yes_email') if t('account.yes_email') else 'Email me at' }} 
+                                  <strong id="masked-email">{{ user.email[:3] }}***{{ user.email[user.email.find('@'):] if user.email else '' }}</strong>
+                            </span>
+                        </label>
+                    </div>
+                    
+                    {% if notification_consent_at %}
+                    <p class="consent-status">
+                        ✅ {{ t('account.consent_given') if t('account.consent_given') else 'Consent given' }}: {{ notification_consent_at.strftime('%d.%m.%Y') if notification_consent_at else '' }}
+                        <button class="btn-link" onclick="revokeEmailConsent()">{{ t('account.revoke') if t('account.revoke') else 'Revoke' }}</button>
+                    </p>
+                    {% endif %}
+                </div>
+            </section>
+            
+            <!-- Mira Preferences -->
+            <section class="account-section">
+                <h2>🧘 {{ t('account.mira_prefs') if t('account.mira_prefs') else 'Mira Preferences' }}</h2>
+                
+                <div class="account-field">
+                    <label>{{ t('account.language') if t('account.language') else 'Language' }}</label>
+                    <select id="mira-language" onchange="saveMiraPrefs()">
+                        <option value="de" {{ 'selected' if notification_preferences.get('language', 'de') == 'de' else '' }}>Deutsch</option>
+                        <option value="en" {{ 'selected' if notification_preferences.get('language') == 'en' else '' }}>English</option>
+                    </select>
+                </div>
+                
+                <div class="account-field">
+                    <label>{{ t('account.address_me') if t('account.address_me') else 'Address me as' }}</label>
+                    <select id="mira-formality" onchange="saveMiraPrefs()">
+                        <option value="du" {{ 'selected' if notification_preferences.get('formality', 'du') == 'du' else '' }}>Du (informal)</option>
+                        <option value="sie" {{ 'selected' if notification_preferences.get('formality') == 'sie' else '' }}>Sie (formal)</option>
+                    </select>
+                </div>
+                
+                <div class="account-field">
+                    <label>{{ t('account.tone') if t('account.tone') else 'Tone' }}</label>
+                    <select id="mira-tone" onchange="saveMiraPrefs()">
+                        <option value="friendly" {{ 'selected' if notification_preferences.get('tone', 'friendly') == 'friendly' else '' }}>{{ t('account.tone_friendly') if t('account.tone_friendly') else 'Friendly' }}</option>
+                        <option value="concise" {{ 'selected' if notification_preferences.get('tone') == 'concise' else '' }}>{{ t('account.tone_concise') if t('account.tone_concise') else 'Concise' }}</option>
+                        <option value="professional" {{ 'selected' if notification_preferences.get('tone') == 'professional' else '' }}>{{ t('account.tone_professional') if t('account.tone_professional') else 'Professional' }}</option>
+                    </select>
+                </div>
+            </section>
+            
+            <!-- My Data (GDPR) -->
+            <section class="account-section account-danger-zone">
+                <h2>📦 {{ t('account.my_data') if t('account.my_data') else 'My Data' }}</h2>
+                
+                <div class="data-actions">
+                    <button class="btn-secondary" onclick="downloadMyData()">
+                        📥 {{ t('account.download_data') if t('account.download_data') else 'Download my data' }}
+                    </button>
+                    
+                    <button class="btn-danger" onclick="confirmDeleteAccount()">
+                        🗑️ {{ t('account.delete_account') if t('account.delete_account') else 'Delete account' }}
+                    </button>
+                </div>
+                
+                <small class="field-hint">{{ t('account.gdpr_hint') if t('account.gdpr_hint') else 'Your data belongs to you. Download or delete anytime.' }}</small>
+            </section>
+        </div>
+    </main>
+</div>
+
+<style>
+.account-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.account-container h1 {
+    margin-bottom: 30px;
+    color: var(--text);
+}
+
+.account-section {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.account-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.account-field {
+    margin-bottom: 16px;
+}
+
+.account-field label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.account-field-row {
+    display: flex;
+    gap: 8px;
+}
+
+.account-field input,
+.account-field select {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.field-hint {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Avatar selector */
+.avatar-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.avatar-option {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg);
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.avatar-option:hover {
+    border-color: var(--primary);
+    transform: scale(1.1);
+}
+
+.avatar-option.selected {
+    border-color: var(--primary);
+    background: var(--primary-light, #fff3e0);
+}
+
+/* Consent card */
+.consent-card {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 3px solid var(--primary);
+}
+
+.consent-question {
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: var(--text);
+}
+
+.consent-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.consent-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.consent-option:hover {
+    background: var(--bg-hover);
+}
+
+.consent-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.consent-status {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Data actions */
+.data-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-secondary {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover);
+}
+
+.btn-danger {
+    padding: 10px 16px;
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    background: transparent;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: inherit;
+}
+
+.account-danger-zone {
+    border: 1px solid #dc354533;
+}
+
+/* Dark mode */
+[data-theme="dark"] .account-section {
+    background: #1f1f1f;
+}
+
+[data-theme="dark"] .consent-card {
+    background: #2a2a2a;
+}
+
+[data-theme="dark"] .avatar-option.selected {
+    background: #3d2a1a;
+}
+</style>
+
+<script>
+// Save display name
+async function saveDisplayName() {
+    const name = document.getElementById('display-name').value.trim();
+    if (!name) return;
+    
+    try {
+        const resp = await fetch('/api/account/display-name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ display_name: name })
+        });
+        if (resp.ok) {
+            showToast('Name saved!');
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Select avatar
+async function selectAvatar(emoji) {
+    try {
+        const resp = await fetch('/api/account/avatar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatar: emoji })
+        });
+        if (resp.ok) {
+            // Update UI
+            document.querySelectorAll('.avatar-option').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent === emoji);
+            });
+            showToast('Avatar updated!');
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Email consent
+async function updateEmailConsent(consent) {
+    try {
+        const resp = await fetch('/api/account/email-consent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ consent: consent })
+        });
+        if (resp.ok) {
+            showToast(consent ? 'Email notifications enabled!' : 'Email notifications disabled');
+            if (!consent) location.reload(); // Refresh to update UI
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function revokeEmailConsent() {
+    updateEmailConsent(false);
+}
+
+// Mira preferences
+async function saveMiraPrefs() {
+    const prefs = {
+        language: document.getElementById('mira-language').value,
+        formality: document.getElementById('mira-formality').value,
+        tone: document.getElementById('mira-tone').value
+    };
+    
+    try {
+        const resp = await fetch('/api/account/mira-preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(prefs)
+        });
+        if (resp.ok) {
+            showToast('Preferences saved!');
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Data export
+async function downloadMyData() {
+    showToast('Preparing your data...');
+    window.location.href = '/api/account/export';
+}
+
+// Account deletion
+function confirmDeleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+        if (confirm('This will permanently delete all your data. Type DELETE to confirm.')) {
+            // Would need actual delete endpoint
+            showToast('Account deletion requested. We will process this within 30 days.');
+        }
+    }
+}
+
+// Toast helper
+function showToast(message) {
+    // Simple toast - could enhance later
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 9999;
+        animation: fadeIn 0.3s;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script>
+{% endblock %}

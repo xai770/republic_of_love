@@ -8,7 +8,7 @@ set -e  # Exit on error
 DB_HOST=localhost
 DB_USER=base_admin
 DB_NAME=turing
-export PGPASSWORD=base_yoga_secure_2025
+export PGPASSWORD=${DB_PASSWORD}
 
 echo "🧪 Testing Migration Rollback Sequence..."
 echo ""

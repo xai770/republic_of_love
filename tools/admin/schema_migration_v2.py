@@ -331,7 +331,7 @@ def migrate_schema():
                 cursor.execute(f"SELECT COUNT(*) FROM {table};")
                 count = cursor.fetchone()[0]
                 print(f"  {table}: {len(columns)} columns, {count} records")
-            except:
+            except Exception:
                 print(f"  {table}: not found")
         
         # Check models table defaults

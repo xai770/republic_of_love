@@ -1,8 +1,5 @@
 # Project Summary
 
-|   |   |
-|---|---|
- 
 |## 2020 - today|## Deutsche Bank, Frankfurt, Chief Technology Office|
 |### 2022 - today|### Project lead Contract Compliance/Tech Lead|
 ||Each piece of software may only be used according to contractually agreed licensing conditions. To ensure these conditions are adhered to DB must have visibility of which contract/s apply to a given software purchase.<br><br>  <br><br>- Understand and reverse engineer the process, which was followed up to this point.<br>    <br>- Analyze gaps in process and propose new process.<br>    <br>- Identify and review data sources to be utilized. Flag data quality issues with stakeholders and agree on way forward.<br>    <br>- Formalize new process into automated application, which will generate the required output and update worklists for the team.|

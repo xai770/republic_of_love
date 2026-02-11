@@ -42,7 +42,7 @@ def load_progress():
         try:
             with open(PROGRESS_FILE) as f:
                 return json.load(f)
-        except:
+        except (OSError, json.JSONDecodeError):
             pass
     return None
 

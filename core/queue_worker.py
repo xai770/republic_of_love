@@ -65,7 +65,7 @@ class QueueWorker:
         self.conn = psycopg2.connect(
             dbname="turing",
             user="base_admin",
-            password="base_yoga_secure_2025",
+            password=os.getenv('DB_PASSWORD', ''),
             host="localhost"
         )
         self.logger.info("Connected to database")

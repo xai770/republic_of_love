@@ -11,7 +11,7 @@
 
 ```
 Workspace:    /home/xai/Documents/ty_wave (symlinks to ty_learn)
-Database:     turing (localhost, base_admin, base_yoga_secure_2025)
+Database:     turing (localhost, base_admin, ${DB_PASSWORD})
 Quick query:  ./scripts/q.sh "SELECT * FROM table;"
 ```
 

@@ -71,7 +71,7 @@ with open(log_file, 'r') as f:
                     batches[actor_id]['processed'] = entry.get('processed')
                     batches[actor_id]['duration_sec'] = entry.get('duration_sec')
                     batches[actor_id]['avg_per_request'] = entry.get('avg_per_request')
-        except:
+        except (json.JSONDecodeError, KeyError, ValueError):
             continue
 
 # Display results
