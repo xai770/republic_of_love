@@ -62,18 +62,12 @@ import psycopg2.extras
 from core.database import get_connection_raw, return_connection
 from lib.scrapers import get_scraper, list_scrapers, SCRAPER_REGISTRY
 from lib.scrapers.base import BaseScraper, ScraperResult
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # ============================================================================
 # LOGGING
-# ============================================================================
-def log(msg: str):
-    """Print timestamped message."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {msg}", flush=True)
-
-
-# ============================================================================
-# PREFIX ANALYSIS
 # ============================================================================
 def get_external_prefix_stats(conn) -> list:
     """
@@ -225,7 +219,7 @@ def update_description(conn, posting_id: int, description: str, metadata: dict =
             conn.commit()
             return True
     except Exception as e:
-        log(f"❌ DB update failed for posting {posting_id}: {e}")
+        logger.error("DB update failed for posting %s: %s", posting_id, e)
         conn.rollback()
         return False
 
@@ -303,25 +297,23 @@ def process_posting(conn, posting: dict, dry_run: bool = False) -> dict:
 
 def run_stats(conn):
     """Show statistics on external partner jobs."""
-    log("📊 External Partner Job Statistics")
-    log("=" * 60)
+    logger.info("External Partner Job Statistics")
+    logger.info("=" * 60)
     
     stats = get_external_prefix_stats(conn)
     
     total_null = sum(s[1] for s in stats)
-    log(f"Total NULL descriptions (non-native): {total_null:,}")
-    log("")
-    log(f"{'Prefix':<10} {'Count':>8} {'Config?':>8} {'Scraper?':>10}")
-    log("-" * 40)
+    logger.info("Total NULL descriptions (non-native): %s", f"{total_null:,}")
+    logger.info("%s %s %s %s", 'Prefix', 'Count', 'Config?', 'Scraper?')
+    logger.info("-" * 40)
     
     for prefix, count, sample_id in stats:
         site_config = get_site_config(conn, prefix)
         has_config = '✅' if site_config else '❌'
         has_scraper = '✅' if site_config and site_config['scraper'] in SCRAPER_REGISTRY else '❌'
-        log(f"{prefix:<10} {count:>8,} {has_config:>8} {has_scraper:>10}")
+        logger.info("%s %s %s %s", prefix, count, has_config, has_scraper)
     
-    log("")
-    log(f"Implemented scrapers: {', '.join(list_scrapers())}")
+    logger.info("Implemented scrapers: %s", ', '.join(list_scrapers()))
 
 
 def run_batch(conn, limit: int, prefix: str = None, dry_run: bool = False):
@@ -329,10 +321,10 @@ def run_batch(conn, limit: int, prefix: str = None, dry_run: bool = False):
     postings = get_postings_to_process(conn, limit=limit, prefix=prefix)
     
     if not postings:
-        log("No postings to process")
+        logger.info("No postings to process")
         return
     
-    log(f"Processing {len(postings)} postings" + (" (DRY RUN)" if dry_run else ""))
+    logger.info("Processing %s postings %s", len(postings), " (DRY RUN)" if dry_run else "")
     
     stats = {'success': 0, 'skipped': 0, 'failed': 0}
     by_reason = {}
@@ -354,12 +346,11 @@ def run_batch(conn, limit: int, prefix: str = None, dry_run: bool = False):
         by_reason[reason_key] = by_reason.get(reason_key, 0) + 1
         
         if i % 10 == 0 or i == len(postings):
-            log(f"Progress: {i}/{len(postings)} - ✅ {stats['success']} | ⏭️ {stats['skipped']} | ❌ {stats['failed']}")
+            logger.error("Progress: %s/%s %s|%s|%s", i, len(postings), stats['success'], stats['skipped'], stats['failed'])
     
-    log("")
-    log("Results by reason:")
+    logger.info("Results by reason:")
     for reason, count in sorted(by_reason.items(), key=lambda x: -x[1]):
-        log(f"  {reason}: {count}")
+        logger.info("%s: %s", reason, count)
     
     # Cleanup Playwright
     BaseScraper.cleanup()

@@ -68,6 +68,9 @@ from bs4 import BeautifulSoup
 from core.database import get_connection
 from core.constants import Status
 from core.text_utils import sanitize_for_storage
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # ============================================================================
 # CONFIGURATION
@@ -167,7 +170,7 @@ class WorkdayDBJobFetcher:
             # Check sync completeness
             self.sync_complete = len(self.fetched_ids) >= self.api_total
             if not self.sync_complete:
-                print(f"  ⚠️  INCOMPLETE SYNC: fetched {len(self.fetched_ids)}/{self.api_total} - invalidations disabled")
+                logger.warning("INCOMPLETE SYNC: fetched %s/%s invalidations disabled", len(self.fetched_ids), self.api_total)
             
             # ----------------------------------------------------------------
             # PHASE 3: SAVE - Insert new postings, update seen, prune stale
@@ -181,7 +184,7 @@ class WorkdayDBJobFetcher:
                 stats['description_success_rate'] = round(success_rate, 2)
                 
                 if success_rate < MIN_DESCRIPTION_SUCCESS_RATE:
-                    print(f"  ⚠️  Low description success rate: {success_rate:.0%} (threshold: {MIN_DESCRIPTION_SUCCESS_RATE:.0%})")
+                    logger.warning("Low description success rate: %s (threshold: %s)", f"{success_rate:.0%}", f"{MIN_DESCRIPTION_SUCCESS_RATE:.0%}")
                     stats['qa_warning'] = f'Low description success rate: {success_rate:.0%}'
             
             # Invalidate stale postings (with safety check)
@@ -262,12 +265,12 @@ class WorkdayDBJobFetcher:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('total', 0) > 0:
-                    print("  ✅ API health check passed")
+                    logger.info("API health check passed")
                     return True
-            print(f"  ❌ API health check failed: status {response.status_code}")
+            logger.error("API health check failed: status %s", response.status_code)
             return False
         except Exception as e:
-            print(f"  ❌ API health check failed: {e}")
+            logger.error("API health check failed: %s", e)
             return False
     
     # ========================================================================
@@ -311,15 +314,15 @@ class WorkdayDBJobFetcher:
                     # Rate limited - wait and retry with exponential backoff
                     rate_limit_errors += 1
                     if rate_limit_errors >= 5:
-                        print(f"  ⚠️  Rate limited 5 times, stopping")
+                        logger.warning("Rate limited 5 times, stopping")
                         break
                     wait_time = 15 * rate_limit_errors  # 15s, 30s, 45s, 60s
-                    print(f"  ⚠️  Rate limited (attempt {rate_limit_errors}/5), waiting {wait_time}s...")
+                    logger.warning("Rate limited (attempt %s/5), waiting %s s...", rate_limit_errors, wait_time)
                     time.sleep(wait_time)
                     continue
                 
                 if response.status_code != 200:
-                    print(f"  ⚠️  API returned {response.status_code}")
+                    logger.warning("API returned %s", response.status_code)
                     break
                 
                 rate_limit_errors = 0  # Reset on success
@@ -340,7 +343,7 @@ class WorkdayDBJobFetcher:
                         all_jobs.append(parsed)
                         self.fetched_ids.add(parsed['external_id'])  # Track for sync
                 
-                print(f"  📡 Fetched {len(all_jobs)}/{self.api_total} (offset {offset})")
+                logger.info("Fetched %s/%s (offset %s)", len(all_jobs), self.api_total, offset)
                 offset += len(jobs)
                 
                 if len(all_jobs) >= self.api_total:
@@ -349,7 +352,7 @@ class WorkdayDBJobFetcher:
                 time.sleep(2)  # Rate limit protection - 2s between requests
                     
             except requests.RequestException as e:
-                print(f"  ❌ API error: {e}")
+                logger.error("API error: %s", e)
                 return None
         
         return all_jobs[:self.max_jobs]
@@ -446,7 +449,7 @@ class WorkdayDBJobFetcher:
                     # No description = don't insert (shell posting is useless)
                     stats['no_description'] += 1
                     if i % 20 == 0 or i == len(jobs):
-                        print(f"  ⚠️  [{i}/{len(jobs)}] Skipped {stats['no_description']} jobs (no description)")
+                        logger.warning("[%s/%s] Skipped %s jobs (no description)", i, len(jobs), stats['no_description'])
                     continue
                 
                 # Insert new posting WITH description
@@ -475,12 +478,12 @@ class WorkdayDBJobFetcher:
                 
                 if stats['new'] % 10 == 0:
                     self.conn.commit()  # Periodic commit
-                    print(f"  ✅ [{i}/{len(jobs)}] {stats['new']} new postings inserted...")
+                    logger.info("[%s/%s]%s new postings inserted...", i, len(jobs), stats['new'])
                 
             except Exception as e:
                 self.conn.rollback()
                 stats['errors'] += 1
-                print(f"  ❌ Error inserting job {job['external_id']}: {type(e).__name__}: {e}")
+                logger.error("Error inserting job %s: %s: %s", job['external_id'], type(e).__name__, e)
         
         self.conn.commit()
         return stats
@@ -532,8 +535,8 @@ class WorkdayDBJobFetcher:
         # SAFETY LAYER 1: Sync completeness check
         # ====================================================================
         if not self.sync_complete:
-            print(f"  🛡️  SAFETY: Sync incomplete ({len(self.fetched_ids)}/{self.api_total}) - skipping ALL invalidations")
-            print(f"       This prevents false invalidations from partial fetches")
+            logger.info("SAFETY: Sync incomplete (%s/%s) - skipping ALL invalidations", len(self.fetched_ids), self.api_total)
+            logger.info("This prevents false invalidations from partial fetches")
             return {
                 'stale_invalidated': 0, 
                 'stale_skipped': True, 
@@ -564,8 +567,8 @@ class WorkdayDBJobFetcher:
         stale_ratio = stale_count / total_active
         
         if stale_ratio > MAX_STALE_PERCENTAGE:
-            print(f"  🛡️  SAFETY: Would invalidate {stale_count}/{total_active} ({stale_ratio:.0%}) - skipping")
-            print(f"       This exceeds {MAX_STALE_PERCENTAGE:.0%} threshold - likely a bug")
+            logger.info("SAFETY: Would invalidate %s/%s (%s) - skipping", stale_count, total_active, f"{stale_ratio:.0%}")
+            logger.info("This exceeds %s threshold - likely a bug", f"{MAX_STALE_PERCENTAGE:.0%}")
             return {'stale_invalidated': 0, 'stale_skipped': True, 'skip_reason': 'ratio_exceeded', 'stale_would_invalidate': stale_count}
         
         # ====================================================================
@@ -584,7 +587,7 @@ class WorkdayDBJobFetcher:
         if not candidates:
             return {'stale_invalidated': 0, 'stale_skipped': False}
         
-        print(f"  🔍 Verifying {len(candidates)} stale candidates before invalidation...")
+        logger.debug("Verifying %s stale candidates before invalidation...", len(candidates))
         
         actually_invalidated = 0
         verified_still_exists = 0
@@ -625,9 +628,9 @@ class WorkdayDBJobFetcher:
         self.conn.commit()
         
         if verified_still_exists > 0:
-            print(f"  ✅ Kept {verified_still_exists} jobs (verified still online)")
+            logger.info("Kept %s jobs (verified still online)", verified_still_exists)
         if actually_invalidated > 0:
-            print(f"  🗑️  Invalidated {actually_invalidated} jobs (verified removed)")
+            logger.info("Invalidated %s jobs (verified removed)", actually_invalidated)
         
         return {
             'stale_invalidated': actually_invalidated, 
@@ -692,11 +695,11 @@ def main():
                         help=f'Max jobs to fetch (default: {DEFAULT_MAX_JOBS})')
     args = parser.parse_args()
     
-    print(f"\n{'='*60}")
-    print(f"📥 Deutsche Bank Job Fetcher")
-    print(f"   Max jobs: {args.max_jobs}")
-    print(f"   Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"{'='*60}\n")
+    logger.info("%s", '='*60)
+    logger.info("Deutsche Bank Job Fetcher")
+    logger.info("Max jobs: %s", args.max_jobs)
+    logger.info("Time: %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    logger.info("%s\n", '='*60)
     
     with get_connection() as conn:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -722,7 +725,7 @@ def main():
         ticket_id = cur.fetchone()['ticket_id']
         conn.commit()
         
-        print(f"  ticket_id: {ticket_id}")
+        logger.info("ticket_id: %s", ticket_id)
         
         # Run the actor
         actor = WorkdayDBJobFetcher(conn, max_jobs=args.max_jobs)
@@ -737,7 +740,7 @@ def main():
                     completed_at = NOW()
                 WHERE ticket_id = %s
             """, (json.dumps(result), ticket_id))
-            print(f"\n✅ SUCCESS: {result.get('message')}")
+            logger.info("SUCCESS: %s", result.get('message'))
         else:
             error = result.get('error') or result.get('skip_reason') or 'Unknown error'
             # 'skipped' isn't a valid status - use 'completed' for skips, 'failed' for errors
@@ -749,11 +752,11 @@ def main():
                     completed_at = NOW()
                 WHERE ticket_id = %s
             """, (status, json.dumps(result), ticket_id))
-            print(f"\n{'⏭️ SKIPPED' if result.get('skip_reason') else '❌ FAILED'}: {error}")
+            logger.error("%s: %s", '⏭️ SKIPPED' if result.get('skip_reason') else '❌ FAILED', error)
         
         conn.commit()
     
-    print(f"\n{'='*60}\n")
+    logger.info("%s\n", '='*60)
 
 
 if __name__ == '__main__':

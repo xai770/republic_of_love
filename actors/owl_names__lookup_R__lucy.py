@@ -66,6 +66,9 @@ import psycopg2.extras
 from core.database import get_connection
 from core.constants import Status
 
+from core.logging_config import get_logger
+logger = get_logger(__name__)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -326,15 +329,15 @@ def main():
                     actor = OwlNamesRowC(db_conn=conn)
                     actor.input_data = input_data
                     result = actor.process()
-                    print(json.dumps(result, default=str))
+                    logger.info("%s", json.dumps(result, default=str))
                     return
             except json.JSONDecodeError:
                 pass  # Fall through to argv handling
     
     # CLI mode
     if len(sys.argv) < 2:
-        print("Usage: python3 owl_names__row_C.py <pending_id>")
-        print("       python3 owl_names__row_C.py --sample 5")
+        logger.info("Usage: python3 owl_names__row_C.py <pending_id>")
+        logger.info("python3 owl_names__row_C.py --sample 5")
         sys.exit(1)
     
     with get_connection() as conn:
@@ -356,13 +359,13 @@ def main():
             for pid in pending_ids:
                 actor.input_data = {'pending_id': pid}
                 result = actor.process()
-                print(f"\n--- pending_id={pid} ---")
-                print(json.dumps(result, indent=2, default=str))
+                logger.info("\n--- pending_id=%s", pid)
+                logger.info("%s", json.dumps(result, indent=2, default=str))
         else:
             pending_id = int(sys.argv[1])
             actor.input_data = {'pending_id': pending_id}
             result = actor.process()
-            print(json.dumps(result, indent=2, default=str))
+            logger.info("%s", json.dumps(result, indent=2, default=str))
 
 
 if __name__ == '__main__':

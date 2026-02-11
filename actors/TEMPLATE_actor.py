@@ -179,6 +179,10 @@ import requests
 
 from core.database import get_connection, get_connection_raw, return_connection
 from core.constants import Status, Fields, OwlTypes  # USE THESE, not strings
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 # For text processing (quote verification, language detection):
 # from core.text_utils import normalize_for_match, detect_language, verify_quote_in_source, clean_json_from_llm
 
@@ -677,30 +681,26 @@ Please address these issues in your response.
         report = self.qa_report(sample_size)
         
         if report['status'] == 'no_data':
-            print(f"❌ {report['message']}")
+            logger.error("%s", report['message'])
             return
         
-        print(f"# QA Report: {self.__class__.__name__}")
-        print(f"Generated: {report['generated_at']}")
-        print(f"Actor: {report['actor_name']}")
-        print()
-        print("## Summary")
-        print(f"| Metric | Value |")
-        print(f"|--------|-------|")
-        print(f"| Sample size | {report['sample_size']} |")
-        print(f"| Passed | {report['passed']} ({report['pass_rate']:.1%}) |")
-        print(f"| Failed | {report['failed']} |")
-        print(f"| Avg processing time | {report['avg_time_ms']:.0f}ms |")
+        logger.info("# QA Report: %s", self.__class__.__name__)
+        logger.info("Generated: %s", report['generated_at'])
+        logger.info("Actor: %s", report['actor_name'])
+        logger.info("## Summary")
+        logger.info("| Metric | Value |")
+        logger.info("|--------|-------|")
+        logger.info("| Sample size |%s|", report['sample_size'])
+        logger.info("| Passed |%s (%.1%) |", report['passed'], report['pass_rate'])
+        logger.info("| Failed |%s|", report['failed'])
+        logger.info("| Avg processing time |%.0fms |", report['avg_time_ms'])
         
         if report['failures']:
-            print()
-            print("## Failures (top 10)")
+            logger.info("## Failures (top 10)")
             for f in report['failures']:
-                print(f"- **{f['subject_id']}**: {f['reason']}")
+                logger.info("**%s**: %s", f['subject_id'], f['reason'])
         
-        print()
-        print("---")
-        print(f"*Run with `--qa --sample N` to adjust sample size*")
+        logger.info("*Run with `--qa --sample N` to adjust sample size*")
     
     # ========================================================================
     # SAVE
@@ -863,17 +863,17 @@ def main():
             'task_type_id': TASK_TYPE_ID,
         }
         result = actor.process()
-        print(f"\n{'='*60}")
-        print(f"Result for subject {subject_id}:")
-        print(f"Success: {result.get('success')}")
+        logger.info("%s", '='*60)
+        logger.info("Result for subject %s:", subject_id)
+        logger.info("Success: %s", result.get('success'))
         if result.get('error'):
-            print(f"Error: {result.get('error')}")
+            logger.error("Error: %s", result.get('error'))
         if result.get('skip_reason'):
-            print(f"Skip: {result.get('skip_reason')}")
-        print(json.dumps(result, indent=2, default=str)[:2000])
-        print(f"{'='*60}")
+            logger.info("Skip: %s", result.get('skip_reason'))
+        logger.info("%s", json.dumps(result, indent=2, default=str)[:2000])
+        logger.info("%s", '='*60)
     else:
-        print("No test subjects found")
+        logger.info("No test subjects found")
     
     conn.close()
 

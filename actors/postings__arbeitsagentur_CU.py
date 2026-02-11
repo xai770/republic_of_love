@@ -61,6 +61,9 @@ from bs4 import BeautifulSoup
 from core.database import get_connection
 from core.constants import Status
 
+from core.logging_config import get_logger
+logger = get_logger(__name__)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -284,14 +287,14 @@ class ArbeitsagenturJobFetcher:
             all_jobs = []
             
             for query in self.search_queries:
-                print(f"\n📡 Fetching: {query.get('was')} in {query.get('wo')}...")
+                logger.info("Fetching: %s in %s...", query.get('was'), query.get('wo'))
                 jobs = self._fetch_jobs(query)
                 
                 if jobs:
-                    print(f"   Found {len(jobs)} jobs")
+                    logger.info("Found %s jobs", len(jobs))
                     all_jobs.extend(jobs)
                 else:
-                    print(f"   ⚠️ No jobs found or API error")
+                    logger.warning("No jobs found or API error")
                 
                 # Rate limit - be nice to the API
                 time.sleep(0.5)
@@ -309,7 +312,7 @@ class ArbeitsagenturJobFetcher:
                 if refnr and refnr not in unique_jobs:
                     unique_jobs[refnr] = job
             
-            print(f"\n🔄 Total unique jobs: {len(unique_jobs)} (from {len(all_jobs)} results)")
+            logger.info("Total unique jobs: %s (from %s results)", len(unique_jobs), len(all_jobs))
             
             # ----------------------------------------------------------------
             # PHASE 3: SAVE - Insert new postings
@@ -378,15 +381,15 @@ class ArbeitsagenturJobFetcher:
         """Quick test to see if the API is responding."""
         try:
             url = f"{API_BASE_URL}/pc/v4/jobs?was=test&size=1"
-            print(f"   🔍 Health check: GET {url[:60]}...")
+            logger.debug("Health check: GET %s...", url[:60])
             response = requests.get(url, headers=API_HEADERS, timeout=10)
-            print(f"   🔍 Health check response: {response.status_code}")
+            logger.debug("Health check response: %s", response.status_code)
             return response.status_code == 200
         except requests.Timeout:
-            print(f"   ❌ Health check TIMEOUT (10s)")
+            logger.error("Health check TIMEOUT (10s)")
             return False
         except Exception as e:
-            print(f"   ❌ Health check error: {e}")
+            logger.error("Health check error: %s", e)
             return False
     
     # ========================================================================
@@ -435,25 +438,25 @@ class ArbeitsagenturJobFetcher:
             try:
                 # Debug: show what we're fetching
                 param_str = '&'.join(f"{k}={v}" for k,v in params.items())
-                print(f"   🌐 GET {url}?{param_str[:80]}...")
+                logger.info("GET %s?%s...", url, param_str[:80])
                 
                 response = requests.get(url, params=params, headers=API_HEADERS, timeout=30)
                 
-                print(f"   📥 Response: {response.status_code} ({len(response.content)} bytes)")
+                logger.info("Response: %s (%s bytes)", response.status_code, len(response.content))
                 
                 if response.status_code != 200:
-                    print(f"   ❌ API error: {response.status_code}")
-                    print(f"   Response body: {response.text[:200]}")
+                    logger.error("API error: %s", response.status_code)
+                    logger.info("Response body: %s", response.text[:200])
                     break
                 
                 data = response.json()
                 jobs = data.get('stellenangebote', [])
                 max_results = data.get('maxErgebnisse', 0)
                 
-                print(f"   📊 Page {page}: {len(jobs)} jobs (max available: {max_results})")
+                logger.info("Page %s: %s jobs (max available: %s)", page, len(jobs), max_results)
                 
                 if not jobs:
-                    print(f"   ℹ️  No more jobs on this page")
+                    logger.info("No more jobs on this page")
                     break
                 
                 # Normalize each job
@@ -466,24 +469,24 @@ class ArbeitsagenturJobFetcher:
                 total_fetched += len(jobs)
                 
                 # Progress update
-                print(f"   ✓ Fetched {total_fetched}/{min(max_results, self.max_jobs)} jobs")
+                logger.info("Fetched %s/%s jobs", total_fetched, min(max_results, self.max_jobs))
                 
                 # Check if we've got all available jobs
                 if total_fetched >= max_results or total_fetched >= self.max_jobs:
-                    print(f"   ✅ Done fetching (reached limit)")
+                    logger.info("Done fetching (reached limit)")
                     break
                 
                 page += 1
                 time.sleep(0.2)  # Rate limit between pages
                 
             except requests.Timeout:
-                print(f"   ❌ Request TIMEOUT (30s) on page {page}")
+                logger.error("Request TIMEOUT (30s) on page %s", page)
                 break
             except requests.RequestException as e:
-                print(f"   ❌ Request error: {type(e).__name__}: {e}")
+                logger.error("Request error: %s: %s", type(e).__name__, e)
                 break
             except json.JSONDecodeError as e:
-                print(f"   ❌ JSON decode error: {e}")
+                logger.error("JSON decode error: %s", e)
                 break
         
         return all_jobs
@@ -596,7 +599,7 @@ class ArbeitsagenturJobFetcher:
             }
             
         except Exception as e:
-            print(f"   ⚠️ Error normalizing job: {e}")
+            logger.error("Error normalizing job: %s", e)
             return None
     
     # ========================================================================
@@ -688,12 +691,12 @@ class ArbeitsagenturJobFetcher:
                 
                 if stats['new'] % 25 == 0:
                     self.conn.commit()
-                    print(f"  ✅ [{i}/{len(jobs)}] {stats['new']} new postings inserted...")
+                    logger.info("[%s/%s]%s new postings inserted...", i, len(jobs), stats['new'])
                 
             except Exception as e:
                 self.conn.rollback()
                 stats['errors'] += 1
-                print(f"  ❌ Error inserting job {job['refnr']}: {type(e).__name__}: {e}")
+                logger.error("Error inserting job %s: %s: %s", job['refnr'], type(e).__name__, e)
         
         self.conn.commit()
         return stats
@@ -764,17 +767,17 @@ def main():
     
     # List profiles and exit
     if args.list_profiles:
-        print("Available search profiles:\n")
+        logger.info("Available search profiles:\n")
         for name, queries in SEARCH_PROFILES.items():
             if name != 'all':
-                print(f"  {name}: {len(queries)} searches")
+                logger.info("%s: %s searches", name, len(queries))
                 for q in queries[:3]:
-                    print(f"    • {q['was']} in {q['wo']}")
+                    logger.info("%s in %s", q['was'], q['wo'])
                 if len(queries) > 3:
-                    print(f"    ... and {len(queries)-3} more")
-        print(f"\n  all: {len(SEARCH_PROFILES['all'])} searches (combined)")
-        print(f"\n  --states: 16 Bundesländer (recommended for nightly)")
-        print(f"    " + ", ".join(BUNDESLAENDER[:4]) + "...")
+                    logger.info("... and %s more", len(queries)-3)
+        logger.info("all: %s searches (combined)", len(SEARCH_PROFILES['all']))
+        logger.info("--states: 16 Bundesländer (recommended for nightly)")
+        logger.info("" + ", ".join(BUNDESLAENDER[:4]) + "...")
         return
     
     # Build search queries based on args
@@ -785,8 +788,8 @@ def main():
     elif args.state:
         # Single state fetch
         if args.state not in BUNDESLAENDER:
-            print(f"❌ Unknown state: {args.state}")
-            print(f"   Valid states: {', '.join(BUNDESLAENDER)}")
+            logger.error("Unknown state: %s", args.state)
+            logger.info("Valid states: %s", ', '.join(BUNDESLAENDER))
             return
         search_queries = [{'wo': args.state}]
         profile_name = f'state: {args.state}'
@@ -813,17 +816,17 @@ def main():
     
     since_days = args.since
     
-    print(f"🇩🇪 Arbeitsagentur Job Fetcher")
-    print(f"   Profile: {profile_name}")
-    print(f"   Max jobs per query: {args.max_jobs}")
-    print(f"   Searches: {len(search_queries)}")
-    print(f"   Since: {f'last {since_days} days' if since_days else 'all time'}")
-    print(f"   Fetch descriptions: {'Yes (scraping HTML)' if fetch_descriptions else 'No (metadata only)'}")
-    print(f"   Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"{'='*60}\n")
+    logger.info("Arbeitsagentur Job Fetcher")
+    logger.info("Profile: %s", profile_name)
+    logger.info("Max jobs per query: %s", args.max_jobs)
+    logger.info("Searches: %s", len(search_queries))
+    logger.info("Since: %s", f'last {since_days}days' if since_days else 'all time')
+    logger.info("Fetch descriptions: %s", 'Yes (scraping HTML)' if fetch_descriptions else 'No (metadata only)')
+    logger.info("Time: %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    logger.info("%s\n", '='*60)
     
     if args.dry_run:
-        print("⚠️  DRY RUN MODE - No database changes\n")
+        logger.warning("DRY RUN MODE - No database changes\n")
         # Test API without database
         _test_api_health(search_queries, since_days)
         return
@@ -845,9 +848,9 @@ def main():
             """, (ACTOR_ID,))
             row = cur.fetchone()
             if row:
-                print(f"\n⏭️ SKIPPED: ALREADY_RAN_TODAY")
-                print(f"   Already ran at {row['completed_at']} (ticket {row['ticket_id']})")
-                print(f"\n{'='*60}\n")
+                logger.info("SKIPPED: ALREADY_RAN_TODAY")
+                logger.info("Already ran at %s (ticket %s)", row['completed_at'], row['ticket_id'])
+                logger.info("%s\n", '='*60)
                 return
         
         # Create ticket for auditability
@@ -875,7 +878,7 @@ def main():
         
         ticket_id = cur.fetchone()['ticket_id']
         conn.commit()
-        print(f"  ticket_id: {ticket_id}")
+        logger.info("ticket_id: %s", ticket_id)
         
         # Run the actor
         actor = ArbeitsagenturJobFetcher(
@@ -888,21 +891,21 @@ def main():
         
         if args.force:
             # Skip preflight, run directly
-            print("⚠️  FORCE MODE - Skipping preflight checks\n")
+            logger.warning("FORCE MODE - Skipping preflight checks\n")
             all_jobs = []
             for query in search_queries:
-                print(f"\n📡 Fetching: {query.get('was')} in {query.get('wo')}...")
+                logger.info("Fetching: %s in %s...", query.get('was'), query.get('wo'))
                 jobs = actor._fetch_jobs(query)
                 if jobs:
-                    print(f"   Found {len(jobs)} jobs")
+                    logger.info("Found %s jobs", len(jobs))
                     all_jobs.extend(jobs)
                 time.sleep(0.5)
             
             # Dedupe and save
             unique_jobs = {j['refnr']: j for j in all_jobs}
-            print(f"\n🔄 Total unique jobs: {len(unique_jobs)}")
+            logger.info("Total unique jobs: %s", len(unique_jobs))
             if fetch_descriptions:
-                print(f"📝 Descriptions scraped: {actor.description_fetch_count}, errors: {actor.description_errors}")
+                logger.info("Descriptions scraped: %s, errors: %s", actor.description_fetch_count, actor.description_errors)
             stats = actor._save_postings(list(unique_jobs.values()))
             result = {
                 'success': True,
@@ -923,7 +926,7 @@ def main():
                     completed_at = NOW()
                 WHERE ticket_id = %s
             """, (json.dumps(result), ticket_id))
-            print(f"\n✅ SUCCESS: {result.get('message')}")
+            logger.info("SUCCESS: %s", result.get('message'))
         else:
             error = result.get('error') or result.get('skip_reason') or 'Unknown error'
             status = 'completed' if result.get('skip_reason') else 'failed'
@@ -934,13 +937,13 @@ def main():
                     completed_at = NOW()
                 WHERE ticket_id = %s
             """, (status, json.dumps(result), ticket_id))
-            print(f"\n{'⏭️ SKIPPED' if result.get('skip_reason') else '❌ FAILED'}: {error}")
+            logger.error("%s: %s", '⏭️ SKIPPED' if result.get('skip_reason') else '❌ FAILED', error)
             if result.get('message'):
-                print(f"   {result['message']}")
+                logger.info("%s", result['message'])
         
         conn.commit()
     
-    print(f"\n{'='*60}\n")
+    logger.info("%s\n", '='*60)
 
 
 def _test_api_health(search_queries: List[Dict], since_days: int = None):
@@ -950,18 +953,18 @@ def _test_api_health(search_queries: List[Dict], since_days: int = None):
         url = f"{API_BASE_URL}/pc/v4/jobs?was=test&size=1"
         response = requests.get(url, headers=API_HEADERS, timeout=10)
         if response.status_code == 200:
-            print("✅ API is healthy")
+            logger.info("API is healthy")
         else:
-            print(f"❌ API returned status {response.status_code}")
+            logger.error("API returned status %s", response.status_code)
             return
     except Exception as e:
-        print(f"❌ API error: {e}")
+        logger.error("API error: %s", e)
         return
     
     # Test first search
     query = search_queries[0]
     was_text = query.get('was') or '(all jobs)'
-    print(f"\n📡 Testing search: {was_text} in {query.get('wo')}...")
+    logger.info("Testing search: %s in %s...", was_text, query.get('wo'))
     
     try:
         url = f"{API_BASE_URL}/pc/v4/jobs"
@@ -984,13 +987,13 @@ def _test_api_health(search_queries: List[Dict], since_days: int = None):
             data = response.json()
             jobs = data.get('stellenangebote', [])
             total = data.get('maxErgebnisse', 0)
-            print(f"✅ Found {total} total jobs, sample of {len(jobs)}:")
+            logger.info("Found %s total jobs, sample of %s:", total, len(jobs))
             for job in jobs[:3]:
-                print(f"   - {job.get('titel')} @ {job.get('arbeitgeber')}")
+                logger.info("%s@%s", job.get('titel'), job.get('arbeitgeber'))
         else:
-            print(f"❌ Search returned status {response.status_code}")
+            logger.error("Search returned status %s", response.status_code)
     except Exception as e:
-        print(f"❌ Search error: {e}")
+        logger.error("Search error: %s", e)
 
 
 if __name__ == '__main__':

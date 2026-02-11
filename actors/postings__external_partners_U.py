@@ -56,7 +56,7 @@ Date: 2026-02-07
 """
 
 import argparse
-import logging
+
 import re
 import sys
 import time
@@ -70,6 +70,9 @@ from bs4 import BeautifulSoup
 from lib.scrapers import get_scraper, SCRAPER_REGISTRY
 from lib.scrapers.base import ScraperResult
 from core.database import get_connection_raw, return_connection
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def strip_html(text: str) -> str:
@@ -89,8 +92,6 @@ MIN_DESCRIPTION_LENGTH = 100
 REQUEST_DELAY_MS = 1000
 
 # Logging - don't use basicConfig as it pollutes root logger when imported by daemon
-logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # DATABASE FUNCTIONS (use core.database for connections)

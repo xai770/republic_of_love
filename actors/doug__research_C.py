@@ -335,10 +335,10 @@ def process_batch(limit: int = 10):
         pending = get_pending_research(conn, limit)
         
         if not pending:
-            print("✅ No research requests pending")
+            logger.info("No research requests pending")
             return
         
-        print(f"📊 Doug has {len(pending)} research requests")
+        logger.info("Doug has %s research requests", len(pending))
         
         success = 0
         failed = 0
@@ -347,16 +347,16 @@ def process_batch(limit: int = 10):
             result = process_interaction(conn, interaction)
             
             if result['success']:
-                print(f"  ✅ {result['job_title'][:40]} → message {result['message_id']}")
+                logger.info("%s→ message %s", result['job_title'][:40], result['message_id'])
                 success += 1
             else:
-                print(f"  ❌ Interaction {interaction['interaction_id']}: {result.get('error', 'Unknown error')}")
+                logger.error("Interaction %s: %s", interaction['interaction_id'], result.get('error', 'Unknown error'))
                 failed += 1
             
             # Rate limit between requests
             time.sleep(2)
         
-        print(f"\n✅ Done: {success} reports written, {failed} failed")
+        logger.info("Done: %s reports written,%s failed", success, failed)
         
     finally:
         return_connection(conn)
@@ -376,21 +376,21 @@ def process_single(interaction_id: int):
         
         interaction = cur.fetchone()
         if not interaction:
-            print(f"❌ Interaction {interaction_id} not found")
+            logger.error("Interaction %s not found", interaction_id)
             return
         
         if interaction['state'] != 'researching':
-            print(f"⚠️ Interaction {interaction_id} is in state '{interaction['state']}', not 'researching'")
-            print("  Run anyway? (override with --force)")
+            logger.warning("Interaction %s is in state '%s', not 'researching'", interaction_id, interaction['state'])
+            logger.info("Run anyway? (override with --force)")
             return
         
         result = process_interaction(conn, dict(interaction))
         
         if result['success']:
-            print(f"✅ Research complete: {result['job_title']}")
-            print(f"   Message ID: {result['message_id']}")
+            logger.info("Research complete: %s", result['job_title'])
+            logger.info("Message ID: %s", result['message_id'])
         else:
-            print(f"❌ Failed: {result.get('error', 'Unknown error')}")
+            logger.error("Failed: %s", result.get('error', 'Unknown error'))
             
     finally:
         return_connection(conn)

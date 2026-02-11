@@ -68,6 +68,9 @@ from bs4 import BeautifulSoup
 from core.database import get_connection
 from core.constants import Status
 from core.text_utils import sanitize_for_storage
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # ============================================================================
 # CONFIGURATION
@@ -155,7 +158,7 @@ class BeesiteDBJobFetcher:
                 stats['description_success_rate'] = round(success_rate, 2)
                 
                 if success_rate < MIN_DESCRIPTION_SUCCESS_RATE:
-                    print(f"  ⚠️  Low description success rate: {success_rate:.0%} (threshold: {MIN_DESCRIPTION_SUCCESS_RATE:.0%})")
+                    logger.warning("Low description success rate:%.0%(threshold:%.0%)", success_rate, MIN_DESCRIPTION_SUCCESS_RATE)
                     stats['qa_warning'] = f'Low description success rate: {success_rate:.0%}'
             
             # Invalidate stale postings (with safety check)
@@ -238,12 +241,12 @@ class BeesiteDBJobFetcher:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('SearchResult', {}).get('SearchResultCount', 0) > 0:
-                    print("  ✅ API health check passed")
+                    logger.info("API health check passed")
                     return True
-            print(f"  ❌ API health check failed: status {response.status_code}")
+            logger.error("API health check failed: status %s", response.status_code)
             return False
         except Exception as e:
-            print(f"  ❌ API health check failed: {e}")
+            logger.error("API health check failed: %s", e)
             return False
     
     # ========================================================================
@@ -287,7 +290,7 @@ class BeesiteDBJobFetcher:
                 )
                 
                 if response.status_code != 200:
-                    print(f"  ⚠️  API returned {response.status_code}")
+                    logger.warning("API returned %s", response.status_code)
                     break
                 
                 data = response.json()
@@ -301,14 +304,14 @@ class BeesiteDBJobFetcher:
                     if job:
                         all_jobs.append(job)
                 
-                print(f"  📡 Fetched batch {start}-{start+len(items)-1}: {len(items)} jobs")
+                logger.info("Fetched batch %s %s: %s jobs", start, start+len(items)-1, len(items))
                 start += len(items)
                 
                 if len(items) < count:
                     break  # No more jobs available
                     
             except requests.RequestException as e:
-                print(f"  ❌ API error: {e}")
+                logger.error("API error: %s", e)
                 return None
         
         return all_jobs[:self.max_jobs]
@@ -412,7 +415,7 @@ class BeesiteDBJobFetcher:
                     # No description = don't insert (shell posting is useless)
                     stats['no_description'] += 1
                     if i % 20 == 0 or i == len(jobs):
-                        print(f"  ⚠️  [{i}/{len(jobs)}] Skipped {stats['no_description']} jobs (no description)")
+                        logger.warning("[%s/%s] Skipped %s jobs (no description)", i, len(jobs), stats['no_description'])
                     continue
                 
                 # Insert new posting WITH description
@@ -441,12 +444,12 @@ class BeesiteDBJobFetcher:
                 
                 if stats['new'] % 10 == 0:
                     self.conn.commit()  # Periodic commit
-                    print(f"  ✅ [{i}/{len(jobs)}] {stats['new']} new postings inserted...")
+                    logger.info("[%s/%s]%s new postings inserted...", i, len(jobs), stats['new'])
                 
             except Exception as e:
                 self.conn.rollback()
                 stats['errors'] += 1
-                print(f"  ❌ Error inserting job {job['external_id']}: {type(e).__name__}: {e}")
+                logger.error("Error inserting job %s: %s: %s", job['external_id'], type(e).__name__, e)
         
         self.conn.commit()
         return stats
@@ -512,8 +515,8 @@ class BeesiteDBJobFetcher:
         stale_ratio = stale_count / total_active
         
         if stale_ratio > MAX_STALE_PERCENTAGE:
-            print(f"  ⚠️  SAFETY: Would invalidate {stale_count}/{total_active} ({stale_ratio:.0%}) - skipping staleness check")
-            print(f"       This exceeds {MAX_STALE_PERCENTAGE:.0%} threshold - likely a bug or API issue")
+            logger.warning("SAFETY: Would invalidate %s/%s (%.0%) - skipping staleness check", stale_count, total_active, stale_ratio)
+            logger.info("This exceeds%.0%threshold - likely a bug or API issue", MAX_STALE_PERCENTAGE)
             return {'stale_invalidated': 0, 'stale_skipped': True, 'stale_would_invalidate': stale_count}
         
         # Safe to proceed - invalidate stale postings
@@ -533,7 +536,7 @@ class BeesiteDBJobFetcher:
         invalidated_count = len(invalidated)
         
         if invalidated_count > 0:
-            print(f"  🗑️  Invalidated {invalidated_count} stale postings (not seen in {STALENESS_DAYS}+ days)")
+            logger.info("Invalidated %s stale postings (not seen in %s+ days)", invalidated_count, STALENESS_DAYS)
         
         self.conn.commit()
         return {'stale_invalidated': invalidated_count, 'stale_skipped': False}
@@ -557,11 +560,11 @@ def main():
                         help=f'Max jobs to fetch (default: {DEFAULT_MAX_JOBS})')
     args = parser.parse_args()
     
-    print(f"\n{'='*60}")
-    print(f"📥 Deutsche Bank Job Fetcher")
-    print(f"   Max jobs: {args.max_jobs}")
-    print(f"   Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"{'='*60}\n")
+    logger.info("%s", '='*60)
+    logger.info("Deutsche Bank Job Fetcher")
+    logger.info("Max jobs: %s", args.max_jobs)
+    logger.info("Time: %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    logger.info("%s\n", '='*60)
     
     with get_connection() as conn:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -578,8 +581,8 @@ def main():
         """, (ACTOR_ID,))
         row = cur.fetchone()
         if row:
-            print(f"\n⏭️ SKIPPED: ALREADY_RAN_TODAY")
-            print(f"\n{'='*60}\n")
+            logger.info("SKIPPED: ALREADY_RAN_TODAY")
+            logger.info("%s\n", '='*60)
             return
         
         # Create ticket for auditability
@@ -603,7 +606,7 @@ def main():
         ticket_id = cur.fetchone()['ticket_id']
         conn.commit()
         
-        print(f"  ticket_id: {ticket_id}")
+        logger.info("ticket_id: %s", ticket_id)
         
         # Run the actor
         actor = BeesiteDBJobFetcher(conn, max_jobs=args.max_jobs)
@@ -618,7 +621,7 @@ def main():
                     completed_at = NOW()
                 WHERE ticket_id = %s
             """, (json.dumps(result), ticket_id))
-            print(f"\n✅ SUCCESS: {result.get('message')}")
+            logger.info("SUCCESS: %s", result.get('message'))
         else:
             error = result.get('error') or result.get('skip_reason') or 'Unknown error'
             # 'skipped' isn't a valid status - use 'completed' for skips, 'failed' for errors
@@ -630,11 +633,11 @@ def main():
                     completed_at = NOW()
                 WHERE ticket_id = %s
             """, (status, json.dumps(result), ticket_id))
-            print(f"\n{'⏭️ SKIPPED' if result.get('skip_reason') else '❌ FAILED'}: {error}")
+            logger.error("%s: %s", '⏭️ SKIPPED' if result.get('skip_reason') else '❌ FAILED', error)
         
         conn.commit()
     
-    print(f"\n{'='*60}\n")
+    logger.info("%s\n", '='*60)
 
 
 if __name__ == '__main__':

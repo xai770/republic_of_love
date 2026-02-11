@@ -129,10 +129,10 @@ def main():
     pairs = find_unconnected_pairs(conn, args.posting_id, args.batch)
     
     if not pairs:
-        print("No new Y2Y matches found")
+        logger.info("No new Y2Y matches found")
         return
     
-    print(f"Found {len(pairs)} potential Y2Y connections")
+    logger.info("Found%spotential Y2Y connections", len(pairs))
     
     # Create connections
     created = 0
@@ -140,11 +140,11 @@ def main():
         result = create_connection(conn, pair)
         if result:
             created += 1
-            print(f"✅ Connection {result['connection_id']}: "
-                  f"Posting {result['posting_id']} ({pair['job_title'][:30]}...) - "
-                  f"Users {result['yogi_a_id']} ↔ {result['yogi_b_id']}")
+            logger.info("Connection%s: "
+ f"Posting%s(%s...) - "
+ f"Users%s↔%s", result['connection_id'], result['posting_id'], pair['job_title'][:30], result['yogi_a_id'], result['yogi_b_id'])
     
-    print(f"\nCreated {created} new Y2Y connections")
+    logger.info("\nCreated%snew Y2Y connections", created)
 
 
 if __name__ == '__main__':

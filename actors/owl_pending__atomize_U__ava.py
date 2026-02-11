@@ -73,6 +73,9 @@ import os
 from core.database import get_connection
 from core.text_utils import clean_json_from_llm
 
+from core.logging_config import get_logger
+logger = get_logger(__name__)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -421,26 +424,24 @@ class OwlPendingAtomizeU:
         report = self.qa_report(sample_size)
         
         if report['status'] == 'no_data':
-            print(f"❌ {report['message']}")
+            logger.error("%s", report['message'])
             return
         
-        print(f"# QA Report: Skill Atomizer")
-        print(f"Generated: {report['generated_at']}")
-        print()
-        print("## Summary")
-        print(f"| Metric | Value |")
-        print(f"|--------|-------|")
-        print(f"| Sample size | {report['sample_size']} |")
-        print(f"| Atomized | {report['atomized_count']} |")
-        print(f"| Skipped | {report['skipped_count']} |")
-        print(f"| Avg atomics per item | {report['avg_atomics_per_item']:.1f} |")
-        print()
-        print("## Samples")
+        logger.info("# QA Report: Skill Atomizer")
+        logger.info("Generated: %s", report['generated_at'])
+        logger.info("## Summary")
+        logger.info("| Metric | Value |")
+        logger.info("|--------|-------|")
+        logger.info("| Sample size |%s|", report['sample_size'])
+        logger.info("| Atomized |%s|", report['atomized_count'])
+        logger.info("| Skipped |%s|", report['skipped_count'])
+        logger.info("| Avg atomics per item |%.1f|", report['avg_atomics_per_item'])
+        logger.info("## Samples")
         for r in report['samples'][:10]:
-            print(f"\n**{r['raw_value'][:60]}{'...' if len(r['raw_value']) > 60 else ''}**")
-            print(f"- Status: {r['status']}")
+            logger.info("\n**%s %s**", r['raw_value'][:60], '...' if len(r['raw_value']) > 60 else '')
+            logger.info("Status: %s", r['status'])
             if r['atomics']:
-                print(f"- Atomics: {r['atomics']}")
+                logger.info("Atomics: %s", r['atomics'])
 
 
 # ============================================================================
@@ -484,19 +485,18 @@ def main():
             """)
             samples = cur.fetchall()
             
-            print("# Atomization Test (dry run)\n")
+            logger.info("# Atomization Test (dry run)\n")
             for sample in samples:
-                print(f"## {sample['raw_value'][:70]}{'...' if len(sample['raw_value']) > 70 else ''}")
-                print(f"Length: {sample['len']} chars")
+                logger.info("##%s %s", sample['raw_value'][:70], '...' if len(sample['raw_value']) > 70 else '')
+                logger.info("Length: %s chars", sample['len'])
                 
                 # Check if atomic
                 if actor._is_atomic(sample['raw_value']):
-                    print(f"→ **Passthrough** (already atomic)")
-                    print(f"→ Normalized: `{actor._normalize_skill(sample['raw_value'])}`")
+                    logger.info("→ **Passthrough** (already atomic)")
+                    logger.info("→ Normalized: `%s`", actor._normalize_skill(sample['raw_value']))
                 else:
                     atomics = actor._atomize_llm(sample['raw_value'])
-                    print(f"→ **LLM atomized**: {atomics}")
-                print()
+                    logger.info("→ **LLM atomized**: %s", atomics)
             return
         
         # Process mode
@@ -517,12 +517,12 @@ def main():
             actor.input_data = {'pending_id': pending_id}
             result = actor.process()
             
-            print(f"\n{'='*60}")
-            print(f"Result for pending_id {pending_id}:")
-            print(json.dumps(result, indent=2, default=str))
-            print(f"{'='*60}")
+            logger.info("%s", '='*60)
+            logger.info("Result for pending_id %s:", pending_id)
+            logger.info("%s", json.dumps(result, indent=2, default=str))
+            logger.info("%s", '='*60)
         else:
-            print("No pending items found")
+            logger.info("No pending items found")
 
 
 if __name__ == '__main__':

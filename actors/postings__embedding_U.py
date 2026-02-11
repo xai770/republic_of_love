@@ -41,6 +41,9 @@ import psycopg2.extras
 
 import os
 from core.database import get_connection_raw, return_connection
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # ============================================================================
 # CONFIGURATION
@@ -66,7 +69,7 @@ def get_embedding(text: str, model: str = MODEL) -> Optional[List[float]]:
         if resp.status_code == 200:
             return resp.json()['embedding']
     except Exception as e:
-        print(f"  ⚠️ Embedding error: {e}")
+        logger.error("Embedding error: %s", e)
     return None
 
 
@@ -112,10 +115,10 @@ def process_batch(limit: int = 1000):
         postings = get_postings_needing_embeddings(conn, limit)
         
         if not postings:
-            print("✅ No postings need embeddings")
+            logger.info("No postings need embeddings")
             return
         
-        print(f"📊 Found {len(postings)} postings needing embeddings")
+        logger.info("Found %s postings needing embeddings", len(postings))
         
         start_time = time.time()
         success = 0
@@ -140,7 +143,7 @@ def process_batch(limit: int = 1000):
                     conn.commit()
                     elapsed = time.time() - start_time
                     rate = success / elapsed
-                    print(f"  💾 {success}/{len(postings)} saved ({rate:.1f}/sec)")
+                    logger.info("%s/%s saved (%.1f/sec)", success, len(postings), rate)
             else:
                 failed += 1
         
@@ -149,9 +152,9 @@ def process_batch(limit: int = 1000):
         
         elapsed = time.time() - start_time
         rate = success / elapsed if elapsed > 0 else 0
-        print(f"✅ Done: {success} embeddings in {elapsed:.1f}s ({rate:.1f}/sec)")
+        logger.info("Done: %s embeddings in%.1fs (%.1f/sec)", success, elapsed, rate)
         if failed:
-            print(f"  ⚠️ {failed} failed")
+            logger.warning("%s failed", failed)
             
     finally:
         return_connection(conn)
@@ -169,21 +172,21 @@ def process_single(posting_id: int):
         row = cur.fetchone()
         
         if not row:
-            print(f"❌ Posting {posting_id} not found in postings_for_matching")
+            logger.error("Posting %s not found in postings_for_matching", posting_id)
             return
         
         text = row[0]
         if not text:
-            print(f"❌ Posting {posting_id} has no match_text")
+            logger.error("Posting %s has no match_text", posting_id)
             return
         
         embedding = get_embedding(text)
         if embedding:
             save_embedding(conn, text, embedding, MODEL)
             conn.commit()
-            print(f"✅ Embedding saved for posting {posting_id} ({len(embedding)} dims)")
+            logger.info("Embedding saved for posting %s (%s dims)", posting_id, len(embedding))
         else:
-            print(f"❌ Failed to compute embedding for posting {posting_id}")
+            logger.error("Failed to compute embedding for posting %s", posting_id)
             
     finally:
         return_connection(conn)

@@ -35,6 +35,10 @@ import re
 from typing import Dict, Any, Optional, List, Tuple
 
 from core.database import get_connection
+
+from core.logging_config import get_logger
+logger = get_logger(__name__)
+
 from tools.skill_embeddings import get_embedding, cosine_similarity
 
 # ============================================================================
@@ -593,21 +597,21 @@ def main():
     args = parser.parse_args()
     
     with get_connection() as conn:
-        print(f"🔍 Analyzing match: Profile {args.profile_id} ↔ Posting {args.posting_id}")
+        logger.debug("Analyzing match: Profile %s↔ Posting %s", args.profile_id, args.posting_id)
         
         result = process_match(conn, args.profile_id, args.posting_id)
         
         if not result['success']:
-            print(f"❌ {result.get('error', 'Unknown error')}")
+            logger.error("%s", result.get('error', 'Unknown error'))
             return 1
         
         if result.get('gated'):
-            print(f"🚫 GATED: {result['gate_reason']}")
+            logger.info("GATED: %s", result['gate_reason'])
             return 0
         
-        print(f"✅ Match ID: {result['match_id']}")
-        print(f"📊 Score: {result['score']:.1%} ({result['match_rate']})")
-        print(f"📋 Recommendation: {result['recommendation'].upper()}")
+        logger.info("Match ID: %s", result['match_id'])
+        logger.info("Score:%.1%(%s)", result['score'], result['match_rate'])
+        logger.info("Recommendation: %s", result['recommendation'].upper())
         
         if args.verbose:
             # Fetch and display full result
@@ -617,35 +621,31 @@ def main():
             """, (result['match_id'],))
             row = cur.fetchone()
             
-            print()
-            print("GO REASONS:")
+            logger.info("GO REASONS:")
             go_reasons = row['go_reasons'] or []
             if isinstance(go_reasons, str):
                 go_reasons = json.loads(go_reasons)
             for r in go_reasons:
-                print(f"  ✅ {r}")
+                logger.info("%s", r)
             
-            print()
-            print("NO-GO REASONS:")
+            logger.info("NO-GO REASONS:")
             nogo_reasons = row['nogo_reasons'] or []
             if isinstance(nogo_reasons, str):
                 nogo_reasons = json.loads(nogo_reasons)
             for r in nogo_reasons:
-                print(f"  ⚠️ {r}")
+                logger.warning("%s", r)
             
             if row['cover_letter']:
-                print()
-                print("=" * 60)
-                print("COVER LETTER:")
-                print("=" * 60)
-                print(row['cover_letter'])
+                logger.info("=" * 60)
+                logger.info("COVER LETTER:")
+                logger.info("=" * 60)
+                logger.info("%s", row['cover_letter'])
             
             if row['nogo_narrative']:
-                print()
-                print("=" * 60)
-                print("NO-GO NARRATIVE:")
-                print("=" * 60)
-                print(row['nogo_narrative'])
+                logger.info("=" * 60)
+                logger.info("NO-GO NARRATIVE:")
+                logger.info("=" * 60)
+                logger.info("%s", row['nogo_narrative'])
     
     return 0
 

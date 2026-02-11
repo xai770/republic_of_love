@@ -6,6 +6,9 @@ Uses BGE-M3 via Ollama for multilingual support (DE/EN).
 
 Usage:
     from lib.mira_faq import MiraFAQ
+
+from core.logging_config import get_logger
+logger = get_logger(__name__)
     
     faq = MiraFAQ()
     result = faq.find_answer(query, uses_du=True)
@@ -69,7 +72,7 @@ def get_embedding(text: str) -> Optional[np.ndarray]:
         if resp.status_code == 200:
             return np.array(resp.json()['embedding'])
     except Exception as e:
-        print(f"⚠️ Embedding error: {e}")
+        logger.error("Embedding error: %s", e)
     return None
 
 
@@ -129,7 +132,7 @@ class MiraFAQ:
             if entry:
                 self.entries.append(entry)
         
-        print(f"📚 Loaded {len(self.entries)} FAQ entries")
+        logger.info("Loaded %s FAQ entries", len(self.entries))
     
     def _parse_faq_block(self, faq_id: str, content: str) -> Optional[FAQEntry]:
         """Parse a single FAQ block into an entry."""
@@ -203,19 +206,19 @@ class MiraFAQ:
                 if cache['content_hash'].item() == content_hash:
                     self.variant_embeddings = list(cache['embeddings'])
                     self.variant_to_entry = list(cache['variant_to_entry'])
-                    print(f"✅ Loaded {len(self.variant_embeddings)} cached embeddings")
+                    logger.info("Loaded %s cached embeddings", len(self.variant_embeddings))
                     return
                 else:
-                    print("📝 FAQ content changed, recomputing embeddings...")
+                    logger.info("FAQ content changed, recomputing embeddings...")
             except Exception as e:
-                print(f"⚠️ Cache load failed: {e}")
+                logger.warning("Cache load failed: %s", e)
         
         # Compute embeddings
         self._compute_embeddings(content_hash)
     
     def _compute_embeddings(self, content_hash: str) -> None:
         """Compute embeddings for all question variants."""
-        print("🔄 Computing FAQ embeddings...")
+        logger.info("Computing FAQ embeddings...")
         
         self.variant_embeddings = []
         self.variant_to_entry = []
@@ -227,7 +230,7 @@ class MiraFAQ:
                     self.variant_embeddings.append(emb)
                     self.variant_to_entry.append(entry_idx)
         
-        print(f"✅ Computed {len(self.variant_embeddings)} embeddings")
+        logger.info("Computed %s embeddings", len(self.variant_embeddings))
         
         # Save cache
         try:
@@ -238,9 +241,9 @@ class MiraFAQ:
                 variant_to_entry=np.array(self.variant_to_entry),
                 content_hash=content_hash
             )
-            print(f"💾 Cached embeddings to {self.cache_path}")
+            logger.info("Cached embeddings to %s", self.cache_path)
         except Exception as e:
-            print(f"⚠️ Failed to cache embeddings: {e}")
+            logger.warning("Failed to cache embeddings: %s", e)
     
     def find_answer(
         self, 

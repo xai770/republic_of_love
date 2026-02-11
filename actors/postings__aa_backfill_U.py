@@ -53,25 +53,13 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 from core.database import get_connection_raw, return_connection
 
+from core.logging_config import get_logger
+logger = get_logger(__name__)
+
 # ============================================================================
 # LOGGING
 # ============================================================================
-LOG_LOCK = threading.Lock()
 
-def log(msg: str):
-    """Print timestamped message to stdout (thread-safe)."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] {msg}"
-    with LOG_LOCK:
-        print(line, flush=True)
-
-def tlog(msg: str):
-    """Print timestamped message to stdout (alias for log)."""
-    log(msg)
-
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 REQUEST_TIMEOUT = 30
 MIN_DESCRIPTION_LENGTH = 100
@@ -92,7 +80,7 @@ REQUEST_COUNTER_LOCK = threading.Lock()
 def rotate_vpn() -> bool:
     """Rotate VPN via vpn.sh switch de. Thread-safe - only one rotation at a time."""
     if not VPN_SCRIPT.exists():
-        log("⚠️  VPN script not found - cannot rotate")
+        logger.warning("VPN script not found - cannot rotate")
         return False
     
     with VPN_LOCK:
@@ -105,14 +93,14 @@ def rotate_vpn() -> bool:
                 timeout=60  # Increased timeout for VPN switch
             )
             if result.returncode == 0:
-                log("🔄 VPN rotated successfully")
+                logger.info("VPN rotated successfully")
                 time.sleep(2)  # Wait for connection to stabilize
                 return True
             else:
-                log(f"⚠️  VPN rotation failed: {result.stderr}")
+                logger.warning("VPN rotation failed: %s", result.stderr)
                 return False
         except Exception as e:
-            log(f"⚠️  VPN rotation error: {e}")
+            logger.error("VPN rotation error: %s", e)
             return False
         finally:
             VPN_ROTATING.clear()  # Allow threads to resume
@@ -278,7 +266,7 @@ def update_posting_description(conn, posting_id: int, description: str) -> bool:
             return True
     except Exception as e:
         conn.rollback()
-        log(f"  ❌ DB update error: {e}")
+        logger.error("DB update error: %s", e)
         return False
 
 
@@ -298,7 +286,7 @@ def invalidate_posting(conn, posting_id: int, reason: str) -> bool:
             return True
     except Exception as e:
         conn.rollback()
-        log(f"  ❌ DB invalidate error: {e}")
+        logger.error("DB invalidate error: %s", e)
         return False
 
 
@@ -397,26 +385,24 @@ def main():
                         help='Number of parallel workers (default: 1). Try 3-5 to find rate limit threshold.')
     args = parser.parse_args()
     
-    print("=" * 70)
-    tlog("🔍 AA Job Description Backfill (Simple HTTP)")
-    print("=" * 70)
-    tlog(f"Min description chars: {args.min_chars}")
-    tlog(f"VPN rotation: {'disabled' if args.no_vpn else 'enabled'}")
-    tlog(f"Order: {args.order} first")
-    tlog(f"Workers: {args.workers}")
-    tlog(f"Dry run: {args.dry_run}")
-    print()
+    logger.info("=" * 70)
+    logger.debug("AA Job Description Backfill (Simple HTTP)")
+    logger.info("=" * 70)
+    logger.info("Min description chars: %s", args.min_chars)
+    logger.info("VPN rotation: %s", 'disabled' if args.no_vpn else 'enabled')
+    logger.info("Order: %s first", args.order)
+    logger.info("Workers: %s", args.workers)
+    logger.info("Dry run: %s", args.dry_run)
     
     conn = get_connection_raw()
     
     try:
         postings = get_postings_to_process(conn, args.limit, args.min_chars, not args.include_partners, args.order)
         total = len(postings)
-        tlog(f"📋 Found {total} postings to process")
-        print()
+        logger.info("Found %s postings to process", total)
         
         if total == 0:
-            tlog("✅ Nothing to do!")
+            logger.info("Nothing to do!")
             return
         
         # Thread-safe stats
@@ -455,7 +441,7 @@ def main():
                     REQUEST_COUNTER[0] = 0  # Reset immediately to prevent other threads triggering
             
             if should_rotate:
-                log(f"🔄 Proactive VPN rotation at {REQUESTS_PER_IP} requests...")
+                logger.info("Proactive VPN rotation at %s requests...", REQUESTS_PER_IP)
                 rotate_vpn()
             
             req_start = time.time()
@@ -477,7 +463,7 @@ def main():
             
             try:
                 if status == 'SUCCESS':
-                    log(f"[{progress}/{total}] {external_id} ✅ {len(description)} chars ({elapsed:.1f}s)")
+                    logger.info("[%s/%s]%s %s chars (%.1fs)", progress, total, external_id, len(description), elapsed)
                     with stats_lock:
                         stats['success'] += 1
                         consecutive_rate_limits[0] = 0
@@ -485,21 +471,21 @@ def main():
                         update_posting_description(thread_conn, posting_id, description)
                         
                 elif status == 'EXTERNAL_PARTNER':
-                    log(f"[{progress}/{total}] {external_id} ⏭️  EXTERNAL_PARTNER ({elapsed:.1f}s)")
+                    logger.info("[%s/%s]%s EXTERNAL_PARTNER (%.1fs)", progress, total, external_id, elapsed)
                     with stats_lock:
                         stats['external_partner'] += 1
                     if thread_conn:
                         update_posting_description(thread_conn, posting_id, 'EXTERNAL_PARTNER')
                         
                 elif status == 'NOT_FOUND':
-                    log(f"[{progress}/{total}] {external_id} 🗑️  Job removed from AA ({elapsed:.1f}s)")
+                    logger.info("[%s/%s]%s Job removed from AA (%.1fs)", progress, total, external_id, elapsed)
                     with stats_lock:
                         stats['not_found'] += 1
                     if thread_conn:
                         invalidate_posting(thread_conn, posting_id, 'Job removed from arbeitsagentur.de')
                         
                 elif status == 'RATE_LIMITED':
-                    log(f"[{progress}/{total}] {external_id} ⚠️  Rate limited ({elapsed:.1f}s)")
+                    logger.warning("[%s/%s]%s Rate limited (%.1fs)", progress, total, external_id, elapsed)
                     with stats_lock:
                         stats['rate_limited'] += 1
                         consecutive_rate_limits[0] += 1
@@ -507,31 +493,31 @@ def main():
                     
                     # Trigger VPN rotation if too many rate limits (only one thread does this)
                     if rl_count >= MAX_CONSECUTIVE_RATE_LIMITS and not args.no_vpn:
-                        log(f"🔄 {rl_count} rate limits - rotating VPN...")
+                        logger.info("%s rate limits - rotating VPN...", rl_count)
                         if rotate_vpn():
                             with stats_lock:
                                 consecutive_rate_limits[0] = 0
                         else:
-                            log("⏸️  VPN rotation failed - pausing 60s...")
+                            logger.info("VPN rotation failed - pausing 60s...")
                             time.sleep(60)
                             with stats_lock:
                                 consecutive_rate_limits[0] = 0
                             
                 elif status == 'NO_DESCRIPTION':
-                    log(f"[{progress}/{total}] {external_id} ⚠️  No description in HTML ({elapsed:.1f}s)")
+                    logger.warning("[%s/%s]%s No description in HTML (%.1fs)", progress, total, external_id, elapsed)
                     with stats_lock:
                         stats['no_description'] += 1
                         
                 elif status == 'SHORT_DESCRIPTION' and description:
                     # Save short descriptions too - they're valid, just small
-                    log(f"[{progress}/{total}] {external_id} ✅ {len(description)} chars (short) ({elapsed:.1f}s)")
+                    logger.info("[%s/%s]%s %s chars (short) (%.1fs)", progress, total, external_id, len(description), elapsed)
                     with stats_lock:
                         stats['success'] += 1
                     if thread_conn:
                         update_posting_description(thread_conn, posting_id, description)
                     
                 else:
-                    log(f"[{progress}/{total}] {external_id} ❌ {status} ({elapsed:.1f}s)")
+                    logger.error("[%s/%s]%s %s (%.1fs)", progress, total, external_id, status, elapsed)
                     with stats_lock:
                         stats['error'] += 1
             finally:
@@ -541,10 +527,10 @@ def main():
             # Batch stats (roughly every batch_size)
             if progress % args.batch_size == 0:
                 with stats_lock:
-                    log(f"📊 Progress: {progress}/{total} | ✅{stats['success']} 🗑️{stats['not_found']} ⚠️{stats['rate_limited']} ❌{stats['error']}")
+                    logger.error("Progress: %s/%s|%s %s %s %s", progress, total, stats['success'], stats['not_found'], stats['rate_limited'], stats['error'])
         
         # Run with thread pool
-        log(f"🚀 Starting with {args.workers} workers")
+        logger.info("Starting with %s workers", args.workers)
         start_time = time.time()
         
         if args.workers == 1:
@@ -567,25 +553,25 @@ def main():
                     try:
                         future.result()  # Raises exception if worker had one
                     except Exception as e:
-                        log(f"❌ Worker exception: {e}")
+                        logger.error("Worker exception: %s", e)
         
         elapsed_total = time.time() - start_time
         rate = stats['processed'] / elapsed_total * 3600 if elapsed_total > 0 else 0
         
         # Final stats
-        log("=" * 70)
-        log("📊 FINAL RESULTS")
-        log("=" * 70)
-        log(f"Total processed: {stats['processed']} in {elapsed_total:.0f}s ({rate:.0f}/hour)")
-        log(f"✅ Descriptions fetched: {stats['success']}")
-        log(f"⏭️  External partner: {stats['external_partner']}")
-        log(f"🗑️  Jobs removed: {stats['not_found']}")
-        log(f"⚠️  Rate limited: {stats['rate_limited']}")
-        log(f"❌ No description: {stats['no_description']}")
-        log(f"❌ Errors: {stats['error']}")
+        logger.info("=" * 70)
+        logger.info("FINAL RESULTS")
+        logger.info("=" * 70)
+        logger.info("Total processed: %s in%.0fs (%.0f/hour)", stats['processed'], elapsed_total, rate)
+        logger.info("Descriptions fetched: %s", stats['success'])
+        logger.info("External partner: %s", stats['external_partner'])
+        logger.info("Jobs removed: %s", stats['not_found'])
+        logger.warning("Rate limited: %s", stats['rate_limited'])
+        logger.error("No description: %s", stats['no_description'])
+        logger.error("Errors: %s", stats['error'])
         
         if args.dry_run:
-            log("⚠️  DRY RUN - no changes made to database")
+            logger.warning("DRY RUN - no changes made to database")
             
     finally:
         return_connection(conn)

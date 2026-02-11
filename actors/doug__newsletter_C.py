@@ -637,22 +637,22 @@ def generate_daily_newsletter(
     if for_date is None:
         for_date = date.today()
     
-    print(f"🗞️ Doug is writing the newsletter for {for_date}...")
+    logger.info("Doug is writing the newsletter for %s...", for_date)
     
     # Gather research
-    print("📊 Researching topics...")
+    logger.info("Researching topics...")
     research = gather_topic_research(NEWSLETTER_TOPICS, max_topics=4)
     
     topics_with_data = sum(1 for r in research.values() if r['results'])
-    print(f"   Found data for {topics_with_data} topics")
+    logger.info("Found data for %s topics", topics_with_data)
     
     # Generate newsletter (with or without review)
     if skip_review:
-        print("✍️ Writing newsletter (no review)...")
+        logger.info("Writing newsletter (no review)...")
         newsletter = generate_newsletter(research, for_date, language)
         review_log = None
     else:
-        print("✍️ Writing newsletter with QA review...")
+        logger.info("Writing newsletter with QA review...")
         newsletter, review_log = generate_newsletter_with_review(research, for_date, language, max_iterations=3)
         
         # Print review summary
@@ -661,26 +661,26 @@ def generate_daily_newsletter(
             improvements = [r for r in review_log if r.get('action') == 'improve']
             final_passed = grades[-1]['passed'] if grades else True
             
-            print(f"   📋 Review: {len(grades)} grades, {len(improvements)} improvements")
+            logger.info("Review: %s grades,%s improvements", len(grades), len(improvements))
             if final_passed:
-                print(f"   ✅ Passed QA review")
+                logger.info("Passed QA review")
             else:
-                print(f"   ⚠️  Published with warnings (max iterations reached)")
+                logger.warning("Published with warnings (max iterations reached)")
     
     if not newsletter:
-        print("❌ Failed to generate newsletter")
+        logger.error("Failed to generate newsletter")
         return None
     
-    print(f"📝 Newsletter generated ({len(newsletter)} chars)")
+    logger.info("Newsletter generated (%s chars)", len(newsletter))
     
     if preview_only:
-        print("\n" + "=" * 60)
-        print(newsletter)
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("%s", newsletter)
+        logger.info("=" * 60)
         if review_log:
-            print("\n📋 Review Log:")
+            logger.info("Review Log:")
             for entry in review_log:
-                print(f"   {entry}")
+                logger.info("%s", entry)
         return newsletter
     
     # Save to database
@@ -688,7 +688,7 @@ def generate_daily_newsletter(
     try:
         ensure_table_exists(conn)
         newsletter_id = save_newsletter(conn, newsletter, for_date, language)
-        print(f"✅ Newsletter saved (ID: {newsletter_id})")
+        logger.info("Newsletter saved (ID: %s)", newsletter_id)
         return newsletter
     finally:
         return_connection(conn)
@@ -735,7 +735,7 @@ def main():
         try:
             for_date = datetime.strptime(args.date, '%Y-%m-%d').date()
         except ValueError:
-            print(f"❌ Invalid date format: {args.date}. Use YYYY-MM-DD")
+            logger.error("Invalid date format: %s. Use YYYY-MM-DD", args.date)
             sys.exit(1)
     
     generate_daily_newsletter(

@@ -45,6 +45,10 @@ import os
 import psycopg2.extras
 import requests
 
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 # Config
 TASK_TYPE_ID = 3335  # session_a_extract_summary
 INSTRUCTION_ID = 3328  # Extract with gemma3:1b (but we'll use qwen2.5-coder:7b)
@@ -372,7 +376,7 @@ def main():
             # Single posting mode
             actor.input_data = {'posting_id': args.posting_id}
             result = actor.process()
-            print(f"Result: {result}")
+            logger.info("Result: %s", result)
         else:
             # Batch mode
             limit = args.batch if args.batch > 0 else 1
@@ -397,10 +401,10 @@ def main():
             rows = cur.fetchall()
             
             if not rows:
-                print(f"No postings need summary extraction{f' for source={args.source}' if args.source else ''}")
+                logger.info("No postings need summary extraction %s", f' for source={args.source}' if args.source else '')
                 return
             
-            print(f"Processing {len(rows)} postings...")
+            logger.info("Processing %s postings...", len(rows))
             success = 0
             failed = 0
             skipped = 0
@@ -411,15 +415,15 @@ def main():
                 
                 if result.get('success'):
                     success += 1
-                    print(f"  [{i}/{len(rows)}] ✅ {row['posting_id']}")
+                    logger.info("[%s/%s]%s", i, len(rows), row['posting_id'])
                 elif result.get('skip_reason'):
                     skipped += 1
-                    print(f"  [{i}/{len(rows)}] ⏭️  {row['posting_id']}: {result.get('skip_reason')}")
+                    logger.info("[%s/%s]%s: %s", i, len(rows), row['posting_id'], result.get('skip_reason'))
                 else:
                     failed += 1
-                    print(f"  [{i}/{len(rows)}] ❌ {row['posting_id']}: {result.get('error', 'Unknown')}")
+                    logger.error("[%s/%s]%s: %s", i, len(rows), row['posting_id'], result.get('error', 'Unknown'))
             
-            print(f"\nDone: {success} success, {skipped} skipped, {failed} failed")
+            logger.info("\nDone: %s success,%s skipped,%s failed", success, skipped, failed)
 
 
 if __name__ == '__main__':

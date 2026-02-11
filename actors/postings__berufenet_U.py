@@ -40,6 +40,9 @@ import os
 
 from core.database import get_connection_raw
 from lib.berufenet_matching import clean_job_title, llm_verify_match
+from core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
 EMBED_MODEL = "bge-m3:567m"
@@ -114,7 +117,7 @@ def get_embedding(text: str) -> Optional[np.ndarray]:
                 return None
             return emb
     except Exception as e:
-        print(f"  ⚠️ Embedding error: {e}")
+        logger.error("Embedding error: %s", e)
     return None
 
 
@@ -230,11 +233,11 @@ def escalate_to_owl_pending(cleaned_title: str, candidates: list[dict], cur, con
 
 def process_batch(batch_size: int, phase2: bool = False):
     """Process a batch of unclassified posting titles."""
-    print(f"\n{'='*60}")
-    print(f"Berufenet Classification Actor (OWL-first)")
-    print(f"{'='*60}")
-    print(f"Batch size: {batch_size}")
-    print(f"Phase 2 (embedding+LLM): {'enabled' if phase2 else 'disabled — OWL only'}")
+    logger.info("%s", '='*60)
+    logger.info("Berufenet Classification Actor (OWL-first)")
+    logger.info("%s", '='*60)
+    logger.info("Batch size: %s", batch_size)
+    logger.info("Phase 2 (embedding+LLM): %s", 'enabled' if phase2 else 'disabled — OWL only')
 
     conn = get_connection_raw()
     cur = conn.cursor()
@@ -255,17 +258,17 @@ def process_batch(batch_size: int, phase2: bool = False):
 
     titles = cur.fetchall()
     if not titles:
-        print("\n✅ No unclassified titles remaining!")
+        logger.info("No unclassified titles remaining!")
         return
 
-    print(f"Processing {len(titles)} unique titles...")
+    logger.info("Processing %s unique titles...", len(titles))
 
     # Load Phase 2 resources only if needed
     beruf_df, beruf_embeddings = None, None
     if phase2:
-        print("Loading Berufenet embeddings for Phase 2...")
+        logger.info("Loading Berufenet embeddings for Phase 2...")
         beruf_df, beruf_embeddings = load_berufenet()
-        print(f"  Loaded {len(beruf_df)} professions")
+        logger.info("Loaded %s professions", len(beruf_df))
 
     stats = {'owl_hit': 0, 'embed_auto': 0, 'llm_yes': 0, 'escalated': 0, 'null': 0, 'error': 0}
     start_time = time.time()
@@ -379,22 +382,21 @@ def process_batch(batch_size: int, phase2: bool = False):
         if (i + 1) % 100 == 0:
             elapsed = time.time() - start_time
             rate = (i + 1) / elapsed
-            print(f"  {i+1}/{len(titles)} ({rate:.1f}/s) — owl:{stats['owl_hit']} embed:{stats['embed_auto']} llm:{stats['llm_yes']} esc:{stats['escalated']} null:{stats['null']}")
+            logger.info("%s/%s (%.1f/s) — owl: %s embed: %s llm: %s esc: %s null: %s", i+1, len(titles), rate, stats['owl_hit'], stats['embed_auto'], stats['llm_yes'], stats['escalated'], stats['null'])
 
     elapsed = time.time() - start_time
 
     total_classified = stats['owl_hit'] + stats['embed_auto'] + stats['llm_yes']
-    print(f"\n{'='*60}")
-    print(f"COMPLETED in {elapsed:.1f}s ({len(titles)/max(elapsed,0.1):.1f} titles/s)")
-    print(f"{'='*60}")
-    print(f"  🦉 OWL hit (Phase 1):   {stats['owl_hit']}")
-    print(f"  📐 Embed auto (≥0.85):  {stats['embed_auto']}")
-    print(f"  🤖 LLM confirmed:       {stats['llm_yes']}")
-    print(f"  📋 Escalated to triage:  {stats['escalated']}")
-    print(f"  ❌ NULL (Phase 2 off):   {stats['null']}")
-    print(f"  ⚠️  Errors:              {stats['error']}")
-    print(f"  ─────────────────────────")
-    print(f"  ✅ Total classified:     {total_classified}")
+    logger.info("%s", '='*60)
+    logger.info("COMPLETED in %.1f s (%.1f titles/s)", elapsed, len(titles)/max(elapsed,0.1))
+    logger.info("%s", '='*60)
+    logger.info("OWL hit (Phase 1): %s", stats['owl_hit'])
+    logger.info("Embed auto (≥0.85): %s", stats['embed_auto'])
+    logger.info("LLM confirmed: %s", stats['llm_yes'])
+    logger.info("Escalated to triage: %s", stats['escalated'])
+    logger.error("NULL (Phase 2 off): %s", stats['null'])
+    logger.error("Errors: %s", stats['error'])
+    logger.info("Total classified: %s", total_classified)
 
 
 def show_stats():
@@ -402,7 +404,7 @@ def show_stats():
     conn = get_connection_raw()
     cur = conn.cursor()
 
-    print("\n📊 BERUFENET CLASSIFICATION STATUS\n")
+    logger.info("BERUFENET CLASSIFICATION STATUS\n")
 
     cur.execute("""
         SELECT
@@ -419,12 +421,12 @@ def show_stats():
     total_postings = 0
     for row in cur:
         status = row['berufenet_verified'] or 'unprocessed'
-        print(f"  {status:15} : {row['titles']:>6,} titles, {row['postings']:>7,} postings")
+        logger.info("%15: %s titles,%s postings", status, row['titles'], row['postings'])
         total_titles += row['titles']
         total_postings += row['postings']
 
-    print(f"  {'─'*50}")
-    print(f"  {'TOTAL':15} : {total_titles:>6,} titles, {total_postings:>7,} postings")
+    logger.info("%s", '─'*50)
+    logger.info("%15: %s titles,%s postings", 'TOTAL', total_titles, total_postings)
 
     # OWL coverage
     cur.execute("""
@@ -434,7 +436,7 @@ def show_stats():
         WHERE o.owl_type = 'berufenet'
     """)
     owl_names_count = cur.fetchone()['count']
-    print(f"\n  OWL berufenet names: {owl_names_count:,}")
+    logger.info("OWL berufenet names: %s", f"{owl_names_count:,}")
 
     # Qualification level distribution
     cur.execute("""
@@ -446,11 +448,11 @@ def show_stats():
     """)
 
     level_names = {1: 'Helfer', 2: 'Fachkraft', 3: 'Spezialist', 4: 'Experte'}
-    print("\n📈 QUALIFICATION LEVEL DISTRIBUTION:")
+    logger.info("QUALIFICATION LEVEL DISTRIBUTION:")
     for row in cur:
         level = row['qualification_level']
         name = level_names.get(level, '?')
-        print(f"  Level {level} ({name:10}): {row['cnt']:>7,} postings")
+        logger.info("Level %s (%10): %s postings", level, name, row['cnt'])
 
 
 if __name__ == '__main__':

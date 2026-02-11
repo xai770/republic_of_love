@@ -81,6 +81,9 @@ from core.database import get_connection, get_connection_raw, return_connection
 from lib.scrapers.arbeitsagentur import ArbeitsagenturScraper
 from lib.scrapers.base import BaseScraper
 
+from core.logging_config import get_logger
+logger = get_logger(__name__)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -123,10 +126,10 @@ def _rotate_vpn() -> bool:
     import subprocess
     
     if not VPN_SCRIPT.exists():
-        print("  ⚠️  VPN script not found - cannot rotate")
+        logger.warning("VPN script not found - cannot rotate")
         return False
     
-    print("\n🔄 ROTATING VPN (reconnect for new IP)")
+    logger.info("ROTATING VPN (reconnect for new IP)")
     
     try:
         result = subprocess.run(
@@ -136,16 +139,16 @@ def _rotate_vpn() -> bool:
             timeout=60
         )
         if result.returncode == 0:
-            print("  ✅ VPN rotated - new IP")
+            logger.info("VPN rotated - new IP")
             return True
         else:
-            print(f"  ⚠️  VPN rotation failed: {result.stderr[:100]}")
+            logger.warning("VPN rotation failed: %s", result.stderr[:100])
             return False
     except subprocess.TimeoutExpired:
-        print("  ⚠️  VPN rotation timed out")
+        logger.warning("VPN rotation timed out")
         return False
     except Exception as e:
-        print(f"  ⚠️  VPN rotation error: {e}")
+        logger.error("VPN rotation error: %s", e)
         return False
 
 
@@ -463,7 +466,7 @@ def main():
             # Single posting mode
             actor.input_data = {'posting_id': args.posting_id}
             result = actor.process()
-            print(f"Result: {json.dumps(result, indent=2)}")
+            logger.info("Result: %s", json.dumps(result, indent=2))
         
         elif args.batch > 0:
             # Batch mode - find work and process (only AA-hosted URLs)
@@ -482,10 +485,10 @@ def main():
             
             rows = cur.fetchall()
             if not rows:
-                print("No postings need description scraping")
+                logger.info("No postings need description scraping")
                 return
             
-            print(f"Processing {len(rows)} postings...")
+            logger.info("Processing %s postings...", len(rows))
             success = 0
             failed = 0
             skipped = 0
@@ -508,7 +511,7 @@ def main():
                     actor._invalidate_posting(row['posting_id'], 'HTTP 404 - Job removed from Arbeitsagentur')
                     invalidated += 1
                     consecutive_403s = 0  # Reset 403 counter on non-403
-                    print(f"  [{i}/{len(rows)}] 🗑️  {row['posting_id']}: INVALIDATED (job removed)")
+                    logger.info("[%s/%s]%s: INVALIDATED (job removed)", i, len(rows), row['posting_id'])
                     time.sleep(0.2)
                     continue
                 
@@ -517,10 +520,10 @@ def main():
                 # ============================================================
                 if http_status == 403:
                     consecutive_403s += 1
-                    print(f"  [{i}/{len(rows)}] ⚠️  {row['posting_id']}: 403 Forbidden ({consecutive_403s}/{CONSECUTIVE_403_THRESHOLD})")
+                    logger.warning("[%s/%s]%s: 403 Forbidden (%s/%s)", i, len(rows), row['posting_id'], consecutive_403s, CONSECUTIVE_403_THRESHOLD)
                     
                     if consecutive_403s >= CONSECUTIVE_403_THRESHOLD:
-                        print(f"\n🛑 RATE LIMIT HIT - {consecutive_403s} consecutive 403s")
+                        logger.error("RATE LIMIT HIT -%s consecutive 403s", consecutive_403s)
                         
                         # Rotate VPN and retry
                         vpn_rotation_count += 1
@@ -528,23 +531,23 @@ def main():
                             # ================================================
                             # FAIL LOUD - all retries exhausted
                             # ================================================
-                            print("\n" + "=" * 60)
-                            print("💥 FATAL: RATE LIMIT PERSISTS AFTER ALL VPN ROTATIONS")
-                            print(f"   Rotated through {vpn_rotation_count - 1} VPN endpoints")
-                            print(f"   Still getting 403 Forbidden from AA")
-                            print(f"   Stats: {success} success, {invalidated} invalidated, {failed} failed")
-                            print("=" * 60 + "\n")
+                            logger.info("=" * 60)
+                            logger.error("FATAL: RATE LIMIT PERSISTS AFTER ALL VPN ROTATIONS")
+                            logger.info("Rotated through %s VPN endpoints", vpn_rotation_count - 1)
+                            logger.info("Still getting 403 Forbidden from AA")
+                            logger.info("Stats: %s success,%s invalidated,%s failed", success, invalidated, failed)
+                            logger.info("=" * 60)
                             sys.exit(1)
                         
                         # Pause then rotate VPN
-                        print(f"⏳ Pausing {RATE_LIMIT_PAUSE_SECONDS}s before VPN rotation #{vpn_rotation_count}...")
+                        logger.info("Pausing %s s before VPN rotation #%s...", RATE_LIMIT_PAUSE_SECONDS, vpn_rotation_count)
                         time.sleep(RATE_LIMIT_PAUSE_SECONDS)
                         
                         _rotate_vpn()
                         consecutive_403s = 0  # Reset counter after VPN change
                         
                         # Retry current posting
-                        print(f"🔄 Retrying posting {row['posting_id']}...")
+                        logger.info("Retrying posting %s...", row['posting_id'])
                         i -= 1  # Will re-process this posting
                     else:
                         failed += 1
@@ -558,18 +561,18 @@ def main():
                 
                 if result.get('success'):
                     success += 1
-                    print(f"  [{i}/{len(rows)}] ✅ {row['posting_id']}: {result.get('description_length')} chars")
+                    logger.info("[%s/%s]%s: %s chars", i, len(rows), row['posting_id'], result.get('description_length'))
                 elif result.get('skip_reason'):
                     skipped += 1
-                    print(f"  [{i}/{len(rows)}] ⏭️  {row['posting_id']}: {result.get('skip_reason')}")
+                    logger.info("[%s/%s]%s: %s", i, len(rows), row['posting_id'], result.get('skip_reason'))
                 else:
                     failed += 1
-                    print(f"  [{i}/{len(rows)}] ❌ {row['posting_id']}: {result.get('error')}")
+                    logger.error("[%s/%s]%s: %s", i, len(rows), row['posting_id'], result.get('error'))
                 
                 # Rate limit - be nice to the server
                 time.sleep(0.2)
             
-            print(f"\nDone: {success} success, {invalidated} invalidated, {skipped} skipped, {failed} failed")
+            logger.info("\nDone: %s success,%s invalidated,%s skipped,%s failed", success, invalidated, skipped, failed)
         
         else:
             # Find a random test subject
@@ -585,10 +588,10 @@ def main():
             if row:
                 actor.input_data = {'posting_id': row['posting_id']}
                 result = actor.process()
-                print(f"Result for posting {row['posting_id']}:")
-                print(json.dumps(result, indent=2))
+                logger.info("Result for posting %s:", row['posting_id'])
+                logger.info("%s", json.dumps(result, indent=2))
             else:
-                print("No postings need description scraping")
+                logger.info("No postings need description scraping")
 
 
 if __name__ == '__main__':
