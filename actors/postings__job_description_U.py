@@ -85,8 +85,8 @@ from lib.scrapers.base import BaseScraper
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-ACTOR_ID = None  # TODO: Set after registering in actors table
-TASK_TYPE_ID = None  # TODO: Set after creating task_type
+ACTOR_ID = 1299  # job_description_backfill
+TASK_TYPE_ID = 1299  # job_description_backfill
 
 # Scraping settings
 MIN_DESCRIPTION_LENGTH = 100

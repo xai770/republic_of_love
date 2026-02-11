@@ -80,7 +80,7 @@ from core.text_utils import clean_json_from_llm
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-TASK_TYPE_ID = None  # Will be set after creating task_type
+TASK_TYPE_ID = 1306  # owl_pending_auto_triage
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 MODEL = "qwen2.5-coder:7b"
