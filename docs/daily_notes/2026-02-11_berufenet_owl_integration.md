@@ -663,13 +663,46 @@ Files changed:
 - `.env` — added `OLLAMA_URL`
 - 7 actors, 3 core modules, 4 tools, 4 scripts, 2 API routers, 1 lib
 
+### Admin.py template extraction (20:00)
+
+Extracted ~500 lines of inline HTML/CSS/JS from `api/routers/admin.py` into Jinja templates:
+- `frontend/templates/admin/base.html` — shared CSS variables, dark mode toggle, theme JS
+- `frontend/templates/admin/console.html` — stats grid, ticket/batch/fetch tables
+- `frontend/templates/admin/owl_triage.html` — candidate cards, keyboard shortcuts, pagination
+
+Both GET endpoints (`/admin/console`, `/admin/owl-triage`) now use `templates.TemplateResponse()`. CSS was duplicated between console and triage (copy-pasted block) — now shared via base template. Theme toggle JS was defined twice — now once.
+
+**admin.py:** 1,007 → 504 lines (−50%). Commit `3b2977e`.
+
+### Qual backfill round 2 (20:05)
+
+Re-ran qualification backfill after OWL triage + cascade created new berufenet mappings. Found 501 more fixable postings. Updated. Coverage: 162,131 → 162,632 (85.9%).
+
+### Nightly fetch running (20:00)
+
+Cron fired `turing_fetch.sh 1 25000 force` at 20:00 on schedule. Observed live at page 48/58 of Bayern (4,700/5,829 jobs), all 200s, no errors. New pipeline steps (domain cascade + qual backfill) will run automatically after fetch completes.
+
+### Session totals
+
+| # | Task | Result |
+|---|------|--------|
+| 1 | Combined domain × qualification chart | ✅ |
+| 2 | BI i18n (DE/EN toggle) | ✅ |
+| 3 | Nightly pipeline: cascade + qual backfill | ✅ |
+| 4 | Ollama URL centralization (24 files) | ✅ |
+| 5 | Admin.py template extraction (−50%) | ✅ |
+| 6 | Qual backfill round 2 (+501 postings) | ✅ |
+| 7 | Git: `052aa35` + `3b2977e`, pushed | ✅ |
+
 ### Planned (not today)
 
 **Nav bar: Newsletters.** Doug creates newsletters (`actors/doug__newsletter_C.py`). Add to left nav as "News"/"Schlagzeilen". Mira uses them for smalltalk context.
 
 **Mysti safety protocol.** If a yogi mentions suicide, self-harm, criminal intent, or violence during chat with Mira: (1) immediately show help resources (Telefonseelsorge 0800-1110111, crisis text line), (2) block further chat, (3) alert admin. Non-negotiable — this is a legal and ethical requirement.
 
-**BI page redo.** ~~Current charts need rework: domains → pie chart, geography → map visualization, qualification levels → bar chart.~~ DONE — combined domain×qual stacked bar, bilingual.
+**~~BI page redo.~~** DONE — combined domain×qual stacked bar, bilingual.
+
+**~~982-line inline HTML in admin.py.~~** DONE — extracted to Jinja templates.
 
 **ESCO import.** Berufenet covers traditional German trades. Corporate jobs (DB, tech) need ESCO (European Skills/Competences, ~13,890 skills + ~3,008 occupations). Import as `owl_type = 'esco_occupation'` + `owl_type = 'skill'`. Add `esco_id` to postings. Skills-based matching for modern roles.
 
