@@ -837,7 +837,10 @@ Commit `c86461d`, pushed.
 | 13 | Drop 185 MB dead indexes | `c86461d` |
 | 14 | Fix pipeline_health.py log path | `c86461d` |
 | 15 | Invalidate 179 stale postings | `c86461d` |
+| 16 | Dead script cleanup (62 files, −16,137 lines) | `397d7a6` |
+| 17 | print→logging (314 calls, 18 files) | `fb2097e` |
+| 18 | Test suite rebuild (85 tests, 12 legacy deleted) | `feeb8e0` |
 
-**7 commits pushed.** 15 items shipped. 17/19 stinks resolved.
+**11 commits pushed.** 18 items shipped. 18/19 stinks resolved (only #15 partial — coverage exists but could grow).
 
 *— ℵ*
