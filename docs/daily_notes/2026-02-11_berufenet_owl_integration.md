@@ -840,7 +840,9 @@ Commit `c86461d`, pushed.
 | 16 | Dead script cleanup (62 files, −16,137 lines) | `397d7a6` |
 | 17 | print→logging (314 calls, 18 files) | `fb2097e` |
 | 18 | Test suite rebuild (85 tests, 12 legacy deleted) | `feeb8e0` |
+| 19 | Test coverage expansion (+107 tests → 192 green) | `cc5a1fa` |
+| 20 | ROADMAP.md rewrite (Dec 2025 → Feb 2026) | `536f95a` |
 
-**11 commits pushed.** 18 items shipped. 18/19 stinks resolved (only #15 partial — coverage exists but could grow).
+**15 commits pushed.** 20 items shipped. 19/19 stinks resolved. PG cache hit 99.97%.
 
 *— ℵ*
