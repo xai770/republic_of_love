@@ -21,13 +21,12 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, '/home/xai/Documents/ty_learn')
 from core.database import get_connection
 
 
 def get_last_pipeline_run() -> dict:
-    """Parse the nightly_fetch.log to find last run info."""
-    log_path = Path('/home/xai/Documents/ty_learn/logs/nightly_fetch.log')
+    """Parse the turing_fetch.log to find last run info."""
+    log_path = Path('/home/xai/Documents/ty_learn/logs/turing_fetch.log')
     
     if not log_path.exists():
         return {'error': 'Log file not found'}
