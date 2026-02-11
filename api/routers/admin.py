@@ -1,6 +1,7 @@
 """
 Admin console routes — operational stats, system health, OWL triage.
 """
+from pathlib import Path
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -9,6 +10,9 @@ import json
 import pytz
 
 from api.deps import get_db, get_current_user
+
+TEMPLATES_DIR = Path(__file__).parent.parent.parent / "frontend" / "templates"
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 ADMIN_DENIED_HTML = """
@@ -113,373 +117,20 @@ def admin_console(request: Request, conn=Depends(get_db)):
         """)
         totals = cur.fetchone()
     
-    # Build HTML
-    html = f"""
-    <!DOCTYPE html>
-    <html data-theme="light">
-    <head>
-        <title>Admin Console - talent.yoga</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            :root {{
-                --bg-primary: #f5f5f5;
-                --bg-card: #ffffff;
-                --text-primary: #333333;
-                --text-secondary: #666666;
-                --border-color: #e0e0e0;
-                --accent: #0066cc;
-                --success: #28a745;
-                --warning: #ffc107;
-                --danger: #dc3545;
-            }}
-            [data-theme="dark"] {{
-                --bg-primary: #1a1a2e;
-                --bg-card: #16213e;
-                --text-primary: #eee;
-                --text-secondary: #aaa;
-                --border-color: #333;
-                --accent: #4dabf7;
-            }}
-            * {{ box-sizing: border-box; }}
-            body {{ 
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                max-width: 1200px; 
-                margin: 0 auto; 
-                padding: 20px;
-                background: var(--bg-primary);
-                color: var(--text-primary);
-            }}
-            h1 {{ color: var(--text-primary); }}
-            h2 {{ 
-                color: var(--text-primary); 
-                border-bottom: 2px solid var(--accent);
-                padding-bottom: 8px;
-            }}
-            .header {{
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 30px;
-            }}
-            .header-right {{
-                display: flex;
-                gap: 15px;
-                align-items: center;
-            }}
-            .card {{
-                background: var(--bg-card);
-                border-radius: 8px;
-                padding: 20px;
-                margin-bottom: 20px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }}
-            .stats-grid {{
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-                margin-bottom: 30px;
-            }}
-            .stat-box {{
-                background: var(--bg-card);
-                border-radius: 8px;
-                padding: 20px;
-                text-align: center;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }}
-            .stat-number {{
-                font-size: 2em;
-                font-weight: bold;
-                color: var(--accent);
-            }}
-            .stat-label {{
-                color: var(--text-secondary);
-                margin-top: 5px;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 10px;
-            }}
-            th, td {{
-                padding: 10px;
-                text-align: left;
-                border-bottom: 1px solid var(--border-color);
-            }}
-            th {{
-                background: var(--bg-primary);
-                font-weight: 600;
-            }}
-            .status-completed {{ color: var(--success); font-weight: 600; }}
-            .status-failed {{ color: var(--danger); font-weight: 600; }}
-            .status-pending {{ color: var(--warning); font-weight: 600; }}
-            .status-running {{ color: var(--accent); font-weight: 600; }}
-            .timestamp {{
-                color: var(--text-secondary);
-                font-size: 0.85em;
-            }}
-            a {{ color: var(--accent); }}
-            .refresh-btn {{
-                background: var(--accent);
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 5px;
-                cursor: pointer;
-            }}
-            .theme-toggle {{
-                background: none;
-                border: 1px solid var(--border-color);
-                padding: 6px 10px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 1.1em;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>🎛️ Admin Console</h1>
-            <div class="header-right">
-                <span class="timestamp">Last updated: {now.strftime('%Y-%m-%d %H:%M:%S')} CET</span>
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌓</button>
-                <button class="refresh-btn" onclick="location.reload()">↻ Refresh</button>
-                <a href="/dashboard">← Dashboard</a>
-            </div>
-        </div>
-        
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-number">{totals['total_postings']:,}</div>
-                <div class="stat-label">Total Postings</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">{totals['total_profiles']}</div>
-                <div class="stat-label">Active Profiles</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">{totals['total_actors']}</div>
-                <div class="stat-label">Active Actors</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">{totals['total_matches']:,}</div>
-                <div class="stat-label">Total Matches</div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>🎫 Ticket Activity (Last 24h)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Actor</th>
-                        <th>Completed</th>
-                        <th>Failed</th>
-                        <th>Pending</th>
-                        <th>Running</th>
-                        <th>Avg Duration</th>
-                    </tr>
-                </thead>
-                <tbody>
-    """
-    
-    if not actor_summary:
-        html += '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No ticket activity in last 24 hours</td></tr>'
-    else:
-        for actor, stats in sorted(actor_summary.items()):
-            avg_dur = f"{stats['avg_duration']:.1f}s" if stats['avg_duration'] else "—"
-            html += f"""
-                    <tr>
-                        <td><strong>{actor}</strong></td>
-                        <td class="status-completed">{stats['completed']}</td>
-                        <td class="status-failed">{stats['failed']}</td>
-                        <td class="status-pending">{stats['pending']}</td>
-                        <td class="status-running">{stats['running']}</td>
-                        <td>{avg_dur}</td>
-                    </tr>
-            """
-    
-    html += """
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="card">
-            <h2>📦 Recent Batches</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Batch ID</th>
-                        <th>Actor</th>
-                        <th>Status</th>
-                        <th>Progress</th>
-                        <th>Started</th>
-                    </tr>
-                </thead>
-                <tbody>
-    """
-    
-    if not recent_batches:
-        html += '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No batches in last 24 hours</td></tr>'
-    else:
-        for batch in recent_batches:
-            progress = f"{batch['completed_count']}/{batch['item_count']}"
-            if batch['failed_count'] > 0:
-                progress += f" <span class='status-failed'>({batch['failed_count']} failed)</span>"
-            started = batch['started_at'].strftime('%H:%M:%S') if batch['started_at'] else "—"
-            status_class = f"status-{batch['status']}"
-            html += f"""
-                    <tr>
-                        <td>{batch['batch_id']}</td>
-                        <td>{batch['actor_name']}</td>
-                        <td class="{status_class}">{batch['status']}</td>
-                        <td>{progress}</td>
-                        <td class="timestamp">{started}</td>
-                    </tr>
-            """
-    
-    html += """
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="card">
-            <h2>📡 Nightly Fetch Status</h2>
-    """
-    
-    if fetch_stats:
-        html += "<table><thead><tr><th>Date</th><th>Postings Fetched</th></tr></thead><tbody>"
-        for stat in fetch_stats:
-            html += f"<tr><td>{stat['fetch_date']}</td><td class='status-completed'>{stat['count']}</td></tr>"
-        html += "</tbody></table>"
-    else:
-        html += '<p style="color: var(--text-secondary);">No arbeitsagentur postings fetched in last 24 hours. Check if nightly_fetch.sh ran.</p>'
-    
-    html += """
-        </div>
-        
-        <script>
-            function toggleTheme() {
-                const html = document.documentElement;
-                const current = html.getAttribute('data-theme');
-                const next = current === 'dark' ? 'light' : 'dark';
-                html.setAttribute('data-theme', next);
-                localStorage.setItem('theme', next);
-            }
-            
-            // Restore theme on load
-            (function() {
-                const saved = localStorage.getItem('theme');
-                if (saved) {
-                    document.documentElement.setAttribute('data-theme', saved);
-                } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                }
-            })();
-        </script>
-    </body>
-    </html>
-    """
-    
-    return HTMLResponse(html)
+    return templates.TemplateResponse("admin/console.html", {
+        "request": request,
+        "now": now.strftime('%Y-%m-%d %H:%M:%S'),
+        "totals": totals,
+        "actor_summary": actor_summary,
+        "recent_batches": recent_batches,
+        "fetch_stats": fetch_stats,
+    })
 
 
 # =============================================================================
 # OWL Triage — /admin/owl-triage
 # =============================================================================
 
-OWL_TRIAGE_CSS = """
-    :root {
-        --bg-primary: #f5f5f5; --bg-card: #ffffff; --text-primary: #333;
-        --text-secondary: #666; --border-color: #e0e0e0; --accent: #0066cc;
-        --success: #28a745; --warning: #ffc107; --danger: #dc3545;
-    }
-    [data-theme="dark"] {
-        --bg-primary: #1a1a2e; --bg-card: #16213e; --text-primary: #eee;
-        --text-secondary: #aaa; --border-color: #333; --accent: #4dabf7;
-        --success: #2ecc71; --warning: #f1c40f; --danger: #e74c3c;
-    }
-    * { box-sizing: border-box; }
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        max-width: 960px; margin: 0 auto; padding: 20px;
-        background: var(--bg-primary); color: var(--text-primary);
-    }
-    a { color: var(--accent); }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .header-right { display: flex; gap: 12px; align-items: center; }
-    .stats-bar {
-        display: flex; gap: 20px; margin-bottom: 24px; padding: 12px 20px;
-        background: var(--bg-card); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .stats-bar .stat { text-align: center; }
-    .stats-bar .stat-num { font-size: 1.4em; font-weight: bold; color: var(--accent); }
-    .stats-bar .stat-lbl { font-size: 0.8em; color: var(--text-secondary); }
-    .item {
-        background: var(--bg-card); border-radius: 8px; padding: 20px; margin-bottom: 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid var(--accent);
-    }
-    .item-title {
-        font-size: 1.3em; font-weight: 700; margin-bottom: 12px;
-        color: var(--text-primary);
-    }
-    .item-meta { font-size: 0.85em; color: var(--text-secondary); margin-bottom: 10px; }
-    .candidates { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .candidate {
-        display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-        border: 2px solid var(--border-color); border-radius: 6px;
-        cursor: pointer; transition: all 0.15s;
-    }
-    .candidate:hover { border-color: var(--accent); background: rgba(0,102,204,0.05); }
-    .candidate.selected { border-color: var(--success); background: rgba(40,167,69,0.08); }
-    .score {
-        font-family: monospace; font-size: 0.95em; font-weight: 600;
-        padding: 3px 8px; border-radius: 4px; min-width: 52px; text-align: center;
-    }
-    .score-high { background: #d4edda; color: #155724; }
-    .score-mid { background: #fff3cd; color: #856404; }
-    .score-low { background: #f8d7da; color: #721c24; }
-    [data-theme="dark"] .score-high { background: #1a3a2a; color: #7dcea0; }
-    [data-theme="dark"] .score-mid { background: #3a3020; color: #f1c40f; }
-    [data-theme="dark"] .score-low { background: #3a1a1a; color: #e74c3c; }
-    .cand-name { flex: 1; font-weight: 500; }
-    .cand-id { font-family: monospace; font-size: 0.85em; color: var(--text-secondary); }
-    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .btn {
-        border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer;
-        font-size: 0.95em; font-weight: 500; transition: opacity 0.15s;
-    }
-    .btn:hover { opacity: 0.85; }
-    .btn-confirm { background: var(--success); color: white; }
-    .btn-skip { background: var(--warning); color: #333; }
-    .btn-reject { background: var(--danger); color: white; }
-    .btn-nav { background: var(--accent); color: white; text-decoration: none; padding: 8px 18px; border-radius: 5px; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .flash {
-        padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;
-        font-weight: 500; text-align: center;
-    }
-    .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    [data-theme="dark"] .flash-success { background: #1a3a2a; color: #7dcea0; border-color: #2a5a3a; }
-    [data-theme="dark"] .flash-error { background: #3a1a1a; color: #e74c3c; border-color: #5a2a2a; }
-    .empty-state {
-        text-align: center; padding: 60px 20px; color: var(--text-secondary);
-        font-size: 1.1em;
-    }
-    .postings-count { font-size: 0.85em; color: var(--text-secondary); margin-left: 8px; }
-    .theme-toggle {
-        background: none; border: 1px solid var(--border-color);
-        padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 1.1em;
-    }
-    .keyboard-hint {
-        font-size: 0.8em; color: var(--text-secondary); margin-top: 12px;
-        text-align: center;
-    }
-    kbd {
-        background: var(--bg-primary); border: 1px solid var(--border-color);
-        padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 0.9em;
-    }
-"""
 
 
 @router.get("/owl-triage", response_class=HTMLResponse)
@@ -529,183 +180,29 @@ def owl_triage(request: Request, conn=Depends(get_db), page: int = 1,
     total_pending = stats['pending']
     total_pages = max(1, (total_pending + page_size - 1) // page_size)
 
-    # Build items HTML
-    items_html = ""
-    if not items:
-        items_html = '<div class="empty-state">All caught up! No pending items.</div>'
-    else:
-        for idx, item in enumerate(items):
-            candidates = []
-            if item['source_context']:
-                ctx = item['source_context'] if isinstance(item['source_context'], dict) else json.loads(item['source_context'])
-                candidates = ctx.get('candidates', [])
+    # Parse candidates from source_context for each item
+    prepared_items = []
+    for item in items:
+        candidates = []
+        if item['source_context']:
+            ctx = item['source_context'] if isinstance(item['source_context'], dict) else json.loads(item['source_context'])
+            candidates = ctx.get('candidates', [])
+        prepared_items.append({
+            'pending_id': item['pending_id'],
+            'raw_value': item['raw_value'],
+            'candidates': candidates,
+        })
 
-            cands_html = ""
-            for ci, c in enumerate(candidates):
-                score = c.get('score', 0)
-                score_class = 'score-high' if score >= 0.70 else 'score-mid' if score >= 0.55 else 'score-low'
-                cands_html += f"""
-                    <div class="candidate" data-pid="{item['pending_id']}" data-bid="{c.get('berufenet_id', 0)}"
-                         onclick="toggleCandidate(this, {item['pending_id']})">
-                        <span class="score {score_class}">{score:.3f}</span>
-                        <span class="cand-name">{c.get('name', '?')}</span>
-                        <span class="cand-id">#{c.get('berufenet_id', '?')}</span>
-                    </div>
-                """
-
-            raw_display = item['raw_value'] or '<em>(empty title)</em>'
-            items_html += f"""
-                <div class="item" id="item-{item['pending_id']}">
-                    <div class="item-title">{raw_display}</div>
-                    <div class="candidates">{cands_html}</div>
-                    <div class="actions">
-                        <form method="POST" action="/admin/owl-triage/resolve" style="display:inline">
-                            <input type="hidden" name="pending_id" value="{item['pending_id']}">
-                            <input type="hidden" name="berufenet_ids" id="bids-{item['pending_id']}" value="">
-                            <input type="hidden" name="page" value="{page}">
-                            <button type="submit" class="btn btn-confirm" id="confirm-{item['pending_id']}" disabled>Confirm</button>
-                        </form>
-                        <form method="POST" action="/admin/owl-triage/skip" style="display:inline">
-                            <input type="hidden" name="pending_id" value="{item['pending_id']}">
-                            <input type="hidden" name="action" value="skip">
-                            <input type="hidden" name="page" value="{page}">
-                            <button type="submit" class="btn btn-skip">Skip</button>
-                        </form>
-                        <form method="POST" action="/admin/owl-triage/skip" style="display:inline">
-                            <input type="hidden" name="pending_id" value="{item['pending_id']}">
-                            <input type="hidden" name="action" value="reject">
-                            <input type="hidden" name="page" value="{page}">
-                            <button type="submit" class="btn btn-reject">No Match</button>
-                        </form>
-                    </div>
-                </div>
-            """
-
-    # Flash message
-    flash_html = ""
-    if flash:
-        flash_html = f'<div class="flash flash-{flash_type}">{flash}</div>'
-
-    # Pagination
-    pagination_html = '<div style="display:flex; justify-content:center; gap:8px; margin-top:20px;">'
-    if page > 1:
-        pagination_html += f'<a href="/admin/owl-triage?page={page-1}" class="btn btn-nav">&larr; Prev</a>'
-    pagination_html += f'<span style="padding:8px 12px; color:var(--text-secondary);">Page {page} / {total_pages}</span>'
-    if page < total_pages:
-        pagination_html += f'<a href="/admin/owl-triage?page={page+1}" class="btn btn-nav">Next &rarr;</a>'
-    pagination_html += '</div>'
-
-    html = f"""
-    <!DOCTYPE html>
-    <html data-theme="light">
-    <head>
-        <title>OWL Triage - talent.yoga</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>{OWL_TRIAGE_CSS}</style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>OWL Triage</h1>
-            <div class="header-right">
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">&#x1F313;</button>
-                <a href="/admin/console">&larr; Admin</a>
-            </div>
-        </div>
-
-        <div class="stats-bar">
-            <div class="stat">
-                <div class="stat-num">{stats['pending']:,}</div>
-                <div class="stat-lbl">Pending</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">{affected_postings:,}</div>
-                <div class="stat-lbl">Postings Affected</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">{stats['resolved']:,}</div>
-                <div class="stat-lbl">Resolved</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">{stats['skipped']:,}</div>
-                <div class="stat-lbl">Skipped</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">{stats['rejected']:,}</div>
-                <div class="stat-lbl">Rejected</div>
-            </div>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-bottom:20px; align-items:center;">
-            <form method="POST" action="/admin/owl-triage/auto" style="display:inline">
-                <input type="hidden" name="page" value="{page}">
-                <input type="hidden" name="batch_size" value="50">
-                <button type="submit" class="btn btn-nav" onclick="this.disabled=true; this.textContent='LLM working...';">
-                    &#x1F916; Auto-triage next 50
-                </button>
-            </form>
-            <span style="color:var(--text-secondary); font-size:0.85em;">
-                LLM picks matches from candidates &mdash; resolved items get OWL synonyms
-            </span>
-        </div>
-
-        {flash_html}
-        {items_html}
-        {pagination_html}
-
-        <div class="keyboard-hint">
-            Click one or more candidates then <kbd>Enter</kbd> to confirm &mdash;
-            <kbd>S</kbd> to skip &mdash; <kbd>R</kbd> to reject &mdash;
-            first selected = primary classification
-        </div>
-
-        <script>
-            let activePendingId = null;
-
-            function toggleCandidate(el, pendingId) {{
-                el.classList.toggle('selected');
-                // Collect all selected IDs for this item
-                const item = document.getElementById('item-' + pendingId);
-                const selected = item.querySelectorAll('.candidate.selected');
-                const ids = Array.from(selected).map(c => c.dataset.bid);
-                document.getElementById('bids-' + pendingId).value = ids.join(',');
-                document.getElementById('confirm-' + pendingId).disabled = ids.length === 0;
-                activePendingId = pendingId;
-            }}
-
-            document.addEventListener('keydown', function(e) {{
-                if (!activePendingId) return;
-                const item = document.getElementById('item-' + activePendingId);
-                if (!item) return;
-                if (e.key === 'Enter') {{
-                    e.preventDefault();
-                    const btn = document.getElementById('confirm-' + activePendingId);
-                    if (!btn.disabled) btn.closest('form').submit();
-                }} else if (e.key === 's' || e.key === 'S') {{
-                    e.preventDefault();
-                    item.querySelector('button.btn-skip').closest('form').submit();
-                }} else if (e.key === 'r' || e.key === 'R') {{
-                    e.preventDefault();
-                    item.querySelector('button.btn-reject').closest('form').submit();
-                }}
-            }});
-
-            function toggleTheme() {{
-                const html = document.documentElement;
-                const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                html.setAttribute('data-theme', next);
-                localStorage.setItem('theme', next);
-            }}
-            (function() {{
-                const saved = localStorage.getItem('theme');
-                if (saved) document.documentElement.setAttribute('data-theme', saved);
-                else if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-                    document.documentElement.setAttribute('data-theme', 'dark');
-            }})();
-        </script>
-    </body>
-    </html>
-    """
-    return HTMLResponse(html)
+    return templates.TemplateResponse("admin/owl_triage.html", {
+        "request": request,
+        "stats": stats,
+        "affected_postings": affected_postings,
+        "items": prepared_items,
+        "page": page,
+        "total_pages": total_pages,
+        "flash": flash,
+        "flash_type": flash_type,
+    })
 
 
 @router.post("/owl-triage/resolve")

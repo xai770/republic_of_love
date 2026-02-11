@@ -1,0 +1,157 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Console - talent.yoga{% endblock %}
+
+{% block extra_css %}
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    .stat-box {
+        background: var(--bg-card);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        color: var(--accent);
+    }
+    .stat-label {
+        color: var(--text-secondary);
+        margin-top: 5px;
+    }
+    .status-completed { color: var(--success); font-weight: 600; }
+    .status-failed { color: var(--danger); font-weight: 600; }
+    .status-pending { color: var(--warning); font-weight: 600; }
+    .status-running { color: var(--accent); font-weight: 600; }
+    .refresh-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+{% endblock %}
+
+{% block body %}
+    <div class="header">
+        <h1>🎛️ Admin Console</h1>
+        <div class="header-right">
+            <span class="timestamp">Last updated: {{ now }} CET</span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌓</button>
+            <button class="refresh-btn" onclick="location.reload()">↻ Refresh</button>
+            <a href="/dashboard">&larr; Dashboard</a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-number">{{ "{:,}".format(totals.total_postings) }}</div>
+            <div class="stat-label">Total Postings</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ totals.total_profiles }}</div>
+            <div class="stat-label">Active Profiles</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ totals.total_actors }}</div>
+            <div class="stat-label">Active Actors</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ "{:,}".format(totals.total_matches) }}</div>
+            <div class="stat-label">Total Matches</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🎫 Ticket Activity (Last 24h)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Actor</th>
+                    <th>Completed</th>
+                    <th>Failed</th>
+                    <th>Pending</th>
+                    <th>Running</th>
+                    <th>Avg Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if not actor_summary %}
+                <tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No ticket activity in last 24 hours</td></tr>
+                {% else %}
+                {% for actor, stats in actor_summary|dictsort %}
+                <tr>
+                    <td><strong>{{ actor }}</strong></td>
+                    <td class="status-completed">{{ stats.completed }}</td>
+                    <td class="status-failed">{{ stats.failed }}</td>
+                    <td class="status-pending">{{ stats.pending }}</td>
+                    <td class="status-running">{{ stats.running }}</td>
+                    <td>{{ "%.1f"|format(stats.avg_duration) ~ "s" if stats.avg_duration else "—" }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>📦 Recent Batches</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Batch ID</th>
+                    <th>Actor</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Started</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if not recent_batches %}
+                <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No batches in last 24 hours</td></tr>
+                {% else %}
+                {% for batch in recent_batches %}
+                <tr>
+                    <td>{{ batch.batch_id }}</td>
+                    <td>{{ batch.actor_name }}</td>
+                    <td class="status-{{ batch.status }}">{{ batch.status }}</td>
+                    <td>
+                        {{ batch.completed_count }}/{{ batch.item_count }}
+                        {% if batch.failed_count > 0 %}
+                        <span class="status-failed">({{ batch.failed_count }} failed)</span>
+                        {% endif %}
+                    </td>
+                    <td class="timestamp">{{ batch.started_at.strftime('%H:%M:%S') if batch.started_at else "—" }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>📡 Nightly Fetch Status</h2>
+        {% if fetch_stats %}
+        <table>
+            <thead><tr><th>Date</th><th>Postings Fetched</th></tr></thead>
+            <tbody>
+                {% for stat in fetch_stats %}
+                <tr>
+                    <td>{{ stat.fetch_date }}</td>
+                    <td class="status-completed">{{ stat.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: var(--text-secondary);">No arbeitsagentur postings fetched in last 24 hours. Check if nightly_fetch.sh ran.</p>
+        {% endif %}
+    </div>
+{% endblock %}
