@@ -28,7 +28,6 @@ Usage:
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -38,9 +37,6 @@ import pandas as pd
 import requests
 
 import os
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.database import get_connection_raw
 from lib.berufenet_matching import clean_job_title, llm_verify_match

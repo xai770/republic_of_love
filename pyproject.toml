@@ -1,3 +1,18 @@
+[project]
+name = "ty_learn"
+version = "0.1.0"
+description = "talent.yoga — AI job matching platform"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["api*", "core*", "lib*", "matching*", "entity_registry*", "contracts*", "config*"]
+exclude = ["tests*", "archive*", "backups*", "prototypes*"]
+
+
 # Type checking configuration for consciousness collaboration project
 [tool.mypy]
 ignore_missing_imports = true

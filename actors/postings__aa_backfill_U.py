@@ -26,7 +26,6 @@ import argparse
 import os
 import re
 import subprocess
-import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -51,7 +50,6 @@ def strip_html(text: str) -> str:
 # SETUP
 # ============================================================================
 PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.database import get_connection_raw, return_connection
 

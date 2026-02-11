@@ -48,10 +48,8 @@ Date: 2026-02-07
 """
 
 import argparse
-import sys
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 import psycopg2
@@ -60,8 +58,6 @@ import psycopg2.extras
 # ============================================================================
 # SETUP
 # ============================================================================
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.database import get_connection_raw, return_connection
 from lib.scrapers import get_scraper, list_scrapers, SCRAPER_REGISTRY

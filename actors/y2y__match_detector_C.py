@@ -12,12 +12,7 @@ Usage:
 
 This is a C (Create) actor - it creates yogi_connections records.
 """
-import sys
 import argparse
-from pathlib import Path
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.database import get_connection_raw
 from core.logging_config import get_logger

@@ -32,12 +32,7 @@ Task Type ID: TBD
 import sys
 import json
 import re
-from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
-
-# Setup
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.database import get_connection
 from tools.skill_embeddings import get_embedding, cosine_similarity

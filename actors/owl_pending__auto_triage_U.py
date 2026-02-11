@@ -19,8 +19,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import psycopg2
 import psycopg2.extras
 from core.database import get_connection_raw

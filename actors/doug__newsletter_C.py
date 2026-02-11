@@ -35,7 +35,6 @@ import re
 import subprocess
 import argparse
 import time
-from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 
@@ -45,8 +44,6 @@ import requests
 # ============================================================================
 # SETUP
 # ============================================================================
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 import os
 from core.database import get_connection_raw, return_connection

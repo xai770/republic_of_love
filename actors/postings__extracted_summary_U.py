@@ -41,16 +41,9 @@ Author: Arden
 Date: 2026-01-15 (updated 2026-02-03 - removed translation logic)
 """
 
-import sys
-from pathlib import Path
-
 import os
 import psycopg2.extras
 import requests
-
-# Add project root to path
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 # Config
 TASK_TYPE_ID = 3335  # session_a_extract_summary
