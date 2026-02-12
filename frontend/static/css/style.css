@@ -1736,14 +1736,28 @@ body {
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px) scale(0.95);
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
     overflow: hidden;
+    pointer-events: none;
 }
 
 .mira-widget.open .mira-chat-window {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Idle: after 5s of no interaction, go semi-transparent */
+.mira-widget.open.mira-idle .mira-chat-window {
+    opacity: 0.55;
+    transition: opacity 0.8s ease;
+}
+
+.mira-widget.open.mira-idle:hover .mira-chat-window,
+.mira-widget.open.mira-idle .mira-chat-window:hover {
+    opacity: 1;
+    transition: opacity 0.15s ease;
 }
 
 .mira-header {

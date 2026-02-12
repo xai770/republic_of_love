@@ -1,6 +1,6 @@
 # CURRENT — talent.yoga Sprint Tracker
 
-**Last updated:** 2026-02-01 afternoon by Arden
+**Last updated:** 2026-02-12 morning by Arden
 
 ---
 
@@ -8,61 +8,28 @@
 
 | Task | Owner | Status |
 |------|-------|--------|
+| Reprocessing SQL (15,651 no_match rows) | Arden | ready — waiting for fetch batch |
 | Dashboard discussion | Sandy+Arden | next |
-| Embedding run for new postings | — | queued |
 
 ---
 
-## ✅ DONE (This Week)
+## ✅ DONE (Recent)
 
 | Task | Owner | Completed |
 |------|-------|-----------|
+| clean_job_title 10 regex bugs fixed | Arden | 2026-02-12 |
+| Three-tier owl_lookup (accept ambiguous OWL names) | Arden | 2026-02-12 |
+| Phase 2 recycling loop fix + migrate 14,430 rows | Arden | 2026-02-12 |
+| Phase 1 recycling loop fix | Arden | 2026-02-12 |
+| Log-level bug fix (berufenet + aa_backfill) | Arden | 2026-02-12 |
+| MCP PostgreSQL connection fixed | Arden | 2026-02-12 |
+| Dead cron jobs removed (reaper + watchdog) | Arden | 2026-02-12 |
+| 19/19 code stinks resolved | Arden | 2026-02-11 |
+| OWL berufenet integration (17,381 names imported) | Arden | 2026-02-11 |
+| Berufenet OWL-first pipeline (Phase 1 + Phase 2) | Arden | 2026-02-11 |
+| 81.8% berufenet classification (167,638 / 205,054) | Arden | 2026-02-11 |
 | **SITE LIVE ON INTERNET** 🎉 | Arden | 2026-02-01 |
-| Cloudflare Tunnel setup (talent.yoga → localhost:8000) | Arden | 2026-02-01 |
-| Google OAuth production fix (redirect_uri + FRONTEND_URL) | Arden | 2026-02-01 |
-| Sudoers config (cloudflared + wg-quick) | Arden | 2026-02-01 |
-| AA backfill complete: 68.5% → **97.3%** coverage | Arden | 2026-02-01 |
-| Rate limit resilience (VPN rotation on 403) | Arden | 2026-02-01 |
-| 931 expired jobs invalidated via 404 detection | Arden | 2026-02-01 |
-| Site testing follow-up | Sandy | 2026-01-29 |
-| Site testing (full pass) | Arden | 2026-01-29 |
-| API fixes (`/api/profiles/me`, `/facets`, `/stats`) | Arden | 2026-01-29 |
-| Archive old tickets (746K deleted) | Sandy | 2026-01-28 |
-| Archive script atomic transactions | Sandy | 2026-01-28 |
-| Domain gate detector (Nate feedback) | Sandy | 2026-01-28 |
-| Fachanwalt → HARD patterns | Sandy | 2026-01-28 |
-| MFA/Arzthelfer → soft_patterns | Sandy | 2026-01-28 |
-| Unknown domain threshold (MIN_CONFIDENCE=0.35) | Sandy | 2026-01-28 |
-| Profile editor + preferences | Arden | 2026-01-27 13:15 |
-| Mobile responsive | Arden | 2026-01-27 13:15 |
-| Maria mockup polish (dashboard) | Arden | 2026-01-27 13:15 |
-| Lobby + Pricing tiers | Arden + Sage | 2026-01-27 13:05 |
-| Finances page (public ledger) | Arden | 2026-01-27 13:05 |
-| Ledger API + DB tables | Arden | 2026-01-27 13:05 |
-| **Phase 4 COMPLETE** | Arden | 2026-01-27 |
-| P4.3 Threshold Tuning (3h est → 4min) | Arden | 2026-01-27 12:55 |
-| P4.2 Application Tracking (2h est → 4min) | Arden | 2026-01-27 12:55 |
-| P4.1 User Ratings (2h est → 4min) | Arden | 2026-01-27 12:55 |
-| **Phase 2 COMPLETE** | Arden | 2026-01-27 |
-| Legal pages (2h est → 3min) | Arden | 2026-01-27 12:43 |
-| P2.4 Match Notifications (2h est → 3min) | Arden | 2026-01-27 12:43 |
-| P2.2 In-App Messages (1h est → 3min) | Arden | 2026-01-27 12:43 |
-| P2.1 Scheduled Matching (3h est → 2min) | Arden | 2026-01-27 12:43 |
-| **Phase 3 COMPLETE** | Arden | 2026-01-27 |
-| P3.5 Visualization (4h est → 4min) | Arden | 2026-01-27 |
-| P3.4 Report Viewer (3h est → 6min) | Arden | 2026-01-27 |
-| P3.3 Match Dashboard (4h est → 5min) | Arden | 2026-01-27 |
-| P3.2 Profile Editor (8h est → 8min) | Arden | 2026-01-27 |
-| **Phase 1 COMPLETE** | Arden | 2026-01-27 |
-| P1.1-P1.4 Backend | Arden | 2026-01-27 |
-| AA pipeline (5,188 jobs) | Arden | 2026-01-27 |
-| `postings__job_description_U.py` actor | Arden | 2026-01-27 |
-| `postings__embedding_U.py` actor | Arden | 2026-01-27 |
-| Seniority handling documented | Sandy | 2026-01-27 |
-| Embedding model comparison (BGE-M3 vs Arctic) | Sandy | 2026-01-27 |
-| Discovered: skip translation, embed German directly | Sandy | 2026-01-27 |
-| arbeitsagentur.de integration (6,433 postings) | Arden | 2026-01-25 |
-| P3.2 Profile Editor spec (multi-method) | Sandy | 2026-01-26 |
+| AA backfill complete: 68.5% → 97.3% coverage | Arden | 2026-02-01 |
 
 ---
 
@@ -70,10 +37,13 @@
 
 | Priority | Task | Hours | Depends On |
 |----------|------|-------|------------|
-| 1 | Notifications JS fix | 1h | — |
-| 2 | Impressum real address | — | Legal review |
-| 3 | Terms [Your City] placeholder | — | Legal review |
-| 4 | LogReg restricted-role detector | 4h | Nate review |
+| 1 | Run reprocessing SQL (15,651 rows) | 5min | Current fetch batch finishing |
+| 2 | Monitor reprocessed batch hit rate | — | #1 |
+| 3 | Notifications JS fix | 1h | — |
+| 4 | Impressum real address | — | Legal review |
+| 5 | Terms [Your City] placeholder | — | Legal review |
+| 6 | LogReg restricted-role detector | 4h | Nate review |
+| ? | **Sandy: what's the priority?** | — | — |
 
 ---
 
@@ -87,19 +57,20 @@
 
 ## 📊 Inventory
 
-| Source | Postings | With Description | Embedded | Invalidated |
-|--------|----------|------------------|----------|-------------|
-| arbeitsagentur.de | 34,291 | 33,360 (97.3%) | TBD | 931 |
-| Deutsche Bank | ~2,200 | ~2,200 | ? | — |
-| **Total** | **~36,500** | **~35,500** | **TBD** | **931** |
+| Source | Postings | With Description | Classified | % Classified |
+|--------|----------|------------------|------------|--------------|
+| arbeitsagentur.de | 201,107 | 176,939 | 166,500 | 82.8% |
+| Deutsche Bank | 3,947 | 3,947 | 1,139 | 28.8% |
+| **Total** | **205,054** | **180,886** | **167,639** | **81.8%** |
 
-**Tickets:** 358,627 active (746K archived 2026-01-28)
+**OWL entities:** 3,561 berufenet | **OWL names:** 32,365
+**Profiles:** 5 | **Matches:** 28 | **Tests:** 215 green
 
-### 🚀 Feb 1 Backfill Victory
-- **Before:** 68.5% coverage (24,256 with descriptions)
-- **After:** 97.3% coverage (33,360 with descriptions)
-- **Expired jobs invalidated:** 931 (were returning 404)
-- **Stubborn holdouts:** 911 (og:description fallback didn't help)
+### Classification pipeline status (Feb 12)
+- Phase 1 (OWL-first): Three-tier acceptance live — exact + unanimous + majority
+- Phase 2 (embed+LLM): Draining queue, ~55 titles/batch
+- Reprocessing pending: 15,651 `no_match` rows to re-enter Phase 1
+- Fix impact estimate: classification should jump from 81.8% → ~90%+ after reprocessing
 
 ---
 

@@ -518,30 +518,69 @@
     }
 
     // ============================================================
-    // MIRA CHAT WIDGET (search-aware)
+    // MIRA CHAT WIDGET — Smart FAB pattern
     // ============================================================
     const miraState = {
         isOpen: false,
         hasGreeted: false,
         usesDu: null,
-        history: []
+        history: [],
+        idleTimer: null,
     };
 
-    function toggleMiraChat() {
+    function openMiraChat() {
         const widget = document.getElementById('mira-widget');
-        miraState.isOpen = !miraState.isOpen;
-        widget.classList.toggle('open', miraState.isOpen);
-        if (miraState.isOpen && !miraState.hasGreeted) {
+        miraState.isOpen = true;
+        widget.classList.add('open');
+        widget.classList.remove('mira-idle');
+        resetMiraIdleTimer();
+        if (!miraState.hasGreeted) {
             loadMiraGreeting();
             miraState.hasGreeted = true;
         }
-        if (miraState.isOpen) {
-            setTimeout(() => document.getElementById('mira-input').focus(), 300);
-        }
+        setTimeout(() => document.getElementById('mira-input').focus(), 300);
     }
 
+    function closeMiraChat() {
+        const widget = document.getElementById('mira-widget');
+        miraState.isOpen = false;
+        widget.classList.remove('open', 'mira-idle');
+        clearTimeout(miraState.idleTimer);
+    }
+
+    function toggleMiraChat() {
+        if (miraState.isOpen) closeMiraChat(); else openMiraChat();
+    }
+
+    // Idle transparency — after 5s without hover/interaction, dim the chat
+    function resetMiraIdleTimer() {
+        const widget = document.getElementById('mira-widget');
+        widget.classList.remove('mira-idle');
+        clearTimeout(miraState.idleTimer);
+        if (!miraState.isOpen) return;
+        miraState.idleTimer = setTimeout(() => {
+            if (miraState.isOpen) widget.classList.add('mira-idle');
+        }, 5000);
+    }
+
+    // Click outside = close
+    document.addEventListener('mousedown', function(e) {
+        const widget = document.getElementById('mira-widget');
+        if (miraState.isOpen && !widget.contains(e.target)) {
+            closeMiraChat();
+        }
+    });
+
+    // Reset idle on any interaction within the widget
+    document.addEventListener('DOMContentLoaded', () => {
+        const widget = document.getElementById('mira-widget');
+        ['mouseenter', 'mousemove', 'click', 'keydown'].forEach(evt => {
+            widget.addEventListener(evt, resetMiraIdleTimer);
+        });
+    });
+
     function loadMiraGreeting() {
-        addMiraMessage('Hallo! Soll ich dir bei der Suche helfen? Sag mir einfach was du suchst — z.B. "Pflegejobs in München" — und ich stelle die Filter für dich ein. 🔍', false);
+        addMiraMessage('Hallo! Soll ich dir bei der Suche helfen? Sag mir was du suchst — z.B. "Pflegejobs in München" 🔍', false);
     }
 
     function addMiraMessage(content, isUser) {
@@ -608,31 +647,51 @@
         if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMiraMessage(); }
     }
 
-    // Auto-resize mira textarea
+    // Auto-resize mira textarea + prevent auto-collapse if user interacts
     document.addEventListener('DOMContentLoaded', () => {
         const mi = document.getElementById('mira-input');
-        if (mi) mi.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-        });
+        if (mi) {
+            mi.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            });
+            // If user starts typing, cancel any pending auto-collapse
+            mi.addEventListener('focus', () => {
+                resetMiraIdleTimer();
+            });
+        }
     });
 
-    // Trigger Mira greeting: vibrate FAB, then auto-open
+    // Trigger Mira greeting: vibrate FAB, auto-open, then auto-collapse after 4s
+    // If user interacts (hovers/clicks/types), cancel the auto-collapse
+    let miraAutoCollapseTimer = null;
+
+    function cancelMiraAutoCollapse() {
+        if (miraAutoCollapseTimer) {
+            clearTimeout(miraAutoCollapseTimer);
+            miraAutoCollapseTimer = null;
+        }
+    }
+
     function triggerMiraGreeting() {
         const widget = document.getElementById('mira-widget');
         const fab = widget.querySelector('.mira-fab');
         miraState.hasGreeted = true;
+
+        // Cancel auto-collapse on any user interaction with the widget
+        ['mouseenter', 'click', 'keydown'].forEach(evt => {
+            widget.addEventListener(evt, cancelMiraAutoCollapse, { once: false });
+        });
+
         setTimeout(() => {
             fab.classList.add('mira-incoming');
             setTimeout(() => {
                 fab.classList.remove('mira-incoming');
-                miraState.isOpen = true;
-                widget.classList.add('open');
-                addMiraMessage('Hallo! Soll ich dir bei der Suche helfen? Sag mir was du suchst — z.B. "Pflegejobs in München" 🔍', false);
-                setTimeout(() => {
-                    const input = document.getElementById('mira-input');
-                    if (input) input.focus();
-                }, 400);
+                openMiraChat();
+                // Auto-collapse after 4s so user sees greeting but it clears for QL panel
+                miraAutoCollapseTimer = setTimeout(() => {
+                    if (miraState.isOpen) closeMiraChat();
+                }, 4000);
             }, 1200);
         }, 800);
     }
@@ -659,6 +718,11 @@
     window.toggleSidebar = function() {
         document.getElementById('sidebar').classList.toggle('open');
     };
+
+    // Expose Mira functions globally for onclick handlers
+    window.toggleMiraChat = toggleMiraChat;
+    window.sendMiraMessage = sendMiraMessage;
+    window.handleMiraKeydown = handleMiraKeydown;
 })();
 </script>
 {% endblock %}
