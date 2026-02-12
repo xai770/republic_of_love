@@ -491,4 +491,24 @@ Login/logout markers are NOT chat messages. Inserting "Yogi logged on" as a `yog
 
 ---
 
+## Parked: Yogi Name Onboarding
+
+**Status:** Parked — pick up when onboarding flow is built.
+
+**Problem:** Mira currently uses `display_name` / `full_name` from the database. But yogis don't go by their real name on the platform — they choose a **yogi name** (e.g. "xai", not their legal name). Mira must address them by their yogi name, not their real one.
+
+**What's needed:**
+1. **Schema:** Add `yogi_name` column to `users` table (or `profiles`). This is the name Mira uses. `display_name` stays as-is for internal/admin use.
+2. **Onboarding flow:** When a yogi first signs up (or first opens Mira), prompt them to choose a yogi name. This becomes part of the onboarding conversation — Mira asks, yogi answers, it's stored.
+3. **Mira context:** `build_yogi_context()` should prefer `yogi_name` over `display_name` / `full_name`. If no yogi name is set yet, Mira should ask for one (first-conversation trigger).
+4. **Uniqueness:** Yogi names should probably be unique (like a handle). Consider case-insensitive uniqueness check.
+5. **Display:** The yogi name should appear in the UI header, chat greeting, and anywhere the platform addresses the user.
+
+**Design questions to resolve later:**
+- Where does yogi_name live? `users.yogi_name` feels right (it's identity, not profile).
+- Can yogis change their name? Probably yes, but rate-limited.
+- Should Mira's first-ever message be "Hi! What should I call you?" — yes, this is the ideal onboarding hook.
+
+---
+
 *— ℵ*
