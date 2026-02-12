@@ -369,16 +369,25 @@ def process_batch(batch_size: int, phase2: bool = False):
                 else:
                     stats['embed_auto'] += 1
             else:
-                # Not confident — escalate to owl_pending
+                # Not confident — escalate to owl_pending for human review
                 escalate_to_owl_pending(cleaned, candidates, cur, conn)
                 stats['escalated'] += 1
+
+                # Use terminal state based on rejection reason (prevents Phase 2 re-processing)
+                reason = result.get('reason', 'no_match')
+                terminal_state = {
+                    'low_score': 'no_match',
+                    'llm_no': 'llm_no',
+                    'llm_uncertain': 'llm_uncertain',
+                    'no_candidates': 'error',
+                }.get(reason, 'no_match')
 
                 cur.execute("""
                     UPDATE postings
                     SET berufenet_score = %s,
-                        berufenet_verified = 'pending_owl'
+                        berufenet_verified = %s
                     WHERE job_title = %s AND berufenet_id IS NULL
-                """, (candidates[0]['score'] if candidates else 0, title))
+                """, (candidates[0]['score'] if candidates else 0, terminal_state, title))
                 conn.commit()
         else:
             # Phase 2 disabled — mark as pending_owl so Phase 1 doesn't reprocess
