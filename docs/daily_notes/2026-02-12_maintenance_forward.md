@@ -620,8 +620,28 @@ Matching starts automatically
 - Privacy architecture doc: full design from Arden, Nov 2025 ✅
 - Workflow 1126 archive: 4-step extraction pipeline (reference) ✅
 
-### What we're building now
-Starting with Tasks O1-O4 (schema + core logic), then wiring in O5-O7.
+### Implementation results — commit `38f7d68`
+
+| Task | Status | Notes |
+|------|--------|-------|
+| O1 | ✅ Done | `migrations/055_yogi_name_onboarding.sql` — yogi_name + onboarding_completed_at |
+| O2 | ✅ Done | Mira onboarding in `core/mira_llm.py` — greeting filter, name extraction, validation |
+| O3 | ✅ Done | `core/cv_anonymizer.py` — single-pass LLM extraction + anonymization (qwen2.5:7b) |
+| O4 | ✅ Done | `core/pii_detector.py` — regex + 36K company corpus, catches email/phone/LinkedIn/companies |
+| O5 | ✅ Done | `api/routers/profiles.py` — parse_cv wired to anonymizer, requires yogi_name |
+| O6 | ⬜ Parked | `detect_notification_email_response()` exists but not wired into chat flow yet |
+| O7 | ✅ Done | `tests/test_onboarding.py` — 51 tests, 300 total passing |
+
+**E2E verified:**
+- "Hallo!" → Mira asks "wie soll ich dich nennen?" (greeting correctly filtered)
+- "Nenn mich xai" → stores yogi_name='xai', Mira confirms
+- Normal chat after onboarding → Mira says "Okay, xai, hier sind deine Top 5 Matches..."
+
+**Bugs found & fixed during implementation:**
+- Greeting treated as name ("Hallo!" → yogi_name='Hallo') — added greeting filter
+- SAP 3-char company detection — `len > 3` skipped "sap", changed to `>= 3`
+- German phone regex too strict — rewrote to flexible pattern
+- Compound name splitting — "Gershon Pollatschek" now checks each part separately
 
 ---
 
