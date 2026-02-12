@@ -121,6 +121,18 @@ class TestExtractYogiName(unittest.TestCase):
     def test_too_long_returns_none(self):
         result = extract_yogi_name_from_message("This is a very long response that doesn't contain a name at all and should return None")
         self.assertIsNone(result)
+    
+    def test_hi_there_is_greeting(self):
+        self.assertIsNone(extract_yogi_name_from_message("Hi there!"))
+    
+    def test_hey_mira_is_greeting(self):
+        self.assertIsNone(extract_yogi_name_from_message("Hey Mira"))
+    
+    def test_hello_there_is_greeting(self):
+        self.assertIsNone(extract_yogi_name_from_message("Hello there"))
+    
+    def test_hallo_du_is_greeting(self):
+        self.assertIsNone(extract_yogi_name_from_message("Hallo du!"))
 
 
 # ─────────────────────────────────────────────────────────

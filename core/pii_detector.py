@@ -103,13 +103,15 @@ class PIIDetector:
         except Exception as e:
             logger.warning(f"Could not load company corpus: {e}")
     
-    def check(self, text: str, extra_names: Optional[list] = None) -> list:
+    def check(self, text: str, extra_names: Optional[list] = None, skip_companies: bool = False) -> list:
         """
         Check text for PII violations.
         
         Args:
             text: The anonymized text to validate.
             extra_names: Additional names to check for (e.g., yogi's real name from CV).
+            skip_companies: If True, skip company name checks (useful for skills/certs fields
+                           where company names like "SAP" are expected as skill references).
         
         Returns:
             List of violation strings. Empty = clean.
@@ -152,13 +154,14 @@ class PIIDetector:
                         violations.append(f"[{label}] {m}")
         
         # Company name checks
-        for company in self._company_names:
-            if len(company) >= 3 and company in text_lower:
-                # Avoid false positives for very short names embedded in words
-                # Check word boundaries
-                pattern = r'\b' + re.escape(company) + r'\b'
-                if re.search(pattern, text_lower):
-                    violations.append(f"[company] {company}")
+        if not skip_companies:
+            for company in self._company_names:
+                if len(company) >= 3 and company in text_lower:
+                    # Avoid false positives for very short names embedded in words
+                    # Check word boundaries
+                    pattern = r'\b' + re.escape(company) + r'\b'
+                    if re.search(pattern, text_lower):
+                        violations.append(f"[company] {company}")
         
         # Extra names (e.g., the yogi's real name)
         if extra_names:

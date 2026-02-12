@@ -64,11 +64,17 @@ PART 2 — ANONYMIZE the output by removing all identifying details.
 
 RULES FOR ANONYMIZATION:
 - Replace the person's real name with: "{yogi_name}"
-- Replace ALL company names with generalized descriptions (see examples below)
+- Replace ALL company names with generalized descriptions IN EMPLOYER CONTEXT (see examples below)
+- KEEP company names when they appear as technology/product names in skills or certifications
+  (e.g., "SAP S/4HANA" stays as "SAP S/4HANA", "SAP Certified" stays as "SAP Certified",
+   "AWS Solutions Architect" stays as-is, "Microsoft Azure" stays as-is)
+- In work_history employer_description: ALWAYS generalize the company name
+- In work_history key_responsibilities: replace company names of CLIENTS/PARTNERS with generalized descriptions
 - Replace ALL school/university names with just the degree level and field
 - Remove ALL dates — convert to durations where useful (e.g., "4 years")
 - Remove ALL contact info (email, phone, address, LinkedIn)
 - Remove ALL personal identifiers
+- Keep role titles exactly as they are (e.g., "Senior Project Manager" stays)
 - Keep: skills, technologies, certifications (by name), languages, role types, industries
 
 {company_examples}
@@ -78,14 +84,14 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
   "yogi_name": "{yogi_name}",
   "years_experience": <number>,
   "career_level": "<junior|mid|senior|lead|executive>",
-  "current_title": "<most recent role title, generalized>",
+  "current_title": "<most recent role title only, e.g. 'Senior Project Manager' — NO company name here>",
   "skills": ["skill1", "skill2", ...],
   "languages": ["language1", "language2", ...],
   "certifications": ["cert1", "cert2", ...],
   "work_history": [
     {{
       "employer_description": "<generalized company description>",
-      "role": "<role title>",
+      "role": "<role title only, e.g. 'Senior Project Manager' — NO company name here>",
       "duration_years": <number>,
       "industry": "<industry category>",
       "key_responsibilities": ["resp1", "resp2"]
@@ -179,25 +185,55 @@ async def extract_and_anonymize(
     # PII safety check
     detector = PIIDetector(conn)
     
-    # Flatten all text from the parsed result for PII checking
-    all_text = _flatten_to_text(parsed)
-    
     extra_names = []
     if real_name:
         # Split "Firstname Lastname" into parts to catch partial matches too
         extra_names = [n for n in real_name.split() if len(n) > 2]
         extra_names.append(real_name)
     
-    violations = detector.check(all_text, extra_names=extra_names)
+    # Split PII check: company names are expected in skills/certifications
+    # (e.g. "SAP S/4HANA" is a skill, not a PII leak)
+    # So we check employer-sensitive fields fully, and skip company check for skills/certs
+    skills_certs_text = ' '.join(
+        parsed.get('skills', []) +
+        parsed.get('certifications', []) +
+        parsed.get('languages', [])
+    )
+    # For skills: only check name/email/phone (not company names)
+    skills_violations = detector.check(skills_certs_text, extra_names=extra_names, skip_companies=True)
+    
+    # For everything else: full PII check including companies
+    sensitive_fields = {k: v for k, v in parsed.items() if k not in ('skills', 'certifications', 'languages')}
+    sensitive_text = _flatten_to_text(sensitive_fields)
+    sensitive_violations = detector.check(sensitive_text, extra_names=extra_names)
+    
+    violations = skills_violations + sensitive_violations
     
     if violations:
         logger.warning(f"PII detected in anonymized output: {violations}")
-        # Try to clean up violations rather than failing entirely
-        parsed = _scrub_violations(parsed, violations)
         
-        # Re-check
+        # Split violations: company violations only apply to non-skill fields
+        company_violations = [v for v in violations if v.startswith('[company]')]
+        other_violations = [v for v in violations if not v.startswith('[company]')]
+        
+        # Scrub non-company violations everywhere
+        if other_violations:
+            parsed = _scrub_violations(parsed, other_violations)
+        
+        # Scrub company violations only in sensitive fields (not skills/certs/languages)
+        if company_violations:
+            protected_keys = ('skills', 'certifications', 'languages')
+            protected = {k: parsed[k] for k in protected_keys if k in parsed}
+            parsed = _scrub_violations(parsed, company_violations)
+            # Restore protected fields
+            parsed.update(protected)
+        
+        # Re-check (light check — just name/email/phone on everything)
         all_text = _flatten_to_text(parsed)
-        remaining = detector.check(all_text, extra_names=extra_names)
+        remaining = detector.check(all_text, extra_names=extra_names, skip_companies=True)
+        # Also re-check sensitive fields for companies
+        sensitive_fields = {k: v for k, v in parsed.items() if k not in ('skills', 'certifications', 'languages')}
+        remaining += detector.check(_flatten_to_text(sensitive_fields), extra_names=extra_names)
         if remaining:
             logger.error(f"PII still present after scrub: {remaining}")
             raise ValueError(f"Anonymization failed safety check: {remaining}")

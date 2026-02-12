@@ -1211,9 +1211,9 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
     
     logger.info(f"Mira LLM chat: lang={language}, uses_du={uses_du}, message={message[:50]}")
     
-    # ── Onboarding check: yogi_name ──
+    # ── Onboarding check: yogi_name + notification email ──
     onboarding_state = get_onboarding_state(user_id, conn)
-    if onboarding_state['needs_yogi_name']:
+    if onboarding_state['needs_yogi_name'] or onboarding_state.get('asking_notification_email'):
         onboarding_response = await handle_onboarding(message, user_id, conn, language, uses_du, onboarding_state)
         if onboarding_response:
             return onboarding_response
@@ -1473,6 +1473,7 @@ def get_onboarding_state(user_id: int, conn) -> dict:
         needs_yogi_name: bool
         needs_profile: bool
         needs_notification_email: bool
+        asking_notification_email: bool  (name set, email not yet answered, onboarding not completed)
         yogi_name: str or None
         onboarding_completed: bool
     """
@@ -1480,6 +1481,7 @@ def get_onboarding_state(user_id: int, conn) -> dict:
         'needs_yogi_name': True,
         'needs_profile': True,
         'needs_notification_email': True,
+        'asking_notification_email': False,
         'yogi_name': None,
         'onboarding_completed': False,
     }
@@ -1495,6 +1497,12 @@ def get_onboarding_state(user_id: int, conn) -> dict:
                 state['needs_yogi_name'] = not row['yogi_name']
                 state['needs_notification_email'] = not row['notification_email']
                 state['onboarding_completed'] = row['onboarding_completed_at'] is not None
+                # We ask for email right after name is set, before onboarding is marked complete
+                state['asking_notification_email'] = (
+                    bool(row['yogi_name'])
+                    and not row['notification_email']
+                    and not row['onboarding_completed_at']
+                )
             
             cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s LIMIT 1", (user_id,))
             state['needs_profile'] = cur.fetchone() is None
@@ -1577,9 +1585,23 @@ def extract_yogi_name_from_message(message: str) -> Optional[str]:
         'guten tag', 'guten morgen', 'guten abend', 'good morning',
         'good evening', 'howdy', 'yo', 'sup', 'ciao', 'tschüss',
         'danke', 'thanks', 'ja', 'nein', 'yes', 'no', 'ok', 'okay',
+        'hi there', 'hey there', 'hello there', 'hi mira', 'hey mira',
+        'hello mira', 'hallo mira', 'na', 'na du', 'hey ho',
+        'was geht', 'wie geht es', 'how are you', "what's up",
+        'good day', 'guten tag mira', 'hallo zusammen',
     }
-    if message.lower().rstrip('!?.') in _GREETINGS:
+    cleaned = message.lower().rstrip('!?., ')
+    if cleaned in _GREETINGS:
         return None
+    
+    # Also filter if first word is a greeting and rest is filler
+    _GREETING_STARTERS = {'hi', 'hey', 'hello', 'hallo', 'moin'}
+    _FILLER_WORDS = {'there', 'mira', 'du', 'ihr', 'alle', 'zusammen', 'folks', 'everyone', 'all'}
+    words_lower = cleaned.split()
+    if words_lower and words_lower[0] in _GREETING_STARTERS:
+        rest = set(words_lower[1:])
+        if rest and rest.issubset(_FILLER_WORDS):
+            return None
     
     # Filter out questions
     if message.rstrip().endswith('?'):
@@ -1627,25 +1649,23 @@ async def handle_onboarding(message: str, user_id: int, conn, language: str, use
             if valid:
                 saved = save_yogi_name(user_id, proposed_name, conn)
                 if saved:
+                    # Name saved — now ask about notification email
                     if language == 'en':
                         reply = (f"Nice to meet you, {proposed_name}! 🧘\n\n"
-                                 f"Now I know what to call you. "
-                                 f"Want to upload your CV? I'll extract your skills "
-                                 f"and start finding matches for you. "
-                                 f"Your data stays private — I only keep the skills, never the original document.")
+                                 f"One quick thing — if we find your dream job, should we let you know? "
+                                 f"You can give me any email address you like for notifications. "
+                                 f"No pressure — you can also just say no and check in whenever you want.")
                     else:
                         if uses_du:
                             reply = (f"Schön dich kennenzulernen, {proposed_name}! 🧘\n\n"
-                                     f"Jetzt weiß ich, wie ich dich nennen soll. "
-                                     f"Möchtest du deinen Lebenslauf hochladen? Ich extrahiere deine Skills "
-                                     f"und fange an, passende Stellen für dich zu finden. "
-                                     f"Deine Daten bleiben privat — ich speichere nur die Skills, nie das Original.")
+                                     f"Eine kurze Frage — wenn wir deinen Traumjob finden, sollen wir dich benachrichtigen? "
+                                     f"Du kannst mir eine beliebige E-Mail-Adresse dafür geben. "
+                                     f"Kein Druck — du kannst auch einfach nein sagen und dich einloggen, wann immer du magst.")
                         else:
                             reply = (f"Schön Sie kennenzulernen, {proposed_name}! 🧘\n\n"
-                                     f"Jetzt weiß ich, wie ich Sie ansprechen soll. "
-                                     f"Möchten Sie Ihren Lebenslauf hochladen? Ich extrahiere Ihre Skills "
-                                     f"und fange an, passende Stellen für Sie zu finden. "
-                                     f"Ihre Daten bleiben privat — ich speichere nur die Skills, nie das Original.")
+                                     f"Eine kurze Frage — wenn wir Ihren Traumjob finden, sollen wir Sie benachrichtigen? "
+                                     f"Sie können mir eine beliebige E-Mail-Adresse dafür geben. "
+                                     f"Kein Druck — Sie können auch einfach nein sagen und sich einloggen, wann immer Sie möchten.")
                     return MiraResponse(reply=reply, language=language, actions={'onboarding': 'name_set', 'yogi_name': proposed_name})
                 else:
                     # Name taken
@@ -1681,7 +1701,98 @@ async def handle_onboarding(message: str, user_id: int, conn, language: str, use
                              "Ihre Privatsphäre ist uns wichtig.")
             return MiraResponse(reply=reply, language=language, actions={'onboarding': 'ask_name'})
     
-    return None  # Not in onboarding, fall through to normal chat
+    # Step 2: yogi_name set, but notification email not yet answered
+    if onboarding_state.get('asking_notification_email'):
+        email_response = detect_notification_email_response(message)
+        yogi_name = onboarding_state.get('yogi_name', 'yogi')
+        
+        if email_response == 'decline':
+            # Yogi declined — that's fine, complete onboarding
+            complete_onboarding(user_id, conn)
+            if language == 'en':
+                reply = (f"No problem, {yogi_name}! You can always check your matches when you log in.\n\n"
+                         f"Want to upload your CV? I'll extract your skills and start finding matches for you. "
+                         f"Your data stays private — I only keep the skills, never the original document.")
+            else:
+                if uses_du:
+                    reply = (f"Kein Problem, {yogi_name}! Du siehst deine Matches immer, wenn du dich einloggst.\n\n"
+                             f"Möchtest du deinen Lebenslauf hochladen? Ich extrahiere deine Skills "
+                             f"und fange an, passende Stellen für dich zu finden. "
+                             f"Deine Daten bleiben privat — ich speichere nur die Skills, nie das Original.")
+                else:
+                    reply = (f"Kein Problem, {yogi_name}! Sie sehen Ihre Matches immer, wenn Sie sich einloggen.\n\n"
+                             f"Möchten Sie Ihren Lebenslauf hochladen? Ich extrahiere Ihre Skills "
+                             f"und fange an, passende Stellen für Sie zu finden. "
+                             f"Ihre Daten bleiben privat — ich speichere nur die Skills, nie das Original.")
+            return MiraResponse(reply=reply, language=language, actions={'onboarding': 'email_declined'})
+        
+        elif email_response and email_response != 'decline':
+            # Got an email — save it and complete onboarding
+            saved = save_notification_email(user_id, email_response, conn)
+            complete_onboarding(user_id, conn)
+            if saved:
+                if language == 'en':
+                    reply = (f"Got it, {yogi_name}! I'll notify you at {email_response} when we find great matches. "
+                             f"You can unsubscribe anytime.\n\n"
+                             f"Now — want to upload your CV? I'll extract your skills and start matching right away.")
+                else:
+                    if uses_du:
+                        reply = (f"Perfekt, {yogi_name}! Ich benachrichtige dich unter {email_response}, wenn wir tolle Matches finden. "
+                                 f"Du kannst dich jederzeit abmelden.\n\n"
+                                 f"Und jetzt — möchtest du deinen Lebenslauf hochladen? Ich extrahiere deine Skills "
+                                 f"und fange sofort an zu matchen.")
+                    else:
+                        reply = (f"Perfekt, {yogi_name}! Ich benachrichtige Sie unter {email_response}, wenn wir tolle Matches finden. "
+                                 f"Sie können sich jederzeit abmelden.\n\n"
+                                 f"Und jetzt — möchten Sie Ihren Lebenslauf hochladen?")
+                return MiraResponse(reply=reply, language=language, actions={'onboarding': 'email_set', 'notification_email': email_response})
+            else:
+                if language == 'en':
+                    reply = "Something went wrong saving that email — could you try again?"
+                else:
+                    reply = "Da ist etwas schiefgegangen — kannst du es nochmal versuchen?"
+                return MiraResponse(reply=reply, language=language)
+        
+        else:
+            # Didn't understand — it's a normal message, let it fall through.
+            # But first, complete onboarding so we don't keep asking
+            complete_onboarding(user_id, conn)
+            return None  # Fall through to normal chat
+
+
+def save_notification_email(user_id: int, email: str, conn) -> bool:
+    """Save notification email and record consent timestamp."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE users
+                SET notification_email = %s,
+                    notification_consent_at = NOW()
+                WHERE user_id = %s
+            """, (email, user_id))
+            conn.commit()
+            return True
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Failed to save notification email: {e}")
+        return False
+
+
+def complete_onboarding(user_id: int, conn) -> bool:
+    """Mark onboarding as completed."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE users
+                SET onboarding_completed_at = NOW()
+                WHERE user_id = %s AND onboarding_completed_at IS NULL
+            """, (user_id,))
+            conn.commit()
+            return True
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Failed to complete onboarding: {e}")
+        return False
 
 
 def detect_notification_email_response(message: str) -> Optional[str]:
