@@ -13,7 +13,7 @@
 
         <!-- Search header -->
         <div class="search-header">
-            <h1 class="search-title">🔍 {{ t('nav.search') }}</h1>
+            <h1 class="search-title">🔍 {{ t('search.title') }}</h1>
             <div class="search-active-filters" id="active-filters">
                 <!-- Active filter pills rendered by JS -->
             </div>
@@ -23,19 +23,19 @@
         <div class="search-panels">
             <!-- LEFT: Domain (Berufsfeld) -->
             <div class="search-panel panel-domain">
-                <h3 class="panel-title">Berufsfeld</h3>
+                <h3 class="panel-title">{{ t('search.domain_title') }}</h3>
                 <div class="domain-bars" id="domain-bars">
                     <!-- Rendered by JS -->
-                    <div class="panel-loading">Laden...</div>
+                    <div class="panel-loading">{{ t('search.loading') }}</div>
                 </div>
             </div>
 
             <!-- CENTER: Map -->
             <div class="search-panel panel-map">
                 <div class="map-controls">
-                    <input type="text" id="city-search" placeholder="Stadt suchen..." autocomplete="off">
+                    <input type="text" id="city-search" placeholder="{{ t('search.city_placeholder') }}" autocomplete="off">
                     <select id="radius-select">
-                        <option value="">Kein Radius</option>
+                        <option value="">{{ t('search.no_radius') }}</option>
                         <option value="10">10 km</option>
                         <option value="25">25 km</option>
                         <option value="50" selected>50 km</option>
@@ -44,20 +44,20 @@
                 </div>
                 <div id="search-map"></div>
                 <div class="map-freshness" id="freshness-badge" style="display:none;">
-                    <span id="fresh-count">0</span> neu diese Woche
+                    <span id="fresh-count">0</span> {{ t('search.fresh_this_week') }}
                 </div>
             </div>
 
             <!-- RIGHT: Qualification Level -->
             <div class="search-panel panel-ql">
-                <h3 class="panel-title">Qualifikation</h3>
+                <h3 class="panel-title">{{ t('search.ql_title') }}</h3>
                 <div class="ql-buttons" id="ql-buttons">
                     <!-- Rendered by JS -->
-                    <div class="panel-loading">Laden...</div>
+                    <div class="panel-loading">{{ t('search.loading') }}</div>
                 </div>
                 <div class="search-total" id="search-total">
                     <span class="total-number">—</span>
-                    <span class="total-label">Stellen gefunden</span>
+                    <span class="total-label">{{ t('search.positions_found') }}</span>
                 </div>
             </div>
         </div>
@@ -65,7 +65,7 @@
         <!-- Save button -->
         <div class="search-actions">
             <button class="btn-save-search" id="btn-save-search">
-                💾 Suche speichern
+                💾 {{ t('search.save_search') }}
             </button>
             <span class="save-feedback" id="save-feedback"></span>
         </div>
@@ -79,7 +79,7 @@
 
     <!-- Mira Chat Widget (same as dashboard) -->
     <div id="mira-widget" class="mira-widget">
-        <button class="mira-fab" id="mira-fab-btn" title="Chat mit Mira">
+        <button class="mira-fab" id="mira-fab-btn" title="{{ t('search.mira_chat_title') }}">
             <span class="mira-fab-icon">💬</span>
             <span class="mira-fab-close">✕</span>
         </button>
@@ -89,7 +89,7 @@
                 <div class="mira-avatar">🧘</div>
                 <div class="mira-title">
                     <span class="mira-name">Mira</span>
-                    <span class="mira-status">Deine Begleiterin</span>
+                    <span class="mira-status">{{ t('search.mira_status') }}</span>
                 </div>
                 <button class="mira-minimize" id="mira-minimize-btn">−</button>
             </div>
@@ -98,7 +98,7 @@
             </div>
             
             <div class="mira-input-area">
-                <textarea id="mira-input" placeholder="Schreib mir..." rows="1"></textarea>
+                <textarea id="mira-input" placeholder="{{ t('search.mira_placeholder') }}" rows="1"></textarea>
                 <button class="mira-send" id="mira-send-btn">
                     <span>➤</span>
                 </button>
@@ -107,6 +107,33 @@
     </div>
 </div>
 
+<!-- Search tour i18n + script -->
+<script>
+window.SEARCH_TOUR_I18N = {
+    welcome_title: '{{ t("search.tour_welcome_title") }}',
+    welcome_desc: '{{ t("search.tour_welcome_desc") }}',
+    domain_title: '{{ t("search.tour_domain_title") }}',
+    domain_desc: '{{ t("search.tour_domain_desc") }}',
+    map_title: '{{ t("search.tour_map_title") }}',
+    map_desc: '{{ t("search.tour_map_desc") }}',
+    ql_title: '{{ t("search.tour_ql_title") }}',
+    ql_desc: '{{ t("search.tour_ql_desc") }}',
+    pills_title: '{{ t("search.tour_pills_title") }}',
+    pills_desc: '{{ t("search.tour_pills_desc") }}',
+    save_title: '{{ t("search.tour_save_title") }}',
+    save_desc: '{{ t("search.tour_save_desc") }}',
+    mira_title: '{{ t("search.tour_mira_title") }}',
+    mira_desc: '{{ t("search.tour_mira_desc") }}',
+    done_title: '{{ t("search.tour_done_title") }}',
+    done_desc: '{{ t("search.tour_done_desc") }}',
+    next: '{{ t("search.tour_next") }}',
+    prev: '{{ t("search.tour_prev") }}',
+    done: '{{ t("search.tour_done") }}',
+    progress: '{{ t("search.tour_progress") }}',
+};
+</script>
+<script src="/static/js/search-tour.js?v=20260212"></script>
+
 <!-- Leaflet CSS + JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -114,6 +141,43 @@
 
 <script>
 (function() {
+    // ============================================================
+    // I18N — translations for JS-rendered content
+    // ============================================================
+    const LANG = '{{ lang }}';
+    const I18N = {
+        ql: { 1: '{{ t("search.ql_helfer") }}', 2: '{{ t("search.ql_fachkraft") }}', 3: '{{ t("search.ql_spezialist") }}', 4: '{{ t("search.ql_experte") }}' },
+        domains: {
+            'Gesundheit & Medizin': '{{ t("search.domain_gesundheit") }}',
+            'IT & Technologie': '{{ t("search.domain_it") }}',
+            'Fertigung & Technik': '{{ t("search.domain_fertigung") }}',
+            'Maschinen & Elektro': '{{ t("search.domain_maschinen") }}',
+            'Bau & Handwerk': '{{ t("search.domain_bau") }}',
+            'Finanzen & Banken': '{{ t("search.domain_finanzen") }}',
+            'Handel & Vertrieb': '{{ t("search.domain_handel") }}',
+            'Transport & Logistik': '{{ t("search.domain_transport") }}',
+            'Bildung & Soziales': '{{ t("search.domain_bildung") }}',
+            'Wissenschaft & Forschung': '{{ t("search.domain_wissenschaft") }}',
+            'Gastgewerbe & Tourismus': '{{ t("search.domain_tourismus") }}',
+            'Gastgewerbe & Lebensmittel': '{{ t("search.domain_lebensmittel") }}',
+            'Verwaltung & Recht': '{{ t("search.domain_verwaltung") }}',
+            'Wirtschaft & Management': '{{ t("search.domain_wirtschaft") }}',
+            'Land- & Forstwirtschaft': '{{ t("search.domain_landwirtschaft") }}',
+            'Sicherheit & Verteidigung': '{{ t("search.domain_sicherheit") }}',
+            'Kultur & Medien': '{{ t("search.domain_kultur") }}',
+        },
+        save_success: '{{ t("search.save_success") }}',
+        save_error: '{{ t("search.save_error") }}',
+        network_error: '{{ t("search.network_error") }}',
+        mira_greeting: '{{ t("search.mira_greeting") }}',
+        mira_error: '{{ t("search.mira_error") }}',
+        mira_offline: '{{ t("search.mira_offline") }}',
+    };
+    // Translate a domain name from API (German) to current language
+    function tDomain(name) { return I18N.domains[name] || name; }
+    // Translate a QL level to current language
+    function tQL(level) { return I18N.ql[level] || ('Level ' + level); }
+
     // ============================================================
     // STATE
     // ============================================================
@@ -238,10 +302,11 @@
     function renderDomains(domains) {
         const container = document.getElementById('domain-bars');
         if (!domains || domains.length === 0) {
-            container.innerHTML = '<div class="panel-empty">Keine Daten</div>';
+            container.innerHTML = '<div class="panel-empty">—</div>';
             return;
         }
         const maxCount = Math.max(...domains.map(d => d.count));
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
 
         container.innerHTML = domains.map(d => {
             const pct = maxCount > 0 ? Math.round(d.count / maxCount * 100) : 0;
@@ -250,11 +315,11 @@
             return `
                 <div class="domain-bar ${dimmed ? 'dimmed' : ''} ${selected && state.domains.length > 0 ? 'selected' : ''}"
                      data-codes="${d.codes.join(',')}" data-name="${d.name}">
-                    <div class="domain-bar-label">${d.name}</div>
+                    <div class="domain-bar-label">${tDomain(d.name)}</div>
                     <div class="domain-bar-track">
                         <div class="domain-bar-fill" style="width:${pct}%; background:${d.color};"></div>
                     </div>
-                    <div class="domain-bar-count">${d.count.toLocaleString('de-DE')}</div>
+                    <div class="domain-bar-count">${d.count.toLocaleString(locale)}</div>
                 </div>
             `;
         }).join('');
@@ -281,6 +346,7 @@
     function renderQL(levels) {
         const container = document.getElementById('ql-buttons');
         const qlColors = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c' };
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
 
         container.innerHTML = levels.map(l => {
             const selected = state.ql.length === 0 || state.ql.includes(l.level);
@@ -289,8 +355,8 @@
                 <div class="ql-btn ${dimmed ? 'dimmed' : ''} ${selected && state.ql.length > 0 ? 'selected' : ''}"
                      data-level="${l.level}">
                     <span class="ql-dot" style="background:${qlColors[l.level] || '#999'};"></span>
-                    <span class="ql-label">${l.label}</span>
-                    <span class="ql-count">${l.count.toLocaleString('de-DE')}</span>
+                    <span class="ql-label">${tQL(l.level)}</span>
+                    <span class="ql-count">${l.count.toLocaleString(locale)}</span>
                 </div>
             `;
         }).join('');
@@ -342,14 +408,14 @@
             }
             names.forEach(name => {
                 pills.push(`<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
-                    ${name} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
+                    ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
                 </span>`);
             });
         }
 
         // QL pills
         state.ql.forEach(level => {
-            const label = {1:'Helfer',2:'Fachkraft',3:'Spezialist',4:'Experte'}[level] || `L${level}`;
+            const label = tQL(level);
             pills.push(`<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
                 ${label} <button class="pill-remove" data-type="ql" data-level="${level}">×</button>
             </span>`);
@@ -396,14 +462,16 @@
     // ============================================================
     function renderTotal(total) {
         const el = document.getElementById('search-total');
-        el.querySelector('.total-number').textContent = total.toLocaleString('de-DE');
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        el.querySelector('.total-number').textContent = total.toLocaleString(locale);
     }
 
     function renderFreshness(count) {
         const badge = document.getElementById('freshness-badge');
         if (count > 0) {
             badge.style.display = '';
-            document.getElementById('fresh-count').textContent = count.toLocaleString('de-DE');
+            const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+            document.getElementById('fresh-count').textContent = count.toLocaleString(locale);
         } else {
             badge.style.display = 'none';
         }
@@ -477,14 +545,14 @@
             });
             if (!res.ok) {
                 const err = await res.json();
-                feedback.textContent = err.error || 'Fehler beim Speichern';
+                feedback.textContent = err.error || I18N.save_error;
                 feedback.className = 'save-feedback error';
             } else {
-                feedback.textContent = '✓ Gespeichert!';
+                feedback.textContent = I18N.save_success;
                 feedback.className = 'save-feedback success';
             }
         } catch(e) {
-            feedback.textContent = 'Netzwerkfehler';
+            feedback.textContent = I18N.network_error;
             feedback.className = 'save-feedback error';
         }
         setTimeout(() => { feedback.textContent = ''; }, 3000);
@@ -580,7 +648,7 @@
     });
 
     function loadMiraGreeting() {
-        addMiraMessage('Hallo! Soll ich dir bei der Suche helfen? Sag mir was du suchst — z.B. "Pflegejobs in München" 🔍', false);
+        addMiraMessage(I18N.mira_greeting, false);
     }
 
     function addMiraMessage(content, isUser) {
@@ -638,12 +706,12 @@
                     window.applyMiraFilters(data.actions);
                 }
             } else {
-                addMiraMessage('Entschuldigung, da ist etwas schiefgelaufen.', false);
+                addMiraMessage(I18N.mira_error, false);
                 miraState.history.pop();
             }
         } catch (error) {
             hideMiraTyping();
-            addMiraMessage('Ich kann gerade nicht antworten. Bitte versuch es später nochmal.', false);
+            addMiraMessage(I18N.mira_offline, false);
             miraState.history.pop();
         }
     }
