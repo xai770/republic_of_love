@@ -326,25 +326,83 @@ function restoreSidebarState() {
 // Notifications
 function toggleNotifications(e) {
     e.stopPropagation();
-    // TODO: Show notification dropdown
+    const dropdown = document.getElementById('notif-dropdown');
+    dropdown.classList.toggle('show');
 }
 
-// Load notifications badge
+// Load notifications badge and list
 async function loadNotifications() {
     try {
-        const res = await fetch('/api/notifications/count');
-        if (res.ok) {
-            const data = await res.json();
+        const countRes = await fetch('/api/notifications/count');
+        if (countRes.ok) {
+            const data = await countRes.json();
             const badge = document.getElementById('notif-badge');
             if (badge && data.unread > 0) {
                 badge.textContent = data.unread > 9 ? '9+' : data.unread;
                 badge.classList.remove('hidden');
+            } else if (badge) {
+                badge.classList.add('hidden');
             }
+        }
+
+        const listRes = await fetch('/api/notifications/?limit=10');
+        if (listRes.ok) {
+            const notifications = await listRes.json();
+            renderNotifications(notifications);
         }
     } catch (err) {
         console.error('Failed to load notifications:', err);
     }
 }
+
+function renderNotifications(notifications) {
+    const list = document.getElementById('notif-list');
+    if (!list) return;
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<li class="notification-empty">Keine Benachrichtigungen</li>';
+        return;
+    }
+
+    list.innerHTML = notifications.map(n => `
+        <li class="notification-item ${n.read_at ? '' : 'unread'}"
+            onclick="clickNotification(${n.notification_id}, '${n.link || ''}')">
+            <div class="notification-title">${escapeHtml(n.title)}</div>
+            ${n.message ? `<div class="notification-message">${escapeHtml(n.message)}</div>` : ''}
+            <div class="notification-time">${timeAgo(n.created_at)}</div>
+        </li>
+    `).join('');
+}
+
+async function clickNotification(id, link) {
+    await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+    loadNotifications();
+    if (link) window.location.href = link;
+}
+
+async function markAllRead(e) {
+    e.stopPropagation();
+    await fetch('/api/notifications/read-all', { method: 'POST' });
+    loadNotifications();
+}
+
+function timeAgo(dateStr) {
+    const date = new Date(dateStr);
+    const diff = Math.floor((Date.now() - date) / 1000);
+    if (diff < 60) return 'Gerade eben';
+    if (diff < 3600) return Math.floor(diff / 60) + ' Min.';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' Std.';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' Tage';
+    return date.toLocaleDateString('de-DE');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-notifications')) {
+        const dd = document.getElementById('notif-dropdown');
+        if (dd) dd.classList.remove('show');
+    }
+});
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
