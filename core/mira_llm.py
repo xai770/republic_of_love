@@ -13,6 +13,7 @@ Usage:
 import json
 import re
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass
@@ -242,39 +243,96 @@ Mira: Das ist eine rechtliche Frage — da bin ich nicht die Richtige für. Die 
 
 
 def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
-    """Format yogi context for the system prompt."""
-    parts = []
+    """
+    Format yogi context as a structured card for the system prompt.
     
-    if language == 'en':
-        if ctx.get('has_profile'):
-            if ctx.get('skills'):
-                skills_str = ', '.join(ctx['skills'])
-                parts.append(f"""ACTUAL SKILLS (from profile — use ONLY these, never invent others):
-[{skills_str}]""")
-        else:
-            parts.append("(No profile uploaded yet)")
-        
-        if ctx.get('match_count', 0) > 0:
-            parts.append(f"Matches: {ctx['match_count']} found")
-            if ctx.get('recent_matches'):
-                recent = ctx['recent_matches'][0]
-                parts.append(f"Best: {recent['title']} at {recent['company']} ({recent['score']:.0%})")
-    else:
-        if ctx.get('has_profile'):
-            if ctx.get('skills'):
-                skills_str = ', '.join(ctx['skills'])
-                parts.append(f"""TATSÄCHLICHE SKILLS (aus dem Profil — NUR diese verwenden, niemals andere erfinden):
-[{skills_str}]""")
-        else:
-            parts.append("(Noch kein Profil hochgeladen)")
-        
-        if ctx.get('match_count', 0) > 0:
-            parts.append(f"Matches: {ctx['match_count']} gefunden")
-            if ctx.get('recent_matches'):
-                recent = ctx['recent_matches'][0]
-                parts.append(f"Bester: {recent['title']} bei {recent['company']} ({recent['score']:.0%})")
+    This is what Mira "sees" about the yogi. ~150-300 tokens.
+    Language-aware: German labels for DE, English for EN.
+    """
+    lines = []
     
-    return '\n'.join(parts) if parts else ''
+    # ── Name & identity ──
+    name = ctx.get('full_name') or ctx.get('display_name') or None
+    if name:
+        identity = f"Name: {name}"
+        if ctx.get('member_since'):
+            identity += f" | Member since: {ctx['member_since']}" if language == 'en' else f" | Mitglied seit: {ctx['member_since']}"
+        if ctx.get('tier') and ctx['tier'] != 'free':
+            identity += f" | Tier: {ctx['tier'].title()}"
+        if ctx.get('last_seen'):
+            seen_label = 'Last seen' if language == 'en' else 'Zuletzt gesehen'
+            identity += f" | {seen_label}: {ctx['last_seen']}"
+        lines.append(identity)
+    
+    # ── Current role ──
+    if ctx.get('current_title'):
+        title_line = ctx['current_title']
+        if ctx.get('years_of_experience'):
+            yrs = ctx['years_of_experience']
+            title_line += f" | {yrs} {'years' if language == 'en' else 'Jahre'} {'experience' if language == 'en' else 'Erfahrung'}"
+        if ctx.get('experience_level'):
+            title_line += f" | Level: {ctx['experience_level'].title()}"
+        lines.append(title_line)
+    
+    # ── What they're looking for ──
+    looking = []
+    if ctx.get('desired_roles'):
+        roles_label = 'Looking for' if language == 'en' else 'Sucht'
+        looking.append(f"{roles_label}: {', '.join(ctx['desired_roles'])}")
+    if ctx.get('desired_locations'):
+        loc_label = 'Locations' if language == 'en' else 'Orte'
+        looking.append(f"{loc_label}: {', '.join(ctx['desired_locations'])}")
+    elif ctx.get('location'):
+        loc_label = 'Location' if language == 'en' else 'Ort'
+        looking.append(f"{loc_label}: {ctx['location']}")
+    if looking:
+        lines.append(' | '.join(looking))
+    
+    # ── Salary ──
+    if ctx.get('salary_min') or ctx.get('salary_max'):
+        sal_label = 'Salary' if language == 'en' else 'Gehalt'
+        sal_min = f"€{ctx['salary_min']:,.0f}" if ctx.get('salary_min') else '?'
+        sal_max = f"€{ctx['salary_max']:,.0f}" if ctx.get('salary_max') else '?'
+        lines.append(f"{sal_label}: {sal_min}–{sal_max}")
+    
+    # ── Skills ──
+    if ctx.get('skills'):
+        skills_str = ', '.join(ctx['skills'])
+        if language == 'en':
+            lines.append(f"Skills (from profile — ONLY use these, never invent): [{skills_str}]")
+        else:
+            lines.append(f"Skills (aus dem Profil — NUR diese verwenden, nie erfinden): [{skills_str}]")
+    
+    # ── Profile summary ──
+    if ctx.get('profile_summary'):
+        summary_label = 'Summary' if language == 'en' else 'Zusammenfassung'
+        lines.append(f"{summary_label}: {ctx['profile_summary']}")
+    
+    # ── No profile yet ──
+    if not ctx.get('has_profile'):
+        if language == 'en':
+            lines.append("(No profile uploaded yet — encourage them to create one)")
+        else:
+            lines.append("(Noch kein Profil hochgeladen — ermutige zum Erstellen)")
+    
+    # ── Matches ──
+    if ctx.get('match_count', 0) > 0:
+        match_label = 'Matches' if language == 'en' else 'Matches'
+        lines.append(f"{match_label}: {ctx['match_count']}")
+        for m in ctx.get('recent_matches', [])[:3]:
+            where = f" ({m['city']})" if m.get('city') else ''
+            lines.append(f"  • {m['title']}{where} — {m['source']} ({m['score']:.0%})")
+    elif ctx.get('has_profile'):
+        if language == 'en':
+            lines.append("Matches: 0 (profile exists but no matches yet)")
+        else:
+            lines.append("Matches: 0 (Profil vorhanden, aber noch keine Matches)")
+    
+    # ── Current time ──
+    if ctx.get('now'):
+        lines.insert(0, f"Current time: {ctx['now']}")
+    
+    return '\n'.join(lines) if lines else ''
 
 
 def detect_language(message: str) -> str:
@@ -396,36 +454,108 @@ async def ask_llm(message: str, system_prompt: str, history: list = None) -> Opt
 
 def build_yogi_context(user_id: int, conn) -> dict:
     """
-    Build context about the yogi from database.
-    Includes latest newsletter from Doug if available.
+    Build rich context about the yogi from database.
+    
+    This is Mira's "eyes" — everything she knows about who she's talking to.
+    Loads: identity, profile summary, skills, matches, recent activity, newsletter.
+    Budget: ~150-400 tokens. gemma3:4b has 8K context, we can afford this.
     """
     context = {
+        # Identity
+        'display_name': None,
+        'full_name': None,
+        'tier': None,
+        'member_since': None,
+        'last_seen': None,
+        # Profile
         'has_profile': False,
+        'current_title': None,
+        'desired_roles': [],
+        'desired_locations': [],
+        'experience_level': None,
+        'years_of_experience': None,
+        'salary_min': None,
+        'salary_max': None,
+        'location': None,
+        'profile_summary': None,
         'skills': [],
+        # Matches
         'recent_matches': [],
         'match_count': 0,
+        # Meta
+        'now': datetime.now(timezone.utc).strftime('%A, %d %B %Y, %H:%M UTC'),
         'newsletter_snippet': None,
     }
     
     try:
         with conn.cursor() as cur:
-            # Get profile info
+            # ── Identity from users table ──
             cur.execute("""
-                SELECT p.skill_keywords
-                FROM profiles p
-                WHERE p.user_id = %s
+                SELECT display_name, tier, subscription_tier,
+                       created_at, last_login_at
+                FROM users
+                WHERE user_id = %s
+            """, (user_id,))
+            user_row = cur.fetchone()
+            if user_row:
+                context['display_name'] = user_row['display_name']
+                context['tier'] = user_row['subscription_tier'] or user_row['tier'] or 'free'
+                if user_row['created_at']:
+                    context['member_since'] = user_row['created_at'].strftime('%B %Y')
+                if user_row['last_login_at']:
+                    delta = datetime.now(timezone.utc) - user_row['last_login_at'].replace(tzinfo=timezone.utc)
+                    if delta.total_seconds() < 300:
+                        context['last_seen'] = 'online now'
+                    elif delta.total_seconds() < 3600:
+                        context['last_seen'] = f'{int(delta.total_seconds() // 60)} min ago'
+                    elif delta.total_seconds() < 86400:
+                        context['last_seen'] = f'{int(delta.total_seconds() // 3600)} hours ago'
+                    else:
+                        context['last_seen'] = f'{int(delta.days)} days ago'
+
+            # ── Profile data ──
+            cur.execute("""
+                SELECT full_name, current_title, desired_roles, desired_locations,
+                       experience_level, years_of_experience,
+                       expected_salary_min, expected_salary_max,
+                       location, profile_summary, skill_keywords
+                FROM profiles
+                WHERE user_id = %s
+                LIMIT 1
             """, (user_id,))
             profile = cur.fetchone()
             
             if profile:
                 context['has_profile'] = True
+                context['full_name'] = profile['full_name']
+                context['current_title'] = profile['current_title']
+                context['experience_level'] = profile['experience_level']
+                context['years_of_experience'] = profile['years_of_experience']
+                context['salary_min'] = profile['expected_salary_min']
+                context['salary_max'] = profile['expected_salary_max']
+                context['location'] = profile['location']
+                
+                # Profile summary — truncate to save tokens
+                if profile['profile_summary']:
+                    summary = profile['profile_summary'].strip()
+                    context['profile_summary'] = summary[:300] + ('...' if len(summary) > 300 else '')
+                
+                # Desired roles/locations (text[] arrays)
+                if profile['desired_roles']:
+                    context['desired_roles'] = list(profile['desired_roles'])[:5]
+                if profile['desired_locations']:
+                    context['desired_locations'] = list(profile['desired_locations'])[:5]
+                
+                # Skills
                 try:
-                    skills = json.loads(profile['skill_keywords'] or '[]')
-                    context['skills'] = skills[:10]
-                except (json.JSONDecodeError, KeyError, TypeError):
+                    skills = profile['skill_keywords'] or []
+                    if isinstance(skills, str):
+                        skills = json.loads(skills)
+                    context['skills'] = list(skills)[:12]
+                except (json.JSONDecodeError, TypeError):
                     pass
             
-            # Get match count
+            # ── Match count + top matches ──
             cur.execute("""
                 SELECT COUNT(*) as cnt
                 FROM profile_posting_matches m
@@ -434,29 +564,32 @@ def build_yogi_context(user_id: int, conn) -> dict:
             """, (user_id,))
             context['match_count'] = cur.fetchone()['cnt']
             
-            # Get best matches (score > 30%, ordered by quality, not recency)
             if context['match_count'] > 0:
                 cur.execute("""
-                    SELECT p.job_title, p.posting_name as company, m.skill_match_score as score
+                    SELECT po.job_title, po.source, po.location_city, m.skill_match_score as score
                     FROM profile_posting_matches m
                     JOIN profiles pr ON m.profile_id = pr.profile_id
-                    JOIN postings p ON m.posting_id = p.posting_id
+                    JOIN postings po ON m.posting_id = po.posting_id
                     WHERE pr.user_id = %s
-                      AND m.skill_match_score > 30
+                      AND m.skill_match_score > 0.10
                     ORDER BY m.skill_match_score DESC
                     LIMIT 3
                 """, (user_id,))
-                
                 context['recent_matches'] = [
-                    {'title': r['job_title'], 'company': r['company'], 'score': float(r['score'] or 0) / 100}
+                    {
+                        'title': r['job_title'],
+                        'source': (r['source'] or '').replace('_', ' ').title(),
+                        'city': r['location_city'] or '',
+                        'score': float(r['score'] or 0),
+                    }
                     for r in cur.fetchall()
                 ]
-            # Get latest newsletter snippet from Doug
+
+            # ── Latest newsletter from Doug ──
             try:
                 from actors.doug__newsletter_C import get_latest_newsletter_content
                 newsletter = get_latest_newsletter_content(language='de')
                 if newsletter and newsletter.get('content'):
-                    # gemma3:4b handles context well — 300 chars is safe
                     content = newsletter['content']
                     context['newsletter_snippet'] = content[:300] + ('...' if len(content) > 300 else '')
                     context['newsletter_date'] = str(newsletter.get('newsletter_date', ''))
