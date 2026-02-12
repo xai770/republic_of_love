@@ -60,9 +60,13 @@ def owl_lookup(cleaned_title: str, cur) -> Optional[dict]:
     Look up a cleaned job title in OWL berufenet names.
 
     Only trusts entries with confidence_source IN ('human', 'import', 'llm_confirmed').
-    REJECTS ambiguous names that map to multiple different owl entities
-    (e.g. "Helfer" → 48 different specializations = ambiguous).
-    Returns dict with berufenet metadata if found unambiguously, None otherwise.
+
+    Three-tier acceptance for ambiguous names (mapping to 2+ owl entities):
+      Tier 1 (owl_unanimous): All candidates share same QL + same KLDB domain → accept any
+      Tier 2 (owl_majority):  Same domain, mixed QL → pick most common QL
+      Tier 3 (reject):        Different domains → fall through to Phase 2
+
+    Returns dict with berufenet metadata + 'confidence' key, or None.
     """
     cur.execute("""
         SELECT
@@ -83,20 +87,52 @@ def owl_lookup(cleaned_title: str, cur) -> Optional[dict]:
     if not rows:
         return None
 
+    def _build_result(row, confidence):
+        return {
+            'owl_id': row['owl_id'],
+            'berufenet_id': int(row['berufenet_id']) if row['berufenet_id'] else None,
+            'berufenet_name': row['canonical_name'],
+            'berufenet_kldb': row['kldb'],
+            'qualification_level': row['qualification_level'],
+            'confidence': confidence,
+        }
+
     # Check for ambiguity: do all rows point to the same owl entity?
     unique_owl_ids = set(r['owl_id'] for r in rows)
-    if len(unique_owl_ids) > 1:
-        # Ambiguous — "Helfer" maps to 48 specializations, refuse to guess
+    if len(unique_owl_ids) == 1:
+        return _build_result(rows[0], 'owl')
+
+    # --- Ambiguous: 2+ owl entities ---
+    # Deduplicate by owl_id (multiple owl_names can point to same entity)
+    seen = set()
+    unique_rows = []
+    for r in rows:
+        if r['owl_id'] not in seen:
+            seen.add(r['owl_id'])
+            unique_rows.append(r)
+
+    domain_set = set(r['kldb'][2:4] for r in unique_rows if r['kldb'] and len(r['kldb']) >= 4)
+    ql_set = set(r['qualification_level'] for r in unique_rows if r['qualification_level'] is not None)
+
+    # Tier 3: different KLDB domains — genuinely ambiguous, reject
+    if len(domain_set) > 1:
         return None
 
-    row = rows[0]
-    return {
-        'owl_id': row['owl_id'],
-        'berufenet_id': int(row['berufenet_id']) if row['berufenet_id'] else None,
-        'berufenet_name': row['canonical_name'],
-        'berufenet_kldb': row['kldb'],
-        'qualification_level': row['qualification_level'],
-    }
+    # Tier 1: same QL + same domain — all equivalent for matching
+    if len(ql_set) <= 1:
+        return _build_result(unique_rows[0], 'owl_unanimous')
+
+    # Tier 2: same domain, mixed QL — pick most common qualification level
+    from collections import Counter
+    ql_counts = Counter(r['qualification_level'] for r in unique_rows if r['qualification_level'] is not None)
+    most_common_ql = ql_counts.most_common(1)[0][0]
+    # Pick first row with the most common QL
+    for r in unique_rows:
+        if r['qualification_level'] == most_common_ql:
+            return _build_result(r, 'owl_majority')
+
+    # Fallback (shouldn't reach here)
+    return _build_result(unique_rows[0], 'owl_majority')
 
 
 # =============================================================================
@@ -276,7 +312,7 @@ def process_batch(batch_size: int, phase2: bool = False):
         beruf_df, beruf_embeddings = load_berufenet()
         logger.info("Loaded %s professions", len(beruf_df))
 
-    stats = {'owl_hit': 0, 'embed_auto': 0, 'llm_yes': 0, 'escalated': 0, 'null': 0, 'error': 0}
+    stats = {'owl_hit': 0, 'owl_unanimous': 0, 'owl_majority': 0, 'embed_auto': 0, 'llm_yes': 0, 'escalated': 0, 'null': 0, 'error': 0}
     start_time = time.time()
 
     for i, row in enumerate(titles):
@@ -289,15 +325,17 @@ def process_batch(batch_size: int, phase2: bool = False):
         match = owl_lookup(cleaned, cur)
 
         if match:
-            # Direct OWL hit — instant, reliable
+            # OWL hit — instant, reliable
+            confidence = match.get('confidence', 'owl')
+            score = 1.0 if confidence == 'owl' else 0.95 if confidence == 'owl_unanimous' else 0.90
             cur.execute("""
                 UPDATE postings
                 SET berufenet_id = %s,
                     berufenet_name = %s,
                     berufenet_kldb = %s,
                     qualification_level = %s,
-                    berufenet_score = 1.0,
-                    berufenet_verified = 'owl'
+                    berufenet_score = %s,
+                    berufenet_verified = %s
                 WHERE job_title = %s
                   AND berufenet_id IS NULL
             """, (
@@ -305,9 +343,14 @@ def process_batch(batch_size: int, phase2: bool = False):
                 match['berufenet_name'],
                 match['berufenet_kldb'],
                 match['qualification_level'],
+                score,
+                confidence,
                 title,
             ))
-            stats['owl_hit'] += 1
+            if confidence in ('owl_unanimous', 'owl_majority'):
+                stats[confidence] += 1
+            else:
+                stats['owl_hit'] += 1
             conn.commit()
             continue
 
@@ -404,15 +447,17 @@ def process_batch(batch_size: int, phase2: bool = False):
         if (i + 1) % 100 == 0:
             elapsed = time.time() - start_time
             rate = (i + 1) / elapsed
-            logger.info("%s/%s (%.1f/s) — owl: %s embed: %s llm: %s esc: %s null: %s", i+1, len(titles), rate, stats['owl_hit'], stats['embed_auto'], stats['llm_yes'], stats['escalated'], stats['null'])
+            owl_total = stats['owl_hit'] + stats['owl_unanimous'] + stats['owl_majority']
+            logger.info("%s/%s (%.1f/s) — owl: %s (exact:%s unan:%s maj:%s) embed: %s llm: %s esc: %s null: %s", i+1, len(titles), rate, owl_total, stats['owl_hit'], stats['owl_unanimous'], stats['owl_majority'], stats['embed_auto'], stats['llm_yes'], stats['escalated'], stats['null'])
 
     elapsed = time.time() - start_time
 
-    total_classified = stats['owl_hit'] + stats['embed_auto'] + stats['llm_yes']
+    owl_total = stats['owl_hit'] + stats['owl_unanimous'] + stats['owl_majority']
+    total_classified = owl_total + stats['embed_auto'] + stats['llm_yes']
     logger.info("%s", '='*60)
     logger.info("COMPLETED in %.1f s (%.1f titles/s)", elapsed, len(titles)/max(elapsed,0.1))
     logger.info("%s", '='*60)
-    logger.info("OWL hit (Phase 1): %s", stats['owl_hit'])
+    logger.info("OWL hit (Phase 1): %s (exact: %s, unanimous: %s, majority: %s)", owl_total, stats['owl_hit'], stats['owl_unanimous'], stats['owl_majority'])
     logger.info("Embed auto (≥0.85): %s", stats['embed_auto'])
     logger.info("LLM confirmed: %s", stats['llm_yes'])
     logger.info("Escalated to triage: %s", stats['escalated'])
