@@ -52,3 +52,26 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+// ===== Event Tracking =====
+// Lightweight fire-and-forget events for Mira's behavioral context.
+// Not analytics — just enough so Mira knows what the yogi is doing.
+
+function trackEvent(eventType, eventData) {
+    try {
+        fetch('/api/events/track', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({event_type: eventType, event_data: eventData || {}}),
+            credentials: 'same-origin'
+        }).catch(() => {}); // fire-and-forget
+    } catch(e) { /* silent */ }
+}
+
+// Auto-track page_view on every page load
+(function() {
+    const page = location.pathname;
+    // Don't track static assets, API calls, or admin pages
+    if (page.startsWith('/api/') || page.startsWith('/static/') || page.startsWith('/admin')) return;
+    trackEvent('page_view', {page: page});
+})();

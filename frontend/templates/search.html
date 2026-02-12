@@ -514,6 +514,17 @@ window.SEARCH_TOUR_I18N = {
             renderTotal(data.total);
             renderFreshness(data.fresh_count);
             renderFilterPills();
+
+            // Track filter state for Mira context
+            if (typeof trackEvent === 'function') {
+                trackEvent('search_filter', {
+                    domains: state.domains,
+                    ql: state.ql,
+                    city: state.city || null,
+                    radius: state.radius_km,
+                    results: data.total
+                });
+            }
         } catch(e) {
             console.error('Search failed:', e);
         } finally {

@@ -337,6 +337,16 @@ def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
     if ctx.get('now'):
         lines.insert(0, f"Current time: {ctx['now']}")
     
+    # ── Timeline (recent activity) ──
+    timeline = ctx.get('timeline', [])
+    if timeline:
+        tl_label = 'Recent Activity' if language == 'en' else 'Letzte Aktivität'
+        lines.append(f"\n{tl_label}:")
+        for entry in timeline[-10:]:  # cap at 10 most recent
+            t = entry.get('time')
+            time_str = t.strftime('%H:%M') if t else '??:??'
+            lines.append(f"  [{time_str}] {entry['text']}")
+    
     return '\n'.join(lines) if lines else ''
 
 
@@ -600,10 +610,102 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     context['newsletter_date'] = str(newsletter.get('newsletter_date', ''))
             except Exception as e:
                 logger.debug(f"Newsletter not available: {e}")
+
+            # ── Interleaved timeline (messages + events) ──
+            context['timeline'] = _build_timeline(user_id, conn)
+
     except Exception as e:
         logger.error(f"Error building yogi context: {e}")
     
     return context
+
+
+def _build_timeline(user_id: int, conn) -> list:
+    """
+    Build an interleaved timeline of messages + behavioral events.
+    
+    Merges yogi_messages (last 10) and yogi_events (last 5) chronologically.
+    Returns list of dicts with {time, type, text} — ready for format_yogi_context.
+    Budget: ~200-400 tokens (10-15 entries, ~20-30 tokens each).
+    """
+    timeline = []
+    
+    try:
+        with conn.cursor() as cur:
+            # Recent messages (both directions)
+            cur.execute("""
+                SELECT sender_type, body, created_at
+                FROM yogi_messages
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT 10
+            """, (user_id,))
+            for row in cur.fetchall():
+                if not row['body']:
+                    continue
+                sender = row['sender_type']
+                body = (row['body'] or '')[:120]
+                # Strip markdown for brevity
+                body = body.replace('**', '').replace('##', '').strip()
+                if body:
+                    timeline.append({
+                        'time': row['created_at'],
+                        'type': 'msg',
+                        'text': f"{'Yogi' if sender == 'yogi' else sender.title()}: {body}"
+                    })
+            
+            # Recent behavioral events
+            cur.execute("""
+                SELECT event_type, event_data, created_at
+                FROM yogi_events
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT 5
+            """, (user_id,))
+            for row in cur.fetchall():
+                evt = row['event_type']
+                data = row['event_data'] or {}
+                text = _format_event(evt, data)
+                if text:
+                    timeline.append({
+                        'time': row['created_at'],
+                        'type': 'event',
+                        'text': text
+                    })
+    except Exception as e:
+        logger.debug(f"Timeline build failed: {e}")
+    
+    # Sort chronologically (oldest first)
+    timeline.sort(key=lambda x: x.get('time') or datetime.min.replace(tzinfo=timezone.utc))
+    
+    return timeline
+
+
+def _format_event(event_type: str, data: dict) -> str:
+    """Format a single behavioral event as a concise timeline entry."""
+    if event_type == 'page_view':
+        page = data.get('page', '?')
+        return f"Visited {page}"
+    elif event_type == 'search_filter':
+        parts = []
+        if data.get('domains'):
+            parts.append(f"domains={data['domains']}")
+        if data.get('city'):
+            parts.append(f"city={data['city']}")
+        if data.get('ql'):
+            parts.append(f"QL={data['ql']}")
+        if data.get('results') is not None:
+            parts.append(f"{data['results']} results")
+        return f"Set search filters: {', '.join(parts)}" if parts else None
+    elif event_type == 'posting_view':
+        title = data.get('title', 'a posting')
+        return f"Viewed posting: {title[:80]}"
+    elif event_type == 'match_action':
+        action = data.get('action', '?')
+        return f"Match action: {action}"
+    elif event_type == 'login':
+        return "Logged in"
+    return None
 
 
 def detect_whats_new(message: str) -> bool:

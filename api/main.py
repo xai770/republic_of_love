@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from api.config import FRONTEND_URL, DEBUG
-from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search
+from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events
 from api.deps import get_current_user, get_db
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
@@ -67,6 +67,7 @@ app.include_router(push.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(account.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
+app.include_router(events.router, prefix="/api")
 app.include_router(visualization.router)
 app.include_router(admin.router)
 
