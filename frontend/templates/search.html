@@ -632,6 +632,11 @@
                 addMiraMessage(data.reply, false);
                 miraState.history.push({ role: 'assistant', content: data.reply });
                 if (miraState.history.length > 20) miraState.history = miraState.history.slice(-20);
+
+                // Apply search filter actions if present
+                if (data.actions && window.applyMiraFilters) {
+                    window.applyMiraFilters(data.actions);
+                }
             } else {
                 addMiraMessage('Entschuldigung, da ist etwas schiefgelaufen.', false);
                 miraState.history.pop();
@@ -744,6 +749,55 @@
 
     // Expose for sidebar toggle
     window.toggleMiraChat = toggleMiraChat;
+
+    // ============================================================
+    // MIRA FILTER ACTIONS — exposed for chat response handling
+    // ============================================================
+    window.applyMiraFilters = function(actions) {
+        if (!actions || !actions.set_filters) return;
+        const filters = actions.set_filters;
+        let changed = false;
+
+        // Set domains
+        if (filters.domains && Array.isArray(filters.domains)) {
+            state.domains = filters.domains;
+            changed = true;
+        }
+
+        // Set qualification levels
+        if (filters.ql && Array.isArray(filters.ql)) {
+            state.ql = filters.ql;
+            changed = true;
+        }
+
+        // Set city/location
+        if (filters.lat != null && filters.lon != null) {
+            state.lat = filters.lat;
+            state.lon = filters.lon;
+            state.radius_km = filters.radius_km || 50;
+
+            // Update city input display
+            const cityInput = document.getElementById('city-search');
+            if (cityInput && filters.city) {
+                cityInput.value = filters.city;
+            }
+
+            // Update radius dropdown
+            const radiusSelect = document.getElementById('radius-select');
+            if (radiusSelect) {
+                radiusSelect.value = String(state.radius_km);
+            }
+
+            // Pan map and draw circle
+            map.setView([state.lat, state.lon], 10);
+            updateRadiusCircle();
+            changed = true;
+        }
+
+        if (changed) {
+            doSearch();
+        }
+    };
 })();
 </script>
 {% endblock %}

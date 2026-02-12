@@ -32,6 +32,7 @@ class ChatResponse(BaseModel):
     confidence: Optional[str] = None  # 'high', 'medium', 'low' for debugging
     faq_id: Optional[str] = None  # Which FAQ was matched
     language: Optional[str] = None  # 'de' or 'en' — current response language
+    actions: Optional[dict] = None  # Structured actions for frontend (e.g. set_filters)
 
 
 class TourStep(BaseModel):

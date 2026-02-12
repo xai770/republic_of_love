@@ -121,5 +121,6 @@ async def chat(
         reply=response.reply,
         confidence='llm' if not response.fallback else 'none',
         language=response.language,
-        fallback=response.fallback
+        fallback=response.fallback,
+        actions=response.actions
     )

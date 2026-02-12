@@ -36,6 +36,7 @@ class MiraResponse:
     reply: str
     language: str  # 'de' or 'en'
     fallback: bool = False  # True if LLM failed and we used fallback
+    actions: Optional[dict] = None  # Structured actions for frontend (e.g. set_filters)
 
 
 # Condensed FAQ knowledge (fits in ~2000 tokens)
@@ -155,8 +156,10 @@ Think of yourself as sitting next to the yogi at a coffee shop, helping them nav
 - Predict outcomes → "I can't predict, but here's what I see..."
 - Promise anything → "Based on the data..."
 - Make up answers → "I don't know" is always valid
+- **CRITICAL: NEVER invent job postings, companies, hospitals, or match scores.** You may ONLY mention jobs that appear in "Current User Situation" below. If no matches exist for a search, say "I've set the filters for you — let's see what comes up" instead of making up results.
 - NEVER recommend matches below 30% — if no good matches exist, say so honestly
 - Don't overwhelm new users with match details — just mention the count
+- When the user asks to search for jobs (e.g. "Pflege in Frankfurt"), say you'll set the filters — the system handles the rest. Do NOT list imaginary search results.
 
 ## Examples of How You Sound
 
@@ -204,8 +207,10 @@ Stell dir vor, du sitzt neben dem Yogi im Café und hilfst bei der Jobsuche in D
 - Vorhersagen → "Ob {formal} den Job bekomm{('en' if not uses_du else 'st')}, kann ich nicht sagen, aber..."
 - Versprechen → "Basierend auf den Daten..."
 - Antworten erfinden → "Das weiß ich nicht" ist immer gültig
+- **KRITISCH: Erfinde NIEMALS Stellenangebote, Firmen, Krankenhäuser oder Match-Scores.** Du darfst NUR Jobs nennen, die unter "Aktuelle Situation" aufgelistet sind. Wenn keine Matches für eine Suche existieren, sag "Ich habe die Filter für dich gesetzt — schauen wir was kommt" statt Ergebnisse zu erfinden.
 - NIEMALS Matches unter 30% empfehlen — wenn keine guten Matches da sind, sag es ehrlich
 - Neue Nutzer nicht mit Match-Details überschütten — nur die Anzahl nennen
+- Wenn der Nutzer nach Jobs sucht (z.B. "Pflege in Frankfurt"), sag dass du die Filter setzt — das System erledigt den Rest. Erfinde KEINE Suchergebnisse.
 
 ## So klingst du (Beispiele)
 
@@ -856,6 +861,224 @@ def _load_my_messages(user_id: int, conn, language: str) -> Optional[str]:
         return f"\n\n## Nachrichten für dich\n\nDer Yogi fragt nach seinen Nachrichten. Fasse zusammen, was eingegangen ist.\n\n{details}\n"
 
 
+# ─────────────────────────────────────────────────────────
+# Search intent extraction → filter actions
+# ─────────────────────────────────────────────────────────
+
+# Keyword → KLDB domain codes mapping (mirrors KLDB_DOMAINS in search.py)
+DOMAIN_KEYWORDS = {
+    # German keywords
+    'pflege': ['81', '82'], 'gesundheit': ['81', '82'], 'medizin': ['81', '82'],
+    'klinik': ['81', '82'], 'krankenhaus': ['81', '82'], 'arzt': ['81', '82'],
+    'krankenpflege': ['81', '82'], 'altenpflege': ['81', '82'],
+    'it': ['43'], 'software': ['43'], 'entwickler': ['43'], 'programmier': ['43'],
+    'technologie': ['43'], 'informatik': ['43'], 'daten': ['43'],
+    'finanzen': ['72'], 'bank': ['72'], 'buchhaltung': ['72'], 'controlling': ['72'],
+    'handel': ['61', '62'], 'vertrieb': ['61', '62'], 'verkauf': ['61', '62'],
+    'bildung': ['83', '84'], 'sozial': ['83', '84'], 'erzieh': ['83', '84'],
+    'lehrer': ['83', '84'], 'pädagog': ['83', '84'],
+    'bau': ['31', '32', '33', '34', '54'], 'handwerk': ['31', '32', '33', '34', '54'],
+    'elektro': ['25', '26'], 'maschinen': ['25', '26'],
+    'logistik': ['51', '52'], 'transport': ['51', '52'], 'lager': ['51', '52'],
+    'fertigung': ['21', '22', '23', '24', '27', '28'], 'produktion': ['21', '22', '23', '24', '27', '28'],
+    'wirtschaft': ['71'], 'management': ['71'], 'beratung': ['71'],
+    'verwaltung': ['73'], 'recht': ['73'], 'jura': ['73'],
+    'gastro': ['29'], 'küche': ['29'], 'koch': ['29'], 'restaurant': ['29'],
+    'tourismus': ['63'], 'hotel': ['63'],
+    'kultur': ['91', '92', '93', '94'], 'medien': ['91', '92', '93', '94'],
+    'wissenschaft': ['41', '42'], 'forschung': ['41', '42'],
+    'sicherheit': ['01', '02', '03', '53'],
+    'landwirtschaft': ['11', '12', '13', '14'],
+    # English keywords
+    'healthcare': ['81', '82'], 'nursing': ['81', '82'], 'care': ['81', '82'],
+    'medical': ['81', '82'], 'hospital': ['81', '82'],
+    'technology': ['43'], 'developer': ['43'], 'programming': ['43'], 'data': ['43'],
+    'finance': ['72'], 'banking': ['72'], 'accounting': ['72'],
+    'sales': ['61', '62'], 'retail': ['61', '62'], 'trade': ['61', '62'],
+    'education': ['83', '84'], 'social': ['83', '84'], 'teaching': ['83', '84'],
+    'construction': ['31', '32', '33', '34', '54'],
+    'engineering': ['25', '26'],
+    'logistics': ['51', '52'],
+    'manufacturing': ['21', '22', '23', '24', '27', '28'],
+    'business': ['71'], 'consulting': ['71'],
+    'administration': ['73'], 'legal': ['73'], 'law': ['73'],
+    'hospitality': ['29'], 'catering': ['29'],
+    'tourism': ['63'],
+    'science': ['41', '42'], 'research': ['41', '42'],
+    'security': ['01', '02', '03', '53'],
+    'agriculture': ['11', '12', '13', '14'],
+}
+
+# Major German cities → coordinates
+CITY_COORDS = {
+    'berlin': (52.52, 13.41), 'hamburg': (53.55, 9.99), 'münchen': (48.14, 11.58),
+    'munich': (48.14, 11.58), 'köln': (50.94, 6.96), 'cologne': (50.94, 6.96),
+    'frankfurt': (50.11, 8.68), 'stuttgart': (48.78, 9.18), 'düsseldorf': (51.23, 6.78),
+    'dortmund': (51.51, 7.47), 'essen': (51.46, 7.01), 'leipzig': (51.34, 12.37),
+    'bremen': (53.08, 8.80), 'dresden': (51.05, 13.74), 'hannover': (52.37, 9.74),
+    'nürnberg': (49.45, 11.08), 'nuremberg': (49.45, 11.08), 'duisburg': (51.43, 6.76),
+    'bochum': (51.48, 7.22), 'wuppertal': (51.26, 7.17), 'bielefeld': (52.02, 8.53),
+    'bonn': (50.74, 7.10), 'münster': (51.96, 7.63), 'karlsruhe': (49.01, 8.40),
+    'mannheim': (49.49, 8.47), 'augsburg': (48.37, 10.90), 'wiesbaden': (50.08, 8.24),
+    'mainz': (50.00, 8.27), 'freiburg': (47.99, 7.85), 'basel': (47.56, 7.59),
+    'aachen': (50.78, 6.08), 'kiel': (54.32, 10.14), 'rostock': (54.09, 12.10),
+    'potsdam': (52.40, 13.07), 'darmstadt': (49.87, 8.65), 'heidelberg': (49.40, 8.69),
+    'kassel': (51.31, 9.50), 'regensburg': (49.01, 12.10), 'wolfsburg': (52.42, 10.79),
+    'ulm': (48.40, 9.99), 'lübeck': (53.87, 10.69), 'erlangen': (49.60, 11.00),
+}
+
+# Qualification level keywords
+QL_KEYWORDS = {
+    'helfer': [1], 'helper': [1], 'ungelernt': [1], 'unskilled': [1],
+    'fachkraft': [2], 'skilled': [2], 'facharbeiter': [2],
+    'spezialist': [3], 'specialist': [3],
+    'experte': [4], 'expert': [4], 'führungskraft': [4], 'senior': [4], 'manager': [4],
+}
+
+
+# Human-readable domain names for composing search replies
+_KLDB_DOMAIN_NAMES = {
+    '01': 'Sicherheit & Verteidigung', '02': 'Sicherheit & Verteidigung',
+    '03': 'Sicherheit & Verteidigung', '53': 'Sicherheit & Verteidigung',
+    '11': 'Land- & Forstwirtschaft', '12': 'Land- & Forstwirtschaft',
+    '13': 'Land- & Forstwirtschaft', '14': 'Land- & Forstwirtschaft',
+    '21': 'Fertigung & Technik', '22': 'Fertigung & Technik',
+    '23': 'Fertigung & Technik', '24': 'Fertigung & Technik',
+    '27': 'Fertigung & Technik', '28': 'Fertigung & Technik',
+    '25': 'Maschinen & Elektro', '26': 'Maschinen & Elektro',
+    '29': 'Gastgewerbe & Lebensmittel',
+    '31': 'Bau & Handwerk', '32': 'Bau & Handwerk',
+    '33': 'Bau & Handwerk', '34': 'Bau & Handwerk', '54': 'Bau & Handwerk',
+    '41': 'Wissenschaft & Forschung', '42': 'Wissenschaft & Forschung',
+    '43': 'IT & Technologie',
+    '51': 'Transport & Logistik', '52': 'Transport & Logistik',
+    '61': 'Handel & Vertrieb', '62': 'Handel & Vertrieb',
+    '63': 'Gastgewerbe & Tourismus',
+    '71': 'Wirtschaft & Management',
+    '72': 'Finanzen & Banken',
+    '73': 'Verwaltung & Recht',
+    '81': 'Gesundheit & Medizin', '82': 'Gesundheit & Medizin',
+    '83': 'Bildung & Soziales', '84': 'Bildung & Soziales',
+    '91': 'Kultur & Medien', '92': 'Kultur & Medien',
+    '93': 'Kultur & Medien', '94': 'Kultur & Medien',
+}
+
+
+def _compose_search_reply(actions: dict, language: str, uses_du: bool) -> str:
+    """
+    Compose a deterministic reply for search intent — no LLM involved.
+    Prevents hallucination by skipping the model entirely.
+    """
+    filters = actions.get('set_filters', {})
+    
+    # Collect readable filter descriptions
+    parts_de = []
+    parts_en = []
+    
+    # Domain names (deduplicated)
+    if 'domains' in filters:
+        domain_names = list(dict.fromkeys(
+            _KLDB_DOMAIN_NAMES.get(c, c) for c in filters['domains']
+        ))
+        parts_de.append(', '.join(domain_names))
+        parts_en.append(', '.join(domain_names))
+    
+    # City
+    city = filters.get('city', '')
+    if city:
+        parts_de.append(f'in {city}')
+        parts_en.append(f'in {city}')
+    
+    # Radius
+    radius = filters.get('radius_km')
+    if radius:
+        parts_de.append(f'im Umkreis von {radius} km')
+        parts_en.append(f'within {radius} km')
+    
+    filter_desc_de = ' '.join(parts_de) if parts_de else 'deine Suchkriterien'
+    filter_desc_en = ' '.join(parts_en) if parts_en else 'your search criteria'
+    
+    if language == 'de':
+        if uses_du:
+            return (
+                f"Alles klar! Ich setze die Filter auf **{filter_desc_de}**. "
+                f"Die Ergebnisse erscheinen gleich auf der Suchseite — schau mal! 🔍"
+            )
+        else:
+            return (
+                f"Sehr gerne! Ich setze die Filter auf **{filter_desc_de}**. "
+                f"Die Ergebnisse erscheinen gleich auf der Suchseite. 🔍"
+            )
+    else:
+        return (
+            f"Got it! I'm setting the filters to **{filter_desc_en}**. "
+            f"The results will appear on the search page — take a look! 🔍"
+        )
+
+
+def extract_search_intent(message: str) -> Optional[dict]:
+    """
+    Extract structured search intent from a user message.
+    
+    Returns dict with optional keys:
+    - domains: list of KLDB 2-digit codes
+    - city: str (city name for display)
+    - lat, lon: float (coordinates)
+    - radius_km: int
+    - ql: list of ints [1-4]
+    
+    Returns None if no search intent detected.
+    """
+    msg = message.lower().strip()
+    
+    # Must look like a job search request
+    search_triggers_de = [
+        r'such\w*', r'find\w*', r'job', r'stell\w*', r'arbeit',
+        r'berufs?\b', r'hilf\w*\s+mir', r'zeig\w*\s+mir',
+    ]
+    search_triggers_en = [
+        r'search', r'find', r'look\w*\s+for', r'job', r'position',
+        r'show me', r'help me',
+    ]
+    
+    has_trigger = any(re.search(p, msg) for p in search_triggers_de + search_triggers_en)
+    if not has_trigger:
+        return None
+    
+    result = {}
+    
+    # ── Extract domain ──
+    found_codes = set()
+    for keyword, codes in DOMAIN_KEYWORDS.items():
+        if re.search(r'\b' + re.escape(keyword), msg):
+            found_codes.update(codes)
+    if found_codes:
+        result['domains'] = sorted(found_codes)
+    
+    # ── Extract city ──
+    for city_name, (lat, lon) in CITY_COORDS.items():
+        if re.search(r'\b' + re.escape(city_name) + r'\b', msg):
+            result['city'] = city_name.title()
+            result['lat'] = lat
+            result['lon'] = lon
+            result['radius_km'] = 50  # sensible default
+            break
+    
+    # ── Extract qualification level ──
+    found_ql = set()
+    for keyword, levels in QL_KEYWORDS.items():
+        if re.search(r'\b' + re.escape(keyword), msg):
+            found_ql.update(levels)
+    if found_ql:
+        result['ql'] = sorted(found_ql)
+    
+    # Only return if we found at least one meaningful filter
+    if result:
+        return {'set_filters': result}
+    
+    return None
+
+
 async def chat(message: str, user_id: int, conn, history: list = None) -> MiraResponse:
     """
     Main chat function — LLM-first, no pattern matching.
@@ -910,6 +1133,16 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
             existing = yogi_context.get('_extra_prompt', '')
             yogi_context['_extra_prompt'] = existing + tier2_context
             logger.info(f"Tier 2 context injected: {tier2_intent}")
+    
+    # Extract search intent (domains, city, ql) before LLM call
+    search_actions = extract_search_intent(message)
+    if search_actions:
+        logger.info(f"Search intent detected: {search_actions}")
+        # Short-circuit: don't call LLM at all for search intents.
+        # gemma3:4b hallucinates fake job postings no matter what prompt says.
+        # The reply is deterministic anyway — just confirm filter changes.
+        reply = _compose_search_reply(search_actions, language, uses_du)
+        return MiraResponse(reply=reply, language=language, fallback=False, actions=search_actions)
     
     # Build system prompt
     system_prompt = build_system_prompt(language, uses_du, yogi_context)
