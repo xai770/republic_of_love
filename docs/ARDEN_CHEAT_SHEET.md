@@ -1,6 +1,6 @@
 # Arden's Cheat Sheet
 
-*Last updated: 2026-02-11*
+*Last updated: 2026-02-12*
 
 ---
 
@@ -278,13 +278,27 @@ DEVELOP → STABILIZE (3×5) → PROVE (3×20) → QA GATE (100 samples) → PRO
 
 **Code quality:** `requirements.txt` rewritten (was linting-only). 11 stale `ty_wave` paths fixed. Duplicate `DBJobFetcher` renamed. Plan: [2026-02-11_berufenet_owl_integration.md](daily_notes/2026-02-11_berufenet_owl_integration.md)
 
+### 2026-02-12: Pipeline Fixes + Search Page Design
+
+**Pipeline (3 stacked bugs):** (A) Phase 1+2 recycling loops — pending_owl titles re-selected every batch, fixed by excluding terminal states + DB migration of 14,430 rows. (B) OWL ambiguity — 31% of names rejected because 2+ owl_ids. Data shows 100% same KLDB domain → three-tier acceptance (unanimous/majority/reject). 12 new tests. (C) clean_job_title 10 regex bugs — `*in` suffix, `(m,w,d)` variants, orphan parens, €salary, pipe sections, date suffixes. 19 tests (was 8).
+
+**Housekeeping:** MCP PostgreSQL fixed (`.pgpass` + `base_admin`). Notifications bell+dropdown wired in header (was half-built: JS existed, HTML missing). Dead cron jobs removed (reaper every 1min + watchdog every 5min, both calling deleted scripts). CURRENT.md updated (was 11 days stale). Reprocessing SQL: 15,651 `no_match` rows reset for re-classification.
+
+**Search/Suche page design (agreed, not yet built):** Three-panel interactive layout — Domain bars (left) + Leaflet heatmap with radius circle (center) + QL buttons (right). Cross-filtering via single `POST /api/search/preview` endpoint. 5 enhancements for v1: city search box, auto-seed from profile, preview cards (3-5 best matches), freshness badge, NL input via Ollama. Data: 159K postings with coords (79%), 20,509 grid cells at ~1km = ~60KB payload. Employment type NOT in AA data — skipped. Key insight: "Profile embeddings pick best matches within the buckets the yogi defined."
+
+**6 commits, 215 tests (was 192).** Plan: [2026-02-12_maintenance_forward.md](daily_notes/2026-02-12_maintenance_forward.md)
+
+### 2026-02-11: Berufenet → OWL + Security Hardening
+
+**OWL integration:** 3,561 berufenet entities + 11,746 owl_names. Actor rewritten: `--batch N` (Phase 1, OWL instant) + `--batch N --phase2` (embed+LLM discovery). Phase 2 now live in `turing_fetch.sh`. Auto-triage: 5,197 owl_pending processed (3,457 resolved, 1,740 rejected). Triage UI at `/admin/owl-triage`.
+
+**Security:** Admin auth via `users.is_admin` + `_require_admin()` on all admin endpoints. Yogi OWL hierarchy (8 roles: admin/agent/free/pro/sustainer). Password rotated + scrubbed from 86 files. SECRET_KEY startup guard. 49 bare `except:` → specific types.
+
+**Code quality:** `requirements.txt` rewritten (was linting-only). 11 stale `ty_wave` paths fixed. Duplicate `DBJobFetcher` renamed. Plan: [2026-02-11_berufenet_owl_integration.md](daily_notes/2026-02-11_berufenet_owl_integration.md)
+
 ### 2026-02-09: Mira Intelligence & Clara Qualification Gate
 
 Mira: match quality gate (>30%), Doug newsletter wired in, persistent memory via `yogi_messages`. Clara: `check_qualification_gate()` uses KLDB levels as hard constraint — never match yogi level N to jobs level < N. NaN bug: bge-m3 on <150 char text → permanently exclude 4 postings.
-
-### 2026-02-08: Nightly Pipeline Overhaul
-
-Rewrote pipeline (now `turing_fetch.sh`) to 3 steps. All enrichment via `turing_daemon.py --run-once`. Domain gate promoted to actor (1303). Fixed infinite loop on NaN-failing embeddings (add `'failed'` to exclusion clause). `task_types` is a VIEW on `actors` — see schema note above.
 
 ---
 
@@ -297,6 +311,7 @@ Rewrote pipeline (now `turing_fetch.sh`) to 3 steps. All enrichment via `turing_
 | [0000_talent_yoga_system_overview.md](0000_talent_yoga_system_overview.md) | System architecture, current metrics |
 | [tools/turing/README.md](../tools/turing/README.md) | All turing-* tools |
 | [20260208_product_roadmap_reset.md](daily_notes/20260208_product_roadmap_reset.md) | UX roadmap, Mira memory architecture, sidebar features |
+| [2026-02-12_maintenance_forward.md](daily_notes/2026-02-12_maintenance_forward.md) | Pipeline fixes A/B/C, Search/Suche page design |
 
 ---
 
