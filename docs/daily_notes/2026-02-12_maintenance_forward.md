@@ -511,4 +511,118 @@ Login/logout markers are NOT chat messages. Inserting "Yogi logged on" as a `yog
 
 ---
 
-*— ℵ*
+## Onboarding + Privacy-First Profile Ingestion
+
+**Status:** Building — Feb 12, 2026 evening session
+
+**The vision:** A yogi signs in, chooses a name, uploads a CV, and gets matched — 
+without us ever storing their real name, email, address, or employer names.
+
+**Legal basis:** EU anti-discrimination law + GDPR data minimization.
+- CVs contain PII we must not store: real names, company names, addresses, dates
+- Real name → replaced with yogi_name
+- Company names → generalized ("Deutsche Bank" → "a large German bank")
+- School names → stripped ("INSEAD MBA" → "MBA")
+- Dates → converted to durations ("2018-2022" → "4 years")
+- Notification email → yogi-provided (any address they choose), never from OAuth
+
+**The flow:**
+```
+Google Sign-In (only sub claim stored, no email/name)
+    ↓
+Mira: "Wie soll ich dich nennen?" → yogi_name stored
+    ↓
+Upload CV (PDF/Word) → RAM only, never on disk
+    ↓
+LLM extracts structured data (skills, roles, companies, education)
+    ↓
+LLM anonymizes: yogi_name replaces real name, companies generalized
+    ↓
+PII safety net: regex + company corpus check — rejects if leaks detected
+    ↓
+Store ONLY the anonymized profile → delete original from memory
+    ↓
+Mira confirms: "Das habe ich verstanden: 12 Jahre Erfahrung, Python, Cloud..."
+    ↓
+Mira: "Sollen wir dich kontaktieren wenn wir deinen Traumjob finden?"
+    → optional notification_email (any address, unsubscribe link in every email)
+    ↓
+Matching starts automatically
+```
+
+### Task breakdown
+
+#### Task O1: Schema migration — yogi_name + PII cleanup (20 min)
+**File:** `migrations/055_yogi_name_and_pii_cleanup.sql`
+
+- Add `users.yogi_name` (TEXT, UNIQUE, case-insensitive via LOWER index)
+- Add `users.onboarding_completed_at` (TIMESTAMPTZ)
+- Drop PII columns from `users`: don't drop email/display_name yet (existing code uses them),
+  but add `users.notification_email` migration note
+- Note: `profiles.full_name`, `profile_raw_text` etc. will be addressed when
+  the anonymized profile flow replaces the old import
+
+#### Task O2: Mira onboarding — yogi_name conversation (30 min)
+**File:** `core/mira_llm.py`
+
+- Detect first-conversation state: no `yogi_name` → trigger onboarding
+- Mira asks "Wie soll ich dich nennen?" / "What should I call you?"
+- Extract yogi_name from response, validate (unique, 2-20 chars, no slurs)
+- Store in `users.yogi_name`
+- Use yogi_name in all subsequent context/greetings
+
+#### Task O3: CV anonymization core (45 min)
+**File:** `core/cv_anonymizer.py` (NEW)
+
+- `extract_and_anonymize(text: str, yogi_name: str) -> dict`
+- LLM prompt: extract skills, roles, education, work history WITH company names
+- Second pass or same prompt: replace real name → yogi_name, companies → generalized
+- Company generalization via LLM: "Deutsche Bank" → "a large German bank"
+- Return structured JSON: skills, anonymized_work_history, education, years_experience
+
+#### Task O4: PII safety net (20 min)
+**File:** `core/pii_detector.py` (NEW)
+
+- Regex patterns: email, phone, dates (DD.MM.YYYY, YYYY), LinkedIn URLs
+- Company name corpus: load 36K names from `postings.posting_name`
+- `check(text: str) -> list[str]` returns violations
+- Used as post-LLM validation — if anything leaks, reject and re-try
+
+#### Task O5: Wire into parse-cv endpoint (20 min)
+**File:** `api/routers/profiles.py`
+
+- Modify `parse_cv()` to use anonymizer instead of raw extraction
+- RAM-only: file bytes → text → LLM → anonymized JSON → response
+- No disk writes, no raw text stored
+- Return anonymized work history for yogi confirmation
+
+#### Task O6: Notification email consent (15 min)
+**Files:** `api/routers/profiles.py`, `core/mira_llm.py`
+
+- Mira asks after profile is set up (or separately in chat)
+- "Was machen wir, wenn wir deinen Traumjob finden? Sollen wir dich kontaktieren?"
+- Yogi can provide any email — stored in `users.notification_email`
+- Clear privacy statement: only for match notifications, one-click unsubscribe
+- If yogi says no: "Kein Problem! Du siehst neue Matches wenn du dich einloggst."
+
+#### Task O7: Tests (20 min)
+**File:** `tests/test_onboarding.py` (NEW)
+
+- Test yogi_name validation (length, uniqueness, forbidden chars)
+- Test PII detector (emails, phones, company names, clean text)
+- Test anonymization output format
+- Test onboarding state detection (no yogi_name → first convo)
+
+### What we already have
+- CV text extraction: `profiles.py:parse_cv()` — PDF/DOCX/TXT → text ✅
+- LLM integration: Ollama with gemma3:4b (chat) and qwen2.5:7b (extraction) ✅
+- 36K company names in `postings.posting_name` for PII corpus ✅
+- Privacy architecture doc: full design from Arden, Nov 2025 ✅
+- Workflow 1126 archive: 4-step extraction pipeline (reference) ✅
+
+### What we're building now
+Starting with Tasks O1-O4 (schema + core logic), then wiring in O5-O7.
+
+---
+
+*Pretty amazing. From a blank search page to this. — ℵ*

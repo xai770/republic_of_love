@@ -471,11 +471,19 @@ Extract all work experiences. Use null for missing dates. Order by most recent f
 @router.post("/me/parse-cv")
 async def parse_cv(
     file: UploadFile = File(...),
-    user: dict = Depends(require_user)
+    user: dict = Depends(require_user),
+    conn = Depends(get_db)
 ):
     """
-    Parse uploaded CV (PDF/DOCX) and extract work history.
-    Returns structured work history for user confirmation.
+    Parse uploaded CV (PDF/DOCX) and extract ANONYMIZED career data.
+    
+    Privacy-first:
+    - File is processed in memory only (never written to disk permanently)
+    - LLM extracts + anonymizes: real name → yogi_name, companies → generalized
+    - PII safety net validates output before returning
+    - Raw text is discarded after processing
+    
+    Returns anonymized structured profile for yogi confirmation.
     """
     filename = file.filename.lower()
     content = await file.read()
@@ -509,16 +517,33 @@ async def parse_cv(
         if not text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from file")
         
-        # Parse with LLM
-        jobs = parse_cv_text(text)
+        # Get yogi_name for anonymization
+        with conn.cursor() as cur:
+            cur.execute("SELECT yogi_name FROM users WHERE user_id = %s", (user['user_id'],))
+            row = cur.fetchone()
+            yogi_name = row['yogi_name'] if row else None
         
-        if not jobs:
-            raise HTTPException(status_code=400, detail="Could not extract work history from CV")
+        if not yogi_name:
+            raise HTTPException(status_code=400, detail="Please set your yogi name first (chat with Mira)")
         
-        return jobs
+        # Anonymize with LLM + PII safety check
+        from core.cv_anonymizer import extract_and_anonymize
+        result = await extract_and_anonymize(
+            cv_text=text,
+            yogi_name=yogi_name,
+            conn=conn
+        )
+        
+        # Explicitly discard raw text
+        del text
+        del content
+        
+        return result
         
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 

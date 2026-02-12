@@ -257,7 +257,7 @@ def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
     lines = []
     
     # ── Name & identity ──
-    name = ctx.get('full_name') or ctx.get('display_name') or None
+    name = ctx.get('yogi_name') or ctx.get('full_name') or ctx.get('display_name') or None
     if name:
         identity = f"Name: {name}"
         if ctx.get('member_since'):
@@ -477,6 +477,7 @@ def build_yogi_context(user_id: int, conn) -> dict:
     """
     context = {
         # Identity
+        'yogi_name': None,
         'display_name': None,
         'full_name': None,
         'tier': None,
@@ -506,13 +507,14 @@ def build_yogi_context(user_id: int, conn) -> dict:
         with conn.cursor() as cur:
             # ── Identity from users table ──
             cur.execute("""
-                SELECT display_name, tier, subscription_tier,
+                SELECT display_name, yogi_name, tier, subscription_tier,
                        created_at, last_login_at
                 FROM users
                 WHERE user_id = %s
             """, (user_id,))
             user_row = cur.fetchone()
             if user_row:
+                context['yogi_name'] = user_row['yogi_name']
                 context['display_name'] = user_row['display_name']
                 context['tier'] = user_row['subscription_tier'] or user_row['tier'] or 'free'
                 if user_row['created_at']:
@@ -1209,6 +1211,13 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
     
     logger.info(f"Mira LLM chat: lang={language}, uses_du={uses_du}, message={message[:50]}")
     
+    # ── Onboarding check: yogi_name ──
+    onboarding_state = get_onboarding_state(user_id, conn)
+    if onboarding_state['needs_yogi_name']:
+        onboarding_response = await handle_onboarding(message, user_id, conn, language, uses_du, onboarding_state)
+        if onboarding_response:
+            return onboarding_response
+    
     # Check for Doug research request
     doug_request = detect_doug_request(message)
     if doug_request:
@@ -1450,6 +1459,255 @@ async def handle_doug_request(
             return MiraResponse(reply=reply, language=language)
     
     return None  # Fall through to normal LLM response
+
+
+# ─────────────────────────────────────────────────────────
+# Onboarding: yogi_name + notification email
+# ─────────────────────────────────────────────────────────
+
+def get_onboarding_state(user_id: int, conn) -> dict:
+    """
+    Check onboarding progress for a yogi.
+    
+    Returns dict with:
+        needs_yogi_name: bool
+        needs_profile: bool
+        needs_notification_email: bool
+        yogi_name: str or None
+        onboarding_completed: bool
+    """
+    state = {
+        'needs_yogi_name': True,
+        'needs_profile': True,
+        'needs_notification_email': True,
+        'yogi_name': None,
+        'onboarding_completed': False,
+    }
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT yogi_name, onboarding_completed_at, notification_email
+                FROM users WHERE user_id = %s
+            """, (user_id,))
+            row = cur.fetchone()
+            if row:
+                state['yogi_name'] = row['yogi_name']
+                state['needs_yogi_name'] = not row['yogi_name']
+                state['needs_notification_email'] = not row['notification_email']
+                state['onboarding_completed'] = row['onboarding_completed_at'] is not None
+            
+            cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s LIMIT 1", (user_id,))
+            state['needs_profile'] = cur.fetchone() is None
+    except Exception as e:
+        logger.warning(f"Onboarding state check failed: {e}")
+    
+    return state
+
+
+_YOGI_NAME_PATTERN = re.compile(r'^[a-zA-Z0-9äöüÄÖÜß][a-zA-Z0-9äöüÄÖÜß._\- ]{0,18}[a-zA-Z0-9äöüÄÖÜß]$')
+
+def validate_yogi_name(name: str) -> tuple:
+    """
+    Validate a proposed yogi name.
+    
+    Returns:
+        (is_valid: bool, error_message: str or None)
+    """
+    if not name or not name.strip():
+        return False, "Name cannot be empty"
+    
+    name = name.strip()
+    
+    if len(name) < 2:
+        return False, "Name must be at least 2 characters"
+    if len(name) > 20:
+        return False, "Name must be 20 characters or fewer"
+    
+    if not _YOGI_NAME_PATTERN.match(name):
+        return False, "Name can only contain letters, numbers, dots, hyphens, and spaces"
+    
+    # Block obvious bad names
+    blocked = {'admin', 'mira', 'doug', 'adele', 'system', 'bot', 'test', 'null', 'undefined'}
+    if name.lower() in blocked:
+        return False, "That name is reserved"
+    
+    return True, None
+
+
+def save_yogi_name(user_id: int, name: str, conn) -> bool:
+    """
+    Store yogi_name. Returns False if name is taken (case-insensitive).
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE users SET yogi_name = %s
+                WHERE user_id = %s
+                  AND NOT EXISTS (
+                      SELECT 1 FROM users 
+                      WHERE LOWER(yogi_name) = LOWER(%s) AND user_id != %s
+                  )
+            """, (name, user_id, name, user_id))
+            conn.commit()
+            return cur.rowcount > 0
+    except Exception as e:
+        logger.error(f"Failed to save yogi_name: {e}")
+        conn.rollback()
+        return False
+
+
+def extract_yogi_name_from_message(message: str) -> Optional[str]:
+    """
+    Try to extract a yogi name from a conversational response.
+    
+    Handles:
+    - "Nenn mich xai" → "xai"
+    - "I'm Luna" → "Luna"
+    - "xai" → "xai" (plain name)
+    - "Ich heiße Max" → "Max"
+    - "Call me Stellar" → "Stellar"
+    
+    Returns None for greetings, questions, and non-name responses.
+    """
+    message = message.strip()
+    
+    # Filter out greetings and non-name messages
+    _GREETINGS = {
+        'hallo', 'hello', 'hi', 'hey', 'moin', 'servus', 'grüß gott',
+        'guten tag', 'guten morgen', 'guten abend', 'good morning',
+        'good evening', 'howdy', 'yo', 'sup', 'ciao', 'tschüss',
+        'danke', 'thanks', 'ja', 'nein', 'yes', 'no', 'ok', 'okay',
+    }
+    if message.lower().rstrip('!?.') in _GREETINGS:
+        return None
+    
+    # Filter out questions
+    if message.rstrip().endswith('?'):
+        return None
+    
+    # Pattern-based extraction
+    patterns = [
+        r'(?:nenn|ruf)\s+mich\s+(.+)',
+        r"(?:call|name)\s+me\s+(.+)",
+        r"(?:ich heiße|ich bin|i'?m|i am|mein name ist|my name is)\s+(.+)",
+        r"(?:du kannst mich|you can call me)\s+(.+)\s+nennen",
+        r"(?:du kannst mich|you can call me)\s+(.+)",
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, message, re.IGNORECASE)
+        if match:
+            name = match.group(1).strip().rstrip('.!?')
+            # Take first word if response is conversational
+            if ' ' in name and len(name) > 20:
+                name = name.split()[0]
+            return name
+    
+    # If it's a short plain response (just the name), use it directly
+    words = message.strip().rstrip('.!?').split()
+    if 1 <= len(words) <= 3 and len(message) <= 30:
+        return ' '.join(words)
+    
+    return None
+
+
+async def handle_onboarding(message: str, user_id: int, conn, language: str, uses_du: bool, onboarding_state: dict) -> Optional[MiraResponse]:
+    """
+    Handle onboarding conversation.
+    
+    Returns MiraResponse if onboarding handled the message, None to fall through.
+    """
+    # Step 1: yogi_name not set yet
+    if onboarding_state['needs_yogi_name']:
+        # Try to extract a name from the message
+        proposed_name = extract_yogi_name_from_message(message)
+        
+        if proposed_name:
+            valid, error = validate_yogi_name(proposed_name)
+            if valid:
+                saved = save_yogi_name(user_id, proposed_name, conn)
+                if saved:
+                    if language == 'en':
+                        reply = (f"Nice to meet you, {proposed_name}! 🧘\n\n"
+                                 f"Now I know what to call you. "
+                                 f"Want to upload your CV? I'll extract your skills "
+                                 f"and start finding matches for you. "
+                                 f"Your data stays private — I only keep the skills, never the original document.")
+                    else:
+                        if uses_du:
+                            reply = (f"Schön dich kennenzulernen, {proposed_name}! 🧘\n\n"
+                                     f"Jetzt weiß ich, wie ich dich nennen soll. "
+                                     f"Möchtest du deinen Lebenslauf hochladen? Ich extrahiere deine Skills "
+                                     f"und fange an, passende Stellen für dich zu finden. "
+                                     f"Deine Daten bleiben privat — ich speichere nur die Skills, nie das Original.")
+                        else:
+                            reply = (f"Schön Sie kennenzulernen, {proposed_name}! 🧘\n\n"
+                                     f"Jetzt weiß ich, wie ich Sie ansprechen soll. "
+                                     f"Möchten Sie Ihren Lebenslauf hochladen? Ich extrahiere Ihre Skills "
+                                     f"und fange an, passende Stellen für Sie zu finden. "
+                                     f"Ihre Daten bleiben privat — ich speichere nur die Skills, nie das Original.")
+                    return MiraResponse(reply=reply, language=language, actions={'onboarding': 'name_set', 'yogi_name': proposed_name})
+                else:
+                    # Name taken
+                    if language == 'en':
+                        reply = f"Hmm, '{proposed_name}' is already taken. Could you choose a different name?"
+                    else:
+                        reply = f"Hmm, '{proposed_name}' ist leider schon vergeben. Magst du einen anderen Namen wählen?"
+                    return MiraResponse(reply=reply, language=language)
+            else:
+                # Invalid name
+                if language == 'en':
+                    reply = f"That name doesn't quite work — {error}. Try something between 2 and 20 characters?"
+                else:
+                    reply = f"Der Name passt leider nicht — {error}. Versuch etwas zwischen 2 und 20 Zeichen?"
+                return MiraResponse(reply=reply, language=language)
+        else:
+            # First message or couldn't extract name — ask for it
+            if language == 'en':
+                reply = ("Welcome to talent.yoga! 🧘 I'm Mira, your career companion.\n\n"
+                         "Before we start — what should I call you? "
+                         "Choose any name you like. It doesn't have to be your real one — "
+                         "your privacy matters here.")
+            else:
+                if uses_du:
+                    reply = ("Willkommen bei talent.yoga! 🧘 Ich bin Mira, deine Begleiterin bei der Jobsuche.\n\n"
+                             "Bevor wir loslegen — wie soll ich dich nennen? "
+                             "Such dir einen Namen aus, der dir gefällt. Muss nicht dein richtiger sein — "
+                             "deine Privatsphäre ist uns wichtig.")
+                else:
+                    reply = ("Willkommen bei talent.yoga! 🧘 Ich bin Mira, Ihre Begleiterin bei der Jobsuche.\n\n"
+                             "Bevor wir beginnen — wie soll ich Sie ansprechen? "
+                             "Wählen Sie einen Namen, der Ihnen gefällt. Er muss nicht Ihr richtiger sein — "
+                             "Ihre Privatsphäre ist uns wichtig.")
+            return MiraResponse(reply=reply, language=language, actions={'onboarding': 'ask_name'})
+    
+    return None  # Not in onboarding, fall through to normal chat
+
+
+def detect_notification_email_response(message: str) -> Optional[str]:
+    """
+    Detect if user is providing an email for notifications,
+    or declining notification.
+    
+    Returns:
+        email string if provided, 'decline' if explicitly declined, None if not relevant.
+    """
+    message_lower = message.lower().strip()
+    
+    # Decline patterns
+    decline_patterns = [
+        r'\b(?:nein|no|nope|nicht|kein|keine|lieber nicht|rather not|no thanks|nein danke)\b',
+    ]
+    for p in decline_patterns:
+        if re.search(p, message_lower):
+            return 'decline'
+    
+    # Extract email
+    email_match = re.search(r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b', message)
+    if email_match:
+        return email_match.group()
+    
+    return None
 
 
 # Singleton instance
