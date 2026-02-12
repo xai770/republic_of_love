@@ -245,12 +245,18 @@ def process_batch(batch_size: int, phase2: bool = False):
     # Get distinct unclassified titles (most frequent first)
     # Includes: NULL/null (never processed), pending_llm (old actor scored 0.70-0.85 but never set berufenet_id),
     #           pending_owl (Phase 1 ran, no OWL match found — needs Phase 2 embedding+LLM)
-    cur.execute("""
+    # When Phase 2 is off, skip pending_owl — re-running Phase 1 on them is pointless
+    if phase2:
+        status_filter = "berufenet_verified IS NULL OR berufenet_verified IN ('null', 'pending_llm', 'pending_owl')"
+    else:
+        status_filter = "berufenet_verified IS NULL OR berufenet_verified IN ('null', 'pending_llm')"
+
+    cur.execute(f"""
         SELECT job_title, COUNT(*) as cnt
         FROM postings
         WHERE job_title IS NOT NULL
           AND berufenet_id IS NULL
-          AND (berufenet_verified IS NULL OR berufenet_verified IN ('null', 'pending_llm', 'pending_owl'))
+          AND ({status_filter})
         GROUP BY job_title
         ORDER BY cnt DESC
         LIMIT %s
@@ -375,7 +381,14 @@ def process_batch(batch_size: int, phase2: bool = False):
                 """, (candidates[0]['score'] if candidates else 0, title))
                 conn.commit()
         else:
-            # Phase 2 disabled — mark as unresolved for now
+            # Phase 2 disabled — mark as pending_owl so Phase 1 doesn't reprocess
+            cur.execute("""
+                UPDATE postings
+                SET berufenet_verified = 'pending_owl'
+                WHERE job_title = %s AND berufenet_id IS NULL
+                  AND (berufenet_verified IS NULL OR berufenet_verified = 'null')
+            """, (title,))
+            conn.commit()
             stats['null'] += 1
 
         # Progress
