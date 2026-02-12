@@ -148,3 +148,5 @@ backups/scripts_archive/
 backups/tickets_archive/
 backups/task_types_to_delete*.txt
 Link to ty_learn archive
+# Screenshots
+*.png
