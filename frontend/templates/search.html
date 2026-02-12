@@ -731,7 +731,16 @@
         await loadSavedSearch();
         doSearch();
         // Fix Leaflet tile rendering after layout settles
-        setTimeout(() => map.invalidateSize(), 200);
+        // Multiple invalidateSize calls: fast one for quick loads, slower for layout shifts
+        setTimeout(() => map.invalidateSize(), 100);
+        setTimeout(() => map.invalidateSize(), 500);
+        setTimeout(() => map.invalidateSize(), 1500);
+        // Also watch for container resize (CSS flex settling, window resize)
+        if (window.ResizeObserver) {
+            const mapEl = document.getElementById('search-map');
+            const ro = new ResizeObserver(() => map.invalidateSize());
+            ro.observe(mapEl);
+        }
         // Vibrate + open Mira
         triggerMiraGreeting();
     }
@@ -796,6 +805,8 @@
 
         if (changed) {
             doSearch();
+            // Ensure map tiles reload after filter-driven view change
+            setTimeout(() => map.invalidateSize(), 200);
         }
     };
 })();
