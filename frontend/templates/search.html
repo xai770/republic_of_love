@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+
+{% block title %}Mira Suche — talent.yoga{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    {% include "partials/header.html" %}
+
+    {% set active_page = 'search' %}
+    {% include "partials/sidebar.html" %}
+
+    <main class="main-content search-page">
+
+        <!-- Search header with NL input -->
+        <div class="search-header">
+            <h1 class="search-title">🔍 Mira Suche</h1>
+            <div class="search-nl-input">
+                <input type="text" id="nl-input" placeholder="z.B. Pflegejobs in München..." autocomplete="off">
+                <button id="nl-search-btn" title="Mit Mira suchen">🔎</button>
+            </div>
+            <div class="search-active-filters" id="active-filters">
+                <!-- Active filter pills rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Three-panel layout -->
+        <div class="search-panels">
+            <!-- LEFT: Domain (Berufsfeld) -->
+            <div class="search-panel panel-domain">
+                <h3 class="panel-title">Berufsfeld</h3>
+                <div class="domain-bars" id="domain-bars">
+                    <!-- Rendered by JS -->
+                    <div class="panel-loading">Laden...</div>
+                </div>
+            </div>
+
+            <!-- CENTER: Map -->
+            <div class="search-panel panel-map">
+                <div class="map-controls">
+                    <input type="text" id="city-search" placeholder="Stadt suchen..." autocomplete="off">
+                    <select id="radius-select">
+                        <option value="">Kein Radius</option>
+                        <option value="10">10 km</option>
+                        <option value="25">25 km</option>
+                        <option value="50" selected>50 km</option>
+                        <option value="100">100 km</option>
+                    </select>
+                </div>
+                <div id="search-map"></div>
+                <div class="map-freshness" id="freshness-badge" style="display:none;">
+                    <span id="fresh-count">0</span> neu diese Woche
+                </div>
+            </div>
+
+            <!-- RIGHT: Qualification Level -->
+            <div class="search-panel panel-ql">
+                <h3 class="panel-title">Qualifikation</h3>
+                <div class="ql-buttons" id="ql-buttons">
+                    <!-- Rendered by JS -->
+                    <div class="panel-loading">Laden...</div>
+                </div>
+                <div class="search-total" id="search-total">
+                    <span class="total-number">—</span>
+                    <span class="total-label">Stellen gefunden</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="search-actions">
+            <button class="btn-save-search" id="btn-save-search">
+                💾 Suche speichern
+            </button>
+            <span class="save-feedback" id="save-feedback"></span>
+        </div>
+
+        <!-- Preview cards -->
+        <div class="search-preview" id="search-preview">
+            <!-- 3-5 best match cards rendered by JS after filters settle -->
+        </div>
+
+    </main>
+</div>
+
+<!-- Leaflet CSS + JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<script>
+(function() {
+    // ============================================================
+    // STATE
+    // ============================================================
+    const state = {
+        domains: [],     // selected KLDB 2-digit codes
+        ql: [],          // selected QL levels [1-4]
+        lat: null,
+        lon: null,
+        radius_km: null,
+        // data from last response
+        data: null,
+    };
+
+    // ============================================================
+    // MAP SETUP
+    // ============================================================
+    const map = L.map('search-map', {
+        center: [51.1657, 10.4515],  // Germany center
+        zoom: 6,
+        zoomControl: true,
+        scrollWheelZoom: true,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 18,
+    }).addTo(map);
+
+    let heatLayer = null;
+    let radiusCircle = null;
+    let searchMarker = null;
+
+    // Click on map = set center + radius
+    map.on('click', function(e) {
+        state.lat = Math.round(e.latlng.lat * 100) / 100;
+        state.lon = Math.round(e.latlng.lng * 100) / 100;
+        state.radius_km = parseInt(document.getElementById('radius-select').value) || null;
+        updateRadiusCircle();
+        doSearch();
+    });
+
+    function updateRadiusCircle() {
+        if (radiusCircle) map.removeLayer(radiusCircle);
+        if (searchMarker) map.removeLayer(searchMarker);
+
+        if (state.lat && state.lon) {
+            searchMarker = L.circleMarker([state.lat, state.lon], {
+                radius: 6, color: '#e74c3c', fillColor: '#e74c3c', fillOpacity: 0.8, weight: 2
+            }).addTo(map);
+
+            if (state.radius_km) {
+                radiusCircle = L.circle([state.lat, state.lon], {
+                    radius: state.radius_km * 1000,
+                    color: '#3498db', fillColor: '#3498db', fillOpacity: 0.08,
+                    weight: 2, dashArray: '5,5'
+                }).addTo(map);
+            }
+        }
+    }
+
+    // Radius dropdown change
+    document.getElementById('radius-select').addEventListener('change', function() {
+        state.radius_km = parseInt(this.value) || null;
+        updateRadiusCircle();
+        if (state.lat && state.lon) doSearch();
+    });
+
+    // ============================================================
+    // CITY SEARCH (simple geocoding via Nominatim)
+    // ============================================================
+    let cityTimeout = null;
+    const cityInput = document.getElementById('city-search');
+    const cityDropdown = document.createElement('div');
+    cityDropdown.className = 'city-dropdown';
+    cityInput.parentElement.appendChild(cityDropdown);
+
+    cityInput.addEventListener('input', function() {
+        clearTimeout(cityTimeout);
+        const q = this.value.trim();
+        if (q.length < 2) { cityDropdown.innerHTML = ''; return; }
+        cityTimeout = setTimeout(() => geocodeCity(q), 400);
+    });
+
+    async function geocodeCity(q) {
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&countrycodes=de&limit=5&q=${encodeURIComponent(q)}`,
+                { headers: { 'Accept-Language': 'de' } }
+            );
+            const results = await res.json();
+            cityDropdown.innerHTML = results.map(r =>
+                `<div class="city-option" data-lat="${r.lat}" data-lon="${r.lon}">${r.display_name.split(',').slice(0,2).join(',')}</div>`
+            ).join('');
+        } catch(e) {
+            cityDropdown.innerHTML = '';
+        }
+    }
+
+    cityDropdown.addEventListener('click', function(e) {
+        const opt = e.target.closest('.city-option');
+        if (!opt) return;
+        state.lat = parseFloat(opt.dataset.lat);
+        state.lon = parseFloat(opt.dataset.lon);
+        state.radius_km = parseInt(document.getElementById('radius-select').value) || 50;
+        cityInput.value = opt.textContent;
+        cityDropdown.innerHTML = '';
+        map.setView([state.lat, state.lon], 10);
+        updateRadiusCircle();
+        doSearch();
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+        if (!cityInput.contains(e.target) && !cityDropdown.contains(e.target)) {
+            cityDropdown.innerHTML = '';
+        }
+    });
+
+    // ============================================================
+    // DOMAIN BARS
+    // ============================================================
+    function renderDomains(domains) {
+        const container = document.getElementById('domain-bars');
+        if (!domains || domains.length === 0) {
+            container.innerHTML = '<div class="panel-empty">Keine Daten</div>';
+            return;
+        }
+        const maxCount = Math.max(...domains.map(d => d.count));
+
+        container.innerHTML = domains.map(d => {
+            const pct = maxCount > 0 ? Math.round(d.count / maxCount * 100) : 0;
+            const selected = state.domains.length === 0 || d.codes.some(c => state.domains.includes(c));
+            const dimmed = state.domains.length > 0 && !selected;
+            return `
+                <div class="domain-bar ${dimmed ? 'dimmed' : ''} ${selected && state.domains.length > 0 ? 'selected' : ''}"
+                     data-codes="${d.codes.join(',')}" data-name="${d.name}">
+                    <div class="domain-bar-label">${d.name}</div>
+                    <div class="domain-bar-track">
+                        <div class="domain-bar-fill" style="width:${pct}%; background:${d.color};"></div>
+                    </div>
+                    <div class="domain-bar-count">${d.count.toLocaleString('de-DE')}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    document.getElementById('domain-bars').addEventListener('click', function(e) {
+        const bar = e.target.closest('.domain-bar');
+        if (!bar) return;
+        const codes = bar.dataset.codes.split(',');
+
+        // Toggle: if all codes are already selected, remove them. Otherwise add them.
+        const allSelected = codes.every(c => state.domains.includes(c));
+        if (allSelected) {
+            state.domains = state.domains.filter(c => !codes.includes(c));
+        } else {
+            codes.forEach(c => { if (!state.domains.includes(c)) state.domains.push(c); });
+        }
+        doSearch();
+    });
+
+    // ============================================================
+    // QL BUTTONS
+    // ============================================================
+    function renderQL(levels) {
+        const container = document.getElementById('ql-buttons');
+        const qlColors = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c' };
+
+        container.innerHTML = levels.map(l => {
+            const selected = state.ql.length === 0 || state.ql.includes(l.level);
+            const dimmed = state.ql.length > 0 && !selected;
+            return `
+                <div class="ql-btn ${dimmed ? 'dimmed' : ''} ${selected && state.ql.length > 0 ? 'selected' : ''}"
+                     data-level="${l.level}">
+                    <span class="ql-dot" style="background:${qlColors[l.level] || '#999'};"></span>
+                    <span class="ql-label">${l.label}</span>
+                    <span class="ql-count">${l.count.toLocaleString('de-DE')}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    document.getElementById('ql-buttons').addEventListener('click', function(e) {
+        const btn = e.target.closest('.ql-btn');
+        if (!btn) return;
+        const level = parseInt(btn.dataset.level);
+        const idx = state.ql.indexOf(level);
+        if (idx >= 0) {
+            state.ql.splice(idx, 1);
+        } else {
+            state.ql.push(level);
+        }
+        doSearch();
+    });
+
+    // ============================================================
+    // HEATMAP
+    // ============================================================
+    function renderHeatmap(points) {
+        if (heatLayer) map.removeLayer(heatLayer);
+        if (!points || points.length === 0) return;
+        heatLayer = L.heatLayer(points, {
+            radius: 18,
+            blur: 22,
+            maxZoom: 12,
+            max: Math.max(...points.map(p => p[2])),
+            gradient: { 0.2: '#2196F3', 0.4: '#4CAF50', 0.6: '#FFEB3B', 0.8: '#FF9800', 1.0: '#F44336' }
+        }).addTo(map);
+    }
+
+    // ============================================================
+    // ACTIVE FILTER PILLS
+    // ============================================================
+    function renderFilterPills() {
+        const container = document.getElementById('active-filters');
+        let pills = [];
+
+        // Domain pills
+        if (state.domains.length > 0) {
+            // Group by domain name
+            const names = new Set();
+            for (const code of state.domains) {
+                for (const [name, codes] of Object.entries(window._domainMap || {})) {
+                    if (codes.includes(code)) names.add(name);
+                }
+            }
+            names.forEach(name => {
+                pills.push(`<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
+                    ${name} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
+                </span>`);
+            });
+        }
+
+        // QL pills
+        state.ql.forEach(level => {
+            const label = {1:'Helfer',2:'Fachkraft',3:'Spezialist',4:'Experte'}[level] || `L${level}`;
+            pills.push(`<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
+                ${label} <button class="pill-remove" data-type="ql" data-level="${level}">×</button>
+            </span>`);
+        });
+
+        // Geo pill
+        if (state.lat && state.lon) {
+            const geoLabel = cityInput.value || `${state.lat}, ${state.lon}`;
+            const rLabel = state.radius_km ? ` (${state.radius_km} km)` : '';
+            pills.push(`<span class="filter-pill geo-pill" data-type="geo">
+                📍 ${geoLabel}${rLabel} <button class="pill-remove" data-type="geo">×</button>
+            </span>`);
+        }
+
+        container.innerHTML = pills.join('');
+    }
+
+    document.getElementById('active-filters').addEventListener('click', function(e) {
+        const btn = e.target.closest('.pill-remove');
+        if (!btn) return;
+        const type = btn.dataset.type;
+        if (type === 'domain') {
+            const name = btn.dataset.name;
+            const codes = (window._domainMap || {})[name] || [];
+            state.domains = state.domains.filter(c => !codes.includes(c));
+        } else if (type === 'ql') {
+            const level = parseInt(btn.dataset.level);
+            state.ql = state.ql.filter(l => l !== level);
+        } else if (type === 'geo') {
+            state.lat = null;
+            state.lon = null;
+            state.radius_km = null;
+            cityInput.value = '';
+            if (radiusCircle) map.removeLayer(radiusCircle);
+            if (searchMarker) map.removeLayer(searchMarker);
+            radiusCircle = null;
+            searchMarker = null;
+        }
+        doSearch();
+    });
+
+    // ============================================================
+    // TOTAL + FRESHNESS
+    // ============================================================
+    function renderTotal(total) {
+        const el = document.getElementById('search-total');
+        el.querySelector('.total-number').textContent = total.toLocaleString('de-DE');
+    }
+
+    function renderFreshness(count) {
+        const badge = document.getElementById('freshness-badge');
+        if (count > 0) {
+            badge.style.display = '';
+            document.getElementById('fresh-count').textContent = count.toLocaleString('de-DE');
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // ============================================================
+    // MAIN SEARCH
+    // ============================================================
+    let searchPending = false;
+    let searchQueued = false;
+
+    async function doSearch() {
+        if (searchPending) { searchQueued = true; return; }
+        searchPending = true;
+
+        const body = {};
+        if (state.domains.length > 0) body.domains = state.domains;
+        if (state.ql.length > 0) body.ql = state.ql;
+        if (state.lat != null) body.lat = state.lat;
+        if (state.lon != null) body.lon = state.lon;
+        if (state.radius_km) body.radius_km = state.radius_km;
+
+        try {
+            const res = await fetch('/api/search/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            state.data = data;
+
+            // Build domain map for pill rendering
+            window._domainMap = {};
+            data.by_domain.forEach(d => { window._domainMap[d.name] = d.codes; });
+
+            renderDomains(data.by_domain);
+            renderQL(data.by_ql);
+            renderHeatmap(data.heatmap);
+            renderTotal(data.total);
+            renderFreshness(data.fresh_count);
+            renderFilterPills();
+        } catch(e) {
+            console.error('Search failed:', e);
+        } finally {
+            searchPending = false;
+            if (searchQueued) {
+                searchQueued = false;
+                doSearch();
+            }
+        }
+    }
+
+    // ============================================================
+    // SAVE SEARCH
+    // ============================================================
+    document.getElementById('btn-save-search').addEventListener('click', async function() {
+        const body = {};
+        if (state.domains.length > 0) body.domains = state.domains;
+        if (state.ql.length > 0) body.ql = state.ql;
+        if (state.lat != null) body.lat = state.lat;
+        if (state.lon != null) body.lon = state.lon;
+        if (state.radius_km) body.radius_km = state.radius_km;
+
+        const feedback = document.getElementById('save-feedback');
+        try {
+            const res = await fetch('/api/search/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                feedback.textContent = err.error || 'Fehler beim Speichern';
+                feedback.className = 'save-feedback error';
+            } else {
+                feedback.textContent = '✓ Gespeichert!';
+                feedback.className = 'save-feedback success';
+            }
+        } catch(e) {
+            feedback.textContent = 'Netzwerkfehler';
+            feedback.className = 'save-feedback error';
+        }
+        setTimeout(() => { feedback.textContent = ''; }, 3000);
+    });
+
+    // ============================================================
+    // LOAD SAVED SEARCH + AUTO-SEED FROM PROFILE
+    // ============================================================
+    async function loadSavedSearch() {
+        try {
+            const res = await fetch('/api/search/saved');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.search_params) {
+                const sp = data.search_params;
+                if (sp.domains) state.domains = sp.domains;
+                if (sp.ql) state.ql = sp.ql;
+                if (sp.lat != null) { state.lat = sp.lat; state.lon = sp.lon; }
+                if (sp.radius_km) {
+                    state.radius_km = sp.radius_km;
+                    document.getElementById('radius-select').value = sp.radius_km;
+                }
+                if (state.lat && state.lon) {
+                    map.setView([state.lat, state.lon], 10);
+                    updateRadiusCircle();
+                }
+            }
+        } catch(e) {
+            console.warn('Could not load saved search:', e);
+        }
+    }
+
+    // ============================================================
+    // NL INPUT (placeholder — sends to Mira later)
+    // ============================================================
+    document.getElementById('nl-search-btn').addEventListener('click', function() {
+        const text = document.getElementById('nl-input').value.trim();
+        if (!text) return;
+        // For now, just do city search if it looks like a city name
+        // Full NL decomposition via Ollama comes later
+        document.getElementById('nl-input').value = '';
+        cityInput.value = text.split(/\s+in\s+/i).pop() || text;
+        cityInput.dispatchEvent(new Event('input'));
+    });
+    document.getElementById('nl-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('nl-search-btn').click();
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    async function init() {
+        await loadSavedSearch();
+        doSearch();
+        // Fix Leaflet tile rendering after layout settles
+        setTimeout(() => map.invalidateSize(), 200);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Sidebar toggle
+    window.toggleSidebar = function() {
+        document.getElementById('sidebar').classList.toggle('open');
+    };
+})();
+</script>
+{% endblock %}

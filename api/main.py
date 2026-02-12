@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from api.config import FRONTEND_URL, DEBUG
-from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account
+from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search
 from api.deps import get_current_user, get_db
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
@@ -66,6 +66,7 @@ app.include_router(subscription.router, prefix="/api")
 app.include_router(push.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(account.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
 app.include_router(visualization.router)
 app.include_router(admin.router)
 
@@ -177,6 +178,23 @@ def bi_page(request: Request, conn=Depends(get_db)):
         return RedirectResponse(url="/", status_code=302)
     
     return templates.TemplateResponse("bi.html", {
+        "request": request,
+        "user": user,
+        **get_i18n_context(request)
+    })
+
+
+@app.get("/search")
+def search_page(request: Request, conn=Depends(get_db)):
+    """Mira Search page — interactive three-panel job search."""
+    if not templates:
+        return {"error": "Frontend not configured"}
+    
+    user = get_current_user(request, conn)
+    if not user:
+        return RedirectResponse(url="/", status_code=302)
+    
+    return templates.TemplateResponse("search.html", {
         "request": request,
         "user": user,
         **get_i18n_context(request)

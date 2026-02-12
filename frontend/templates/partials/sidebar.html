@@ -21,12 +21,12 @@
             <span class="nav-label">{{ t('nav.resume') }}</span>
         </a>
         
-        {# 3. My Search (was "Overview") #}
-        <a href="/bi" class="nav-item {{ 'active' if active_page == 'bi' else '' }}" data-tooltip="{{ t('nav.overview') }}">
+        {# 3. Mira Search #}
+        <a href="/search" class="nav-item {{ 'active' if active_page == 'search' else '' }}" data-tooltip="{{ t('nav.search') }}">
             <span class="nav-icon-wrap" style="background: #e3f2fd;">
-                <img src="/static/images/icons/icon-dashboard.png" alt="" class="nav-icon-img">
+                <span class="nav-icon">🔍</span>
             </span>
-            <span class="nav-label">{{ t('nav.overview') }}</span>
+            <span class="nav-label">{{ t('nav.search') }}</span>
         </a>
         
         {# 4. My Active Postings (Jobs/Matches) #}

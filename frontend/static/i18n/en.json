@@ -24,6 +24,7 @@
   "nav": {
     "start": "Home",
     "overview": "My Overview",
+    "search": "Mira Search",
     "resume": "My Resume",
     "jobs": "My Job Matches",
     "messages": "My Messages",
