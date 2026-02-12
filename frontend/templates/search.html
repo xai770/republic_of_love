@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Mira Suche — talent.yoga{% endblock %}
+{% block title %}{{ t('nav.search') }} — talent.yoga{% endblock %}
 
 {% block content %}
 <div class="app-layout">
@@ -11,13 +11,9 @@
 
     <main class="main-content search-page">
 
-        <!-- Search header with NL input -->
+        <!-- Search header -->
         <div class="search-header">
-            <h1 class="search-title">🔍 Mira Suche</h1>
-            <div class="search-nl-input">
-                <input type="text" id="nl-input" placeholder="z.B. Pflegejobs in München..." autocomplete="off">
-                <button id="nl-search-btn" title="Mit Mira suchen">🔎</button>
-            </div>
+            <h1 class="search-title">🔍 {{ t('nav.search') }}</h1>
             <div class="search-active-filters" id="active-filters">
                 <!-- Active filter pills rendered by JS -->
             </div>
@@ -80,6 +76,35 @@
         </div>
 
     </main>
+
+    <!-- Mira Chat Widget (same as dashboard) -->
+    <div id="mira-widget" class="mira-widget">
+        <button class="mira-fab" onclick="toggleMiraChat()" title="Chat mit Mira">
+            <span class="mira-fab-icon">💬</span>
+            <span class="mira-fab-close">✕</span>
+        </button>
+        
+        <div class="mira-chat-window">
+            <div class="mira-header">
+                <div class="mira-avatar">🧘</div>
+                <div class="mira-title">
+                    <span class="mira-name">Mira</span>
+                    <span class="mira-status">Deine Begleiterin</span>
+                </div>
+                <button class="mira-minimize" onclick="toggleMiraChat()">−</button>
+            </div>
+            
+            <div class="mira-messages" id="mira-messages">
+            </div>
+            
+            <div class="mira-input-area">
+                <textarea id="mira-input" placeholder="Schreib mir..." rows="1" onkeydown="handleMiraKeydown(event)"></textarea>
+                <button class="mira-send" onclick="sendMiraMessage()">
+                    <span>➤</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Leaflet CSS + JS -->
@@ -493,20 +518,124 @@
     }
 
     // ============================================================
-    // NL INPUT (placeholder — sends to Mira later)
+    // MIRA CHAT WIDGET (search-aware)
     // ============================================================
-    document.getElementById('nl-search-btn').addEventListener('click', function() {
-        const text = document.getElementById('nl-input').value.trim();
+    const miraState = {
+        isOpen: false,
+        hasGreeted: false,
+        usesDu: null,
+        history: []
+    };
+
+    function toggleMiraChat() {
+        const widget = document.getElementById('mira-widget');
+        miraState.isOpen = !miraState.isOpen;
+        widget.classList.toggle('open', miraState.isOpen);
+        if (miraState.isOpen && !miraState.hasGreeted) {
+            loadMiraGreeting();
+            miraState.hasGreeted = true;
+        }
+        if (miraState.isOpen) {
+            setTimeout(() => document.getElementById('mira-input').focus(), 300);
+        }
+    }
+
+    function loadMiraGreeting() {
+        addMiraMessage('Hallo! Soll ich dir bei der Suche helfen? Sag mir einfach was du suchst — z.B. "Pflegejobs in München" — und ich stelle die Filter für dich ein. 🔍', false);
+    }
+
+    function addMiraMessage(content, isUser) {
+        const container = document.getElementById('mira-messages');
+        const msg = document.createElement('div');
+        msg.className = `mira-message ${isUser ? 'user' : 'mira'}`;
+        msg.textContent = content;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showMiraTyping() {
+        const container = document.getElementById('mira-messages');
+        const typing = document.createElement('div');
+        typing.className = 'mira-typing'; typing.id = 'mira-typing';
+        typing.innerHTML = '<span></span><span></span><span></span>';
+        container.appendChild(typing);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function hideMiraTyping() {
+        const el = document.getElementById('mira-typing'); if (el) el.remove();
+    }
+
+    async function sendMiraMessage() {
+        const input = document.getElementById('mira-input');
+        const text = input.value.trim();
         if (!text) return;
-        // For now, just do city search if it looks like a city name
-        // Full NL decomposition via Ollama comes later
-        document.getElementById('nl-input').value = '';
-        cityInput.value = text.split(/\s+in\s+/i).pop() || text;
-        cityInput.dispatchEvent(new Event('input'));
+        addMiraMessage(text, true);
+        input.value = ''; input.style.height = 'auto';
+
+        if (miraState.usesDu === null) {
+            if (/\b(du|dein|dich|dir)\b/i.test(text)) miraState.usesDu = true;
+            else if (/\b(Sie|Ihr|Ihnen|Ihre)\b/.test(text)) miraState.usesDu = false;
+        }
+
+        showMiraTyping();
+        miraState.history.push({ role: 'user', content: text });
+
+        try {
+            const response = await fetch('/api/mira/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, uses_du: miraState.usesDu, history: miraState.history.slice(0, -1) })
+            });
+            hideMiraTyping();
+            if (response.ok) {
+                const data = await response.json();
+                addMiraMessage(data.reply, false);
+                miraState.history.push({ role: 'assistant', content: data.reply });
+                if (miraState.history.length > 20) miraState.history = miraState.history.slice(-20);
+            } else {
+                addMiraMessage('Entschuldigung, da ist etwas schiefgelaufen.', false);
+                miraState.history.pop();
+            }
+        } catch (error) {
+            hideMiraTyping();
+            addMiraMessage('Ich kann gerade nicht antworten. Bitte versuch es später nochmal.', false);
+            miraState.history.pop();
+        }
+    }
+
+    function handleMiraKeydown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMiraMessage(); }
+    }
+
+    // Auto-resize mira textarea
+    document.addEventListener('DOMContentLoaded', () => {
+        const mi = document.getElementById('mira-input');
+        if (mi) mi.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
     });
-    document.getElementById('nl-input').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('nl-search-btn').click();
-    });
+
+    // Trigger Mira greeting: vibrate FAB, then auto-open
+    function triggerMiraGreeting() {
+        const widget = document.getElementById('mira-widget');
+        const fab = widget.querySelector('.mira-fab');
+        miraState.hasGreeted = true;
+        setTimeout(() => {
+            fab.classList.add('mira-incoming');
+            setTimeout(() => {
+                fab.classList.remove('mira-incoming');
+                miraState.isOpen = true;
+                widget.classList.add('open');
+                addMiraMessage('Hallo! Soll ich dir bei der Suche helfen? Sag mir was du suchst — z.B. "Pflegejobs in München" 🔍', false);
+                setTimeout(() => {
+                    const input = document.getElementById('mira-input');
+                    if (input) input.focus();
+                }, 400);
+            }, 1200);
+        }, 800);
+    }
 
     // ============================================================
     // INIT
@@ -516,6 +645,8 @@
         doSearch();
         // Fix Leaflet tile rendering after layout settles
         setTimeout(() => map.invalidateSize(), 200);
+        // Vibrate + open Mira
+        triggerMiraGreeting();
     }
 
     if (document.readyState === 'loading') {
