@@ -384,18 +384,18 @@ with get_connection() as conn:
     cur.execute('''
         UPDATE postings p
         SET qualification_level = CASE
-                WHEN SUBSTRING(b.kldb_code FROM 7 FOR 1) IN ('1','2','3','4')
-                THEN SUBSTRING(b.kldb_code FROM 7 FOR 1)::int
+                WHEN SUBSTRING(b.kldb FROM 7 FOR 1) IN ('1','2','3','4')
+                THEN SUBSTRING(b.kldb FROM 7 FOR 1)::int
             END,
             berufenet_id = COALESCE(p.berufenet_id, b.berufenet_id),
             berufenet_name = COALESCE(p.berufenet_name, b.name),
-            berufenet_kldb = COALESCE(p.berufenet_kldb, b.kldb_code)
+            berufenet_kldb = COALESCE(p.berufenet_kldb, b.kldb)
         FROM berufenet b
         WHERE p.beruf IS NOT NULL
           AND p.qualification_level IS NULL
           AND LOWER(TRIM(p.beruf)) = LOWER(TRIM(b.name))
-          AND b.kldb_code IS NOT NULL
-          AND LENGTH(b.kldb_code) >= 7
+          AND b.kldb IS NOT NULL
+          AND LENGTH(b.kldb) >= 7
     ''')
     direct = cur.rowcount
     
@@ -403,19 +403,19 @@ with get_connection() as conn:
     cur.execute('''
         UPDATE postings p
         SET qualification_level = CASE
-                WHEN SUBSTRING(b.kldb_code FROM 7 FOR 1) IN ('1','2','3','4')
-                THEN SUBSTRING(b.kldb_code FROM 7 FOR 1)::int
+                WHEN SUBSTRING(b.kldb FROM 7 FOR 1) IN ('1','2','3','4')
+                THEN SUBSTRING(b.kldb FROM 7 FOR 1)::int
             END,
             berufenet_id = COALESCE(p.berufenet_id, b.berufenet_id),
             berufenet_name = COALESCE(p.berufenet_name, b.name),
-            berufenet_kldb = COALESCE(p.berufenet_kldb, b.kldb_code)
+            berufenet_kldb = COALESCE(p.berufenet_kldb, b.kldb)
         FROM owl_names o
         JOIN berufenet b ON b.berufenet_id = o.berufenet_id
         WHERE p.beruf IS NOT NULL
           AND p.qualification_level IS NULL
           AND LOWER(TRIM(p.beruf)) = LOWER(TRIM(o.name))
-          AND b.kldb_code IS NOT NULL
-          AND LENGTH(b.kldb_code) >= 7
+          AND b.kldb IS NOT NULL
+          AND LENGTH(b.kldb) >= 7
     ''')
     synonym = cur.rowcount
     
