@@ -22,9 +22,42 @@ class TestCleanJobTitle:
         assert clean_job_title("Elektriker  (m/w/d)") == "Elektriker"
 
     def test_strips_star_gender(self):
-        result = clean_job_title("Mitarbeiter*in")
-        # Should remove gendered suffix
-        assert "Mitarbeiter" in result
+        assert clean_job_title("Mitarbeiter*in") == "Mitarbeiter"
+
+    def test_strips_star_gender_with_continuation(self):
+        assert clean_job_title("Ingenieur*in Maschinenbau") == "Ingenieur Maschinenbau"
+
+    def test_strips_slash_in_suffix(self):
+        assert clean_job_title("Staplerfahrer/in (m/w/d)") == "Staplerfahrer"
+
+    def test_strips_dash_mwd_no_parens(self):
+        assert clean_job_title("Elektroniker - m/w/d") == "Elektroniker"
+
+    def test_strips_comma_separated_gender(self):
+        assert clean_job_title("Elektroniker (m,w,d)") == "Elektroniker"
+
+    def test_strips_pipe_separated_gender(self):
+        assert clean_job_title("Elektroniker (m|w|d)") == "Elektroniker"
+
+    def test_removes_empty_parens(self):
+        assert clean_job_title("Elektrotechniker () Betriebstechnik") == "Elektrotechniker Betriebstechnik"
+
+    def test_strips_euro_salary(self):
+        assert clean_job_title("Elektroniker (m/w/d) 23,23€ Std. brutto") == "Elektroniker"
+
+    def test_strips_price_range(self):
+        assert clean_job_title("Elektroniker (m/w/d) 20,30 - 29,12€/h") == "Elektroniker"
+
+    def test_strips_date_suffix(self):
+        assert clean_job_title("Elektroniker (m/w/d) ab Januar 2026") == "Elektroniker"
+
+    def test_strips_pipe_sections(self):
+        result = clean_job_title("Elektroniker (m/w/d) Automatisierungstechnik | MSR - Technik | Gebäudeautomation")
+        assert result == "Elektroniker Automatisierungstechnik"
+
+    def test_preserves_slash_compound(self):
+        result = clean_job_title("Elektroniker / Mechatroniker Sicherheitstechnik (w/m/d)")
+        assert result == "Elektroniker / Mechatroniker Sicherheitstechnik"
 
     def test_preserves_meaningful_content(self):
         result = clean_job_title("Senior Software Engineer")
