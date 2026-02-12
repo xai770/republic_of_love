@@ -613,6 +613,249 @@ def detect_whats_new(message: str) -> bool:
     return any(re.search(p, msg) for p in patterns)
 
 
+# ─────────────────────────────────────────────────────────
+# Tier 2: On-demand context tools
+# ─────────────────────────────────────────────────────────
+
+def detect_tier2_intent(message: str) -> Optional[str]:
+    """
+    Detect Tier 2 on-demand intent from user message.
+    
+    Returns intent key or None. Checked AFTER doug_request (which short-circuits).
+    Order matters: first match wins.
+    """
+    msg = message.lower().strip()
+    
+    # ── Profile detail ──
+    profile_patterns = [
+        r'zeig\w*\s+(?:mir\s+)?mein(?:en?)?\s+(?:profil|lebenslauf|cv)',
+        r'mein\s+profil\s+(?:zeigen|anzeigen|ansehen|anschauen)',
+        r'was\s+steht\s+(?:in|auf)\s+meinem\s+profil',
+        r'show\s+(?:me\s+)?my\s+profile',
+        r'what(?:\'s| is)\s+(?:in|on)\s+my\s+profile',
+        r'my\s+(?:profile|cv|resume)',
+    ]
+    if any(re.search(p, msg) for p in profile_patterns):
+        return 'profile_detail'
+    
+    # ── Match detail ──
+    match_patterns = [
+        r'(?:erzähl|sag|zeig)\w*\s+(?:mir\s+)?(?:(?:was|mehr)\s+)?über\s+mein\w*\s+match',
+        r'mein\w*\s+(?:besten?|top)\s+match',
+        r'(?:was|welche)\s+(?:sind|waren?)\s+mein\w*\s+match',
+        r'warum\s+(?:habe? ich|passe? ich)',
+        r'match\s+details?',
+        r'tell\s+me\s+(?:about|more about)\s+my\s+match',
+        r'my\s+(?:best|top)\s+match',
+        r'why\s+(?:did|do)\s+i\s+match',
+        r'match\s+(?:reasons?|explanation)',
+    ]
+    if any(re.search(p, msg) for p in match_patterns):
+        return 'match_detail'
+    
+    # ── Doug messages ──
+    doug_msg_patterns = [
+        r'was\s+hat\s+doug\s+(?:geschrieben|gesagt|berichtet)',
+        r'doug(?:s|\'s)?\s+(?:bericht|nachricht|report)',
+        r'(?:gibt\s+es|habe?\s+ich)\s+(?:was|etwas)\s+von\s+doug',
+        r'what\s+did\s+doug\s+(?:write|say|report|find)',
+        r'doug(?:\'s)?\s+(?:report|message|research|findings?)',
+        r'anything\s+from\s+doug',
+    ]
+    if any(re.search(p, msg) for p in doug_msg_patterns):
+        return 'doug_messages'
+    
+    # ── My messages / inbox ──
+    inbox_patterns = [
+        r'(?:hab(?:e)?\s+ich|gibt\s+es)\s+(?:neue?\s+)?nachricht',
+        r'mein\w*\s+(?:nachrichten|posteingang|inbox)',
+        r'(?:zeig|check)\w*\s+(?:mir\s+)?(?:meine?\s+)?nachrichten',
+        r'(?:any|new|my)\s+messages?',
+        r'(?:check|show)\s+(?:my\s+)?(?:inbox|messages)',
+        r'(?:anything|something)\s+for\s+me',
+    ]
+    if any(re.search(p, msg) for p in inbox_patterns):
+        return 'my_messages'
+    
+    return None
+
+
+def load_tier2_context(intent: str, user_id: int, conn, language: str) -> Optional[str]:
+    """
+    Load on-demand context for a Tier 2 intent.
+    
+    Returns a prompt fragment to inject into _extra_prompt, or None.
+    Each loader stays under ~500 tokens to respect gemma3:4b's 8K window.
+    """
+    try:
+        if intent == 'profile_detail':
+            return _load_profile_detail(user_id, conn, language)
+        elif intent == 'match_detail':
+            return _load_match_detail(user_id, conn, language)
+        elif intent == 'doug_messages':
+            return _load_doug_messages(user_id, conn, language)
+        elif intent == 'my_messages':
+            return _load_my_messages(user_id, conn, language)
+    except Exception as e:
+        logger.error(f"Tier 2 load failed for {intent}: {e}")
+    return None
+
+
+def _load_profile_detail(user_id: int, conn, language: str) -> Optional[str]:
+    """Load full profile text for the yogi."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT profile_raw_text, full_name, current_title, location,
+                   experience_level, years_of_experience
+            FROM profiles WHERE user_id = %s LIMIT 1
+        """, (user_id,))
+        row = cur.fetchone()
+    
+    if not row:
+        if language == 'en':
+            return "\n\n## Profile Detail\n\nThis yogi has no profile yet. Encourage them to upload a CV or fill in their profile.\n"
+        else:
+            return "\n\n## Profil-Detail\n\nDieser Yogi hat noch kein Profil. Ermutige zum Erstellen oder CV-Upload.\n"
+    
+    raw = (row['profile_raw_text'] or '').strip()
+    if not raw:
+        # Fall back to structured fields
+        parts = [f for f in [row['full_name'], row['current_title'], row['location'],
+                             f"{row['years_of_experience']}y exp" if row['years_of_experience'] else None,
+                             row['experience_level']] if f]
+        raw = ' | '.join(parts) if parts else 'Profile exists but no raw text.'
+    
+    # Truncate to ~500 tokens (~2000 chars)
+    raw = raw[:2000] + ('...' if len(raw) > 2000 else '')
+    
+    if language == 'en':
+        return f"\n\n## Yogi's Full Profile\n\nThe yogi asked to see their profile. Summarize the key points in a friendly way.\n\n```\n{raw}\n```\n"
+    else:
+        return f"\n\n## Vollständiges Profil des Yogis\n\nDer Yogi möchte sein Profil sehen. Fasse die wichtigsten Punkte freundlich zusammen.\n\n```\n{raw}\n```\n"
+
+
+def _load_match_detail(user_id: int, conn, language: str) -> Optional[str]:
+    """Load top matches with go/nogo reasons."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT po.job_title, po.source, po.location_city,
+                   m.skill_match_score, m.recommendation,
+                   m.go_reasons, m.nogo_reasons
+            FROM profile_posting_matches m
+            JOIN profiles pr ON m.profile_id = pr.profile_id
+            JOIN postings po ON m.posting_id = po.posting_id
+            WHERE pr.user_id = %s
+              AND m.skill_match_score > 0.10
+            ORDER BY m.skill_match_score DESC
+            LIMIT 5
+        """, (user_id,))
+        matches = cur.fetchall()
+    
+    if not matches:
+        if language == 'en':
+            return "\n\n## Match Details\n\nNo matches found yet. If the yogi has a profile, matching may still be processing.\n"
+        else:
+            return "\n\n## Match-Details\n\nNoch keine Matches gefunden. Falls ein Profil besteht, läuft das Matching möglicherweise noch.\n"
+    
+    lines = []
+    for m in matches:
+        source = (m['source'] or '').replace('_', ' ').title()
+        score = float(m['skill_match_score'] or 0)
+        city = m['location_city'] or ''
+        rec = m['recommendation'] or 'none'
+        
+        line = f"• {m['job_title']} ({city}) — {source} — {score:.0%} — rec: {rec}"
+        
+        # Add top 2 go reasons if any
+        go = m.get('go_reasons') or []
+        if isinstance(go, list) and go:
+            for reason in go[:2]:
+                line += f"\n  ✓ {reason[:120]}"
+        
+        # Add top 2 nogo reasons if any
+        nogo = m.get('nogo_reasons') or []
+        if isinstance(nogo, list) and nogo:
+            for reason in nogo[:2]:
+                line += f"\n  ✗ {reason[:120]}"
+        
+        lines.append(line)
+    
+    details = '\n'.join(lines)
+    
+    if language == 'en':
+        return f"\n\n## Match Details (Top 5)\n\nThe yogi asked about their matches. Explain the strongest matches and why they fit (or don't). Be honest about weak matches.\n\n{details}\n"
+    else:
+        return f"\n\n## Match-Details (Top 5)\n\nDer Yogi fragt nach seinen Matches. Erkläre die stärksten Matches und warum sie passen (oder nicht). Sei ehrlich bei schwachen Matches.\n\n{details}\n"
+
+
+def _load_doug_messages(user_id: int, conn, language: str) -> Optional[str]:
+    """Load recent Doug research reports/messages for the yogi."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT body, message_type, created_at
+            FROM yogi_messages
+            WHERE user_id = %s AND sender_type = 'doug'
+            ORDER BY created_at DESC
+            LIMIT 3
+        """, (user_id,))
+        msgs = cur.fetchall()
+    
+    if not msgs:
+        if language == 'en':
+            return "\n\n## Doug's Messages\n\nDoug hasn't sent any research reports to this yogi yet. Explain that Doug researches companies when they ask about a specific posting.\n"
+        else:
+            return "\n\n## Dougs Nachrichten\n\nDoug hat diesem Yogi noch keine Berichte geschickt. Erkläre, dass Doug Unternehmen recherchiert, wenn man nach einer bestimmten Stelle fragt.\n"
+    
+    lines = []
+    for m in msgs:
+        date = m['created_at'].strftime('%d.%m.%Y %H:%M') if m['created_at'] else '?'
+        body = (m['body'] or '')[:600] + ('...' if len(m['body'] or '') > 600 else '')
+        lines.append(f"[{date}] ({m['message_type']})\n{body}")
+    
+    details = '\n---\n'.join(lines)
+    
+    if language == 'en':
+        return f"\n\n## Doug's Messages\n\nThe yogi asked about Doug's reports. Summarize the key findings.\n\n{details}\n"
+    else:
+        return f"\n\n## Dougs Nachrichten\n\nDer Yogi fragt nach Dougs Berichten. Fasse die wichtigsten Erkenntnisse zusammen.\n\n{details}\n"
+
+
+def _load_my_messages(user_id: int, conn, language: str) -> Optional[str]:
+    """Load recent non-chat messages (system, staff, y2y, arden, etc.)."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT sender_type, message_type, body, created_at
+            FROM yogi_messages
+            WHERE user_id = %s
+              AND sender_type NOT IN ('yogi', 'mira')
+              AND message_type != 'chat'
+            ORDER BY created_at DESC
+            LIMIT 5
+        """, (user_id,))
+        msgs = cur.fetchall()
+    
+    if not msgs:
+        if language == 'en':
+            return "\n\n## Your Messages\n\nNo special messages for this yogi. Let them know their inbox is clear.\n"
+        else:
+            return "\n\n## Deine Nachrichten\n\nKeine besonderen Nachrichten für diesen Yogi. Sag Bescheid, dass der Posteingang leer ist.\n"
+    
+    lines = []
+    for m in msgs:
+        date = m['created_at'].strftime('%d.%m.%Y %H:%M') if m['created_at'] else '?'
+        sender = m['sender_type']
+        mtype = m['message_type']
+        body = (m['body'] or '')[:300] + ('...' if len(m['body'] or '') > 300 else '')
+        lines.append(f"[{date}] From {sender} ({mtype}):\n{body}")
+    
+    details = '\n---\n'.join(lines)
+    
+    if language == 'en':
+        return f"\n\n## Messages for You\n\nThe yogi asked about their messages. Summarize what they've received.\n\n{details}\n"
+    else:
+        return f"\n\n## Nachrichten für dich\n\nDer Yogi fragt nach seinen Nachrichten. Fasse zusammen, was eingegangen ist.\n\n{details}\n"
+
+
 async def chat(message: str, user_id: int, conn, history: list = None) -> MiraResponse:
     """
     Main chat function — LLM-first, no pattern matching.
@@ -658,6 +901,15 @@ async def chat(message: str, user_id: int, conn, history: list = None) -> MiraRe
         else:
             newsletter_context = f"\n\n## Dougs neuester Newsletter ({yogi_context.get('newsletter_date', 'heute')})\n{yogi_context['newsletter_snippet']}\n\nFasse Dougs Newsletter-Highlights kurz zusammen. Antworte auf Deutsch."
         yogi_context['_extra_prompt'] = newsletter_context
+    
+    # Tier 2: On-demand context injection
+    tier2_intent = detect_tier2_intent(message)
+    if tier2_intent:
+        tier2_context = load_tier2_context(tier2_intent, user_id, conn, language)
+        if tier2_context:
+            existing = yogi_context.get('_extra_prompt', '')
+            yogi_context['_extra_prompt'] = existing + tier2_context
+            logger.info(f"Tier 2 context injected: {tier2_intent}")
     
     # Build system prompt
     system_prompt = build_system_prompt(language, uses_du, yogi_context)
