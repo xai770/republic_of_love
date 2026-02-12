@@ -79,7 +79,7 @@
 
     <!-- Mira Chat Widget (same as dashboard) -->
     <div id="mira-widget" class="mira-widget">
-        <button class="mira-fab" onclick="toggleMiraChat()" title="Chat mit Mira">
+        <button class="mira-fab" id="mira-fab-btn" title="Chat mit Mira">
             <span class="mira-fab-icon">💬</span>
             <span class="mira-fab-close">✕</span>
         </button>
@@ -91,15 +91,15 @@
                     <span class="mira-name">Mira</span>
                     <span class="mira-status">Deine Begleiterin</span>
                 </div>
-                <button class="mira-minimize" onclick="toggleMiraChat()">−</button>
+                <button class="mira-minimize" id="mira-minimize-btn">−</button>
             </div>
             
             <div class="mira-messages" id="mira-messages">
             </div>
             
             <div class="mira-input-area">
-                <textarea id="mira-input" placeholder="Schreib mir..." rows="1" onkeydown="handleMiraKeydown(event)"></textarea>
-                <button class="mira-send" onclick="sendMiraMessage()">
+                <textarea id="mira-input" placeholder="Schreib mir..." rows="1"></textarea>
+                <button class="mira-send" id="mira-send-btn">
                     <span>➤</span>
                 </button>
             </div>
@@ -647,20 +647,43 @@
         if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMiraMessage(); }
     }
 
-    // Auto-resize mira textarea + prevent auto-collapse if user interacts
-    document.addEventListener('DOMContentLoaded', () => {
-        const mi = document.getElementById('mira-input');
-        if (mi) {
-            mi.addEventListener('input', function() {
+    // Wire up all Mira button handlers via addEventListener (not onclick)
+    function wireMiraHandlers() {
+        const fabBtn = document.getElementById('mira-fab-btn');
+        const minBtn = document.getElementById('mira-minimize-btn');
+        const sendBtn = document.getElementById('mira-send-btn');
+        const miraInput = document.getElementById('mira-input');
+
+        if (fabBtn) fabBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMiraChat();
+        });
+        if (minBtn) minBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeMiraChat();
+        });
+        if (sendBtn) sendBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sendMiraMessage();
+        });
+        if (miraInput) {
+            miraInput.addEventListener('keydown', handleMiraKeydown);
+            miraInput.addEventListener('input', function() {
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             });
-            // If user starts typing, cancel any pending auto-collapse
-            mi.addEventListener('focus', () => {
+            miraInput.addEventListener('focus', () => {
+                cancelMiraAutoCollapse();
                 resetMiraIdleTimer();
             });
         }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireMiraHandlers);
+    } else {
+        wireMiraHandlers();
+    }
 
     // Trigger Mira greeting: vibrate FAB, auto-open, then auto-collapse after 4s
     // If user interacts (hovers/clicks/types), cancel the auto-collapse
@@ -719,10 +742,8 @@
         document.getElementById('sidebar').classList.toggle('open');
     };
 
-    // Expose Mira functions globally for onclick handlers
+    // Expose for sidebar toggle
     window.toggleMiraChat = toggleMiraChat;
-    window.sendMiraMessage = sendMiraMessage;
-    window.handleMiraKeydown = handleMiraKeydown;
 })();
 </script>
 {% endblock %}
