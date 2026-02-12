@@ -354,4 +354,141 @@ Text box: "Ich suche Pflegejobs in München" → Ollama decomposes into structur
 
 ---
 
+## Mira Context Architecture — "Give Her Eyes"
+
+**Time:** 14:56  
+**Inspiration:** Clarke, Bradbury, Dick
+
+### The problem
+
+`build_yogi_context()` in `core/mira_llm.py` only loads `skill_keywords` and `match_count`. Mira doesn't know the yogi's name, title, location, experience, desired roles, salary expectations, tier, or login history. She calls everyone "Yogi A". She can't help with the search because she has no mechanism to return structured actions (set filters, trigger queries). She has no awareness of what the yogi has been doing on the platform.
+
+### Architecture: Two-Tier Context
+
+```
+┌─────────────────────────────────────────┐
+│  TIER 1: ALWAYS IN CONTEXT (~1500 tok)  │
+│                                         │
+│  • Time & date                          │
+│  • FAQ top 10 (already in prompt)       │
+│  • Yogi card (name, skills, matches)    │
+│  • Last 10 messages + last 5 events     │
+│  • Current search state (if on /search) │
+│                                         │
+│  → Loaded by build_yogi_context()       │
+│  → Every single chat call               │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│  TIER 2: ON-DEMAND TOOLS (~0-2000 tok)  │
+│                                         │
+│  • search_postings(domain, city, ql)    │
+│  • get_profile_detail(section)          │
+│  • get_doug_reports(topic)              │
+│  • get_staff_messages(recent=5)         │
+│  • request_doug_research(topic)         │
+│                                         │
+│  → Triggered by intent detection        │
+│  → Results injected as assistant note   │
+│  → gemma3:4b handles ~4K context well   │
+└─────────────────────────────────────────┘
+```
+
+### Token budget (gemma3:4b = 8K context)
+
+| Component | Tokens | Notes |
+|-----------|--------|-------|
+| System prompt (voice + rules) | ~600 | Already exists |
+| FAQ knowledge | ~600 | Already exists |
+| Yogi card | ~150 | NEW — name, title, skills, matches |
+| Timeline (10 msgs + 5 events) | ~500 | Partially exists (msgs only) |
+| Search state | ~100 | NEW — current filters on /search |
+| Tier 2 results (on demand) | 0–2000 | NEW — only when triggered |
+| **Subtotal** | ~1950–3950 | Leaves 4K for generation |
+
+### Implementation plan
+
+#### Task 1: Enrich `build_yogi_context` (30 min)
+**File:** `core/mira_llm.py`
+
+Load from DB and inject into system prompt:
+- `users.display_name`, `users.tier`, `users.created_at`, `users.last_login_at`
+- `profiles.full_name`, `profiles.current_title`, `profiles.desired_roles`, `profiles.desired_locations`
+- `profiles.experience_level`, `profiles.years_of_experience`, `profiles.expected_salary_min/max`
+- `profiles.profile_summary`
+- Current datetime
+
+Format as structured yogi card:
+```
+## This Yogi
+Name: Gershon | Member since: Oct 2025 | Tier: Sustainer
+Title: Senior Software Engineer | 8 yrs experience
+Looking for: Backend Dev, Platform Engineer | Locations: Frankfurt, Remote
+Skills: Python, PostgreSQL, FastAPI, Docker, K8s
+Salary: €65K–80K | Level: Senior
+Summary: "Experienced backend engineer transitioning from..."
+Matches: 47 found, best: Backend Dev at Deutsche Bank (87%)
+Last seen: 10 min ago
+```
+
+#### Task 2: Create `yogi_events` table + tracking (1 hr)
+**Files:** `migrations/`, `api/deps.py` or middleware, `frontend/static/js/app.js`
+
+```sql
+CREATE TABLE yogi_events (
+    event_id    SERIAL PRIMARY KEY,
+    user_id     INTEGER REFERENCES users(user_id),
+    event_type  TEXT NOT NULL,
+    event_data  JSONB DEFAULT '{}',
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_yogi_events_user ON yogi_events(user_id, created_at DESC);
+```
+
+Five events that matter:
+
+| Event | Trigger | Data |
+|-------|---------|------|
+| `login` | Auth success | `{page: referrer}` |
+| `page_view` | Route hit | `{page: '/search'}` |
+| `posting_view` | Posting detail | `{posting_id, title, dwell_s}` |
+| `search_filter` | Filter change | `{domains, ql, city, radius}` |
+| `match_action` | Save/dismiss | `{match_id, action: 'save'\|'dismiss'}` |
+
+**NOT tracking:** scroll depth, mouse hovers, exact timing (noisy, creepy).
+
+#### Task 3: Interleaved timeline in context (30 min)
+**File:** `core/mira_llm.py`
+
+Merge `yogi_messages` + `yogi_events` chronologically, format for LLM:
+```
+[14:30] Yogi logged in
+[14:31] Yogi viewed /search, set filters: Berlin + IT
+[14:32] Yogi: "Hey, ich suche was in der Pflege in Frankfurt"
+[14:32] Mira: "Meinst du Gesundheit/Pflege? ..."
+[14:35] Yogi viewed posting #4521 (Backend Dev, Deutsche Bank) for 45s
+```
+
+#### Task 4: Search intent → filter action (1 hr)
+**Files:** `core/mira_llm.py`, `api/routers/mira/chat.py`, `api/routers/mira/models.py`, `frontend/templates/search.html`
+
+When user says "Pflegejobs in München":
+1. After LLM reply, extract structured intent via regex + KLDB domain map
+2. Return `actions: {set_filters: {domains: ["81","82"], city: "München", lat: 48.14, lon: 11.58}}`
+3. Frontend applies filters to search state and triggers `doSearch()`
+
+#### Task 5: Tier 2 on-demand tools (2 hrs)
+**Files:** `core/mira_llm.py`, `api/routers/mira/chat.py`
+
+Intent detection → DB query → inject result → re-prompt:
+- "Was weißt du über Deutsche Bank?" → query Doug reports for that company
+- "Zeig mir mein Profil" → load full `profile_raw_text`
+- "Was hat Doug geschrieben?" → load latest `yogi_messages WHERE sender_type='doug'`
+
+### Decision: Don't pollute `yogi_messages` with events
+
+Login/logout markers are NOT chat messages. Inserting "Yogi logged on" as a `yogi_messages` row breaks the clean `sender_type` contract and pollutes the conversation. Instead: separate `yogi_events` table, interleaved at query time.
+
+---
+
 *— ℵ*
