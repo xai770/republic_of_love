@@ -229,8 +229,17 @@ Scope: **15,651 rows** reset to NULL. The `llm_no`/`llm_uncertain` rows (3,208) 
 | 9 | Dead cron jobs removed (reaper + watchdog) | — (crontab) |
 | 10 | CURRENT.md updated (was 11 days stale) | — (docs) |
 | 11 | Search/Suche page — full design agreed | — (see below) |
+| 12 | Smart FAB + minimize fix + architecture doc | `31526af`, `d7725a6`, `f9ad8bb` |
+| 13 | Enriched build_yogi_context | `05aefd7` |
+| 14 | Tier 2 on-demand context | `67f33ea` |
+| 15 | Search intent → filter actions + hallucination fix | `905d8e5` |
+| 16 | Map grey tiles fix + i18n + tour | `e442286`, `1ed543a`, `e39b133` |
+| 17 | Pipeline kldb_code fix | `750963c` |
+| 18 | Yogi events + interleaved timeline | `7fa9aae` |
+| 19 | Onboarding: yogi_name + CV anonymizer + PII safety net | `38f7d68` |
+| 20 | Notification email wired + CV anonymizer refinements | `510c4d2` |
 
-**6 commits pushed. 215 tests green (was 192).**
+**18 commits pushed. 304 tests green (was 192).**
 
 ### Fixes A/B/C final status
 
@@ -629,19 +638,37 @@ Matching starts automatically
 | O3 | ✅ Done | `core/cv_anonymizer.py` — single-pass LLM extraction + anonymization (qwen2.5:7b) |
 | O4 | ✅ Done | `core/pii_detector.py` — regex + 36K company corpus, catches email/phone/LinkedIn/companies |
 | O5 | ✅ Done | `api/routers/profiles.py` — parse_cv wired to anonymizer, requires yogi_name |
-| O6 | ⬜ Parked | `detect_notification_email_response()` exists but not wired into chat flow yet |
-| O7 | ✅ Done | `tests/test_onboarding.py` — 51 tests, 300 total passing |
+| O6 | ✅ Done | Notification email wired into chat — ask after name, accept/decline, consent stored |
+| O7 | ✅ Done | `tests/test_onboarding.py` — 55 tests, 304 total passing |
 
-**E2E verified:**
-- "Hallo!" → Mira asks "wie soll ich dich nennen?" (greeting correctly filtered)
-- "Nenn mich xai" → stores yogi_name='xai', Mira confirms
-- Normal chat after onboarding → Mira says "Okay, xai, hier sind deine Top 5 Matches..."
+**E2E verified with 3 test users** (via `GET /auth/test-login/{id}`):
+
+| User | Yogi name | Email path | DB state |
+|------|-----------|------------|----------|
+| Luna (4) | "Nenn mich Luna" | Provided: luna.star@proton.me | ✅ name + email + consent + onboarding done |
+| Kai (5) | "Ich bin Kai" | Declined: "Nein danke" | ✅ name + no email + onboarding done |
+| Rio (6) | "Call me Rio" | Provided: rio@proton.me | ✅ name + email + consent + onboarding done |
+
+Full flow per user:
+1. Greeting ("Hey!") → Mira asks "wie soll ich dich nennen?"
+2. Name → Mira saves, asks about notification email
+3. Email or decline → Mira saves (or skips), onboarding complete
+4. Normal chat → Mira addresses by yogi_name, no more onboarding intercept
+
+**CV anonymization E2E** (Luna, test CV with real PII):
+- Input: Maria Schmidt, Deutsche Bank, SAP SE, Siemens, BMW, Accenture, TU München, phone, email, LinkedIn
+- Output: yogi_name=Luna, "a large German bank", "a leading enterprise software company"
+- Skills preserved: SAP S/4HANA, PMP, Scrum Master (company names allowed in skills/certs)
+- PII scrubbed: no email, phone, address, LinkedIn leaked
 
 **Bugs found & fixed during implementation:**
-- Greeting treated as name ("Hallo!" → yogi_name='Hallo') — added greeting filter
+- Greeting treated as name ("Hallo!"/"Hi there!" → yogi_name) — expanded greeting filter
 - SAP 3-char company detection — `len > 3` skipped "sap", changed to `>= 3`
 - German phone regex too strict — rewrote to flexible pattern
 - Compound name splitting — "Gershon Pollatschek" now checks each part separately
+- PII scrubber over-redacting skills — split check: companies only in employer fields, not skills/certs
+
+**Commits:** `38f7d68` (core), `510c4d2` (email wiring + refinements)
 
 ---
 
