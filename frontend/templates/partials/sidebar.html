@@ -63,8 +63,8 @@
     </nav>
     
     <div class="sidebar-footer">
-        {# Tour - replay onboarding #}
-        <a href="javascript:void(0)" onclick="resetMiraTour(); startMiraTour();" class="nav-item" data-tooltip="Tour starten">
+        {# Tour - replay onboarding (page-aware) #}
+        <a href="javascript:void(0)" onclick="if(window.startSearchTour && location.pathname.includes('/search')){resetSearchTour();startSearchTour();}else{resetMiraTour();startMiraTour();}" class="nav-item" data-tooltip="Tour starten">
             <span class="nav-icon-wrap" style="background: #e0f7fa;">
                 <span class="nav-icon">🎓</span>
             </span>

@@ -798,12 +798,11 @@ window.SEARCH_TOUR_I18N = {
     async function init() {
         await loadSavedSearch();
         doSearch();
-        // Fix Leaflet tile rendering after layout settles
-        // Multiple invalidateSize calls: fast one for quick loads, slower for layout shifts
-        setTimeout(() => map.invalidateSize(), 100);
-        setTimeout(() => map.invalidateSize(), 500);
-        setTimeout(() => map.invalidateSize(), 1500);
-        // Also watch for container resize (CSS flex settling, window resize)
+        // Fix Leaflet tile rendering — force recalculation after layout resolves
+        // The grid now has explicit height (calc(100vh-220px)) so this should work reliably
+        setTimeout(() => { map.invalidateSize(); map.setView(map.getCenter()); }, 200);
+        setTimeout(() => map.invalidateSize(), 1000);
+        // Watch for container resize (window resize, sidebar toggle)
         if (window.ResizeObserver) {
             const mapEl = document.getElementById('search-map');
             const ro = new ResizeObserver(() => map.invalidateSize());

@@ -4485,7 +4485,10 @@ body {
     grid-template-columns: 1fr 2fr 1fr;
     gap: 1rem;
     margin-bottom: 1rem;
+    /* Explicit height so flex children can resolve */
+    height: calc(100vh - 220px);
     min-height: 420px;
+    max-height: 800px;
 }
 
 .search-panel {
@@ -4614,8 +4617,8 @@ body {
 }
 
 #search-map {
-    flex: 1;
-    min-height: 350px;
+    flex: 1 1 0;
+    min-height: 0;
     z-index: 400;
 }
 
@@ -4937,6 +4940,7 @@ body {
     }
     .search-panels {
         grid-template-columns: 1fr;
+        height: auto;
     }
     .panel-map {
         grid-column: auto;
