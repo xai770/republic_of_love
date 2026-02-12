@@ -394,8 +394,11 @@ def process_batch(batch_size: int, phase2: bool = False):
     logger.info("Embed auto (≥0.85): %s", stats['embed_auto'])
     logger.info("LLM confirmed: %s", stats['llm_yes'])
     logger.info("Escalated to triage: %s", stats['escalated'])
-    logger.error("NULL (Phase 2 off): %s", stats['null'])
-    logger.error("Errors: %s", stats['error'])
+    logger.info("NULL (Phase 2 off): %s", stats['null'])
+    if stats['error'] > 0:
+        logger.error("Errors: %s", stats['error'])
+    else:
+        logger.info("Errors: %s", stats['error'])
     logger.info("Total classified: %s", total_classified)
 
 

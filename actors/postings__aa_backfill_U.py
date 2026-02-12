@@ -566,9 +566,15 @@ def main():
         logger.info("Descriptions fetched: %s", stats['success'])
         logger.info("External partner: %s", stats['external_partner'])
         logger.info("Jobs removed: %s", stats['not_found'])
-        logger.warning("Rate limited: %s", stats['rate_limited'])
-        logger.error("No description: %s", stats['no_description'])
-        logger.error("Errors: %s", stats['error'])
+        if stats['rate_limited'] > 0:
+            logger.warning("Rate limited: %s", stats['rate_limited'])
+        else:
+            logger.info("Rate limited: %s", stats['rate_limited'])
+        logger.info("No description: %s", stats['no_description'])
+        if stats['error'] > 0:
+            logger.error("Errors: %s", stats['error'])
+        else:
+            logger.info("Errors: %s", stats['error'])
         
         if args.dry_run:
             logger.warning("DRY RUN - no changes made to database")
