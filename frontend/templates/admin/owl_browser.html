@@ -138,6 +138,58 @@
 
     /* Search results */
     .search-results { margin-bottom: 24px; }
+
+    /* View toggle */
+    .view-toggle {
+        display: inline-flex; border: 1px solid var(--border-color); border-radius: 6px;
+        overflow: hidden; margin-bottom: 20px;
+    }
+    .view-toggle button {
+        padding: 6px 14px; border: none; cursor: pointer; font-size: 0.85em;
+        background: var(--bg-card); color: var(--text-secondary); font-weight: 500;
+        transition: all 0.15s;
+    }
+    .view-toggle button.active {
+        background: var(--accent); color: white;
+    }
+    .view-toggle button:not(:last-child) { border-right: 1px solid var(--border-color); }
+
+    /* Folder tree */
+    .tree-container {
+        background: var(--bg-card); border-radius: 8px; padding: 16px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
+        font-size: 0.9em; line-height: 1.6; min-height: 200px;
+    }
+    .tree-node { user-select: none; }
+    .tree-children { padding-left: 20px; border-left: 1px solid var(--border-color); margin-left: 8px; }
+    .tree-row {
+        display: flex; align-items: center; gap: 4px; padding: 2px 4px;
+        border-radius: 4px; cursor: pointer; white-space: nowrap;
+    }
+    .tree-row:hover { background: rgba(0,102,204,0.08); }
+    .tree-toggle {
+        width: 18px; height: 18px; display: inline-flex; align-items: center;
+        justify-content: center; font-size: 0.7em; color: var(--text-secondary);
+        flex-shrink: 0; transition: transform 0.15s;
+    }
+    .tree-toggle.open { transform: rotate(90deg); }
+    .tree-toggle.leaf { visibility: hidden; }
+    .tree-icon { flex-shrink: 0; font-size: 1em; }
+    .tree-label { font-weight: 500; color: var(--text-primary); }
+    .tree-label:hover { text-decoration: underline; color: var(--accent); }
+    .tree-meta {
+        font-size: 0.8em; color: var(--text-secondary); margin-left: 6px;
+        font-weight: normal;
+    }
+    .tree-loading {
+        color: var(--text-secondary); font-style: italic; padding: 2px 0 2px 22px;
+        font-size: 0.85em;
+    }
+    .tree-badge {
+        display: inline-block; padding: 0px 5px; border-radius: 3px;
+        font-size: 0.7em; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.3px; margin-right: 4px;
+    }
 {% endblock %}
 
 {% block body %}
@@ -317,7 +369,16 @@
     {% endif %}
 
     {% else %}
-    {# ============ ROOT VIEW — TAXONOMY ROOTS ============ #}
+    {# ============ ROOT VIEW ============ #}
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+        <div class="view-toggle">
+            <button id="btn-grid" class="active" onclick="switchView('grid')">&#x1F4CB; Grid</button>
+            <button id="btn-tree" onclick="switchView('tree')">&#x1F4C2; Tree</button>
+        </div>
+    </div>
+
+    {# ---------- GRID VIEW ---------- #}
+    <div id="view-grid">
     <div class="section-title">Taxonomy Roots</div>
     <div class="entity-grid">
         {% for r in roots %}
@@ -361,6 +422,14 @@
         </a>
         {% endfor %}
     </div>
+    </div>{# /view-grid #}
+
+    {# ---------- TREE VIEW ---------- #}
+    <div id="view-tree" style="display:none;">
+        <div class="tree-container" id="tree-root">
+            <div class="tree-loading">Loading roots&hellip;</div>
+        </div>
+    </div>
     {% endif %}
 
 {% endblock %}
@@ -374,5 +443,103 @@
             document.querySelector('.search-box input').focus();
         }
     });
+
+    // ---------- View toggle ----------
+    function switchView(mode) {
+        const grid = document.getElementById('view-grid');
+        const tree = document.getElementById('view-tree');
+        const btnGrid = document.getElementById('btn-grid');
+        const btnTree = document.getElementById('btn-tree');
+        if (!grid || !tree) return;
+        if (mode === 'tree') {
+            grid.style.display = 'none';
+            tree.style.display = '';
+            btnGrid.classList.remove('active');
+            btnTree.classList.add('active');
+            // Load roots on first switch
+            const root = document.getElementById('tree-root');
+            if (root && !root.dataset.loaded) {
+                root.dataset.loaded = '1';
+                loadChildren(null, root);
+            }
+        } else {
+            grid.style.display = '';
+            tree.style.display = 'none';
+            btnGrid.classList.add('active');
+            btnTree.classList.remove('active');
+        }
+    }
+
+    // ---------- Type icons ----------
+    const TYPE_ICONS = {
+        taxonomy_root: '\uD83C\uDFE0',
+        skill_dimension: '\uD83D\uDCC1',
+        competency: '\u2B50',
+        berufenet: '\uD83D\uDCBC',
+        city: '\uD83C\uDFD9\uFE0F',
+        bundesland: '\uD83D\uDDFA\uFE0F',
+        domain_gate: '\uD83D\uDEAA',
+        country: '\uD83C\uDF0D',
+        yogi_role: '\uD83D\uDD11',
+        yogi: '\uD83E\uDDD1',
+        external_job_site: '\uD83C\uDF10',
+        privilege: '\uD83D\uDEE1\uFE0F',
+    };
+
+    // ---------- Lazy-load children ----------
+    async function loadChildren(parentId, container) {
+        container.innerHTML = '<div class="tree-loading">Loading\u2026</div>';
+        const url = parentId
+            ? '/admin/owl-browser/children?parent_id=' + parentId
+            : '/admin/owl-browser/children';
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(resp.status);
+            const items = await resp.json();
+            container.innerHTML = '';
+            if (items.length === 0) {
+                container.innerHTML = '<div class="tree-loading">(empty)</div>';
+                return;
+            }
+            items.forEach(it => {
+                const node = document.createElement('div');
+                node.className = 'tree-node';
+                const hasKids = it.children > 0;
+                const icon = TYPE_ICONS[it.type] || '\uD83D\uDCC4';
+                node.innerHTML =
+                    '<div class="tree-row">' +
+                        '<span class="tree-toggle ' + (hasKids ? '' : 'leaf') + '">\u25B6</span>' +
+                        '<span class="tree-icon">' + icon + '</span>' +
+                        '<a class="tree-label" href="/admin/owl-browser?id=' + it.id + '">' + escHtml(it.name) + '</a>' +
+                        '<span class="tree-badge badge-' + it.type + '">' + it.type + '</span>' +
+                        (hasKids ? '<span class="tree-meta">(' + it.children + ')</span>' : '') +
+                    '</div>';
+                if (hasKids) {
+                    const childDiv = document.createElement('div');
+                    childDiv.className = 'tree-children';
+                    childDiv.style.display = 'none';
+                    node.appendChild(childDiv);
+                    const row = node.querySelector('.tree-row');
+                    const toggle = node.querySelector('.tree-toggle');
+                    row.addEventListener('click', function(ev) {
+                        if (ev.target.closest('a')) return; // let links navigate
+                        ev.stopPropagation();
+                        const open = toggle.classList.toggle('open');
+                        childDiv.style.display = open ? '' : 'none';
+                        if (open && !childDiv.dataset.loaded) {
+                            childDiv.dataset.loaded = '1';
+                            loadChildren(it.id, childDiv);
+                        }
+                    });
+                }
+                container.appendChild(node);
+            });
+        } catch(err) {
+            container.innerHTML = '<div class="tree-loading" style="color:var(--danger)">Error loading: ' + err.message + '</div>';
+        }
+    }
+    function escHtml(s) {
+        const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+    }
 </script>
 {% endblock %}

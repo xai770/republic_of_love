@@ -393,6 +393,58 @@ def owl_browser(
         return templates.TemplateResponse("admin/owl_browser.html", context)
 
 
+@router.get("/owl-browser/children")
+def owl_browser_children(
+    request: Request,
+    conn=Depends(get_db),
+    parent_id: int = None,
+):
+    """JSON API: return children of a given OWL entity for lazy tree loading."""
+    user, err = _require_privilege(request, conn, 'admin_owl_browser')
+    if err:
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    with conn.cursor() as cur:
+        if parent_id is None:
+            # Return taxonomy roots as top-level nodes
+            cur.execute("""
+                SELECT o.owl_id, o.owl_type, o.canonical_name,
+                       (SELECT COUNT(*) FROM owl_relationships r
+                        WHERE r.related_owl_id = o.owl_id
+                          AND r.relationship IN ('belongs_to','child_of')) AS child_count
+                FROM owl o
+                WHERE o.owl_type = 'taxonomy_root'
+                ORDER BY o.canonical_name
+            """)
+        else:
+            # Return entities that belong_to / child_of this parent
+            cur.execute("""
+                SELECT o.owl_id, o.owl_type, o.canonical_name,
+                       (SELECT COUNT(*) FROM owl_relationships r2
+                        WHERE r2.related_owl_id = o.owl_id
+                          AND r2.relationship IN ('belongs_to','child_of')) AS child_count
+                FROM owl_relationships r
+                JOIN owl o ON o.owl_id = r.owl_id
+                WHERE r.related_owl_id = %s
+                  AND r.relationship IN ('belongs_to', 'child_of')
+                ORDER BY o.owl_type, o.canonical_name
+                LIMIT 500
+            """, (parent_id,))
+
+        rows = cur.fetchall()
+
+    return [
+        {
+            "id": r['owl_id'],
+            "type": r['owl_type'],
+            "name": r['canonical_name'],
+            "children": r['child_count'],
+        }
+        for r in rows
+    ]
+
+
 # =============================================================================
 # OWL Triage — /admin/owl-triage
 # =============================================================================
