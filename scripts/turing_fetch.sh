@@ -364,6 +364,16 @@ while true; do
     sleep 1
 done
 
+# Phase 3: Auto-triage owl_pending backlog (LLM picks best candidate)
+# Items escalated by Phase 2 have embedding candidates attached — re-ask LLM.
+# Resolved items become OWL synonyms, so Phase 1 catches them next run.
+ts "Berufenet Phase 3 (auto-triage owl_pending)..."
+OUTPUT=$(python3 scripts/bulk_auto_triage.py 2>&1)
+echo "$OUTPUT" | while IFS= read -r line; do
+    [[ -n "$line" ]] && ts "$line"
+done
+ts "✅ Berufenet Phase 3 (auto-triage) complete"
+
 # ============================================================================
 # STEP 3b: DOMAIN GATE CASCADE (keyword patterns + LLM for non-KldB postings)
 # ============================================================================
