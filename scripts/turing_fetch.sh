@@ -399,7 +399,7 @@ with get_connection() as conn:
     ''')
     direct = cur.rowcount
     
-    # Synonym fallback
+    # Synonym fallback (berufenet_synonyms maps AA beruf → berufenet_id)
     cur.execute('''
         UPDATE postings p
         SET qualification_level = CASE
@@ -409,11 +409,11 @@ with get_connection() as conn:
             berufenet_id = COALESCE(p.berufenet_id, b.berufenet_id),
             berufenet_name = COALESCE(p.berufenet_name, b.name),
             berufenet_kldb = COALESCE(p.berufenet_kldb, b.kldb)
-        FROM owl_names o
-        JOIN berufenet b ON b.berufenet_id = o.berufenet_id
+        FROM berufenet_synonyms s
+        JOIN berufenet b ON b.berufenet_id = s.berufenet_id
         WHERE p.beruf IS NOT NULL
           AND p.qualification_level IS NULL
-          AND LOWER(TRIM(p.beruf)) = LOWER(TRIM(o.name))
+          AND LOWER(TRIM(p.beruf)) = LOWER(TRIM(s.aa_beruf))
           AND b.kldb IS NOT NULL
           AND LENGTH(b.kldb) >= 7
     ''')
