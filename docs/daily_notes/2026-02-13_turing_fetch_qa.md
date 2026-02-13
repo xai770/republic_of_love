@@ -163,6 +163,169 @@ from city name alone.
 | `f4448f1` | feat: OWL privilege system |
 | `aa7d8aa` | feat: OWL browser tree view |
 | `cd8529b` | feat: OWL geography completion (13K places + postal codes) |
+| `27c5bd3` | feat: tree limit 500 → 5000 children |
+| `417b057` | docs: daily notes update |
+| `2e8f9f9` | feat: feedback widget ("Fehler melden") with screenshot + highlight |
+| `99af5a8` | docs: privacy testing guide update |
+| `9b4a2ba` | feat: add Phase 3 auto-triage to turing_fetch.sh |
+| `248f7ed` | feat: owl-triage status tabs (rejected/pending/resolved/skipped) |
+
+### Feedback Widget (`2e8f9f9`)
+- **"Fehler melden" button**: Floating 🐛 overlay on all pages
+- **Screenshot + highlight**: html2canvas captures page, user drags to highlight problem area
+- **Admin dashboard**: `/admin/feedback` — status tabs, lightbox, resolve workflow
+- **DB table**: `feedback` (id, user_id, page_url, screenshot_data, highlight_rect, description, status, created_at, resolved_at)
+
+### OWL Triage Pipeline Fix (`9b4a2ba`)
+- **Root cause**: 22,793 `owl_pending` items stuck at `status=pending` — all berufenet type
+- **Why**: Phase 2 (embedding + LLM candidate generation) ran nightly, but Phase 3 (auto-triage via `bulk_auto_triage.py`) was never integrated into `turing_fetch.sh`
+- **Fix**: Added Phase 3 auto-triage call to `turing_fetch.sh` after Phase 2
+- **Bulk run result**: 22,664 items processed in 208.8 minutes
+  - 16,061 resolved (70.9%)
+  - 6,603 rejected (29.1%)
+  - 0 skipped
+- **DB state after**: 23,195 resolved, 9,776 rejected, **0 pending**
+
+### OWL Triage UI Tabs (`248f7ed`)
+- Added 4-tab status bar: Rejected | Pending | Resolved | Skipped (with counts)
+- Default view: rejected items (since pending is now 0)
+- Rejected items show candidates with "Override & Resolve" button
+- Resolved/Skipped tabs are read-only
+- All pagination and action redirect URLs carry `status` param
+
+---
+
+## Berufenet Classification: Hard Cases Analysis
+
+**Context:** After clearing the 22K triage backlog, reviewed the 9,776 rejected items.
+These are job titles where the LLM auto-triage couldn't find a confident berufenet match.
+Sandy to review this section.
+
+### The Numbers
+
+| Metric | Value |
+|--------|-------|
+| Total postings | 222,568 |
+| Have berufenet_id | 199,791 (89.8%) |
+| No berufenet_id | 22,777 (10.2%) |
+| owl_pending resolved | 23,195 |
+| owl_pending rejected | 9,776 |
+| owl_pending pending | 0 |
+
+### Rejected Items by Embedding Score
+
+| Score bucket | Count | Meaning |
+|-------------|------:|---------|
+| >0.65 (decent match, LLM said no) | 2,899 | Potentially fixable |
+| 0.55–0.65 (mediocre match) | 5,739 | Grey zone |
+| 0.45–0.55 (poor match) | 1,116 | Genuinely distant |
+| <0.45 (garbage/noise) | 21 | Ad headlines, empty strings |
+| No candidates | 1 | Empty title data bug (pending_id=2) |
+
+### Three Failure Patterns in Rejected Items
+
+**Pattern A — LLM too conservative (fixable, ~1,000–2,000 items)**
+The embedding found a reasonable berufenet candidate, but the LLM rejected it.
+
+| Raw title | Top candidate | Score | Assessment |
+|-----------|--------------|-------|------------|
+| Hausmeisterhelfer | Hausmeister/in | 0.785 | Should have matched — Helfer level of same occupation |
+| Nachwuchsführungskraft Reinigung | Helfer/in - Reinigung | 0.710 | LLM rejected; `Gebäudereiniger/in` would be closer |
+| Experte Rechnungswesen / Abrechnung | Assistent/in/Fachkraft - Rechnungswesen | 0.730 | Reasonable match, LLM was too strict |
+| Elektriker:innen im Schichtdienst | Helfer/in - Elektro | 0.658 | `Elektroniker/in` exists and would fit better |
+
+**Pattern B — Embedding missed the right candidate (fixable, ~1,000–2,000 items)**
+Berufenet HAS a match, but the embedding surfaced the wrong one.
+
+| Raw title | What embedding found | What actually exists |
+|-----------|---------------------|---------------------|
+| Maschinenbediener / Bestücker | Mechatroniker/in (0.671) | Maschinen- und Anlagenführer/in (132652–132656) |
+| Helfer Kälte- und Klimatechnik | Helfer/in - Chemie- und Pharmatechnik (0.664) | Helfer/in - Klempnerei, Sanitär, Heizung, Klimatechnik |
+| Kantinenmitarbeiter | (rejected) | Helfer/in - Küche (3751) |
+| Network Deployment Engineer | DevOps Engineer (0.809) | Netzwerkadministrator/in or IT-Systemelektroniker/in |
+
+**Pattern C — Berufenet fundamentally can't represent this (~5,000–6,000 items)**
+These jobs don't map to the German vocational training taxonomy.
+
+| Raw title | Why it fails | Category |
+|-----------|-------------|----------|
+| KYC Associate / KYC Role, NCT | Investment banking specialization, no berufenet equivalent | Too specialized |
+| Clearing and Settlement Analyst, NCT | Post-trade finance niche | Too specialized |
+| SAP Consultant / Principal Consultant | Berufenet has only generic "Data-Consultant" | Too specialized |
+| Aushilfe auf geringfügiger Beschäftigungsbasis | Describes employment type, not occupation | Not an occupation |
+| Teamassistenz | No entry for team/project assistant; Sekretär/in exists (15009) but is different | Gap in berufenet |
+| Wohnbereichsleitung | Composite: management + social work + care | Composite role |
+| Chief of Staff & Strategic Project Lead | C-suite adjacent composite | Composite role |
+| Referendar (all genders) | Legal trainee stage (Beamtenlaufbahn), not an occupation | Status, not job |
+| "Kaffee im Blut?" | Marketing headline, not a job title | Data noise |
+| "Weil gutes Wohnen mit Zuhören beginnt" | Marketing headline | Data noise |
+| Idstein / Gemeinde Enge-Sande | Place names stored as job titles | Data noise |
+| CRO India Grads 2026 / ACO Junior Paris | Internal program names | Data noise |
+
+### 8 Case Studies (reviewed by human)
+
+1. **Maschinenbediener** — Berufenet has `Maschinen- und Anlagenführer/in` (IDs 132652–132656) with 5 specializations. Embedding should have found them. → **Pattern B, fixable**
+
+2. **Empty title** — 1 item (pending_id=2), raw_value is empty string, all candidate scores 0.000. → **Data bug, clean up**
+
+3. **KYC Associate** — Closest berufenet: Compliance-Manager/in (89949), Geldwäschebeauftragte/r (135002), Bankkaufmann/-frau (6755). None are KYC-specific. → **Pattern C, berufenet gap**
+
+4. **Aushilfe auf geringfügiger Beschäftigungsbasis** — "Mini-job/€520 marginal employment." Berufenet has 30+ `Helfer/in - [domain]` entries but no generic Aushilfe. Title describes contract type, not occupation. → **Pattern C, not an occupation**
+
+5. **Kantinenmitarbeiter** — Berufenet has `Helfer/in - Küche` (3751), `Helfer/in - Gastgewerbe` (10086), `Fachkraft - Küche` (136119). Should have matched. → **Pattern B, fixable**
+
+6. **Wohnbereichsleitung** — Residential care team lead. Berufenet has `Pflegedienstleiter/in` (14589) which is close. Also `Sozialarbeiter/in` (58775). Neither is exact — it's a composite role. → **Pattern C, borderline — Pflegedienstleiter/in is 80% right**
+
+7. **Teamassistenz** — No berufenet entry found. `Sekretär/in` (15009) exists but is a different role. `Managementassistent/in` (77908, 58991) exists but is a formal school-based training track. → **Pattern C, berufenet gap**
+
+8. **Clearing and Settlement Analyst, NCT** — Post-trade finance. Closest: `Wertpapiersachbearbeiter/in` (6793), `Wertpapieranalyst/in` (6779). Loose fit. → **Pattern C, too specialized**
+
+### Architectural Observation: Berufenet's Limits
+
+Berufenet (based on KldB 2010) classifies occupations along two axes:
+1. **Berufsfachlichkeit** (occupational field) — the 5-digit code, *what* you do
+2. **Anforderungsniveau** (skill level) — 1=Helfer, 2=Fachkraft, 3=Spezialist, 4=Experte
+
+But a *job posting* describes a *position*, not a *trained occupation*. A position has:
+- **Occupation** (berufenet's domain — partially covered)
+- **Level** (Helfer → Fachkraft → Spezialist → Experte — partially in berufenet)
+- **Industry/Domain** (banking, automotive, public sector — NOT in berufenet)
+- **Employment arrangement** (hours, contract type, mini-job — NOT in berufenet)
+- **Compensation** (salary — NOT in berufenet)
+
+Berufenet works for ~90% of German postings. The remaining ~10% are:
+- **Too generic** — describe employment level, not occupation (Aushilfe, Maschinenbediener)
+- **Too specialized** — company/industry-specific (KYC Associate, SAP Consultant)
+- **Composite roles** — blend multiple domains (Wohnbereichsleitung, Chief of Staff)
+- **Data noise** — marketing headlines, place names, program codes
+
+### Proposed: Complementary Dimensional Model
+
+Instead of forcing everything into berufenet, add orthogonal dimensions to postings:
+
+| Dimension | Values | Source |
+|-----------|--------|--------|
+| Works mostly with | Humans, machines, animals, plants, raw materials, IT | Inferred from description (hardest) |
+| Hours per week | Mini-job, part-time, full-time, shifts | Often explicit in posting text |
+| Responsibility level | 0–n people managed | Extractable from titles (Leitung, Team Lead) |
+| Salary in € | Range or single value | Sometimes in posting, usually not (AA doesn't include) |
+
+**Key principle:** These dimensions live on the **posting**, not on the occupation. Berufenet remains ONE dimension (null when it doesn't fit), not THE dimension.
+
+**Matching value:** "Looking for a Fachkraft-level role, primarily working with humans, full-time, €40–50K" matches both the Bankkaufmann WITH berufenet_id AND the KYC Associate WITHOUT one.
+
+### Quick Wins (no architecture change needed)
+
+1. **Fix Pattern A+B** (~2,000–3,000 items): Improve embedding search (more candidates, German synonym expansion) and tune LLM triage prompt to be less conservative
+2. **Clean up data noise**: Filter out empty titles, marketing headlines, place names before they enter owl_pending
+3. **Delete pending_id=2**: Empty title data bug
+
+### Open Questions for Sandy
+
+- Which dimension to tackle first? Hours/contract-type is lowest-hanging fruit (often explicit in text). "Works mostly with" is most interesting but hardest.
+- Should Pattern C items get `berufenet_id = NULL` permanently (accepted gap), or do we want a fallback taxonomy?
+- How important is berufenet classification for the matching algorithm vs. the new dimensions?
+- Should we build a "closest approximate" mode — e.g. map KYC Associate → Bankkaufmann/-frau with a confidence flag?
 
 ---
 
