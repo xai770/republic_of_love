@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import json
 import pytz
 
-from api.deps import get_db, get_current_user
+from api.deps import get_db, get_current_user, user_has_owl_privilege
 
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "frontend" / "templates"
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -25,11 +25,24 @@ ADMIN_DENIED_HTML = """
 
 
 def _require_admin(request: Request, conn):
-    """Check user is authenticated and is_admin. Returns (user, error_response)."""
+    """Check user is authenticated and has admin privileges via OWL.
+    Falls back to is_admin column for backwards compat."""
     user = get_current_user(request, conn)
     if not user:
         return None, HTMLResponse(ADMIN_DENIED_HTML, status_code=401)
-    if not user.get('is_admin'):
+    # Check OWL privilege first, fall back to is_admin column
+    if not (user.get('is_admin') or user_has_owl_privilege(conn, user['user_id'], 'admin_console')):
+        return None, HTMLResponse(ADMIN_DENIED_HTML, status_code=403)
+    return user, None
+
+
+def _require_privilege(request: Request, conn, privilege: str):
+    """Check user is authenticated and has a specific OWL privilege.
+    Falls back to is_admin (admins can do everything)."""
+    user = get_current_user(request, conn)
+    if not user:
+        return None, HTMLResponse(ADMIN_DENIED_HTML, status_code=401)
+    if not (user.get('is_admin') or user_has_owl_privilege(conn, user['user_id'], privilege)):
         return None, HTMLResponse(ADMIN_DENIED_HTML, status_code=403)
     return user, None
 
@@ -142,7 +155,7 @@ def owl_browser(
     page: int = 1,
 ):
     """OWL Browser — explore the entity graph with drill-down."""
-    user, err = _require_admin(request, conn)
+    user, err = _require_privilege(request, conn, 'admin_owl_browser')
     if err:
         return err
 

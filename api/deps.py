@@ -69,3 +69,48 @@ def require_user(user: Optional[dict] = Depends(get_current_user)) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+def user_has_owl_privilege(conn, user_id: int, privilege_name: str) -> bool:
+    """
+    Check if a user has a specific privilege via OWL role graph.
+
+    Resolution path:
+        user → yogi (instance_of) → yogi_role → has_privilege → privilege
+    Roles inherit up the child_of chain, so yogi_admin inherits from
+    yogi_internal which inherits from yogi (root).
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            WITH RECURSIVE user_roles AS (
+                -- Step 1: Find the yogi entity for this user_id
+                SELECT r.related_owl_id AS role_id
+                FROM owl yogi
+                JOIN owl_relationships r ON r.owl_id = yogi.owl_id
+                WHERE yogi.owl_type = 'yogi'
+                  AND (yogi.metadata->>'user_id')::int = %s
+                  AND r.relationship = 'instance_of'
+
+                UNION
+
+                -- Step 2: Walk up the role hierarchy via child_of
+                SELECT r.related_owl_id
+                FROM user_roles ur
+                JOIN owl_relationships r ON r.owl_id = ur.role_id
+                WHERE r.relationship = 'child_of'
+            ),
+            role_privileges AS (
+                -- Step 3: Collect all privileges from all roles in the chain
+                SELECT p.canonical_name
+                FROM user_roles ur
+                JOIN owl_relationships rel ON rel.owl_id = ur.role_id
+                    AND rel.relationship = 'has_privilege'
+                JOIN owl p ON p.owl_id = rel.related_owl_id
+                    AND p.owl_type = 'privilege'
+                    AND p.status = 'active'
+            )
+            SELECT EXISTS (
+                SELECT 1 FROM role_privileges WHERE canonical_name = %s
+            ) AS has_priv
+        """, (user_id, privilege_name))
+        return cur.fetchone()['has_priv']
