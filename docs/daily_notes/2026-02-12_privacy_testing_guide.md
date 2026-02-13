@@ -328,3 +328,33 @@ DELETE FROM users WHERE email LIKE 'test-%@example.com';
 ---
 
 *Take your time with this. The code isn't going anywhere. Enjoy the swim in the morning if that's what happens first.*
+
+---
+
+## Update — Feb 13, 2026
+
+### New: In-App Feedback Widget ("Fehler melden")
+
+While testing, you can now use the built-in feedback tool instead of taking notes separately.
+
+**How to use:**
+1. Click the **🐛 bug icon** in the header bar (between notifications and the theme toggle)
+2. An overlay appears — **drag a rectangle** over the problem area (optional)
+3. Pick a **category**: Bug, Suggestion, Question, or Other
+4. **Describe** what happened / what you expected
+5. Click **Submit** — a screenshot is captured automatically with your annotation highlighted
+
+**What gets saved:**
+- Screenshot (PNG with your red highlight box drawn on it)
+- URL of the page you were on
+- Category + description
+- Viewport size, device pixel ratio, user agent
+- Your user ID + timestamp
+
+**Where to review:**
+- Admin dashboard: `https://talent.yoga/admin/feedback`
+- Filter by Open / Resolved / All
+- Click any screenshot to view full-size (lightbox)
+- Resolve with optional admin notes
+
+**Tip:** Use this during onboarding testing (Tests 1–4 above). If Mira says something weird, hit 🐛, highlight the chat bubble, describe what you expected, and submit. Much faster than copy-pasting into notes.
