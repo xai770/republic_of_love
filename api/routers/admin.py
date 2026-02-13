@@ -429,7 +429,7 @@ def owl_browser_children(
                 WHERE r.related_owl_id = %s
                   AND r.relationship IN ('belongs_to', 'child_of')
                 ORDER BY o.owl_type, o.canonical_name
-                LIMIT 500
+                LIMIT 5000
             """, (parent_id,))
 
         rows = cur.fetchall()
