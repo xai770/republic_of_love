@@ -190,5 +190,9 @@
     "impressum": "Legal Notice",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "feedback": {
+    "title": "Report an issue",
+    "button_tooltip": "Report an issue"
   }
 }

@@ -1,0 +1,235 @@
+{% extends "admin/base.html" %}
+{% block title %}Feedback — Admin{% endblock %}
+{% block max_width %}1400px{% endblock %}
+
+{% block extra_css %}
+.status-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.status-tab {
+    padding: 6px 16px; border-radius: 20px; font-size: 0.85em;
+    text-decoration: none; font-weight: 500;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    color: var(--text-secondary); transition: all 0.15s;
+}
+.status-tab:hover { border-color: var(--accent); color: var(--accent); }
+.status-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.status-tab .count { opacity: 0.8; font-weight: 400; }
+
+.fb-card {
+    background: var(--bg-card); border-radius: 8px; padding: 20px;
+    margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex; gap: 20px;
+}
+.fb-screenshot {
+    flex: 0 0 320px; position: relative; cursor: pointer;
+}
+.fb-screenshot img {
+    width: 320px; border-radius: 6px; border: 1px solid var(--border-color);
+    transition: transform 0.2s;
+}
+.fb-screenshot img:hover { transform: scale(1.02); }
+.fb-no-screenshot {
+    width: 320px; height: 180px; background: var(--bg-primary);
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); font-size: 0.85em;
+}
+.fb-detail { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.fb-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85em; color: var(--text-secondary); }
+.fb-meta-item { display: flex; align-items: center; gap: 4px; }
+.fb-category {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 0.78em; font-weight: 600; text-transform: uppercase;
+}
+.cat-bug { background: #fecaca; color: #991b1b; }
+.cat-suggestion { background: #dbeafe; color: #1e40af; }
+.cat-question { background: #fef3c7; color: #92400e; }
+.cat-other { background: #e5e7eb; color: #374151; }
+[data-theme="dark"] .cat-bug { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .cat-suggestion { background: #172554; color: #93c5fd; }
+[data-theme="dark"] .cat-question { background: #451a03; color: #fcd34d; }
+[data-theme="dark"] .cat-other { background: #1f2937; color: #d1d5db; }
+
+.fb-description {
+    margin: 8px 0; padding: 12px; background: var(--bg-primary);
+    border-radius: 6px; white-space: pre-wrap; line-height: 1.5;
+}
+.fb-status-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 0.78em; font-weight: 600;
+}
+.badge-open { background: #fef3c7; color: #92400e; }
+.badge-resolved { background: #d1fae5; color: #065f46; }
+[data-theme="dark"] .badge-open { background: #451a03; color: #fcd34d; }
+[data-theme="dark"] .badge-resolved { background: #064e3b; color: #6ee7b7; }
+
+.fb-resolve-form { margin-top: auto; display: flex; gap: 8px; align-items: end; }
+.fb-resolve-form textarea {
+    flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);
+    background: var(--bg-primary); color: var(--text-primary); font-size: 0.85em;
+    resize: vertical; min-height: 36px;
+}
+.fb-resolve-btn {
+    padding: 8px 16px; border-radius: 6px; border: none;
+    background: var(--success); color: white; cursor: pointer; font-size: 0.85em;
+    font-weight: 500; white-space: nowrap;
+}
+.fb-resolve-btn:hover { opacity: 0.85; }
+
+.fb-admin-notes {
+    margin-top: 8px; padding: 10px; border-radius: 6px;
+    background: #d1fae5; font-size: 0.85em; color: #065f46;
+}
+[data-theme="dark"] .fb-admin-notes { background: #064e3b; color: #6ee7b7; }
+
+.empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-secondary);
+}
+.empty-state .emoji { font-size: 3em; margin-bottom: 12px; }
+
+/* Lightbox for full-size screenshot */
+.fb-lightbox {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.85); cursor: zoom-out;
+    align-items: center; justify-content: center;
+}
+.fb-lightbox.active { display: flex; }
+.fb-lightbox img { max-width: 95vw; max-height: 95vh; border-radius: 8px; }
+{% endblock %}
+
+{% block body %}
+<div class="header">
+    <h1>🐛 Feedback Reports</h1>
+    <div class="header-right">
+        <a href="/admin/console" class="btn-nav">← Console</a>
+        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+    </div>
+</div>
+
+<div class="status-tabs">
+    <a href="/admin/feedback?status_filter=open"
+       class="status-tab {{ 'active' if status_filter == 'open' else '' }}">
+        Open <span class="count">({{ counts.get('open', 0) }})</span>
+    </a>
+    <a href="/admin/feedback?status_filter=resolved"
+       class="status-tab {{ 'active' if status_filter == 'resolved' else '' }}">
+        Resolved <span class="count">({{ counts.get('resolved', 0) }})</span>
+    </a>
+    <a href="/admin/feedback?status_filter=all"
+       class="status-tab {{ 'active' if status_filter == 'all' else '' }}">
+        All <span class="count">({{ (counts.get('open', 0) + counts.get('resolved', 0)) }})</span>
+    </a>
+</div>
+
+{% if reports %}
+{% for r in reports %}
+<div class="fb-card" id="fb-{{ r.feedback_id }}">
+    <div class="fb-screenshot">
+        {% if r.screenshot %}
+        <img src="{{ r.screenshot }}" alt="Screenshot" onclick="openLightbox(this.src)"
+             loading="lazy">
+        {% else %}
+        <div class="fb-no-screenshot">No screenshot</div>
+        {% endif %}
+    </div>
+    <div class="fb-detail">
+        <div class="fb-meta">
+            <span class="fb-meta-item">
+                <span class="fb-status-badge badge-{{ r.status }}">{{ r.status }}</span>
+            </span>
+            <span class="fb-meta-item">
+                <span class="fb-category cat-{{ r.category }}">{{ r.category }}</span>
+            </span>
+            <span class="fb-meta-item">
+                👤 {{ r.yogi_name or r.display_name or r.email or ('User #' ~ r.user_id) }}
+            </span>
+            <span class="fb-meta-item timestamp">
+                🕐 {{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '?' }}
+            </span>
+            <span class="fb-meta-item">
+                🔗 <a href="{{ r.url }}" target="_blank" title="{{ r.url }}">
+                    {{ r.url[:60] }}{{ '…' if r.url|length > 60 else '' }}
+                </a>
+            </span>
+        </div>
+
+        <div class="fb-description">{{ r.description }}</div>
+
+        {% if r.viewport %}
+        <div class="fb-meta" style="font-size:0.78em;">
+            <span class="fb-meta-item">🖥 {{ r.viewport.get('width','?') }}×{{ r.viewport.get('height','?') }} @ {{ r.viewport.get('dpr','?') }}x</span>
+            {% if r.user_agent %}
+            <span class="fb-meta-item" title="{{ r.user_agent }}">🌐 {{ r.user_agent[:50] }}…</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if r.status == 'resolved' and r.admin_notes %}
+        <div class="fb-admin-notes">
+            <strong>Admin:</strong> {{ r.admin_notes }}
+            {% if r.resolved_at %}
+            <span class="timestamp"> — {{ r.resolved_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if r.status == 'open' %}
+        <div class="fb-resolve-form">
+            <textarea placeholder="Admin notes (optional)..." id="notes-{{ r.feedback_id }}"></textarea>
+            <button class="fb-resolve-btn" onclick="resolveFeedback({{ r.feedback_id }})">
+                ✓ Resolve
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+    <div class="emoji">🎉</div>
+    <p>No {{ status_filter }} feedback reports.</p>
+</div>
+{% endif %}
+
+<!-- Lightbox -->
+<div class="fb-lightbox" id="fb-lightbox" onclick="closeLightbox()">
+    <img id="fb-lightbox-img" src="" alt="Full screenshot">
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openLightbox(src) {
+    const lb = document.getElementById('fb-lightbox');
+    document.getElementById('fb-lightbox-img').src = src;
+    lb.classList.add('active');
+}
+function closeLightbox() {
+    document.getElementById('fb-lightbox').classList.remove('active');
+}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+});
+
+async function resolveFeedback(id) {
+    const notes = document.getElementById('notes-' + id).value;
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+        const res = await fetch('/admin/feedback/resolve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ feedback_id: id, admin_notes: notes }),
+        });
+        if (!res.ok) throw new Error();
+        // Fade out the card and reload
+        const card = document.getElementById('fb-' + id);
+        card.style.opacity = '0.3';
+        setTimeout(() => location.reload(), 500);
+    } catch {
+        btn.disabled = false;
+        btn.textContent = '✓ Resolve';
+        alert('Error resolving feedback');
+    }
+}
+</script>
+{% endblock %}

@@ -190,5 +190,9 @@
     "impressum": "Impressum",
     "privacy": "Datenschutz",
     "terms": "AGB"
+  },
+  "feedback": {
+    "title": "Fehler melden",
+    "button_tooltip": "Fehler melden"
   }
 }
