@@ -151,6 +151,8 @@ An actor is a script that:
 | Yes | Yes | **Actor** | `postings__embedding_U.py` |
 | No | No | **Tool** | `turing-harness`, `turing-dashboard` |
 
+**The test:** A tool is a one-off script you run manually and then forget about. An actor runs every night, finds its own work, and never lets data rot. If it changes Turing data, it's an actor — otherwise new data comes in without processing, you don't notice for two weeks, and the pipeline silently degrades.
+
 ### Actor Types
 
 | Type | Suffix | LLM? | Example |
