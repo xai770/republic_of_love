@@ -69,14 +69,88 @@ WORK_QUERY = """
 # City-states: these cities ARE their own Bundesland
 CITY_STATES = {"Berlin", "Hamburg", "Bremen"}
 
+# GeoNames data file (cleaned, company rows removed)
+GEONAMES_FILE = Path(__file__).resolve().parent.parent / "data" / "DE" / "DE.txt"
+
+
+def _load_geonames() -> Dict[str, str]:
+    """
+    Load city→state from GeoNames DE.txt (cleaned of company rows).
+    
+    Skips ambiguous place names (same name in multiple Bundesländer).
+    Returns dict mapping place_name (original case) → Bundesland.
+    """
+    if not GEONAMES_FILE.exists():
+        return {}
+    
+    geo = {}
+    ambiguous = set()
+    with open(GEONAMES_FILE, encoding="utf-8") as f:
+        for line in f:
+            parts = line.strip().split("\t")
+            if len(parts) < 4 or not parts[3].strip():
+                continue
+            place = parts[2].strip()
+            state = parts[3].strip()
+            if not place or not state:
+                continue
+            key = place.lower()
+            if key in geo and geo[key] != state:
+                ambiguous.add(key)
+            else:
+                geo[key] = state
+    
+    for k in ambiguous:
+        del geo[k]
+    
+    return geo
+
+
+def _load_self_learned(cur) -> Dict[str, str]:
+    """
+    Build city→state from postings that already have location_state populated.
+    
+    Picks the state with the most rows per city. Skips 'Sonstiges'.
+    Returns dict mapping location_city (original case) → Bundesland.
+    """
+    cur.execute("""
+        SELECT location_city, location_state, COUNT(*) as cnt
+        FROM postings
+        WHERE location_state IS NOT NULL
+          AND location_state != ''
+          AND location_state != 'Sonstiges'
+          AND location_city IS NOT NULL
+          AND location_city != ''
+        GROUP BY 1, 2
+        ORDER BY 3 DESC
+    """)
+    
+    db_map = {}
+    for row in cur.fetchall():
+        city = row["location_city"]
+        state = row["location_state"]
+        cnt = row["cnt"]
+        key = city.lower()
+        if key not in db_map or cnt > db_map[key][1]:
+            db_map[key] = (state, cnt)
+    
+    return {k: v[0] for k, v in db_map.items()}
+
 
 def build_city_state_lookup(cur) -> Dict[str, str]:
     """
-    Build a city_name → bundesland lookup from OWL.
+    Build a city_name → bundesland lookup from three sources (layered):
     
-    Returns dict mapping display_name (lowered) → bundesland canonical_name.
-    Only includes unambiguous mappings (city linked to exactly one bundesland).
+    1. OWL geography hierarchy (most authoritative)
+    2. GeoNames DE.txt (13K+ unambiguous German places)
+    3. Self-learned from existing postings (matches AA naming conventions)
+    
+    Later layers override earlier ones, so self-learned (which matches the actual
+    AA city naming like "Nürnberg, Mittelfranken") takes priority.
+    
+    Returns dict mapping city name (lowered) → bundesland canonical_name.
     """
+    # Layer 1: OWL
     cur.execute("""
         SELECT n.display_name, state.canonical_name as bundesland
         FROM owl_names n
@@ -86,14 +160,33 @@ def build_city_state_lookup(cur) -> Dict[str, str]:
         WHERE city.status = 'active'
     """)
     
-    # Group by display_name to detect ambiguity
     from collections import defaultdict
     name_states = defaultdict(set)
     for row in cur.fetchall():
         name_states[row["display_name"].strip().lower()].add(row["bundesland"])
     
-    # Only unambiguous mappings
-    return {name: list(states)[0] for name, states in name_states.items() if len(states) == 1}
+    # Only unambiguous OWL mappings
+    lookup = {name: list(states)[0] for name, states in name_states.items() if len(states) == 1}
+    owl_count = len(lookup)
+    
+    # Layer 2: GeoNames (fills gaps — especially small towns not in OWL)
+    geo = _load_geonames()
+    for name, state in geo.items():
+        if name not in lookup:
+            lookup[name] = state
+    geo_added = len(lookup) - owl_count
+    
+    # Layer 3: Self-learned (overrides — matches actual AA city naming)
+    db = _load_self_learned(cur)
+    for name, state in db.items():
+        lookup[name] = state  # override: DB-learned uses AA naming conventions
+    
+    logger.info(
+        "City→Bundesland lookup: %d OWL + %d GeoNames + %d self-learned = %d total",
+        owl_count, geo_added, len(db), len(lookup),
+    )
+    
+    return lookup
 
 
 def resolve_state(city: str, lookup: Dict[str, str]) -> Tuple[Optional[str], str]:
@@ -135,9 +228,8 @@ def process_batch(batch_size: int = 10000, dry_run: bool = False) -> Dict[str, A
     try:
         cur = conn.cursor()
         
-        # Build lookup once
+        # Build lookup once (logged inside build_city_state_lookup)
         lookup = build_city_state_lookup(cur)
-        logger.info("City→Bundesland lookup: %d entries from OWL", len(lookup))
         
         # Get pending rows
         cur.execute(WORK_QUERY + " LIMIT %s", (batch_size,))
