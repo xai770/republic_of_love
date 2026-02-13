@@ -19,16 +19,22 @@
 #         C4 -- uncertain --> C6[owl_pending]
 #     end
 #
-#     subgraph "3. ENRICH (turing_daemon)"
+#     subgraph "3. CLASSIFY"
+#         D1[🗺️ domain_gate cascade] --> D2[📍 geo_state<br/>city→OWL→Bundesland]
+#         D2 --> D3[🎓 qualification backfill]
+#     end
+#
+#     subgraph "4. ENRICH (turing_daemon)"
 #         B1[job_description_backfill] --> B4[embedding_generator x3]
 #         B5[🤖 owl_pending_auto_triage<br/>LLM picks best match] --> B6[new OWL synonyms]
 #     end
 #
 #     A2 --> C1
-#     C3 --> B1
-#     C5 --> B1
+#     C3 --> D1
+#     C5 --> D1
 #     C6 --> B5
-#     B4 --> D[📊 Summary stats]
+#     D3 --> B1
+#     B4 --> E[📊 Summary stats]
 # ```
 
 set -e
@@ -286,6 +292,7 @@ python3 -c "
 from actors.postings__arbeitsagentur_CU import main; print('  ✅ arbeitsagentur_CU')
 from actors.postings__deutsche_bank_CU import main; print('  ✅ deutsche_bank_CU')
 from actors.postings__berufenet_U import owl_lookup, process_batch; print('  ✅ berufenet_U (OWL-first)')
+from actors.postings__geo_state_U import process_batch as geo_batch; print('  ✅ geo_state_U (OWL geo)')
 from core.turing_daemon import TuringDaemon; print('  ✅ turing_daemon')
 from tools.populate_domain_gate import main; print('  ✅ populate_domain_gate')
 from core.database import get_connection, get_connection_raw; print('  ✅ core.database')
@@ -370,11 +377,21 @@ python3 tools/populate_domain_gate.py --cascade --apply
 ts "Domain cascade (keyword + LLM) complete"
 
 # ============================================================================
-# STEP 3c: QUALIFICATION BACKFILL (beruf → berufenet → KldB → qual level)
+# STEP 3c: GEO STATE RESOLUTION (city → OWL → bundesland)
+# ============================================================================
+# Many AA postings arrive with location_city but no location_state.
+# This resolves Bundesland via OWL geography hierarchy (city child_of bundesland).
+# Three strategies: direct match, comma-strip, city-state.
+# Skips ambiguous cities and international locations. ~82% resolution rate.
+ts "[3c/4] Geo state resolution (city → OWL → Bundesland)..."
+python3 actors/postings__geo_state_U.py --batch 50000
+
+# ============================================================================
+# STEP 3d: QUALIFICATION BACKFILL (beruf → berufenet → KldB → qual level)
 # ============================================================================
 # Many AA postings have a 'beruf' field but no qualification_level.
 # This maps beruf → berufenet (direct name or synonym) → KldB code → qual level.
-ts "[3c/4] Qualification level backfill..."
+ts "[3d/4] Qualification level backfill..."
 python3 -c "
 from core.database import get_connection
 with get_connection() as conn:
