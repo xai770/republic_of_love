@@ -128,6 +128,259 @@ def admin_console(request: Request, conn=Depends(get_db)):
 
 
 # =============================================================================
+# OWL Browser — /admin/owl-browser
+# =============================================================================
+
+
+@router.get("/owl-browser", response_class=HTMLResponse)
+def owl_browser(
+    request: Request,
+    conn=Depends(get_db),
+    id: int = None,
+    type: str = None,
+    q: str = None,
+    page: int = 1,
+):
+    """OWL Browser — explore the entity graph with drill-down."""
+    user, err = _require_admin(request, conn)
+    if err:
+        return err
+
+    page_size = 100
+
+    with conn.cursor() as cur:
+        # Global stats (always shown)
+        cur.execute("""
+            SELECT owl_type, COUNT(*) AS cnt
+            FROM owl GROUP BY owl_type ORDER BY cnt DESC
+        """)
+        type_counts = [(r['owl_type'], r['cnt']) for r in cur.fetchall()]
+
+        cur.execute("SELECT COUNT(*) AS c FROM owl_names")
+        total_names = cur.fetchone()['c']
+
+        cur.execute("SELECT COUNT(*) AS c FROM owl_relationships")
+        total_rels = cur.fetchone()['c']
+
+        context = {
+            "request": request,
+            "type_counts": type_counts,
+            "total_names": total_names,
+            "total_rels": total_rels,
+            "breadcrumbs": [],
+            "q": q,
+            "entity": None,
+            "search_results": None,
+        }
+
+        # ----- SINGLE ENTITY VIEW -----
+        if id is not None:
+            cur.execute("""
+                SELECT owl_id, owl_type, canonical_name, status, description, metadata
+                FROM owl WHERE owl_id = %s
+            """, (id,))
+            entity = cur.fetchone()
+            if not entity:
+                context["entity"] = None
+                return templates.TemplateResponse("admin/owl_browser.html", context)
+
+            # Build breadcrumb by walking up parent chain
+            breadcrumbs = [{"id": entity['owl_id'], "name": entity['canonical_name']}]
+            visited = {entity['owl_id']}
+            walk_id = entity['owl_id']
+            for _ in range(10):  # max depth
+                cur.execute("""
+                    SELECT r.related_owl_id, o.canonical_name
+                    FROM owl_relationships r
+                    JOIN owl o ON o.owl_id = r.related_owl_id
+                    WHERE r.owl_id = %s
+                      AND r.relationship IN ('belongs_to', 'child_of')
+                    ORDER BY r.strength DESC NULLS LAST
+                    LIMIT 1
+                """, (walk_id,))
+                parent = cur.fetchone()
+                if not parent or parent['related_owl_id'] in visited:
+                    break
+                breadcrumbs.insert(0, {
+                    "id": parent['related_owl_id'],
+                    "name": parent['canonical_name'],
+                })
+                visited.add(parent['related_owl_id'])
+                walk_id = parent['related_owl_id']
+
+            # Names
+            cur.execute("""
+                SELECT display_name, language, is_primary, name_type, confidence
+                FROM owl_names
+                WHERE owl_id = %s
+                ORDER BY is_primary DESC NULLS LAST, language, display_name
+            """, (id,))
+            names = cur.fetchall()
+
+            # Children (entities that belong_to / child_of this one)
+            cur.execute("""
+                SELECT o.owl_id, o.owl_type, o.canonical_name,
+                       (SELECT COUNT(*) FROM owl_names n WHERE n.owl_id = o.owl_id) AS name_count,
+                       (SELECT COUNT(*) FROM owl_relationships r2 WHERE r2.owl_id = o.owl_id OR r2.related_owl_id = o.owl_id) AS rel_count,
+                       (SELECT COUNT(*) FROM owl_relationships r3 WHERE r3.related_owl_id = o.owl_id AND r3.relationship IN ('belongs_to','child_of')) AS child_count
+                FROM owl_relationships r
+                JOIN owl o ON o.owl_id = r.owl_id
+                WHERE r.related_owl_id = %s
+                  AND r.relationship IN ('belongs_to', 'child_of')
+                ORDER BY o.owl_type, o.canonical_name
+                LIMIT 201
+            """, (id,))
+            children_raw = cur.fetchall()
+            children_truncated = len(children_raw) > 200
+            children = children_raw[:200]
+
+            # Outgoing relationships (excluding child_of/belongs_to already shown)
+            cur.execute("""
+                SELECT r.related_owl_id, r.relationship, r.strength,
+                       o.canonical_name AS related_name, o.owl_type AS related_type
+                FROM owl_relationships r
+                JOIN owl o ON o.owl_id = r.related_owl_id
+                WHERE r.owl_id = %s
+                ORDER BY r.relationship, o.canonical_name
+                LIMIT 100
+            """, (id,))
+            rels_out = cur.fetchall()
+
+            # Incoming relationships (not child_of, belongs_to — those are "children")
+            cur.execute("""
+                SELECT r.owl_id AS from_owl_id, r.relationship,
+                       o.canonical_name AS from_name, o.owl_type AS from_type
+                FROM owl_relationships r
+                JOIN owl o ON o.owl_id = r.owl_id
+                WHERE r.related_owl_id = %s
+                  AND r.relationship NOT IN ('belongs_to', 'child_of')
+                ORDER BY r.relationship, o.canonical_name
+                LIMIT 101
+            """, (id,))
+            rels_in_raw = cur.fetchall()
+            rels_in_truncated = len(rels_in_raw) > 100
+            rels_in = rels_in_raw[:100]
+
+            # Linked postings (for berufenet entities)
+            postings = []
+            posting_total = 0
+            if entity['owl_type'] == 'berufenet' and entity.get('metadata'):
+                meta = entity['metadata'] if isinstance(entity['metadata'], dict) else json.loads(entity['metadata'])
+                bid = meta.get('berufenet_id')
+                if bid:
+                    cur.execute(
+                        "SELECT COUNT(*) AS c FROM postings WHERE berufenet_id = %s", (bid,))
+                    posting_total = cur.fetchone()['c']
+                    cur.execute("""
+                        SELECT job_title, location_city, first_seen_at
+                        FROM postings WHERE berufenet_id = %s
+                        ORDER BY first_seen_at DESC LIMIT 15
+                    """, (bid,))
+                    postings = cur.fetchall()
+
+            context.update({
+                "entity": entity,
+                "breadcrumbs": breadcrumbs,
+                "names": names,
+                "children": children,
+                "children_truncated": children_truncated,
+                "rels_out": rels_out,
+                "rels_in": rels_in,
+                "rels_in_truncated": rels_in_truncated,
+                "postings": postings,
+                "posting_total": posting_total,
+            })
+            return templates.TemplateResponse("admin/owl_browser.html", context)
+
+        # ----- SEARCH -----
+        if q and q.strip():
+            query = q.strip()
+            cur.execute("""
+                SELECT DISTINCT o.owl_id, o.owl_type, o.canonical_name,
+                       n.display_name AS matched_name,
+                       (SELECT COUNT(*) FROM owl_names n2 WHERE n2.owl_id = o.owl_id) AS name_count
+                FROM owl o
+                LEFT JOIN owl_names n ON n.owl_id = o.owl_id
+                WHERE o.canonical_name ILIKE %s
+                   OR n.display_name ILIKE %s
+                ORDER BY
+                    CASE WHEN o.canonical_name ILIKE %s THEN 0 ELSE 1 END,
+                    o.owl_type, o.canonical_name
+                LIMIT 101
+            """, (f'%{query}%', f'%{query}%', f'{query}%'))
+            results_raw = cur.fetchall()
+            search_truncated = len(results_raw) > 100
+            search_results = results_raw[:100]
+
+            context.update({
+                "search_results": search_results,
+                "search_truncated": search_truncated,
+            })
+            return templates.TemplateResponse("admin/owl_browser.html", context)
+
+        # ----- TYPE LISTING -----
+        if type:
+            offset = (page - 1) * page_size
+            cur.execute("""
+                SELECT o.owl_id, o.owl_type, o.canonical_name,
+                       (SELECT COUNT(*) FROM owl_names n WHERE n.owl_id = o.owl_id) AS name_count,
+                       (SELECT COUNT(*) FROM owl_relationships r WHERE r.owl_id = o.owl_id OR r.related_owl_id = o.owl_id) AS rel_count,
+                       0 AS child_count
+                FROM owl o
+                WHERE o.owl_type = %s
+                ORDER BY o.canonical_name
+                LIMIT %s OFFSET %s
+            """, (type, page_size + 1, offset))
+            results_raw = cur.fetchall()
+            search_truncated = len(results_raw) > page_size
+            search_results = results_raw[:page_size]
+
+            context.update({
+                "search_results": search_results,
+                "search_truncated": search_truncated,
+                "breadcrumbs": [{"id": None, "name": type}],
+            })
+            return templates.TemplateResponse("admin/owl_browser.html", context)
+
+        # ----- ROOT VIEW -----
+        # Taxonomy roots with child counts
+        cur.execute("""
+            SELECT o.owl_id, o.canonical_name,
+                   (SELECT COUNT(*) FROM owl_relationships r
+                    WHERE r.related_owl_id = o.owl_id
+                      AND r.relationship IN ('belongs_to','child_of')) AS child_count
+            FROM owl o
+            WHERE o.owl_type = 'taxonomy_root'
+            ORDER BY o.canonical_name
+        """)
+        roots = cur.fetchall()
+
+        # Domain gates with posting counts
+        cur.execute("""
+            SELECT o.owl_id, o.canonical_name, o.metadata
+            FROM owl o
+            WHERE o.owl_type = 'domain_gate'
+            ORDER BY o.canonical_name
+        """)
+        gates_raw = cur.fetchall()
+        gates = []
+        for g in gates_raw:
+            meta = g['metadata'] if isinstance(g['metadata'], dict) else (json.loads(g['metadata']) if g['metadata'] else {})
+            gates.append({
+                "owl_id": g['owl_id'],
+                "canonical_name": g['canonical_name'],
+                "color": meta.get('color', '#0066cc'),
+                "posting_count": 0,  # Could query postings but expensive — skip for now
+            })
+
+        context.update({
+            "roots": roots,
+            "gates": gates,
+        })
+        return templates.TemplateResponse("admin/owl_browser.html", context)
+
+
+# =============================================================================
 # OWL Triage — /admin/owl-triage
 # =============================================================================
 

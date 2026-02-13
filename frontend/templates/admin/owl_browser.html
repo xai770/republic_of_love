@@ -1,0 +1,378 @@
+{% extends "admin/base.html" %}
+
+{% block title %}OWL Browser - talent.yoga{% endblock %}
+{% block max_width %}1100px{% endblock %}
+
+{% block extra_css %}
+    .stats-bar {
+        display: flex; gap: 20px; margin-bottom: 24px; padding: 12px 20px;
+        background: var(--bg-card); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
+    }
+    .stats-bar .stat { text-align: center; min-width: 80px; }
+    .stats-bar .stat-num { font-size: 1.4em; font-weight: bold; color: var(--accent); }
+    .stats-bar .stat-lbl { font-size: 0.8em; color: var(--text-secondary); }
+
+    /* Search */
+    .search-box {
+        display: flex; gap: 8px; margin-bottom: 24px;
+    }
+    .search-box input {
+        flex: 1; padding: 10px 14px; border-radius: 6px;
+        border: 1px solid var(--border-color); background: var(--bg-card);
+        color: var(--text-primary); font-size: 1em;
+    }
+    .search-box input:focus { outline: 2px solid var(--accent); }
+    .search-box button {
+        padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer;
+        background: var(--accent); color: white; font-weight: 600;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        display: flex; gap: 6px; align-items: center; margin-bottom: 20px;
+        font-size: 0.9em; flex-wrap: wrap;
+    }
+    .breadcrumb a { text-decoration: none; font-weight: 500; }
+    .breadcrumb .sep { color: var(--text-secondary); }
+    .breadcrumb .current { color: var(--text-primary); font-weight: 700; }
+
+    /* Type badge */
+    .badge {
+        display: inline-block; padding: 2px 8px; border-radius: 4px;
+        font-size: 0.75em; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge-taxonomy_root { background: #e8d5f5; color: #5b2c8c; }
+    .badge-skill_dimension { background: #d5e8f5; color: #1a5276; }
+    .badge-competency { background: #d5f5e3; color: #196f3d; }
+    .badge-berufenet { background: #fdebd0; color: #7e5109; }
+    .badge-city { background: #f5e6cc; color: #6e4b1e; }
+    .badge-bundesland { background: #d4efdf; color: #1e8449; }
+    .badge-domain_gate { background: #fadbd8; color: #922b21; }
+    .badge-country { background: #d6dbdf; color: #2c3e50; }
+    .badge-yogi_role { background: #e8daef; color: #6c3483; }
+    .badge-yogi { background: #fce4ec; color: #880e4f; }
+    .badge-external_job_site { background: #e0f2f1; color: #00695c; }
+    [data-theme="dark"] .badge-taxonomy_root { background: #3a1f5c; color: #d5b8f0; }
+    [data-theme="dark"] .badge-skill_dimension { background: #1a3a5c; color: #a8d0f0; }
+    [data-theme="dark"] .badge-competency { background: #1a4a2e; color: #a8e6c0; }
+    [data-theme="dark"] .badge-berufenet { background: #5c3a0a; color: #f5d6a0; }
+    [data-theme="dark"] .badge-city { background: #4a3010; color: #f0d8a8; }
+    [data-theme="dark"] .badge-bundesland { background: #0a4a2e; color: #a8e6c0; }
+    [data-theme="dark"] .badge-domain_gate { background: #5c1a1a; color: #f0a8a8; }
+    [data-theme="dark"] .badge-country { background: #2c3e50; color: #d6dbdf; }
+    [data-theme="dark"] .badge-yogi_role { background: #3a1f5c; color: #d5b8f0; }
+    [data-theme="dark"] .badge-yogi { background: #5c0a2e; color: #f0a8c8; }
+    [data-theme="dark"] .badge-external_job_site { background: #0a3a3a; color: #a8e6e0; }
+
+    /* Grid of entity cards */
+    .entity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px; margin-bottom: 24px;
+    }
+    .entity-card {
+        background: var(--bg-card); border-radius: 8px; padding: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        cursor: pointer; transition: all 0.15s; border-left: 4px solid var(--accent);
+        text-decoration: none; color: inherit; display: block;
+    }
+    .entity-card:hover {
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+    .entity-card .name { font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+    .entity-card .meta { font-size: 0.82em; color: var(--text-secondary); }
+    .entity-card .count-row {
+        display: flex; gap: 12px; margin-top: 8px; font-size: 0.82em;
+        color: var(--text-secondary);
+    }
+    .entity-card .count-row strong { color: var(--text-primary); }
+
+    /* Detail panel for single entity view */
+    .detail-card {
+        background: var(--bg-card); border-radius: 8px; padding: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;
+    }
+    .detail-card h2 { margin-top: 0; border: none; padding: 0; }
+    .detail-card .desc { color: var(--text-secondary); margin: 8px 0 16px; }
+    .names-list {
+        display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0;
+    }
+    .name-tag {
+        background: var(--bg-primary); border: 1px solid var(--border-color);
+        border-radius: 4px; padding: 3px 10px; font-size: 0.85em;
+    }
+    .name-tag.primary { font-weight: 700; border-color: var(--accent); }
+    .rel-section { margin-top: 20px; }
+    .rel-section h3 { font-size: 1em; color: var(--text-secondary); margin-bottom: 8px; }
+    .rel-list { display: flex; flex-direction: column; gap: 6px; }
+    .rel-item {
+        display: flex; gap: 10px; align-items: center; padding: 8px 12px;
+        background: var(--bg-primary); border-radius: 6px; font-size: 0.9em;
+    }
+    .rel-item a { font-weight: 500; }
+    .rel-arrow { color: var(--text-secondary); font-family: monospace; }
+    .rel-strength {
+        font-family: monospace; font-size: 0.85em; color: var(--text-secondary);
+    }
+
+    /* Posting preview */
+    .posting-row {
+        display: flex; gap: 10px; align-items: baseline; padding: 6px 0;
+        border-bottom: 1px solid var(--border-color); font-size: 0.88em;
+    }
+    .posting-row:last-child { border-bottom: none; }
+    .posting-title { flex: 1; font-weight: 500; }
+    .posting-city { color: var(--text-secondary); min-width: 120px; }
+    .posting-date { color: var(--text-secondary); font-family: monospace; font-size: 0.85em; }
+
+    .section-title {
+        font-size: 1em; font-weight: 600; color: var(--text-secondary);
+        margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .empty-state {
+        text-align: center; padding: 40px 20px; color: var(--text-secondary);
+    }
+
+    /* Search results */
+    .search-results { margin-bottom: 24px; }
+{% endblock %}
+
+{% block body %}
+    <div class="header">
+        <h1>&#x1F989; OWL Browser</h1>
+        <div class="header-right">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">&#x1F313;</button>
+            <a href="/admin/owl-triage">Triage</a>
+            <a href="/admin/console">&larr; Admin</a>
+        </div>
+    </div>
+
+    {# Stats #}
+    <div class="stats-bar">
+        {% for type_name, type_count in type_counts %}
+        <div class="stat">
+            <div class="stat-num">{{ "{:,}".format(type_count) }}</div>
+            <div class="stat-lbl">{{ type_name }}</div>
+        </div>
+        {% endfor %}
+        <div class="stat">
+            <div class="stat-num">{{ "{:,}".format(total_names) }}</div>
+            <div class="stat-lbl">names</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">{{ "{:,}".format(total_rels) }}</div>
+            <div class="stat-lbl">relationships</div>
+        </div>
+    </div>
+
+    {# Search #}
+    <form class="search-box" action="/admin/owl-browser" method="GET">
+        <input type="text" name="q" value="{{ q or '' }}" placeholder="Search entities by name&hellip;" autofocus>
+        <button type="submit">Search</button>
+        {% if q %}<a href="/admin/owl-browser" style="align-self:center; font-size:0.9em;">clear</a>{% endif %}
+    </form>
+
+    {# Breadcrumb #}
+    <div class="breadcrumb">
+        <a href="/admin/owl-browser">OWL</a>
+        {% for crumb in breadcrumbs %}
+        <span class="sep">&#x25B6;</span>
+        {% if loop.last %}
+        <span class="current">{{ crumb.name }}</span>
+        {% else %}
+        <a href="/admin/owl-browser?id={{ crumb.id }}">{{ crumb.name }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    {% if entity %}
+    {# ============ SINGLE ENTITY DETAIL ============ #}
+    <div class="detail-card">
+        <h2>
+            <span class="badge badge-{{ entity.owl_type }}">{{ entity.owl_type }}</span>
+            {{ entity.canonical_name }}
+            <span style="font-size:0.6em; color:var(--text-secondary);">#{{ entity.owl_id }}</span>
+        </h2>
+        {% if entity.description %}
+        <div class="desc">{{ entity.description }}</div>
+        {% endif %}
+        {% if entity.status and entity.status != 'active' %}
+        <div style="color: var(--warning); font-weight:600;">Status: {{ entity.status }}</div>
+        {% endif %}
+
+        {# Names / aliases #}
+        {% if names %}
+        <div class="section-title">Names &amp; Aliases ({{ names|length }})</div>
+        <div class="names-list">
+            {% for n in names %}
+            <span class="name-tag {{ 'primary' if n.is_primary }}" title="{{ n.language }} &middot; {{ n.name_type or 'alias' }}{% if n.confidence %} &middot; conf {{ n.confidence }}{% endif %}">
+                {{ n.display_name }}
+                {% if n.language != 'de' %}<small>({{ n.language }})</small>{% endif %}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# Metadata #}
+        {% if entity.metadata %}
+        <div class="section-title">Metadata</div>
+        <pre style="background:var(--bg-primary); padding:12px; border-radius:6px; font-size:0.85em; overflow-x:auto;">{{ entity.metadata | tojson(indent=2) }}</pre>
+        {% endif %}
+    </div>
+
+    {# Children (belongs_to / child_of this entity) #}
+    {% if children %}
+    <div class="section-title">Children ({{ children|length }}{% if children_truncated %}+{% endif %})</div>
+    <div class="entity-grid">
+        {% for c in children %}
+        <a class="entity-card" href="/admin/owl-browser?id={{ c.owl_id }}">
+            <div class="name">
+                <span class="badge badge-{{ c.owl_type }}">{{ c.owl_type }}</span>
+                {{ c.canonical_name }}
+            </div>
+            <div class="count-row">
+                <span>&#x1F4DB; {{ c.name_count }} names</span>
+                <span>&#x1F517; {{ c.rel_count }} rels</span>
+                {% if c.child_count %}<span>&#x1F4C2; {{ c.child_count }} children</span>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Outgoing relationships (this entity -> others) #}
+    {% if rels_out %}
+    <div class="section-title">Relationships &rarr; ({{ rels_out|length }})</div>
+    <div class="rel-list">
+        {% for r in rels_out %}
+        <div class="rel-item">
+            <span class="rel-arrow">&rarr;</span>
+            <span class="badge badge-{{ r.related_type }}">{{ r.related_type }}</span>
+            <a href="/admin/owl-browser?id={{ r.related_owl_id }}">{{ r.related_name }}</a>
+            <span style="color:var(--text-secondary);">({{ r.relationship }})</span>
+            {% if r.strength and r.strength != 1.0 %}
+            <span class="rel-strength">{{ "%.2f"|format(r.strength) }}</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Incoming relationships (others -> this entity) #}
+    {% if rels_in %}
+    <div class="section-title">&larr; Referenced by ({{ rels_in|length }}{% if rels_in_truncated %}+{% endif %})</div>
+    <div class="rel-list">
+        {% for r in rels_in %}
+        <div class="rel-item">
+            <span class="rel-arrow">&larr;</span>
+            <span class="badge badge-{{ r.from_type }}">{{ r.from_type }}</span>
+            <a href="/admin/owl-browser?id={{ r.from_owl_id }}">{{ r.from_name }}</a>
+            <span style="color:var(--text-secondary);">({{ r.relationship }})</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Linked postings (for berufenet entities) #}
+    {% if postings %}
+    <div class="section-title">Recent Postings ({{ posting_total }} total, showing {{ postings|length }})</div>
+    <div class="card">
+        {% for p in postings %}
+        <div class="posting-row">
+            <span class="posting-title">{{ p.job_title }}</span>
+            <span class="posting-city">{{ p.location_city or '' }}</span>
+            <span class="posting-date">{{ p.first_seen_at.strftime('%Y-%m-%d') if p.first_seen_at else '' }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% elif search_results is not none %}
+    {# ============ SEARCH RESULTS ============ #}
+    {% if search_results %}
+    <div class="section-title">{{ search_results|length }} result{{ 's' if search_results|length != 1 }}{% if search_truncated %}+{% endif %} for &ldquo;{{ q }}&rdquo;</div>
+    <div class="entity-grid">
+        {% for r in search_results %}
+        <a class="entity-card" href="/admin/owl-browser?id={{ r.owl_id }}">
+            <div class="name">
+                <span class="badge badge-{{ r.owl_type }}">{{ r.owl_type }}</span>
+                {{ r.canonical_name }}
+            </div>
+            <div class="meta">
+                {% if r.matched_name and r.matched_name != r.canonical_name %}
+                matched: <em>{{ r.matched_name }}</em>
+                {% endif %}
+            </div>
+            <div class="count-row">
+                <span>&#x1F4DB; {{ r.name_count }} names</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No results for &ldquo;{{ q }}&rdquo;</div>
+    {% endif %}
+
+    {% else %}
+    {# ============ ROOT VIEW — TAXONOMY ROOTS ============ #}
+    <div class="section-title">Taxonomy Roots</div>
+    <div class="entity-grid">
+        {% for r in roots %}
+        <a class="entity-card" href="/admin/owl-browser?id={{ r.owl_id }}">
+            <div class="name">
+                <span class="badge badge-taxonomy_root">root</span>
+                {{ r.canonical_name }}
+            </div>
+            <div class="count-row">
+                <span>&#x1F4C2; {{ r.child_count }} children</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="section-title">Domain Gates</div>
+    <div class="entity-grid">
+        {% for g in gates %}
+        <a class="entity-card" href="/admin/owl-browser?id={{ g.owl_id }}" style="border-left-color: {{ g.color or 'var(--accent)' }}">
+            <div class="name">
+                <span class="badge badge-domain_gate">gate</span>
+                {{ g.canonical_name }}
+            </div>
+            <div class="count-row">
+                <span>&#x1F4C4; {{ g.posting_count }} postings</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="section-title">Browse by Type</div>
+    <div class="entity-grid">
+        {% for type_name, type_count in type_counts %}
+        <a class="entity-card" href="/admin/owl-browser?type={{ type_name }}">
+            <div class="name">
+                <span class="badge badge-{{ type_name }}">{{ type_name }}</span>
+            </div>
+            <div class="count-row">
+                <span><strong>{{ "{:,}".format(type_count) }}</strong> entities</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Keyboard shortcut: / to focus search
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            document.querySelector('.search-box input').focus();
+        }
+    });
+</script>
+{% endblock %}
