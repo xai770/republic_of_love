@@ -125,10 +125,44 @@ from city name alone.
 
 ## Recommended Fix Order
 
-1. **Fix step 3c SQL** — `o.berufenet_id` → `p.berufenet_id`
-2. **Re-run steps 3c + 4** for Feb 11 + Feb 12 data
-3. **Build city→Bundesland lookup** and backfill null `location_state`
-4. **Verify tonight's cron** picks up the fix
+1. ~~**Fix step 3c SQL** — `o.berufenet_id` → `p.berufenet_id`~~ ✅ **DONE** (`ac8b95e`)
+2. ~~**Re-run steps 3c + 4** for Feb 11 + Feb 12 data~~ ✅ **DONE** (ran manually after fix)
+3. ~~**Build city→Bundesland lookup** and backfill null `location_state`~~ ✅ **DONE** — three-layer geo_state actor (`a1d8b00`, `ed8217d`): OWL lookup → GeoNames DE.txt fallback → self-learned cache
+4. **Verify tonight's cron** picks up the fix — ⏳ pending (overnight run)
+
+---
+
+## Session Work Log — Feb 13, 2026
+
+### Pipeline QA Fixes (morning)
+- **Step 3c SQL fix** (`ac8b95e`): `o.berufenet_id` → `p.berufenet_id`, added synonym fallback via `owl_names` → `berufenet_synonyms`
+- **Geo state resolution** (`ed8217d`, `a1d8b00`): Built `postings__geo_state_U.py` actor — 3-layer city→state lookup (OWL → DE.txt → self-learned). Backfilled 41K null states.
+- **Re-ran steps 3c + 4** for Feb 11 + 12 affected rows
+
+### OWL Browser (`052da32`, `f4448f1`, `aa7d8aa`)
+- **Grid + detail view**: `/admin/owl-browser` — browse entities by type, search, drill into detail with relationships/metadata
+- **Privilege system** (`f4448f1`): 11 OWL privileges (e.g. `can_view_matches`, `can_edit_profile`), role grants, recursive resolver in `user_has_owl_privilege()`
+- **Tree view** (`aa7d8aa`): Collapsible folder tree with lazy-loading children via `/admin/owl-browser/children` endpoint
+
+### OWL Geography Completion (`cd8529b`)
+- **Fixed tree hierarchy**: Added missing Deutschland → geography `child_of` link (cities were in grid but not tree)
+- **Loaded all GeoNames places**: 8,368 new villages from DE.txt → **13,183 total cities** in OWL
+- **Added postal codes**: `postal_codes` array in metadata for all 13,182 cities (Berlin: 191 zips, München: 75)
+- **Lat/lng**: Confirmed present for all 13,182 cities
+- **475 ambiguous places** skipped (same name in multiple states)
+- **Tree limit**: Raised from 500 → 5,000 children per node (largest: Rheinland-Pfalz at 2,093)
+
+### Commits Today
+| Hash | Summary |
+|------|---------|
+| `ac8b95e` | fix(pipeline): step 3c synonym fallback |
+| `33d90b6` | docs: actor vs tool consequence explanation |
+| `ed8217d` | feat: geo state resolution via OWL |
+| `a1d8b00` | feat: three-layer city→state lookup |
+| `052da32` | feat: OWL browser grid + detail |
+| `f4448f1` | feat: OWL privilege system |
+| `aa7d8aa` | feat: OWL browser tree view |
+| `cd8529b` | feat: OWL geography completion (13K places + postal codes) |
 
 ---
 
