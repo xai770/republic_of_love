@@ -5,16 +5,34 @@
 
 {% block extra_css %}
     .stats-bar {
-        display: flex; gap: 20px; margin-bottom: 24px; padding: 12px 20px;
+        display: flex; gap: 20px; margin-bottom: 16px; padding: 12px 20px;
         background: var(--bg-card); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .stats-bar .stat { text-align: center; }
     .stats-bar .stat-num { font-size: 1.4em; font-weight: bold; color: var(--accent); }
     .stats-bar .stat-lbl { font-size: 0.8em; color: var(--text-secondary); }
+    .tab-bar {
+        display: flex; gap: 4px; margin-bottom: 20px; padding: 4px;
+        background: var(--bg-card); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tab-bar a {
+        padding: 8px 18px; border-radius: 6px; text-decoration: none;
+        font-weight: 500; font-size: 0.9em; color: var(--text-secondary);
+        transition: all 0.15s;
+    }
+    .tab-bar a:hover { background: rgba(0,102,204,0.08); color: var(--text-primary); }
+    .tab-bar a.active {
+        background: var(--accent); color: white;
+    }
+    .tab-bar .tab-count {
+        font-size: 0.8em; opacity: 0.7; margin-left: 4px;
+    }
     .item {
         background: var(--bg-card); border-radius: 8px; padding: 20px; margin-bottom: 16px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid var(--accent);
     }
+    .item.item-rejected { border-left-color: var(--danger); }
+    .item.item-resolved { border-left-color: var(--success); }
     .item-title {
         font-size: 1.3em; font-weight: 700; margin-bottom: 12px;
         color: var(--text-primary);
@@ -65,6 +83,10 @@
         background: var(--bg-primary); border: 1px solid var(--border-color);
         padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 0.9em;
     }
+    .resolution-note {
+        font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px;
+        font-style: italic;
+    }
 {% endblock %}
 
 {% block body %}
@@ -82,6 +104,10 @@
             <div class="stat-lbl">Pending</div>
         </div>
         <div class="stat">
+            <div class="stat-num">{{ "{:,}".format(stats.rejected) }}</div>
+            <div class="stat-lbl">Rejected</div>
+        </div>
+        <div class="stat">
             <div class="stat-num">{{ "{:,}".format(affected_postings) }}</div>
             <div class="stat-lbl">Postings Affected</div>
         </div>
@@ -93,12 +119,28 @@
             <div class="stat-num">{{ "{:,}".format(stats.skipped) }}</div>
             <div class="stat-lbl">Skipped</div>
         </div>
-        <div class="stat">
-            <div class="stat-num">{{ "{:,}".format(stats.rejected) }}</div>
-            <div class="stat-lbl">Rejected</div>
-        </div>
     </div>
 
+    <div class="tab-bar">
+        <a href="/admin/owl-triage?status=rejected"
+           class="{{ 'active' if current_status == 'rejected' else '' }}">
+            Rejected <span class="tab-count">({{ "{:,}".format(stats.rejected) }})</span>
+        </a>
+        <a href="/admin/owl-triage?status=pending"
+           class="{{ 'active' if current_status == 'pending' else '' }}">
+            Pending <span class="tab-count">({{ "{:,}".format(stats.pending) }})</span>
+        </a>
+        <a href="/admin/owl-triage?status=resolved"
+           class="{{ 'active' if current_status == 'resolved' else '' }}">
+            Resolved <span class="tab-count">({{ "{:,}".format(stats.resolved) }})</span>
+        </a>
+        <a href="/admin/owl-triage?status=skipped"
+           class="{{ 'active' if current_status == 'skipped' else '' }}">
+            Skipped <span class="tab-count">({{ "{:,}".format(stats.skipped) }})</span>
+        </a>
+    </div>
+
+    {% if current_status == 'pending' %}
     <div style="display:flex; gap:10px; margin-bottom:20px; align-items:center;">
         <form method="POST" action="/admin/owl-triage/auto" style="display:inline">
             <input type="hidden" name="page" value="{{ page }}">
@@ -111,17 +153,26 @@
             LLM picks matches from candidates &mdash; resolved items get OWL synonyms
         </span>
     </div>
+    {% endif %}
 
     {% if flash %}
     <div class="flash flash-{{ flash_type }}">{{ flash }}</div>
     {% endif %}
 
     {% if not items %}
-    <div class="empty-state">All caught up! No pending items.</div>
+    <div class="empty-state">
+        {% if current_status == 'pending' %}All caught up! No pending items.
+        {% elif current_status == 'rejected' %}No rejected items. The LLM matched everything it could.
+        {% elif current_status == 'resolved' %}No resolved items yet.
+        {% else %}No skipped items.{% endif %}
+    </div>
     {% else %}
     {% for item in items %}
-    <div class="item" id="item-{{ item.pending_id }}">
+    <div class="item {{ 'item-rejected' if current_status == 'rejected' else 'item-resolved' if current_status == 'resolved' else '' }}" id="item-{{ item.pending_id }}">
         <div class="item-title">{{ item.raw_value or '<em>(empty title)</em>'|safe }}</div>
+        {% if item.resolution_notes and current_status in ('resolved', 'rejected') %}
+        <div class="resolution-note">{{ item.resolution_notes }}</div>
+        {% endif %}
         <div class="candidates">
             {% for c in item.candidates %}
             {% set score = c.get('score', 0) %}
@@ -136,26 +187,35 @@
             </div>
             {% endfor %}
         </div>
+        {% if current_status in ('pending', 'rejected') %}
         <div class="actions">
             <form method="POST" action="/admin/owl-triage/resolve" style="display:inline">
                 <input type="hidden" name="pending_id" value="{{ item.pending_id }}">
                 <input type="hidden" name="berufenet_ids" id="bids-{{ item.pending_id }}" value="">
+                <input type="hidden" name="status_tab" value="{{ current_status }}">
                 <input type="hidden" name="page" value="{{ page }}">
-                <button type="submit" class="btn btn-confirm" id="confirm-{{ item.pending_id }}" disabled>Confirm</button>
+                <button type="submit" class="btn btn-confirm" id="confirm-{{ item.pending_id }}" disabled>
+                    {% if current_status == 'rejected' %}Override &amp; Resolve{% else %}Confirm{% endif %}
+                </button>
             </form>
+            {% if current_status == 'pending' %}
             <form method="POST" action="/admin/owl-triage/skip" style="display:inline">
                 <input type="hidden" name="pending_id" value="{{ item.pending_id }}">
                 <input type="hidden" name="action" value="skip">
+                <input type="hidden" name="status_tab" value="{{ current_status }}">
                 <input type="hidden" name="page" value="{{ page }}">
                 <button type="submit" class="btn btn-skip">Skip</button>
             </form>
             <form method="POST" action="/admin/owl-triage/skip" style="display:inline">
                 <input type="hidden" name="pending_id" value="{{ item.pending_id }}">
                 <input type="hidden" name="action" value="reject">
+                <input type="hidden" name="status_tab" value="{{ current_status }}">
                 <input type="hidden" name="page" value="{{ page }}">
                 <button type="submit" class="btn btn-reject">No Match</button>
             </form>
+            {% endif %}
         </div>
+        {% endif %}
     </div>
     {% endfor %}
     {% endif %}
@@ -163,11 +223,11 @@
     {# Pagination #}
     <div style="display:flex; justify-content:center; gap:8px; margin-top:20px;">
         {% if page > 1 %}
-        <a href="/admin/owl-triage?page={{ page - 1 }}" class="btn btn-nav">&larr; Prev</a>
+        <a href="/admin/owl-triage?status={{ current_status }}&page={{ page - 1 }}" class="btn btn-nav">&larr; Prev</a>
         {% endif %}
         <span style="padding:8px 12px; color:var(--text-secondary);">Page {{ page }} / {{ total_pages }}</span>
         {% if page < total_pages %}
-        <a href="/admin/owl-triage?page={{ page + 1 }}" class="btn btn-nav">Next &rarr;</a>
+        <a href="/admin/owl-triage?status={{ current_status }}&page={{ page + 1 }}" class="btn btn-nav">Next &rarr;</a>
         {% endif %}
     </div>
 

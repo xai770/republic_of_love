@@ -453,8 +453,8 @@ def owl_browser_children(
 
 @router.get("/owl-triage", response_class=HTMLResponse)
 def owl_triage(request: Request, conn=Depends(get_db), page: int = 1,
-               flash: str = None, flash_type: str = "success"):
-    """OWL Triage — resolve pending berufenet classifications."""
+               status: str = None, flash: str = None, flash_type: str = "success"):
+    """OWL Triage — resolve pending/rejected berufenet classifications."""
     user, err = _require_admin(request, conn)
     if err:
         return err
@@ -475,6 +475,10 @@ def owl_triage(request: Request, conn=Depends(get_db), page: int = 1,
         """)
         stats = cur.fetchone()
 
+        # Auto-select tab: if no status given, show rejected if any, else pending
+        if status not in ('pending', 'rejected', 'resolved', 'skipped'):
+            status = 'rejected' if stats['rejected'] > 0 else 'pending'
+
         # Count affected postings
         cur.execute("""
             SELECT COUNT(*) AS cnt
@@ -484,19 +488,20 @@ def owl_triage(request: Request, conn=Depends(get_db), page: int = 1,
         """)
         affected_postings = cur.fetchone()['cnt']
 
-        # Get current page of pending items
+        # Get current page of items for selected status
         cur.execute("""
-            SELECT pending_id, raw_value, source_context, created_at
+            SELECT pending_id, raw_value, source_context, created_at,
+                   resolution_notes, resolved_owl_id
             FROM owl_pending
             WHERE owl_type = 'berufenet'
-              AND status = 'pending'
+              AND status = %s
             ORDER BY created_at
             LIMIT %s OFFSET %s
-        """, (page_size, offset))
+        """, (status, page_size, offset))
         items = cur.fetchall()
 
-    total_pending = stats['pending']
-    total_pages = max(1, (total_pending + page_size - 1) // page_size)
+    total_in_tab = stats[status]
+    total_pages = max(1, (total_in_tab + page_size - 1) // page_size)
 
     # Parse candidates from source_context for each item
     prepared_items = []
@@ -509,6 +514,8 @@ def owl_triage(request: Request, conn=Depends(get_db), page: int = 1,
             'pending_id': item['pending_id'],
             'raw_value': item['raw_value'],
             'candidates': candidates,
+            'resolution_notes': item.get('resolution_notes', ''),
+            'resolved_owl_id': item.get('resolved_owl_id'),
         })
 
     return templates.TemplateResponse("admin/owl_triage.html", {
@@ -518,6 +525,7 @@ def owl_triage(request: Request, conn=Depends(get_db), page: int = 1,
         "items": prepared_items,
         "page": page,
         "total_pages": total_pages,
+        "current_status": status,
         "flash": flash,
         "flash_type": flash_type,
     })
@@ -528,6 +536,7 @@ def owl_triage_resolve(
     request: Request,
     pending_id: int = Form(...),
     berufenet_ids: str = Form(...),
+    status_tab: str = Form("pending"),
     page: int = Form(1),
     conn=Depends(get_db),
 ):
@@ -540,7 +549,7 @@ def owl_triage_resolve(
     id_list = [int(x.strip()) for x in berufenet_ids.split(',') if x.strip().isdigit()]
     if not id_list:
         return RedirectResponse(
-            f"/admin/owl-triage?page={page}&flash=No+candidates+selected&flash_type=error",
+            f"/admin/owl-triage?status={status_tab}&page={page}&flash=No+candidates+selected&flash_type=error",
             status_code=303)
 
     with conn.cursor() as cur:
@@ -557,7 +566,7 @@ def owl_triage_resolve(
         berufe = cur.fetchall()
         if not berufe:
             return RedirectResponse(
-                f"/admin/owl-triage?page={page}&flash=Berufenet+IDs+not+found&flash_type=error",
+                f"/admin/owl-triage?status={status_tab}&page={page}&flash=Berufenet+IDs+not+found&flash_type=error",
                 status_code=303)
 
         # First selected = primary for posting classification
@@ -568,7 +577,7 @@ def owl_triage_resolve(
         pending = cur.fetchone()
         if not pending:
             return RedirectResponse(
-                f"/admin/owl-triage?page={page}&flash=Pending+item+not+found&flash_type=error",
+                f"/admin/owl-triage?status={status_tab}&page={page}&flash=Pending+item+not+found&flash_type=error",
                 status_code=303)
 
         raw_value = pending['raw_value']
@@ -589,6 +598,7 @@ def owl_triage_resolve(
                 """, (beruf['owl_id'], raw_value))
 
         # 4. Update all matching postings (primary entity)
+        #    For rejected items, also pick up postings marked 'no_match'
         cur.execute("""
             UPDATE postings
             SET berufenet_id = %s,
@@ -597,7 +607,7 @@ def owl_triage_resolve(
                 qualification_level = %s,
                 berufenet_score = 1.0,
                 berufenet_verified = 'human'
-            WHERE berufenet_verified = 'pending_owl'
+            WHERE (berufenet_verified IN ('pending_owl', 'no_match'))
               AND berufenet_id IS NULL
               AND LOWER(job_title) = LOWER(%s)
         """, (primary['berufenet_id'], primary['berufenet_name'],
@@ -623,7 +633,7 @@ def owl_triage_resolve(
     label = primary['berufenet_name'] if n == 1 else f"{n}+entities"
     flash = f"Resolved:+{raw_value}+->+{label}+({postings_updated}+postings)"
     return RedirectResponse(
-        f"/admin/owl-triage?page={page}&flash={flash}&flash_type=success",
+        f"/admin/owl-triage?status={status_tab}&page={page}&flash={flash}&flash_type=success",
         status_code=303)
 
 
@@ -632,6 +642,7 @@ def owl_triage_skip(
     request: Request,
     pending_id: int = Form(...),
     action: str = Form("skip"),
+    status_tab: str = Form("pending"),
     page: int = Form(1),
     conn=Depends(get_db),
 ):
@@ -667,7 +678,7 @@ def owl_triage_skip(
     label = "Rejected" if new_status == 'rejected' else "Skipped"
     raw = pending['raw_value'] if pending else '?'
     return RedirectResponse(
-        f"/admin/owl-triage?page={page}&flash={label}:+{raw.replace(' ', '+')}&flash_type=success",
+        f"/admin/owl-triage?status={status_tab}&page={page}&flash={label}:+{raw.replace(' ', '+')}&flash_type=success",
         status_code=303)
 
 
