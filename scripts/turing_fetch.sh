@@ -29,12 +29,18 @@
 #         B5[🤖 owl_pending_auto_triage<br/>LLM picks best match] --> B6[new OWL synonyms]
 #     end
 #
+#     subgraph "5. SECOND PASS"
+#         F1[🔄 berufenet_description_retry<br/>title+desc → LLM → ~28%]
+#     end
+#
 #     A2 --> C1
 #     C3 --> D1
 #     C5 --> D1
 #     C6 --> B5
 #     D3 --> B1
+#     B1 --> F1
 #     B4 --> E[📊 Summary stats]
+#     F1 --> E
 # ```
 
 set -e
@@ -287,7 +293,7 @@ ts "Starting turing_fetch pipeline (since=$SINCE days, max_jobs=$MAX_JOBS${FORCE
 # ============================================================================
 # PRE-FLIGHT SMOKE TESTS - Catch import errors before they kill a 2-hour run
 # ============================================================================
-ts "[0/4] Pre-flight smoke tests..."
+ts "[0/5] Pre-flight smoke tests..."
 python3 -c "
 from actors.postings__arbeitsagentur_CU import main; print('  ✅ arbeitsagentur_CU')
 from actors.postings__deutsche_bank_CU import main; print('  ✅ deutsche_bank_CU')
@@ -296,6 +302,9 @@ from actors.postings__geo_state_U import process_batch as geo_batch; print('  �
 from core.turing_daemon import TuringDaemon; print('  ✅ turing_daemon')
 from tools.populate_domain_gate import main; print('  ✅ populate_domain_gate')
 from core.database import get_connection, get_connection_raw; print('  ✅ core.database')
+import ast
+ast.parse(open('scripts/berufenet_description_retry.py').read()); print('  ✅ berufenet_description_retry')
+ast.parse(open('scripts/bulk_auto_triage.py').read()); print('  ✅ bulk_auto_triage')
 print('All imports OK')
 "
 if [ $? -ne 0 ]; then
@@ -311,11 +320,11 @@ fi
 # Using --states (16 Bundesländer) instead of --nationwide for better progress tracking
 # and more reliable batching (smaller queries, less likely to timeout)
 # NOTE: Using --no-descriptions for speed - descriptions are backfilled in step 1c
-ts "[1/4] Fetching Arbeitsagentur (16 states, metadata only)..."
+ts "[1/5] Fetching Arbeitsagentur (16 states, metadata only)..."
 python3 actors/postings__arbeitsagentur_CU.py --since $SINCE --states --max-jobs $MAX_JOBS --no-descriptions $FORCE_FLAG
 
 # 1b. Deutsche Bank (corporate careers API - ~1 minute)
-ts "[2/4] Fetching Deutsche Bank..."
+ts "[2/5] Fetching Deutsche Bank..."
 python3 actors/postings__deutsche_bank_CU.py --max-jobs $MAX_JOBS
 
 # ============================================================================
@@ -325,7 +334,7 @@ python3 actors/postings__deutsche_bank_CU.py --max-jobs $MAX_JOBS
 # Phase 1: OWL lookup (instant, 11,746 known names in owl_names)
 # Phase 2: Embedding + LLM for unknown titles (--phase2, ~14/sec, GPU-bound)
 #          Confident matches auto-add as OWL synonyms (system learns!)
-ts "[3/4] Running Berufenet classification (OWL-first)..."
+ts "[3/5] Running Berufenet classification (OWL-first)..."
 
 # Phase 1: OWL lookup — instant, no GPU, handles known titles
 PHASE1_BATCH=5000
@@ -380,7 +389,7 @@ ts "✅ Berufenet Phase 3 (auto-triage) complete"
 # KldB-based domain mapping runs in step 4 (turing_daemon), but many postings
 # have no KldB code. This cascade classifies them via keyword patterns (~78%)
 # and LLM fallback (~17%), achieving 95%+ domain coverage.
-ts "[3b/4] Domain gate cascade (patterns + LLM)..."
+ts "[3b/5] Domain gate cascade (patterns + LLM)..."
 python3 tools/populate_domain_gate.py --apply
 ts "Domain cascade (KldB-based) complete"
 python3 tools/populate_domain_gate.py --cascade --apply
@@ -393,7 +402,7 @@ ts "Domain cascade (keyword + LLM) complete"
 # This resolves Bundesland via OWL geography hierarchy (city child_of bundesland).
 # Three strategies: direct match, comma-strip, city-state.
 # Skips ambiguous cities and international locations. ~82% resolution rate.
-ts "[3c/4] Geo state resolution (city → OWL → Bundesland)..."
+ts "[3c/5] Geo state resolution (city → OWL → Bundesland)..."
 python3 actors/postings__geo_state_U.py --batch 50000
 
 # ============================================================================
@@ -401,7 +410,7 @@ python3 actors/postings__geo_state_U.py --batch 50000
 # ============================================================================
 # Many AA postings have a 'beruf' field but no qualification_level.
 # This maps beruf → berufenet (direct name or synonym) → KldB code → qual level.
-ts "[3d/4] Qualification level backfill..."
+ts "[3d/5] Qualification level backfill..."
 python3 -c "
 from core.database import get_connection
 with get_connection() as conn:
@@ -460,7 +469,7 @@ with get_connection() as conn:
 #   - owl_pending_auto_triage  (prio 10): LLM triage for owl_pending items
 # Each actor has a work_query that self-discovers pending items.
 # Tickets track completion so nothing is processed twice.
-ts "[4/4] Running enrichment pipeline (turing_daemon)..."
+ts "[4/5] Running enrichment pipeline (turing_daemon)..."
 python3 core/turing_daemon.py --limit 50000
 
 # ============================================================================
