@@ -158,7 +158,7 @@ class BeesiteDBJobFetcher:
                 stats['description_success_rate'] = round(success_rate, 2)
                 
                 if success_rate < MIN_DESCRIPTION_SUCCESS_RATE:
-                    logger.warning("Low description success rate:%.0%(threshold:%.0%)", success_rate, MIN_DESCRIPTION_SUCCESS_RATE)
+                    logger.warning("Low description success rate: %.0f%% (threshold: %.0f%%)", success_rate * 100, MIN_DESCRIPTION_SUCCESS_RATE * 100)
                     stats['qa_warning'] = f'Low description success rate: {success_rate:.0%}'
             
             # Invalidate stale postings (with safety check)
@@ -515,8 +515,8 @@ class BeesiteDBJobFetcher:
         stale_ratio = stale_count / total_active
         
         if stale_ratio > MAX_STALE_PERCENTAGE:
-            logger.warning("SAFETY: Would invalidate %s/%s (%.0%) - skipping staleness check", stale_count, total_active, stale_ratio)
-            logger.info("This exceeds%.0%threshold - likely a bug or API issue", MAX_STALE_PERCENTAGE)
+            logger.warning("SAFETY: Would invalidate %s/%s (%.0f%%) - skipping staleness check", stale_count, total_active, stale_ratio * 100)
+            logger.info("This exceeds %.0f%% threshold - likely a bug or API issue", MAX_STALE_PERCENTAGE * 100)
             return {'stale_invalidated': 0, 'stale_skipped': True, 'stale_would_invalidate': stale_count}
         
         # Safe to proceed - invalidate stale postings

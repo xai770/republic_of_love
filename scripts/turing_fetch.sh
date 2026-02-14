@@ -463,6 +463,15 @@ with get_connection() as conn:
 ts "[4/4] Running enrichment pipeline (turing_daemon)..."
 python3 core/turing_daemon.py --limit 50000
 
+# ============================================================================
+# STEP 5: BERUFENET SECOND PASS — retry rejected items with descriptions
+# ============================================================================
+# After step 4 scrapes job descriptions, re-attempt berufenet matching on
+# rejected owl_pending items. The LLM now sees title + description, which
+# resolves ~25% of previously rejected items (Pattern A + B fixes).
+ts "[5/5] Berufenet description retry (second pass)..."
+python3 scripts/berufenet_description_retry.py
+
 # Summary
 ts "Pipeline complete. Summary:"
 python3 -c "
