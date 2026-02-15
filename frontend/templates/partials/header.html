@@ -16,24 +16,6 @@
     </div>
     
     <div class="header-right">
-        <!-- Notifications -->
-        <div class="nav-notifications" onclick="toggleNotifications(event)">
-            <span class="notification-bell">🔔</span>
-            <span class="notification-badge hidden" id="notif-badge"></span>
-            <div class="notification-dropdown" id="notif-dropdown">
-                <div class="notification-header">
-                    <h4>{{ t('common.notifications') if t('common.notifications') != 'common.notifications' else 'Benachrichtigungen' }}</h4>
-                    <button class="mark-all-read" onclick="markAllRead(event)">✓ Alle gelesen</button>
-                </div>
-                <ul class="notification-list" id="notif-list">
-                    <li class="notification-empty">Keine Benachrichtigungen</li>
-                </ul>
-            </div>
-        </div>
-        <!-- Feedback / Report Issue -->
-        <button class="feedback-btn" onclick="openFeedbackWidget()" title="{{ t('feedback.title') if t('feedback.title') != 'feedback.title' else 'Fehler melden' }}">
-            �
-        </button>
         <!-- Theme Toggle -->
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
             <span class="theme-icon-light">☀️</span>

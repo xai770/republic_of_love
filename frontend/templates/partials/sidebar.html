@@ -37,10 +37,11 @@
             <span class="nav-label">{{ t('nav.jobs') }}</span>
         </a>
         
-        {# 5. Messages #}
-        <a href="/messages" class="nav-item {{ 'active' if active_page == 'messages' else '' }}" data-tooltip="{{ t('nav.messages') }}">
-            <span class="nav-icon-wrap" style="background: #fff3e0;">
+        {# 5. Messages (with notification badge) #}
+        <a href="/messages" class="nav-item {{ 'active' if active_page == 'messages' else '' }}" data-tooltip="{{ t('nav.messages') }}" id="nav-messages">
+            <span class="nav-icon-wrap" style="background: #fff3e0; position: relative;">
                 <img src="/static/images/icons/icon-inbox.png" alt="" class="nav-icon-img">
+                <span class="nav-badge hidden" id="notif-badge"></span>
             </span>
             <span class="nav-label">{{ t('nav.messages') }}</span>
         </a>
@@ -63,6 +64,14 @@
     </nav>
     
     <div class="sidebar-footer">
+        {# Feedback / Report Issue #}
+        <a href="javascript:void(0)" onclick="openFeedbackWidget()" class="nav-item" data-tooltip="{{ t('feedback.title') if t('feedback.title') != 'feedback.title' else 'Feedback' }}">
+            <span class="nav-icon-wrap" style="background: #fce4ec;">
+                <span class="nav-icon">💡</span>
+            </span>
+            <span class="nav-label">{{ t('feedback.title') if t('feedback.title') != 'feedback.title' else 'Feedback' }}</span>
+        </a>
+
         {# Tour - replay onboarding (page-aware) #}
         <a href="javascript:void(0)" onclick="if(window.startSearchTour && location.pathname.includes('/search')){resetSearchTour();startSearchTour();}else{resetMiraTour();startMiraTour();}" class="nav-item" data-tooltip="Tour starten">
             <span class="nav-icon-wrap" style="background: #e0f7fa;">
