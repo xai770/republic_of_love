@@ -358,6 +358,26 @@ with get_connection() as conn:
     cur.execute("SELECT ...")
 ```
 
+### Test Users
+
+| user_id | email | display_name | role | purpose |
+|---------|-------|-------------|------|---------|
+| 1 | gershele@gmail.com | Gershon Pollatschek | admin | Production user (xai) |
+| 2 | test@talent.yoga | Test User | admin | Generic test account |
+| 3 | claude@talent.yoga | Arden (Dev) | admin | AI dev sessions |
+| 4 | luna@test.local | Luna Testbot | user | Non-admin test |
+| 5 | kai@test.local | Kai Testbot | user | Non-admin test |
+| 6 | rio@test.local | Rio Testbot | user | Non-admin test |
+
+**Minting a test session (for curl / Playwright):**
+```python
+from tools.turing.turing_browser import generate_session_token
+token = generate_session_token(user_id=3)  # returns JWT string
+# Set as cookie: session=<token>
+```
+
+**Browser testing:** `tools/turing/turing-browser --user 3 --interact`
+
 ---
 
 ## Glossary
