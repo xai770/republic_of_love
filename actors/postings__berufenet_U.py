@@ -314,6 +314,7 @@ def process_batch(batch_size: int, phase2: bool = False):
 
     stats = {'owl_hit': 0, 'owl_unanimous': 0, 'owl_majority': 0, 'embed_auto': 0, 'llm_yes': 0, 'escalated': 0, 'null': 0, 'error': 0}
     start_time = time.time()
+    last_progress_log = start_time
 
     for i, row in enumerate(titles):
         title = row['job_title']
@@ -443,9 +444,11 @@ def process_batch(batch_size: int, phase2: bool = False):
             conn.commit()
             stats['null'] += 1
 
-        # Progress
-        if (i + 1) % 100 == 0:
-            elapsed = time.time() - start_time
+        # Progress — at most once every 5 seconds
+        now = time.time()
+        if now - last_progress_log >= 5:
+            last_progress_log = now
+            elapsed = now - start_time
             rate = (i + 1) / elapsed
             owl_total = stats['owl_hit'] + stats['owl_unanimous'] + stats['owl_majority']
             logger.info("%s/%s (%.1f/s) — owl: %s (exact:%s unan:%s maj:%s) embed: %s llm: %s esc: %s null: %s", i+1, len(titles), rate, owl_total, stats['owl_hit'], stats['owl_unanimous'], stats['owl_majority'], stats['embed_auto'], stats['llm_yes'], stats['escalated'], stats['null'])
