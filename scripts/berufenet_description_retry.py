@@ -170,6 +170,7 @@ def get_eligible_items(conn, limit: int = 0) -> list[dict]:
           AND op.status = 'rejected'
           AND op.raw_value IS NOT NULL
           AND op.raw_value != ''
+          AND COALESCE(op.processed_by, '') != 'description_retry_rejected'
         ORDER BY op.pending_id, LENGTH(p.job_description) DESC
     """
     if limit > 0:
@@ -198,6 +199,7 @@ def show_stats(conn):
                 AND COALESCE(p.invalidated, false) = false
             WHERE op.owl_type = 'berufenet'
               AND op.status = 'rejected'
+              AND COALESCE(op.processed_by, '') != 'description_retry_rejected'
               AND op.raw_value IS NOT NULL
               AND op.raw_value != ''
         """)
@@ -319,6 +321,14 @@ def process(limit: int = 0, dry_run: bool = False):
                     conn.commit()
                     resolved += 1
                 else:
+                    # Mark as tried so we don't retry every night
+                    cur.execute("""
+                        UPDATE owl_pending
+                        SET processed_by = 'description_retry_rejected',
+                            processed_at = NOW()
+                        WHERE pending_id = %s
+                    """, (item['pending_id'],))
+                    conn.commit()
                     still_rejected += 1
 
             except Exception as e:

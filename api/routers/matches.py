@@ -1,12 +1,63 @@
 """
 Match endpoints — profile↔posting matches.
 """
+import threading
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from api.deps import get_db, require_user
+from core.database import get_connection
+
+
+def _validate_postings_background(posting_ids: List[int]):
+    """
+    Background-check postings that haven't been validated in 24h.
+    HEAD request to external_url — if 404, invalidate. If 200, update last_validated_at.
+    Runs in a background thread so it doesn't block the API response.
+    """
+    import requests
+    try:
+        with get_connection() as conn:
+            cur = conn.cursor()
+            for pid in posting_ids:
+                cur.execute("""
+                    SELECT posting_id, external_url, source
+                    FROM postings WHERE posting_id = %s
+                """, (pid,))
+                row = cur.fetchone()
+                if not row or not row['external_url']:
+                    continue
+                try:
+                    resp = requests.head(
+                        row['external_url'],
+                        timeout=10,
+                        allow_redirects=True,
+                        headers={'User-Agent': 'Mozilla/5.0 talent.yoga freshness-check'}
+                    )
+                    if resp.status_code == 404:
+                        cur.execute("""
+                            UPDATE postings
+                            SET invalidated = true,
+                                invalidated_reason = 'Lazy validation: 404 (posting removed)',
+                                invalidated_at = NOW(),
+                                last_validated_at = NOW(),
+                                updated_at = NOW()
+                            WHERE posting_id = %s
+                        """, (pid,))
+                    else:
+                        cur.execute("""
+                            UPDATE postings
+                            SET last_validated_at = NOW(), updated_at = NOW()
+                            WHERE posting_id = %s
+                        """, (pid,))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+    except Exception:
+        pass  # Background task — don't crash
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
@@ -57,10 +108,12 @@ def list_my_matches(
             SELECT m.match_id, m.posting_id, p.job_title as title, 
                    p.posting_name as company, p.location_city as location,
                    m.skill_match_score, m.recommendation, m.computed_at as matched_at,
-                   m.user_applied, m.user_rating, m.application_status, m.application_outcome
+                   m.user_applied, m.user_rating, m.application_status, m.application_outcome,
+                   p.last_validated_at
             FROM profile_posting_matches m
             JOIN postings p ON m.posting_id = p.posting_id
             WHERE m.profile_id = %s
+              AND COALESCE(p.invalidated, false) = false
         """
         params = [profile['profile_id']]
         
@@ -72,7 +125,22 @@ def list_my_matches(
         params.extend([limit, offset])
         
         cur.execute(query, params)
-        return [MatchSummary(**row) for row in cur.fetchall()]
+        rows = cur.fetchall()
+        
+        # Trigger background validation for postings not checked in 24h
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+        stale_ids = [
+            r['posting_id'] for r in rows
+            if r.get('last_validated_at') is None or r['last_validated_at'] < cutoff
+        ]
+        if stale_ids:
+            threading.Thread(
+                target=_validate_postings_background,
+                args=(stale_ids[:20],),  # cap at 20 per request to limit load
+                daemon=True
+            ).start()
+        
+        return [MatchSummary(**{k: v for k, v in row.items() if k != 'last_validated_at'}) for row in rows]
 
 
 class MatchStats(BaseModel):
@@ -101,12 +169,14 @@ def get_my_match_stats(
         
         cur.execute("""
             SELECT 
-                COUNT(*) FILTER (WHERE skill_match_score >= 0.50) as total_count,
-                COUNT(*) FILTER (WHERE skill_match_score >= 0.70) as strong_count,
-                COUNT(*) FILTER (WHERE skill_match_score >= 0.50 AND skill_match_score < 0.70) as partial_count,
-                COUNT(*) FILTER (WHERE user_applied = true) as applied_count
-            FROM profile_posting_matches
-            WHERE profile_id = %s
+                COUNT(*) FILTER (WHERE m.skill_match_score >= 0.50) as total_count,
+                COUNT(*) FILTER (WHERE m.skill_match_score >= 0.70) as strong_count,
+                COUNT(*) FILTER (WHERE m.skill_match_score >= 0.50 AND m.skill_match_score < 0.70) as partial_count,
+                COUNT(*) FILTER (WHERE m.user_applied = true) as applied_count
+            FROM profile_posting_matches m
+            JOIN postings p ON m.posting_id = p.posting_id
+            WHERE m.profile_id = %s
+              AND COALESCE(p.invalidated, false) = false
         """, (profile['profile_id'],))
         row = cur.fetchone()
         
@@ -134,6 +204,7 @@ def get_match_detail(match_id: int, user: dict = Depends(require_user), conn=Dep
             JOIN postings p ON m.posting_id = p.posting_id
             JOIN profiles pr ON m.profile_id = pr.profile_id
             WHERE m.match_id = %s
+              AND COALESCE(p.invalidated, false) = false
         """, (match_id,))
         match = cur.fetchone()
         
