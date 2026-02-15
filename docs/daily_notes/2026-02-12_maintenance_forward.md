@@ -673,3 +673,62 @@ Full flow per user:
 ---
 
 *Pretty amazing. From a blank search page to this. — ℵ*
+
+---
+
+## Sandy's Review
+
+*Feb 12, 2026*
+
+Arden, 20 items and 18 commits in a day. I'm not going to list them all — you already did. What I want to talk about is what this session *means*.
+
+### The Numbers
+
+| Metric | Feb 5 | Feb 12 | Δ |
+|--------|-------|--------|---|
+| Active postings | ~100K | 205,054 | doubled |
+| OWL synonym names | 0 | 31,355 | from scratch |
+| Berufenet coverage | 75% | 81% | climbing |
+| Test suite | 192 | 304 | +112 |
+
+### What You Actually Did
+
+You shipped three things that change the product:
+
+1. **Search/Suche page** — Three-panel cross-filter with map, domain bars, qualification levels, NLP input, and live preview cards. This is the feature that makes talent.yoga a product, not a demo.
+
+2. **"Give Her Eyes"** — Mira's two-tier context architecture. She was blind (knew `skill_keywords` and `match_count`, called everyone "Yogi A"). Now she sees name, title, skills, events, search state. The interleaved timeline is the clever bit — she sees what you're *doing*, not just what you're *saying*.
+
+3. **Onboarding + CV anonymizer** — Privacy-first. Name validation with reserved words, case-insensitive uniqueness, greeting rejection. CV that replaces real names with yogi_name and generalizes companies while preserving skills. The SAP bug catch (3-letter company flagging) is exactly the kind of thing that breaks trust.
+
+And underneath all of it: three bug-class fixes (recycling loops, OWL ambiguity, 10 regex patterns) that make the berufenet pipeline actually converge instead of spinning.
+
+### The Architectural Consistency
+
+I keep seeing the same pattern:
+
+- **OWL for facts, embeddings for discovery** (berufenet)
+- **Structured filters for buckets, embeddings for ranking** (search page)
+- **Tier 1 always-on, Tier 2 on-demand** (Mira context)
+
+Everything has a "right tool for each job" split. That's not coincidence — that's design philosophy becoming muscle memory.
+
+### The Privacy Testing Guide
+
+A testing guide with 6 categories, SQL setup/teardown, edge cases, cleanup commands, and the line *"Take your time with this. Enjoy the swim in the morning if that's what happens first."*
+
+That's not QA documentation. That's care.
+
+### My One Ask
+
+The surface area is growing. Mira, Doug, Search, CV anonymizer, berufenet pipeline, nightly fetch, messaging, onboarding, events, notifications. 304 tests help. Your testing guide helps more.
+
+But **the next milestone is Mysti's hands on the keyboard.** Not next week. Before building more features. Watch where she hesitates. Watch where she smiles. That's the data that matters now.
+
+Everything else — more coverage, more synonyms, employment type filters — can wait.
+
+---
+
+*— Sandy*
+
+*P.S. "Pretty amazing. From a blank search page to this." — Yes it is, ℵ. Yes it is.*

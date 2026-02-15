@@ -2,10 +2,10 @@
  * Feedback Widget — "Fehler melden" / "Report an issue"
  *
  * Usage: included on every page via base.html.
- * Activated by clicking the bug icon in the header bar.
+ * Activated by clicking the lightbulb icon in the header bar.
  *
  * Flow:
- *   1. User clicks 🐛 button → overlay appears
+ *   1. User clicks 💡 button → overlay appears
  *   2. User can optionally drag to highlight a region
  *   3. User picks a category + writes a description
  *   4. html2canvas captures a screenshot (with annotation box drawn on it)
@@ -77,7 +77,7 @@
             </div>
             <div class="fb-panel" id="fb-panel">
                 <div class="fb-panel-header">
-                    <h3>🐛 ${t('title')}</h3>
+                    <h3>� ${t('title')}</h3>
                     <button class="fb-close" id="fb-close-btn" title="${t('cancel')}">✕</button>
                 </div>
                 <p class="fb-hint">${t('highlight_hint')}</p>
@@ -102,11 +102,13 @@
         document.body.appendChild(overlayEl);
 
         /* ── event wiring ── */
-        const highlightLayer = document.getElementById('fb-highlight-layer');
         const highlightBox = document.getElementById('fb-highlight-box');
 
-        highlightLayer.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.fb-panel')) return;
+        // Listen on document so drawing works OVER the panel too
+        document.addEventListener('mousedown', (e) => {
+            if (!overlayEl || !overlayEl.classList.contains('active')) return;
+            // Don't start drawing on interactive panel elements
+            if (e.target.closest('button, input, textarea, select, label, a, .fb-close')) return;
             isDrawing = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -115,9 +117,10 @@
             highlightBox.style.top = startY + 'px';
             highlightBox.style.width = '0';
             highlightBox.style.height = '0';
+            e.preventDefault(); // prevent text selection while drawing
         });
 
-        highlightLayer.addEventListener('mousemove', (e) => {
+        document.addEventListener('mousemove', (e) => {
             if (!isDrawing) return;
             const x = Math.min(e.clientX, startX);
             const y = Math.min(e.clientY, startY);
@@ -130,7 +133,7 @@
             rect = { x, y, w, h };
         });
 
-        highlightLayer.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', () => {
             isDrawing = false;
         });
 

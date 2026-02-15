@@ -5053,10 +5053,10 @@ body {
     border-radius: 4px;
     background: rgba(239, 68, 68, 0.08);
     pointer-events: none;
-    z-index: 100002;
+    z-index: 100005; /* above panel so rectangle is visible over it */
 }
 
-/* Side panel */
+/* Side panel — semi-transparent so user can see & draw through it */
 .fb-panel {
     position: fixed;
     top: 0;
@@ -5064,7 +5064,9 @@ body {
     width: 380px;
     max-width: 90vw;
     height: 100vh;
-    background: var(--bg-card, #fff);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
     z-index: 100003;
     padding: 24px;
@@ -5072,7 +5074,7 @@ body {
     flex-direction: column;
     gap: 12px;
     overflow-y: auto;
-    cursor: default;
+    cursor: crosshair;
     animation: fbSlideIn 0.2s ease-out;
 }
 
@@ -5198,7 +5200,7 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 [data-theme="dark"] .fb-panel {
-    background: var(--bg-card, #1a1a2e);
+    background: rgba(26, 26, 46, 0.88);
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
 }
 [data-theme="dark"] .fb-close:hover {
