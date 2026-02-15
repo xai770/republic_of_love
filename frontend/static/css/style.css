@@ -755,6 +755,15 @@ body {
     background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
 }
 
+[data-theme="dark"] .header-search {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="dark"] .search-icon {
+    color: #a0aec0 !important;
+}
+
 [data-theme="dark"] .logo-text,
 [data-theme="dark"] .talent,
 [data-theme="dark"] .yoga {
@@ -762,13 +771,14 @@ body {
 }
 
 [data-theme="dark"] .search-input {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-primary) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    color: #f7fafc !important;
 }
 
 [data-theme="dark"] .search-input::placeholder {
-    color: var(--text-secondary) !important;
+    color: #a0aec0 !important;
+    opacity: 1 !important;
 }
 
 [data-theme="dark"] .user-name {
