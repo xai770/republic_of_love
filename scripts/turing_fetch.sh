@@ -338,49 +338,44 @@ ts "[3/5] Running Berufenet classification (OWL-first)..."
 
 # Phase 1: OWL lookup — instant, no GPU, handles known titles
 PHASE1_BATCH=5000
+OUTPUT_FILE=$(mktemp)
 while true; do
     ts "Berufenet OWL lookup batch..."
-    OUTPUT=$(python3 actors/postings__berufenet_U.py --batch $PHASE1_BATCH 2>&1)
-    echo "$OUTPUT" | while IFS= read -r line; do
-        [[ -n "$line" ]] && ts "$line"
-    done
+    python3 actors/postings__berufenet_U.py --batch $PHASE1_BATCH 2>&1 | tee "$OUTPUT_FILE"
 
-    if echo "$OUTPUT" | grep -q "No unclassified titles remaining"; then
+    if grep -q "No unclassified titles remaining" "$OUTPUT_FILE"; then
         ts "✅ Berufenet Phase 1 (OWL) complete"
         break
     fi
     # If no OWL hits and Phase 2 is off, all titles are NULL — stop looping
-    if echo "$OUTPUT" | grep -q "NULL (Phase 2 off).*$PHASE1_BATCH"; then
+    if grep -q "NULL (Phase 2 off).*$PHASE1_BATCH" "$OUTPUT_FILE"; then
         ts "⏭️  Berufenet Phase 1 done — remaining titles need Phase 2"
         break
     fi
     sleep 1
 done
+rm -f "$OUTPUT_FILE"
 
 # Phase 2: Embedding + LLM discovery for unknown titles
 # Adds new OWL synonyms automatically. Tested 2026-02-11: 927/6200 classified (78.5%).
 PHASE2_BATCH=500
+OUTPUT_FILE=$(mktemp)
 while true; do
     ts "Berufenet Phase 2 (embed+LLM) batch..."
-    OUTPUT=$(python3 actors/postings__berufenet_U.py --batch $PHASE2_BATCH --phase2 2>&1)
-    echo "$OUTPUT" | while IFS= read -r line; do
-        [[ -n "$line" ]] && ts "$line"
-    done
-    if echo "$OUTPUT" | grep -q "No unclassified titles remaining"; then
+    python3 actors/postings__berufenet_U.py --batch $PHASE2_BATCH --phase2 2>&1 | tee "$OUTPUT_FILE"
+    if grep -q "No unclassified titles remaining" "$OUTPUT_FILE"; then
         ts "✅ Berufenet Phase 2 complete"
         break
     fi
     sleep 1
 done
+rm -f "$OUTPUT_FILE"
 
 # Phase 3: Auto-triage owl_pending backlog (LLM picks best candidate)
 # Items escalated by Phase 2 have embedding candidates attached — re-ask LLM.
 # Resolved items become OWL synonyms, so Phase 1 catches them next run.
 ts "Berufenet Phase 3 (auto-triage owl_pending)..."
-OUTPUT=$(python3 scripts/bulk_auto_triage.py 2>&1)
-echo "$OUTPUT" | while IFS= read -r line; do
-    [[ -n "$line" ]] && ts "$line"
-done
+python3 scripts/bulk_auto_triage.py 2>&1
 ts "✅ Berufenet Phase 3 (auto-triage) complete"
 
 # ============================================================================
