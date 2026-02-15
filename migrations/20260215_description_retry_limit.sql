@@ -1,0 +1,15 @@
+-- 2026-02-15: Limit description fetch retries to 2 attempts
+-- 
+-- Rationale: ~444 postings have been stuck at processing_failures >= 3 forever.
+-- The AA API simply doesn't return descriptions for these postings.
+-- After 2 failures, mark them as permanently failed and stop wasting compute.
+--
+-- The work_query for job_description_backfill was updated via:
+--   UPDATE actors SET work_query = '...AND COALESCE(processing_failures, 0) < 2...'
+--   WHERE actor_name = 'job_description_backfill'
+--
+-- The postings__job_description_U.py preflight check was updated:
+--   processing_failures >= 3 → processing_failures >= 2
+--
+-- No schema changes needed — processing_failures column already exists.
+-- This is a policy change documented as a migration for traceability.

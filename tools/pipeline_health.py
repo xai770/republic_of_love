@@ -32,17 +32,45 @@ def get_last_pipeline_run() -> dict:
     if not log_path.exists():
         return {'error': 'Log file not found'}
     
-    # Read last 200 lines
+    # Read entire file and find the LAST run (starts with [1/5])
     with open(log_path) as f:
-        lines = f.readlines()[-200:]
+        all_lines = f.readlines()
+    
+    # Find the last occurrence of [1/5] to isolate the most recent run
+    last_run_start = 0
+    for i, line in enumerate(all_lines):
+        if '[1/5]' in line:
+            last_run_start = i
+    
+    lines = all_lines[last_run_start:]
     
     result = {
         'log_file': str(log_path),
         'start_time': None,
         'end_time': None,
-        'steps_completed': [],
+        'step_checklist': {},  # step_key -> {name, status, timestamp}
+        'steps_completed': [],  # backward compat
         'errors': [],
     }
+    
+    # Canonical pipeline steps — order matters
+    PIPELINE_STEPS = [
+        ('1', 'AA fetch'),
+        ('2', 'DB fetch'),
+        ('3', 'Berufenet classification'),
+        ('3b', 'Domain cascade'),
+        ('3c', 'Geo state'),
+        ('3d', 'Qualification backfill'),
+        ('4', 'Enrichment daemon'),
+        ('5', 'Description retry'),
+    ]
+    
+    # Initialize checklist
+    for key, name in PIPELINE_STEPS:
+        result['step_checklist'][key] = {'name': name, 'status': 'not_seen'}
+    
+    # Track step start times for ETA estimation
+    step_timestamps = {}
     
     for line in lines:
         line = line.strip()
@@ -58,11 +86,32 @@ def get_last_pipeline_run() -> dict:
             except (KeyError, ValueError, TypeError):
                 pass
         
-        # Look for step completions  
-        # Format: [n/5] step name, or ✅ ... complete, or Pipeline complete
-        if re.search(r'\[\d+/5\]', line) or \
-           ('✅' in line and 'complete' in line.lower()) or \
-           'Pipeline complete' in line:
+        # Match step markers: [1/5], [3b/5], etc.
+        step_match = re.search(r'\[(\d+[a-z]?)/5\]', line)
+        if step_match:
+            step_key = step_match.group(1)
+            if step_key in result['step_checklist']:
+                result['step_checklist'][step_key]['status'] = 'started'
+                # Extract timestamp if present
+                ts_match = re.match(r'\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]', line)
+                if ts_match:
+                    step_timestamps[step_key] = datetime.strptime(ts_match.group(1), '%Y-%m-%d %H:%M:%S')
+            result['steps_completed'].append(line)
+        
+        # Match completion markers: ✅ ... complete
+        if '✅' in line and 'complete' in line.lower():
+            result['steps_completed'].append(line)
+            # Try to match which step completed
+            for key, name in PIPELINE_STEPS:
+                if any(word in line.lower() for word in name.lower().split()[:2]):
+                    result['step_checklist'][key]['status'] = 'done'
+        
+        # Pipeline complete marker
+        if 'Pipeline complete' in line:
+            # Mark all started steps as done
+            for key in result['step_checklist']:
+                if result['step_checklist'][key]['status'] == 'started':
+                    result['step_checklist'][key]['status'] = 'done'
             result['steps_completed'].append(line)
         
         # Look for errors
@@ -74,6 +123,24 @@ def get_last_pipeline_run() -> dict:
         result['start_time'] = result['start_time'].isoformat()
         result['end_time'] = result['end_time'].isoformat()
     
+    # Calculate step durations for ETA estimation
+    step_keys = [k for k, _ in PIPELINE_STEPS]
+    step_durations = {}
+    for i, key in enumerate(step_keys):
+        if key in step_timestamps:
+            # Duration = time to next step (or end)
+            next_ts = None
+            for j in range(i + 1, len(step_keys)):
+                if step_keys[j] in step_timestamps:
+                    next_ts = step_timestamps[step_keys[j]]
+                    break
+            if next_ts is None and result.get('end_time'):
+                next_ts = datetime.fromisoformat(result['end_time'])
+            if next_ts:
+                step_durations[key] = (next_ts - step_timestamps[key]).total_seconds()
+    
+    result['step_durations'] = step_durations
+    
     return result
 
 
@@ -82,13 +149,18 @@ def get_pending_work() -> dict:
     with get_connection() as conn:
         cur = conn.cursor()
         
-        # Postings without job_description
+        # Postings without job_description — split retryable vs permanently failed
         cur.execute("""
-            SELECT COUNT(*) as cnt FROM postings 
+            SELECT 
+                COUNT(*) FILTER (WHERE COALESCE(processing_failures, 0) < 2) as retryable,
+                COUNT(*) FILTER (WHERE COALESCE(processing_failures, 0) >= 2) as given_up
+            FROM postings 
             WHERE (job_description IS NULL OR job_description = '')
               AND invalidated = false
         """)
-        no_description = cur.fetchone()['cnt']
+        row = cur.fetchone()
+        no_desc_retryable = row['retryable']
+        no_desc_given_up = row['given_up']
         
         # AA postings not yet processed by berufenet actor
         # Note: berufenet_verified IS NULL means unprocessed
@@ -123,7 +195,8 @@ def get_pending_work() -> dict:
         need_embedding = cur.fetchone()['cnt']
         
         return {
-            'no_description': no_description,
+            'no_desc_retryable': no_desc_retryable,
+            'no_desc_given_up': no_desc_given_up,
             'need_berufenet': need_berufenet,
             'need_summary': need_summary,
             'need_embedding': need_embedding,
@@ -257,7 +330,21 @@ def render_ascii(last_run: dict, pending: dict, activity: dict, anomalies: list,
             lines.append(f"   Ended:    {last_run.get('end_time', 'unknown')}")
             if last_run.get('duration_minutes'):
                 lines.append(f"   Duration: {last_run['duration_minutes']:.1f} minutes")
-        lines.append(f"   Steps completed: {len(last_run.get('steps_completed', []))}")
+        
+        # Step checklist
+        checklist = last_run.get('step_checklist', {})
+        step_durations = last_run.get('step_durations', {})
+        if checklist:
+            lines.append("")
+            for key in ['1', '2', '3', '3b', '3c', '3d', '4', '5']:
+                step = checklist.get(key, {})
+                name = step.get('name', f'Step {key}')
+                status = step.get('status', 'not_seen')
+                icon = '✅' if status == 'done' else ('🔄' if status == 'started' else '⬜')
+                dur = step_durations.get(key)
+                dur_str = f" ({dur:.0f}s)" if dur else ""
+                lines.append(f"   {icon} [{key}/5] {name}{dur_str}")
+        
         if last_run.get('errors'):
             lines.append(f"   ⚠️ Errors found: {len(last_run['errors'])}")
     
@@ -278,7 +365,9 @@ def render_ascii(last_run: dict, pending: dict, activity: dict, anomalies: list,
     def status_icon(count, threshold=100):
         return "🟢" if count == 0 else ("🟡" if count < threshold else "🔴")
     
-    lines.append(f"   {status_icon(pending['no_description'], 500)} Missing descriptions:     {pending['no_description']:,}")
+    lines.append(f"   {status_icon(pending['no_desc_retryable'], 100)} Missing descriptions:     {pending['no_desc_retryable']:,} retryable")
+    if pending['no_desc_given_up'] > 0:
+        lines.append(f"   ⚫ Given up (≥2 failures):   {pending['no_desc_given_up']:,}")
     lines.append(f"   {status_icon(pending['need_berufenet'], 500)} Need berufenet match:     {pending['need_berufenet']:,}")
     lines.append(f"   {status_icon(pending['need_summary'], 100)} Need LLM summary:         {pending['need_summary']:,}")
     lines.append(f"   {status_icon(pending['need_embedding'], 500)} Need embedding:           {pending['need_embedding']:,}")

@@ -338,9 +338,9 @@ class PostingsJobDescriptionU:
         posting = dict(posting)  # Make mutable copy
         posting['actual_source'] = actual_source
         
-        # Check failure count - skip if too many failures
-        if (posting.get('processing_failures') or 0) >= 3:
-            return {'ok': False, 'reason': 'TOO_MANY_FAILURES', 'message': 'Posting has failed 3+ times'}
+        # Check failure count - skip if too many failures (2 strikes = out)
+        if (posting.get('processing_failures') or 0) >= 2:
+            return {'ok': False, 'reason': 'TOO_MANY_FAILURES', 'message': 'Posting has failed 2+ times (permanently failed)'}
         
         return {'ok': True, 'data': posting}
     
@@ -477,7 +477,7 @@ def main():
                 WHERE source = 'arbeitsagentur'
                   AND job_description IS NULL
                   AND external_url LIKE '%%arbeitsagentur.de/jobsuche/jobdetail/%%'
-                  AND COALESCE(processing_failures, 0) < 3
+                  AND COALESCE(processing_failures, 0) < 2
                   AND COALESCE(invalidated, false) = false
                 ORDER BY posting_id DESC
                 LIMIT %s
