@@ -2278,6 +2278,223 @@ body {
     margin: 0;
 }
 
+/* ============================================================
+   JOURNEY BOARD — 3-column progress tracker
+   ============================================================ */
+
+.journey-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 2rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.journey-column {
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.journey-column-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border, #f1f5f9);
+}
+
+.journey-column-icon {
+    font-size: 1.4rem;
+}
+
+.journey-column-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary, #1e293b);
+}
+
+.journey-steps {
+    display: flex;
+    flex-direction: column;
+}
+
+.journey-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid var(--border, #f1f5f9);
+    transition: background 0.15s;
+}
+
+.journey-step:last-child {
+    border-bottom: none;
+}
+
+.journey-step:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+.step-status {
+    font-size: 1.15rem;
+    line-height: 1;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.step-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.step-label {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary, #334155);
+    line-height: 1.35;
+}
+
+.step-detail {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.15rem;
+}
+
+/* Step states */
+.journey-step.step-not-started {
+    opacity: 0.55;
+}
+
+.journey-step.step-not-started:hover {
+    opacity: 0.8;
+}
+
+.journey-step.step-in-progress {
+    opacity: 1;
+    background: rgba(245, 158, 11, 0.04);
+}
+
+.journey-step.step-in-progress .step-label {
+    color: #b45309;
+}
+
+.journey-step.step-complete {
+    opacity: 1;
+}
+
+.journey-step.step-complete .step-label {
+    color: #059669;
+}
+
+.journey-step.step-complete .step-status {
+    color: #059669;
+}
+
+/* Progress bar (inside step A1) */
+.step-progress-bar {
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    margin-top: 0.4rem;
+    overflow: hidden;
+}
+
+.step-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #10b981);
+    border-radius: 999px;
+    transition: width 0.5s ease;
+}
+
+/* Dark mode — journey board */
+[data-theme="dark"] .journey-column {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .journey-column-header {
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .journey-column-title {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .journey-step {
+    border-bottom-color: #2d3748;
+}
+
+[data-theme="dark"] .journey-step:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+[data-theme="dark"] .step-label {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .step-detail {
+    color: #718096;
+}
+
+[data-theme="dark"] .journey-step.step-not-started {
+    opacity: 0.45;
+}
+
+[data-theme="dark"] .journey-step.step-in-progress {
+    background: rgba(245, 158, 11, 0.08);
+}
+
+[data-theme="dark"] .journey-step.step-in-progress .step-label {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .journey-step.step-complete .step-label {
+    color: #34d399;
+}
+
+[data-theme="dark"] .journey-step.step-complete .step-status {
+    color: #34d399;
+}
+
+[data-theme="dark"] .step-progress-bar {
+    background: #374151;
+}
+
+/* Journey responsive */
+@media (max-width: 1024px) {
+    .journey-board {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .journey-board {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .journey-column-header {
+        padding: 0.85rem 1rem 0.6rem;
+    }
+    
+    .journey-step {
+        padding: 0.7rem 1rem;
+    }
+}
+
 /* Dark theme adjustments for T004 */
 [data-theme="dark"] .mira-greeting-card {
     background: linear-gradient(135deg, #1e3a5f 0%, #1e3a5f 50%, #1a3d2f 100%);

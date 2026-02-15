@@ -10,64 +10,112 @@
     {% include "partials/sidebar.html" %}
     
     <main class="main-content">
-        <!-- T004: Home Redesign — Mira-centered, no job cards -->
-        
-        <!-- Home Stats — 5 cards, large friendly letters -->
-        <section class="summary-cards home-stats">
-            <a href="/profile" class="summary-card">
-                <div class="summary-icon"><img src="/static/images/icons/clipboard.png" alt="📋"></div>
-                <div class="summary-content">
-                    <span class="summary-number"><span id="stat-resume">—</span>%</span>
-                    <span class="summary-label">{{ t('dashboard.resume_complete') if t('dashboard.resume_complete') != 'dashboard.resume_complete' else 'Lebenslauf' }}</span>
+        <!-- Journey Tracker — 3-column progress board -->
+        <section class="journey-board" id="journey-board">
+
+            <!-- Column A: Resume -->
+            <div class="journey-column">
+                <div class="journey-column-header">
+                    <span class="journey-column-icon">📋</span>
+                    <h2 class="journey-column-title">{{ t('dashboard.journey_resume') }}</h2>
                 </div>
-                <div class="summary-detail" id="resume-detail">{{ t('dashboard.click_to_complete') }}</div>
-            </a>
-            
-            <a href="/matches" class="summary-card">
-                <div class="summary-icon"><img src="/static/images/icons/sparkles.png" alt="✨"></div>
-                <div class="summary-content">
-                    <span class="summary-number" id="stat-new">—</span>
-                    <span class="summary-label">{{ t('dashboard.new_matches') if t('dashboard.new_matches') != 'dashboard.new_matches' else 'Neue Matches' }}</span>
-                </div>
-                <div class="summary-detail" id="new-detail"></div>
-            </a>
-            
-            <a href="/matches?filter=unread" class="summary-card">
-                <div class="summary-icon"><img src="/static/images/icons/eyes.png" alt="👀"></div>
-                <div class="summary-content">
-                    <span class="summary-number" id="stat-unread">—</span>
-                    <span class="summary-label">{{ t('dashboard.unread_matches') if t('dashboard.unread_matches') != 'dashboard.unread_matches' else 'Ungelesene' }}</span>
-                </div>
-                <div class="summary-detail" id="unread-detail"></div>
-            </a>
-            
-            <a href="/matches?filter=saved" class="summary-card">
-                <div class="summary-icon"><img src="/static/images/icons/purple_heart.png" alt="💜"></div>
-                <div class="summary-content">
-                    <span class="summary-number" id="stat-saved">—</span>
-                    <span class="summary-label">{{ t('dashboard.saved_matches') if t('dashboard.saved_matches') != 'dashboard.saved_matches' else 'Gespeicherte' }}</span>
-                </div>
-                <div class="summary-detail"></div>
-            </a>
-            
-            <a href="/journey" class="summary-card">
-                <div class="summary-icon"><img src="/static/images/icons/envelope.png" alt="📨"></div>
-                <div class="summary-content">
-                    <span class="summary-number" id="stat-applied">—</span>
-                    <span class="summary-label">{{ t('dashboard.open_applications') if t('dashboard.open_applications') != 'dashboard.open_applications' else 'Bewerbungen' }}</span>
-                </div>
-                <div class="summary-detail"></div>
-            </a>
-        </section>
-        
-        <!-- Suggested Next Steps -->
-        <section class="next-steps-section">
-            <h2>{{ t('dashboard.next_steps') }}</h2>
-            <div class="next-steps" id="next-steps">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
+                <div class="journey-steps">
+                    <a href="/profile" class="journey-step" id="step-a1" data-step="upload_create">
+                        <span class="step-status" id="status-a1">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_upload_create') }}</div>
+                            <div class="step-detail" id="detail-a1"></div>
+                            <div class="step-progress-bar" id="progress-a1" style="display:none;">
+                                <div class="step-progress-fill" id="fill-a1"></div>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="/profile" class="journey-step" id="step-a2" data-step="fix_gaps">
+                        <span class="step-status" id="status-a2">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_fix_gaps') }}</div>
+                            <div class="step-detail" id="detail-a2"></div>
+                        </div>
+                    </a>
+                    <a href="/profile#skills" class="journey-step" id="step-a3" data-step="confirm_skills">
+                        <span class="step-status" id="status-a3">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_confirm_skills') }}</div>
+                            <div class="step-detail" id="detail-a3"></div>
+                        </div>
+                    </a>
                 </div>
             </div>
+
+            <!-- Column B: Search -->
+            <div class="journey-column">
+                <div class="journey-column-header">
+                    <span class="journey-column-icon">🔍</span>
+                    <h2 class="journey-column-title">{{ t('dashboard.journey_search') }}</h2>
+                </div>
+                <div class="journey-steps">
+                    <a href="/search" class="journey-step" id="step-b1" data-step="define_search">
+                        <span class="step-status" id="status-b1">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_define_search') }}</div>
+                            <div class="step-detail" id="detail-b1"></div>
+                        </div>
+                    </a>
+                    <a href="/matches" class="journey-step" id="step-b2" data-step="review_matches">
+                        <span class="step-status" id="status-b2">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_review_matches') }}</div>
+                            <div class="step-detail" id="detail-b2"></div>
+                        </div>
+                    </a>
+                    <a href="/search" class="journey-step" id="step-b3" data-step="select_favorites">
+                        <span class="step-status" id="status-b3">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_select_favorites') }}</div>
+                            <div class="step-detail" id="detail-b3"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Column C: Apply -->
+            <div class="journey-column">
+                <div class="journey-column-header">
+                    <span class="journey-column-icon">🚀</span>
+                    <h2 class="journey-column-title">{{ t('dashboard.journey_apply') }}</h2>
+                </div>
+                <div class="journey-steps">
+                    <a href="/journey" class="journey-step" id="step-c1" data-step="ship_documents">
+                        <span class="step-status" id="status-c1">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_ship_documents') }}</div>
+                            <div class="step-detail" id="detail-c1"></div>
+                        </div>
+                    </a>
+                    <a href="/journey" class="journey-step" id="step-c2" data-step="await_reply">
+                        <span class="step-status" id="status-c2">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_await_reply') }}</div>
+                            <div class="step-detail" id="detail-c2"></div>
+                        </div>
+                    </a>
+                    <a href="/journey" class="journey-step" id="step-c3" data-step="train_coach">
+                        <span class="step-status" id="status-c3">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_train_coach') }}</div>
+                            <div class="step-detail" id="detail-c3"></div>
+                        </div>
+                    </a>
+                    <a href="/journey" class="journey-step" id="step-c4" data-step="interview">
+                        <span class="step-status" id="status-c4">💤</span>
+                        <div class="step-content">
+                            <div class="step-label">{{ t('dashboard.step_interview') }}</div>
+                            <div class="step-detail" id="detail-c4"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
         </section>
         
         <!-- Sentence of the Day (Easter Egg) -->
@@ -168,43 +216,62 @@ function timeAgo(dateStr) {
     return I18N.common.months_ago.replace('{n}', Math.floor(days / 30));
 }
 
-// Load home stats — single call for all 5 numbers
-async function loadStats() {
+// Load journey tracker — single call
+const STATUS_ICONS = { not_started: '💤', in_progress: '🛠', complete: '✔' };
+
+async function loadJourney() {
     try {
-        const res = await fetch('/api/home/stats');
+        const res = await fetch('/api/home/journey');
         if (!res.ok) return;
-        const s = await res.json();
-        
-        // Resume completeness
-        document.getElementById('stat-resume').textContent = s.resume_complete;
-        const resumeDetail = document.getElementById('resume-detail');
-        if (resumeDetail) {
-            if (s.resume_complete === 100) resumeDetail.textContent = 'Vollständig ✓';
-            else if (s.resume_complete >= 50) resumeDetail.textContent = 'Fast fertig!';
-            else resumeDetail.textContent = 'Jetzt ergänzen';
+        const j = await res.json();
+
+        // A: Resume
+        setStep('a1', j.resume.upload_create);
+        setStep('a2', j.resume.fix_gaps);
+        setStep('a3', j.resume.confirm_skills);
+
+        // Progress bar for A1
+        if (j.resume_pct > 0) {
+            const bar = document.getElementById('progress-a1');
+            const fill = document.getElementById('fill-a1');
+            bar.style.display = '';
+            fill.style.width = j.resume_pct + '%';
         }
-        
-        // New matches (never seen)
-        document.getElementById('stat-new').textContent = s.new_matches;
-        const newDetail = document.getElementById('new-detail');
-        if (newDetail && s.new_matches > 0) {
-            newDetail.textContent = 'Jetzt ansehen →';
+
+        // B: Search
+        setStep('b1', j.search.define_search);
+        const b2 = j.search.review_matches;
+        if (b2.detail) {
+            b2.detail = b2.detail + ' ' + (LANG === 'de' ? 'ungelesen' : 'unread');
         }
-        
-        // Unread matches (seen < 5s)
-        document.getElementById('stat-unread').textContent = s.unread_matches;
-        const unreadDetail = document.getElementById('unread-detail');
-        if (unreadDetail && s.unread_matches > 0) {
-            unreadDetail.textContent = 'Noch nicht gelesen';
+        setStep('b2', b2);
+        const b3 = j.search.select_favorites;
+        if (b3.detail) {
+            b3.detail = b3.detail + ' ❤️';
         }
-        
-        // Saved matches
-        document.getElementById('stat-saved').textContent = s.saved_matches;
-        
-        // Open applications
-        document.getElementById('stat-applied').textContent = s.open_applications;
+        setStep('b3', b3);
+
+        // C: Apply
+        setStep('c1', j.apply.ship_documents);
+        setStep('c2', j.apply.await_reply);
+        setStep('c3', j.apply.train_coach);
+        setStep('c4', j.apply.interview);
+
     } catch (err) {
-        console.error('Failed to load home stats:', err);
+        console.error('Failed to load journey:', err);
+    }
+}
+
+function setStep(id, data) {
+    const statusEl = document.getElementById('status-' + id);
+    const detailEl = document.getElementById('detail-' + id);
+    const stepEl = document.getElementById('step-' + id);
+
+    if (statusEl) statusEl.textContent = STATUS_ICONS[data.status] || '💤';
+    if (detailEl) detailEl.textContent = data.detail || '';
+    if (stepEl) {
+        stepEl.classList.remove('step-not-started', 'step-in-progress', 'step-complete');
+        stepEl.classList.add('step-' + data.status.replace('_', '-'));
     }
 }
 
@@ -407,8 +474,7 @@ document.addEventListener('click', (e) => {
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     restoreSidebarState();
-    loadStats();
-    loadNextSteps();
+    loadJourney();
     loadDailyQuote();
     loadNotifications();
     triggerMiraGreeting();

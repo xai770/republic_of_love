@@ -60,7 +60,20 @@
     "your_journey": "Your Journey",
     "view_progress": "View progress",
     "next_steps": "Next Steps",
-    "quote_default": "The path unfolds as you walk it."
+    "quote_default": "The path appears as you walk it.",
+    "journey_resume": "Resume",
+    "journey_search": "Search",
+    "journey_apply": "Apply",
+    "step_upload_create": "Upload / Create",
+    "step_fix_gaps": "Fix gaps",
+    "step_confirm_skills": "Confirm implied skills",
+    "step_define_search": "Define search",
+    "step_review_matches": "Review matches",
+    "step_select_favorites": "Select favorites",
+    "step_ship_documents": "Ship cover letter + CV",
+    "step_await_reply": "Await reply",
+    "step_train_coach": "Train with coach for interview",
+    "step_interview": "Interview"
   },
   "quick_actions": {
     "title": "Quick Actions",

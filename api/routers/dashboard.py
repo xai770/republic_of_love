@@ -100,6 +100,169 @@ def get_home_stats(
         }
 
 
+# ============================================================
+# JOURNEY STATS — three-column progress tracker
+# ============================================================
+
+@router.get("/api/home/journey")
+def get_journey_stats(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Returns status for each journey step:
+      A. Resume: upload/create, fix gaps, confirm skills
+      B. Search: define search, review matches, select favorites
+      C. Apply:  ship documents, await reply, train with coach, interview
+
+    Each step returns: status ('not_started' | 'in_progress' | 'complete'), detail (string)
+    """
+    with conn.cursor() as cur:
+        user_id = user['user_id']
+
+        # ── A. Resume ──
+        cur.execute("""
+            SELECT profile_id, full_name, location, experience_level,
+                   skill_keywords, desired_locations, desired_roles
+            FROM profiles WHERE user_id = %s
+        """, (user_id,))
+        profile = cur.fetchone()
+
+        resume_pct = 0
+        profile_id = None
+        missing_fields = []
+        if profile:
+            profile_id = profile['profile_id']
+            if profile['full_name']: resume_pct += 10
+            else: missing_fields.append('name')
+            if profile['location']: resume_pct += 10
+            else: missing_fields.append('location')
+            if profile['experience_level']: resume_pct += 10
+            else: missing_fields.append('experience')
+            skills = profile['skill_keywords']
+            if skills and skills != '[]' and len(str(skills)) > 2:
+                resume_pct += 30
+            else:
+                missing_fields.append('skills')
+            if profile['desired_locations']: resume_pct += 20
+            else: missing_fields.append('desired_locations')
+            if profile['desired_roles']: resume_pct += 20
+            else: missing_fields.append('desired_roles')
+
+        has_skills = profile and profile['skill_keywords'] and str(profile['skill_keywords']) not in ('[]', '', 'None')
+
+        # A1: Upload/Create
+        if not profile:
+            a1 = {'status': 'not_started', 'detail': '0%'}
+        elif resume_pct >= 100:
+            a1 = {'status': 'complete', 'detail': '100%'}
+        else:
+            a1 = {'status': 'in_progress', 'detail': f'{resume_pct}%'}
+
+        # A2: Fix gaps
+        if resume_pct >= 100:
+            a2 = {'status': 'complete', 'detail': ''}
+        elif resume_pct > 0 and missing_fields:
+            a2 = {'status': 'in_progress', 'detail': ', '.join(missing_fields[:3])}
+        else:
+            a2 = {'status': 'not_started', 'detail': ''}
+
+        # A3: Confirm implied skills
+        if has_skills:
+            a3 = {'status': 'complete', 'detail': ''}
+        elif profile:
+            a3 = {'status': 'not_started', 'detail': ''}
+        else:
+            a3 = {'status': 'not_started', 'detail': ''}
+
+        # ── B. Search ──
+        has_search = profile and profile.get('desired_locations') is not None
+        # Check search_params separately
+        cur.execute("SELECT search_params FROM profiles WHERE user_id = %s", (user_id,))
+        sp_row = cur.fetchone()
+        has_search_params = sp_row and sp_row['search_params'] is not None
+
+        # Match counts
+        new_matches = 0
+        unread_matches = 0
+        favorites = 0
+        if profile_id:
+            cur.execute("""
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE i.interaction_id IS NULL) as new_count,
+                    COUNT(*) FILTER (
+                        WHERE i.interaction_id IS NOT NULL
+                          AND COALESCE(i.total_view_seconds, 0) < 5
+                          AND i.state NOT IN ('favorited', 'applied', 'hired', 'rejected')
+                    ) as unread_count,
+                    COUNT(*) FILTER (WHERE i.is_favorited = true) as fav_count
+                FROM profile_posting_matches m
+                LEFT JOIN user_posting_interactions i
+                    ON i.user_id = %s AND i.posting_id = m.posting_id
+                WHERE m.profile_id = %s AND m.skill_match_score > 30
+            """, (user_id, profile_id))
+            mrow = cur.fetchone()
+            new_matches = mrow['new_count'] or 0
+            unread_matches = mrow['unread_count'] or 0
+            favorites = mrow['fav_count'] or 0
+
+        # Also count posting_interest likes as "favorites" alternative
+        cur.execute("SELECT COUNT(*) as cnt FROM posting_interest WHERE user_id = %s AND interested = true", (user_id,))
+        interest_likes = cur.fetchone()['cnt'] or 0
+        total_favorites = favorites + interest_likes
+
+        # B1: Define search
+        if has_search_params:
+            b1 = {'status': 'complete', 'detail': ''}
+        else:
+            b1 = {'status': 'not_started', 'detail': ''}
+
+        # B2: Review matches
+        total_to_review = new_matches + unread_matches
+        if total_to_review == 0 and (favorites > 0 or interest_likes > 0):
+            b2 = {'status': 'complete', 'detail': ''}
+        elif total_to_review > 0:
+            b2 = {'status': 'in_progress', 'detail': str(total_to_review)}
+        else:
+            b2 = {'status': 'not_started', 'detail': ''}
+
+        # B3: Select favorites
+        if total_favorites > 0:
+            b3 = {'status': 'in_progress' if total_favorites < 3 else 'complete', 'detail': str(total_favorites)}
+        else:
+            b3 = {'status': 'not_started', 'detail': ''}
+
+        # ── C. Apply (placeholder — tables don't exist yet) ──
+        c1 = {'status': 'not_started', 'detail': ''}
+        c2 = {'status': 'not_started', 'detail': ''}
+        c3 = {'status': 'not_started', 'detail': ''}
+        c4 = {'status': 'not_started', 'detail': ''}
+
+        return {
+            "resume": {
+                "upload_create": a1,
+                "fix_gaps": a2,
+                "confirm_skills": a3,
+            },
+            "search": {
+                "define_search": b1,
+                "review_matches": b2,
+                "select_favorites": b3,
+            },
+            "apply": {
+                "ship_documents": c1,
+                "await_reply": c2,
+                "train_coach": c3,
+                "interview": c4,
+            },
+            "resume_pct": resume_pct,
+            "total_favorites": total_favorites,
+            "new_matches": new_matches,
+            "unread_matches": unread_matches,
+        }
+
+
 def render_base(content: str, user: dict = None) -> str:
     """Wrap content in base HTML template."""
     nav = ""
