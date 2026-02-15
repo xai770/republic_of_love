@@ -341,22 +341,31 @@ window.SEARCH_TOUR_I18N = {
     });
 
     // ============================================================
-    // QL BUTTONS
+    // QL BAR CHART
     // ============================================================
     function renderQL(levels) {
         const container = document.getElementById('ql-buttons');
         const qlColors = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c' };
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        const total = levels.reduce((s, l) => s + l.count, 0) || 1;
 
         container.innerHTML = levels.map(l => {
             const selected = state.ql.length === 0 || state.ql.includes(l.level);
             const dimmed = state.ql.length > 0 && !selected;
+            const pct = ((l.count / total) * 100).toFixed(1);
+            const color = qlColors[l.level] || '#999';
             return `
                 <div class="ql-btn ${dimmed ? 'dimmed' : ''} ${selected && state.ql.length > 0 ? 'selected' : ''}"
                      data-level="${l.level}">
-                    <span class="ql-dot" style="background:${qlColors[l.level] || '#999'};"></span>
-                    <span class="ql-label">${tQL(l.level)}</span>
-                    <span class="ql-count">${l.count.toLocaleString(locale)}</span>
+                    <div class="ql-bar-header">
+                        <span class="ql-dot" style="background:${color};"></span>
+                        <span class="ql-label">${tQL(l.level)}</span>
+                        <span class="ql-count">${l.count.toLocaleString(locale)}</span>
+                        <span class="ql-pct">${pct}%</span>
+                    </div>
+                    <div class="ql-bar-track">
+                        <div class="ql-bar-fill" style="width:${pct}%; background:${color};"></div>
+                    </div>
                 </div>
             `;
         }).join('');
