@@ -61,6 +61,25 @@ def submit_feedback(
             ua,
         ))
         fid = cur.fetchone()["feedback_id"]
+
+        # --- Record feedback in Mira chat history ---
+        # 1. System note that feedback was submitted
+        cur.execute("""
+            INSERT INTO yogi_messages (user_id, sender_type, message_type, body)
+            VALUES (%s, 'system', 'event', %s)
+        """, (user["user_id"], f"[feedback:{body.category}] {body.description[:200]}"))
+
+        # 2. Mira thank-you message (bilingual, based on request lang)
+        lang = request.headers.get("accept-language", "de")
+        if "en" in lang.lower()[:5]:
+            thanks = "Thanks for the feedback! I've noted it — we'll take care of it."
+        else:
+            thanks = "Danke für dein Feedback! Hab's notiert — wir kümmern uns darum."
+        cur.execute("""
+            INSERT INTO yogi_messages (user_id, sender_type, message_type, body)
+            VALUES (%s, 'mira', 'chat', %s)
+        """, (user["user_id"], thanks))
+
     conn.commit()
 
     return {"ok": True, "feedback_id": fid}

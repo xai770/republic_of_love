@@ -490,13 +490,22 @@ async function triggerMiraGreeting() {
     
     // Step 1: Fetch the greeting in background
     let greetingText = 'Hallo! Wie kann ich dir helfen?';
+    let suppress = false;
     try {
         const res = await fetch('/api/mira/greeting');
         if (res.ok) {
             const data = await res.json();
             if (data.greeting) greetingText = data.greeting;
+            if (data.suppress_greeting) suppress = true;
         }
     } catch (e) { /* fallback */ }
+
+    // If yogi has ignored Mira 3+ times, stay closed — no auto-open
+    if (suppress) {
+        // Store greeting so it shows when yogi manually opens chat
+        miraState._pendingGreeting = greetingText;
+        return;
+    }
     
     // Step 2: After a beat, vibrate the FAB to signal incoming
     setTimeout(() => {
@@ -642,6 +651,10 @@ function toggleMiraChat() {
     if (miraState.isOpen && !miraState.hasGreeted) {
         loadMiraGreeting();
         miraState.hasGreeted = true;
+    } else if (miraState.isOpen && miraState._pendingGreeting) {
+        // Greeting was suppressed — show it now that yogi opened manually
+        addMiraMessage(miraState._pendingGreeting, false);
+        miraState._pendingGreeting = null;
     }
     
     if (miraState.isOpen) {

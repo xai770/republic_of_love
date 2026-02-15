@@ -119,6 +119,48 @@ async def get_greeting(
             """, (user['user_id'],))
         match_count = cur.fetchone()['cnt']
 
+        # --- Check if yogi has ignored Mira 3+ consecutive sessions ---
+        suppress_greeting = False
+        try:
+            # Get recent system events + yogi chat messages, ordered by time
+            cur.execute("""
+                SELECT sender_type, message_type, body
+                FROM yogi_messages
+                WHERE user_id = %s
+                  AND (
+                    (sender_type = 'system' AND message_type = 'event' AND body IN ('logon', 'logoff'))
+                    OR
+                    (sender_type = 'yogi' AND message_type = 'chat')
+                  )
+                ORDER BY created_at DESC
+                LIMIT 30
+            """, (user['user_id'],))
+            events = cur.fetchall()
+
+            # Walk backwards through events to count consecutive ignored sessions.
+            # An ignored session = logon followed by logoff with no yogi chat in between.
+            ignored_count = 0
+            in_session = False
+            had_chat = False
+            for ev in events:  # newest first
+                if ev['body'] == 'logoff' and ev['sender_type'] == 'system':
+                    in_session = True
+                    had_chat = False
+                elif ev['sender_type'] == 'yogi' and ev['message_type'] == 'chat':
+                    had_chat = True
+                elif ev['body'] == 'logon' and ev['sender_type'] == 'system':
+                    if in_session:
+                        if not had_chat:
+                            ignored_count += 1
+                        else:
+                            break  # yogi engaged — stop counting
+                    in_session = False
+
+            if ignored_count >= 3 and not is_new:
+                suppress_greeting = True
+        except Exception as e:
+            logger.warning(f"Failed to check greeting suppression: {e}")
+
         # --- MEMORY: Load last few messages from yogi_messages ---
         recent_messages = []
         try:
@@ -235,5 +277,6 @@ Begrüßung (max 120 Zeichen):"""
         has_skills=has_skills,
         has_matches=match_count,
         suggested_actions=actions,
-        uses_du=uses_du
+        uses_du=uses_du,
+        suppress_greeting=suppress_greeting
     )

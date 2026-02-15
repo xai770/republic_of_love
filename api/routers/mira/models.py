@@ -24,6 +24,7 @@ class GreetingResponse(BaseModel):
     has_matches: int
     suggested_actions: List[str]
     uses_du: bool  # Server's guess, client can override
+    suppress_greeting: bool = False  # True if yogi ignored Mira 3+ times
 
 
 class ChatResponse(BaseModel):

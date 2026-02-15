@@ -1163,22 +1163,42 @@ window.SEARCH_TOUR_I18N = {
         const fab = widget.querySelector('.mira-fab');
         miraState.hasGreeted = true;
 
-        // Cancel auto-collapse on any user interaction with the widget
-        ['mouseenter', 'click', 'keydown'].forEach(evt => {
-            widget.addEventListener(evt, cancelMiraAutoCollapse, { once: false });
-        });
+        // Check if Mira should stay closed (yogi ignored her 3+ times)
+        fetch('/api/mira/greeting')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (data && data.suppress_greeting) return; // grumpy yogi — stay closed
 
-        setTimeout(() => {
-            fab.classList.add('mira-incoming');
-            setTimeout(() => {
-                fab.classList.remove('mira-incoming');
-                openMiraChat();
-                // Auto-collapse after 4s so user sees greeting but it clears for QL panel
-                miraAutoCollapseTimer = setTimeout(() => {
-                    if (miraState.isOpen) closeMiraChat();
-                }, 4000);
-            }, 1200);
-        }, 800);
+                // Cancel auto-collapse on any user interaction with the widget
+                ['mouseenter', 'click', 'keydown'].forEach(evt => {
+                    widget.addEventListener(evt, cancelMiraAutoCollapse, { once: false });
+                });
+
+                setTimeout(() => {
+                    fab.classList.add('mira-incoming');
+                    setTimeout(() => {
+                        fab.classList.remove('mira-incoming');
+                        openMiraChat();
+                        // Auto-collapse after 4s so user sees greeting but it clears for QL panel
+                        miraAutoCollapseTimer = setTimeout(() => {
+                            if (miraState.isOpen) closeMiraChat();
+                        }, 4000);
+                    }, 1200);
+                }, 800);
+            })
+            .catch(() => {
+                // On error, still greet (fallback)
+                setTimeout(() => {
+                    fab.classList.add('mira-incoming');
+                    setTimeout(() => {
+                        fab.classList.remove('mira-incoming');
+                        openMiraChat();
+                        miraAutoCollapseTimer = setTimeout(() => {
+                            if (miraState.isOpen) closeMiraChat();
+                        }, 4000);
+                    }, 1200);
+                }, 800);
+            });
     }
 
     // ============================================================

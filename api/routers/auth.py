@@ -141,6 +141,17 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
             """, (user_id, email))
         
         conn.commit()
+
+    # --- Record logon event in yogi_messages ---
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO yogi_messages (user_id, sender_type, message_type, body)
+                VALUES (%s, 'system', 'event', 'logon')
+            """, (user_id,))
+            conn.commit()
+    except Exception:
+        pass  # non-critical
     
     # Create session token
     session_token = jwt.encode(
@@ -167,10 +178,27 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
 
 
 @router.get("/logout")
-def logout():
+def logout(request: Request, conn=Depends(get_db)):
     """
     Clear session cookie and redirect to home.
+    Records a logoff event in yogi_messages before clearing session.
     """
+    # Try to record logoff event before clearing cookie
+    try:
+        token = request.cookies.get('session')
+        if token:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            uid = payload.get('user_id')
+            if uid:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO yogi_messages (user_id, sender_type, message_type, body)
+                        VALUES (%s, 'system', 'event', 'logoff')
+                    """, (uid,))
+                    conn.commit()
+    except Exception:
+        pass  # non-critical — still log out
+
     response = RedirectResponse(url=FRONTEND_URL)
     response.delete_cookie(key="session")
     return response
