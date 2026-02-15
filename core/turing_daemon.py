@@ -52,7 +52,7 @@ from core.database import get_connection_raw, return_connection
 # VPN ROTATION CONFIG (OpenVPN with ProtonVPN)
 # ============================================================================
 CONSECUTIVE_403_THRESHOLD = 3      # Trigger VPN rotation after this many
-MAX_VPN_ROTATIONS = 10             # Give up after this many rotations
+MAX_CONSECUTIVE_FAILED_ROTATIONS = 5  # Give up after this many rotations with no success between them
 REQUESTS_PER_IP = 550              # Proactive rotation threshold
 
 # ProtonVPN's de config load-balances across German servers
@@ -101,7 +101,9 @@ class TuringDaemon:
         
         # VPN state
         self._consecutive_403s = 0
-        self._vpn_rotation_count = 0
+        self._consecutive_failed_rotations = 0  # rotations with no success between them
+        self._requests_since_rotation = 0       # successful requests since last reactive rotation
+        self._total_rotations = 0               # lifetime count for logging
         self._current_vpn_index = -1
         self._request_count = 0
         self._request_lock = threading.Lock()
@@ -219,17 +221,38 @@ class TuringDaemon:
                 self._rotate_vpn()
     
     def _handle_rate_limit(self) -> bool:
-        """Handle rate limiting. Returns True if recovered, False if exhausted."""
-        self._vpn_rotation_count += 1
+        """Handle rate limiting. Returns True if recovered, False if exhausted.
         
-        if self._vpn_rotation_count > MAX_VPN_ROTATIONS:
-            self.logger.error(f"🛑 RATE LIMIT: Exhausted all {MAX_VPN_ROTATIONS} VPN rotations")
+        Tracks consecutive FAILED rotations — a rotation is 'failed' if no
+        successful requests happened since the previous rotation. This means
+        intermittent rate limits (rotate → process 200+ → rate limit again)
+        don't count toward giving up, only persistent blocks do.
+        """
+        self._total_rotations += 1
+        
+        if self._requests_since_rotation == 0 and self._total_rotations > 1:
+            # No successful requests since last rotation — this IP was also blocked
+            self._consecutive_failed_rotations += 1
+        else:
+            # Had successful requests — reset the consecutive failure count
+            self._consecutive_failed_rotations = 0
+        
+        if self._consecutive_failed_rotations >= MAX_CONSECUTIVE_FAILED_ROTATIONS:
+            self.logger.error(
+                f"🛑 RATE LIMIT: {MAX_CONSECUTIVE_FAILED_ROTATIONS} consecutive rotations "
+                f"with no successful requests — giving up ({self._total_rotations} total rotations)"
+            )
             return False
         
-        self.logger.warning(f"🛑 RATE LIMIT HIT - {self._consecutive_403s} consecutive 403s, rotating VPN #{self._vpn_rotation_count}...")
+        self.logger.warning(
+            f"🛑 RATE LIMIT HIT - {self._consecutive_403s} consecutive 403s, "
+            f"rotating VPN #{self._total_rotations} "
+            f"(streak: {self._consecutive_failed_rotations}/{MAX_CONSECUTIVE_FAILED_ROTATIONS})..."
+        )
         
         self._rotate_vpn()
         self._consecutive_403s = 0
+        self._requests_since_rotation = 0
         return True
     
     # =========================================================================
@@ -480,6 +503,7 @@ class TuringDaemon:
             if status == 'success':
                 self._success_ids.append(subject_id)
                 self._consecutive_403s = 0
+                self._requests_since_rotation += 1
             elif status == 'skipped':
                 self._skipped_ids[subject_id] = error or 'skipped'
                 self._consecutive_403s = 0
@@ -553,7 +577,9 @@ class TuringDaemon:
         self._failed_ids = {}
         self._skipped_ids = {}
         self._consecutive_403s = 0
-        self._vpn_rotation_count = 0
+        self._consecutive_failed_rotations = 0
+        self._requests_since_rotation = 0
+        self._total_rotations = 0
         self._request_count = 0
         rate_limited = False
         
@@ -605,7 +631,7 @@ class TuringDaemon:
             self.logger.info(
                 f"✅ {name} complete: {len(self._success_ids)} success, "
                 f"{len(self._failed_ids)} failed, {len(self._skipped_ids)} skipped "
-                f"in {elapsed:.1f}s ({self._vpn_rotation_count} VPN rotations)"
+                f"in {elapsed:.1f}s ({self._total_rotations} VPN rotations)"
             )
             
         except Exception as e:
