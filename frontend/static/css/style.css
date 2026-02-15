@@ -2381,7 +2381,6 @@ body {
 
 .journey-step.step-in-progress {
     opacity: 1;
-    background: rgba(245, 158, 11, 0.04);
 }
 
 .journey-step.step-in-progress .step-label {
@@ -2452,7 +2451,7 @@ body {
 }
 
 [data-theme="dark"] .journey-step.step-in-progress {
-    background: rgba(245, 158, 11, 0.08);
+    opacity: 1;
 }
 
 [data-theme="dark"] .journey-step.step-in-progress .step-label {
