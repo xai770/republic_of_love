@@ -273,8 +273,10 @@ class TuringDaemon:
                 t.scale_limit,
                 t.batch_size,
                 t.execution_type,
-                t.enabled
+                t.enabled,
+                a.execution_config
             FROM task_types t
+            JOIN actors a ON a.actor_id = t.actor_id
             WHERE t.execution_type = 'bulk'
               AND t.enabled = true
               AND t.work_query IS NOT NULL
@@ -406,7 +408,7 @@ class TuringDaemon:
             'success_ids': self._success_ids,
             'failed_ids': self._failed_ids,
             'skipped_ids': self._skipped_ids,
-            'vpn_rotations': self._vpn_rotation_count,
+            'vpn_rotations': self._total_rotations,
         }
         
         cursor.execute("""
@@ -453,12 +455,13 @@ class TuringDaemon:
         """
         subject_id = subject['subject_id']
         
-        # Wait if VPN rotation is in progress
-        while VPN_ROTATING.is_set():
-            time.sleep(0.5)
-        
-        # Check proactive rotation
-        self._check_proactive_rotation()
+        if self._requires_vpn:
+            # Wait if VPN rotation is in progress
+            while VPN_ROTATING.is_set():
+                time.sleep(0.5)
+            
+            # Check proactive rotation
+            self._check_proactive_rotation()
         
         # Each worker gets its own DB connection
         conn = get_connection_raw()
@@ -572,6 +575,12 @@ class TuringDaemon:
             self.logger.error(f"  Failed to load actor: {e}")
             return
         
+        # Check if this actor needs VPN (default: True for backward compat)
+        exec_config = task_type.get('execution_config') or {}
+        self._requires_vpn = exec_config.get('requires_vpn', True)
+        if not self._requires_vpn:
+            self.logger.info(f"  ⚡ Local actor — skipping VPN rotation")
+        
         # Reset aggregation state
         self._success_ids = []
         self._failed_ids = {}
@@ -607,8 +616,8 @@ class TuringDaemon:
                     
                     completed += 1
                     
-                    # Check rate limit threshold
-                    if self._consecutive_403s >= CONSECUTIVE_403_THRESHOLD:
+                    # Check rate limit threshold (only for VPN-dependent actors)
+                    if self._requires_vpn and self._consecutive_403s >= CONSECUTIVE_403_THRESHOLD:
                         if not self._handle_rate_limit():
                             self.logger.error(f"Rate limit exhausted for {name}, moving to next actor")
                             rate_limited = True
