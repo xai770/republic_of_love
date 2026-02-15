@@ -678,7 +678,7 @@ class ArbeitsagenturJobFetcher:
                     fetch=True
                 )
                 
-                batch_new = sum(1 for r in results if r[0])
+                batch_new = sum(1 for r in results if r['was_inserted'])
                 batch_existing = len(results) - batch_new
                 stats['new'] += batch_new
                 stats['existing'] += batch_existing

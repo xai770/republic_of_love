@@ -17,6 +17,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -57,8 +58,11 @@ def get_last_pipeline_run() -> dict:
             except (KeyError, ValueError, TypeError):
                 pass
         
-        # Look for step completions
-        if 'Step' in line and ('DONE' in line or 'complete' in line.lower() or '✅' in line):
+        # Look for step completions  
+        # Format: [n/5] step name, or ✅ ... complete, or Pipeline complete
+        if re.search(r'\[\d+/5\]', line) or \
+           ('✅' in line and 'complete' in line.lower()) or \
+           'Pipeline complete' in line:
             result['steps_completed'].append(line)
         
         # Look for errors
