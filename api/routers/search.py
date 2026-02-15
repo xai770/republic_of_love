@@ -364,3 +364,218 @@ def get_saved_search(
             return {"search_params": None}
 
         return {"search_params": row['search_params']}
+
+
+# ============================================================
+# Search results — actual postings matching the filters
+# ============================================================
+
+class SearchResultsRequest(BaseModel):
+    domains: Optional[List[str]] = None
+    ql: Optional[List[int]] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    radius_km: Optional[int] = None
+    offset: int = 0
+    limit: int = 20
+
+
+@router.post("/search/results")
+def search_results(
+    req: SearchResultsRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Return actual posting records matching the current filters.
+    Paginated with offset/limit. Returns posting details + user interest status.
+    """
+    with conn.cursor() as cur:
+        wheres = ["p.berufenet_id IS NOT NULL"]
+        params = []
+
+        if req.domains:
+            wheres.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+            params.append(req.domains)
+
+        if req.ql:
+            wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
+            params.append(req.ql)
+
+        if req.lat is not None and req.lon is not None and req.radius_km:
+            wheres.append("""
+                (6371 * acos(
+                    cos(radians(%s)) * cos(radians(
+                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+                    )) *
+                    cos(radians(
+                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
+                    ) - radians(%s)) +
+                    sin(radians(%s)) * sin(radians(
+                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+                    ))
+                )) <= %s
+            """)
+            params.extend([req.lat, req.lon, req.lat, req.radius_km])
+
+        where_sql = " AND ".join(wheres)
+
+        # Fetch postings with LEFT JOIN to interest table for this user
+        query_params = params + [user['user_id'], req.limit, req.offset]
+        cur.execute(f"""
+            SELECT
+                p.posting_id,
+                p.job_title,
+                p.berufenet_name,
+                p.location_city,
+                p.location_state,
+                p.qualification_level,
+                p.external_url,
+                p.extracted_summary,
+                p.first_seen_at,
+                p.source,
+                SUBSTRING(b.kldb FROM 3 FOR 2) as domain_code,
+                CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) as ql_level,
+                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' as employer_name,
+                pi.interested,
+                pi.reason as interest_reason
+            FROM postings p
+            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            LEFT JOIN posting_interest pi ON pi.posting_id = p.posting_id AND pi.user_id = %s
+            WHERE {where_sql}
+            ORDER BY p.first_seen_at DESC NULLS LAST
+            LIMIT %s OFFSET %s
+        """, query_params)
+        postings = cur.fetchall()
+
+        results = []
+        for row in postings:
+            domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Sonstige')
+            ql_label = QL_LABELS.get(row['ql_level'], f"Level {row['ql_level']}")
+            results.append({
+                "posting_id": row['posting_id'],
+                "job_title": row['job_title'] or row['berufenet_name'] or 'Untitled',
+                "berufenet_name": row['berufenet_name'],
+                "location": row['location_city'] or row['location_state'] or '',
+                "employer": row['employer_name'] or '',
+                "domain": domain_name,
+                "domain_code": row['domain_code'],
+                "domain_color": DOMAIN_COLORS.get(domain_name, '#cccccc'),
+                "ql_level": row['ql_level'],
+                "ql_label": ql_label,
+                "external_url": row['external_url'],
+                "summary": row['extracted_summary'] or '',
+                "source": row['source'] or '',
+                "first_seen": row['first_seen_at'].isoformat() if row['first_seen_at'] else None,
+                "interested": row['interested'],  # None, True, or False
+            })
+
+        return {
+            "results": results,
+            "offset": req.offset,
+            "limit": req.limit,
+            "has_more": len(results) == req.limit,
+        }
+
+
+# ============================================================
+# Posting interest — record interested / not interested
+# ============================================================
+
+class PostingInterestRequest(BaseModel):
+    posting_id: int
+    interested: bool
+    reason: Optional[str] = None
+
+
+@router.post("/search/interest")
+def record_interest(
+    req: PostingInterestRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """Record the user's interest (or lack thereof) in a posting."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO posting_interest (user_id, posting_id, interested, reason)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (user_id, posting_id)
+            DO UPDATE SET interested = EXCLUDED.interested,
+                          reason = EXCLUDED.reason,
+                          created_at = NOW()
+            RETURNING interest_id
+        """, (user['user_id'], req.posting_id, req.interested, req.reason))
+        result = cur.fetchone()
+        conn.commit()
+        return {"status": "recorded", "interest_id": result['interest_id']}
+
+
+# ============================================================
+# Posting detail — full posting info for modal
+# ============================================================
+
+@router.get("/search/posting/{posting_id}")
+def get_posting_detail(
+    posting_id: int,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """Get full posting details for the detail modal."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT
+                p.posting_id,
+                p.job_title,
+                p.job_description,
+                p.berufenet_name,
+                p.location_city,
+                p.location_state,
+                p.location_country,
+                p.qualification_level,
+                p.external_url,
+                p.extracted_summary,
+                p.first_seen_at,
+                p.last_seen_at,
+                p.source,
+                SUBSTRING(b.kldb FROM 3 FOR 2) as domain_code,
+                CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) as ql_level,
+                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' as employer_name,
+                source_metadata->'raw_api_response'->'arbeitgeber'->>'branche' as employer_industry,
+                source_metadata->'raw_api_response'->>'eintrittsdatum' as start_date,
+                source_metadata->'raw_api_response'->>'befristung' as contract_type,
+                source_metadata->'raw_api_response'->'arbeitszeit'->>'text' as work_hours,
+                pi.interested,
+                pi.reason as interest_reason
+            FROM postings p
+            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            LEFT JOIN posting_interest pi ON pi.posting_id = p.posting_id AND pi.user_id = %s
+            WHERE p.posting_id = %s
+        """, (user['user_id'], posting_id))
+        row = cur.fetchone()
+
+        if not row:
+            return JSONResponse(status_code=404, content={"error": "Posting not found"})
+
+        domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Sonstige')
+        return {
+            "posting_id": row['posting_id'],
+            "job_title": row['job_title'] or row['berufenet_name'] or 'Untitled',
+            "job_description": row['job_description'] or '',
+            "berufenet_name": row['berufenet_name'],
+            "location": ', '.join(filter(None, [row['location_city'], row['location_state'], row['location_country']])),
+            "employer": row['employer_name'] or '',
+            "employer_industry": row['employer_industry'] or '',
+            "domain": domain_name,
+            "domain_color": DOMAIN_COLORS.get(domain_name, '#cccccc'),
+            "ql_level": row['ql_level'],
+            "ql_label": QL_LABELS.get(row['ql_level'], ''),
+            "external_url": row['external_url'],
+            "summary": row['extracted_summary'] or '',
+            "source": row['source'] or '',
+            "first_seen": row['first_seen_at'].isoformat() if row['first_seen_at'] else None,
+            "last_seen": row['last_seen_at'].isoformat() if row['last_seen_at'] else None,
+            "start_date": row['start_date'] or '',
+            "contract_type": row['contract_type'] or '',
+            "work_hours": row['work_hours'] or '',
+            "interested": row['interested'],
+        }

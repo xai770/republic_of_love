@@ -70,9 +70,37 @@
             <span class="save-feedback" id="save-feedback"></span>
         </div>
 
-        <!-- Preview cards -->
-        <div class="search-preview" id="search-preview">
-            <!-- 3-5 best match cards rendered by JS after filters settle -->
+        <!-- Search results -->
+        <div class="search-results-section" id="search-results-section" style="display:none;">
+            <h2 class="results-section-title" id="results-title"></h2>
+            <div class="search-results-grid" id="search-results-grid">
+                <!-- Tiles rendered by JS -->
+            </div>
+            <div class="results-show-more" id="results-show-more" style="display:none;">
+                <button class="btn-show-more" id="btn-show-more"></button>
+            </div>
+        </div>
+
+        <!-- Posting detail modal -->
+        <div class="posting-modal-overlay" id="posting-modal-overlay">
+            <div class="posting-modal">
+                <button class="posting-modal-close" id="posting-modal-close">&times;</button>
+                <div class="posting-modal-body" id="posting-modal-body">
+                    <!-- Filled by JS -->
+                </div>
+                <div class="posting-interest-bar" id="posting-interest-bar">
+                    <p class="interest-prompt" id="interest-prompt"></p>
+                    <div class="interest-buttons">
+                        <button class="btn-interest btn-interested" id="btn-interested"></button>
+                        <button class="btn-interest btn-not-interested" id="btn-not-interested"></button>
+                    </div>
+                    <div class="interest-reason-row" id="interest-reason-row" style="display:none;">
+                        <input type="text" id="interest-reason" class="interest-reason-input" maxlength="200">
+                        <button class="btn-interest-submit" id="btn-interest-submit">&#10003;</button>
+                    </div>
+                    <div class="interest-feedback" id="interest-feedback" style="display:none;"></div>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -172,6 +200,33 @@ window.SEARCH_TOUR_I18N = {
         mira_greeting: '{{ t("search.mira_greeting") }}',
         mira_error: '{{ t("search.mira_error") }}',
         mira_offline: '{{ t("search.mira_offline") }}',
+        results_title: '{{ t("search.results_title") }}',
+        results_loading: '{{ t("search.results_loading") }}',
+        results_none: '{{ t("search.results_none") }}',
+        results_show_more: '{{ t("search.results_show_more") }}',
+        results_employer: '{{ t("search.results_employer") }}',
+        results_location: '{{ t("search.results_location") }}',
+        results_new: '{{ t("search.results_new") }}',
+        results_view_details: '{{ t("search.results_view_details") }}',
+        results_external: '{{ t("search.results_external") }}',
+        detail_summary: '{{ t("search.detail_summary") }}',
+        detail_description: '{{ t("search.detail_description") }}',
+        detail_employer: '{{ t("search.detail_employer") }}',
+        detail_location: '{{ t("search.detail_location") }}',
+        detail_qualification: '{{ t("search.detail_qualification") }}',
+        detail_sector: '{{ t("search.detail_sector") }}',
+        detail_source: '{{ t("search.detail_source") }}',
+        detail_seen_since: '{{ t("search.detail_seen_since") }}',
+        detail_start_date: '{{ t("search.detail_start_date") }}',
+        detail_contract: '{{ t("search.detail_contract") }}',
+        detail_hours: '{{ t("search.detail_hours") }}',
+        interest_prompt: '{{ t("search.interest_prompt") }}',
+        interest_yes: '{{ t("search.interest_yes") }}',
+        interest_no: '{{ t("search.interest_no") }}',
+        interest_reason_placeholder: '{{ t("search.interest_reason_placeholder") }}',
+        interest_saved: '{{ t("search.interest_saved") }}',
+        interest_already_yes: '{{ t("search.interest_already_yes") }}',
+        interest_already_no: '{{ t("search.interest_already_no") }}',
     };
     // Translate a domain name from API (German) to current language
     function tDomain(name) { return I18N.domains[name] || name; }
@@ -524,6 +579,9 @@ window.SEARCH_TOUR_I18N = {
             renderFreshness(data.fresh_count);
             renderFilterPills();
 
+            // Load matching postings as result tiles
+            loadResults(true);
+
             // Track filter state for Mira context
             if (typeof trackEvent === 'function') {
                 trackEvent('search_filter', {
@@ -543,6 +601,317 @@ window.SEARCH_TOUR_I18N = {
                 doSearch();
             }
         }
+    }
+
+    // ============================================================
+    // SEARCH RESULTS — tiles / rolodex
+    // ============================================================
+    let resultsOffset = 0;
+    let resultsLoading = false;
+    let currentPostingId = null;
+    let pendingInterest = null;
+
+    function buildFilterBody() {
+        const body = {};
+        if (state.domains.length > 0) body.domains = state.domains;
+        if (state.ql.length > 0) body.ql = state.ql;
+        if (state.lat != null) body.lat = state.lat;
+        if (state.lon != null) body.lon = state.lon;
+        if (state.radius_km) body.radius_km = state.radius_km;
+        return body;
+    }
+
+    async function loadResults(reset) {
+        if (resultsLoading) return;
+        resultsLoading = true;
+
+        if (reset) resultsOffset = 0;
+
+        const grid = document.getElementById('search-results-grid');
+        const section = document.getElementById('search-results-section');
+        const showMore = document.getElementById('results-show-more');
+
+        if (reset) {
+            grid.innerHTML = `<div class="results-loading">${I18N.results_loading}</div>`;
+            section.style.display = '';
+        }
+
+        const body = buildFilterBody();
+        body.offset = resultsOffset;
+        body.limit = 20;
+
+        try {
+            const res = await fetch('/api/search/results', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            if (reset) grid.innerHTML = '';
+
+            // Title
+            document.getElementById('results-title').textContent = I18N.results_title;
+
+            if (data.results.length === 0 && resultsOffset === 0) {
+                grid.innerHTML = `<div class="results-empty">${I18N.results_none}</div>`;
+                showMore.style.display = 'none';
+                resultsLoading = false;
+                return;
+            }
+
+            // Render tiles
+            const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+            data.results.forEach(p => {
+                const tile = document.createElement('div');
+                tile.className = 'result-tile';
+                tile.dataset.postingId = p.posting_id;
+                if (p.interested === true) tile.classList.add('tile-interested');
+                if (p.interested === false) tile.classList.add('tile-not-interested');
+
+                const isNew = p.first_seen && (Date.now() - new Date(p.first_seen).getTime()) < 7 * 86400000;
+                const dateStr = p.first_seen ? new Date(p.first_seen).toLocaleDateString(locale) : '';
+
+                tile.innerHTML = `
+                    <div class="tile-header">
+                        <span class="tile-domain-dot" style="background:${p.domain_color};" title="${tDomain(p.domain)}"></span>
+                        <span class="tile-ql-badge">${tQL(p.ql_level)}</span>
+                        ${isNew ? `<span class="tile-new-badge">${I18N.results_new}</span>` : ''}
+                        ${p.interested === true ? '<span class="tile-interest-icon" title="' + I18N.interest_already_yes + '">👍</span>' : ''}
+                        ${p.interested === false ? '<span class="tile-interest-icon" title="' + I18N.interest_already_no + '">👎</span>' : ''}
+                    </div>
+                    <h3 class="tile-title">${escHtml(p.job_title)}</h3>
+                    ${p.employer ? `<div class="tile-employer">${escHtml(p.employer)}</div>` : ''}
+                    ${p.location ? `<div class="tile-location">📍 ${escHtml(p.location)}</div>` : ''}
+                    ${p.summary ? `<div class="tile-summary">${escHtml(p.summary).substring(0, 150)}${p.summary.length > 150 ? '…' : ''}</div>` : ''}
+                    <div class="tile-footer">
+                        <span class="tile-date">${dateStr}</span>
+                        <button class="tile-details-btn">${I18N.results_view_details}</button>
+                    </div>
+                `;
+                grid.appendChild(tile);
+            });
+
+            resultsOffset += data.results.length;
+            if (data.has_more) {
+                showMore.style.display = '';
+                document.getElementById('btn-show-more').textContent = I18N.results_show_more;
+            } else {
+                showMore.style.display = 'none';
+            }
+        } catch(e) {
+            console.error('Results failed:', e);
+            if (reset) grid.innerHTML = `<div class="results-empty">${I18N.network_error}</div>`;
+        } finally {
+            resultsLoading = false;
+        }
+    }
+
+    function escHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // Click on tile → open detail
+    document.getElementById('search-results-grid').addEventListener('click', function(e) {
+        const btn = e.target.closest('.tile-details-btn');
+        const tile = e.target.closest('.result-tile');
+        if (btn && tile) {
+            openPostingDetail(parseInt(tile.dataset.postingId));
+        }
+    });
+
+    // Show more
+    document.getElementById('btn-show-more').addEventListener('click', function() {
+        loadResults(false);
+    });
+
+    // ============================================================
+    // POSTING DETAIL MODAL
+    // ============================================================
+    async function openPostingDetail(postingId) {
+        currentPostingId = postingId;
+        const overlay = document.getElementById('posting-modal-overlay');
+        const body = document.getElementById('posting-modal-body');
+        const interestBar = document.getElementById('posting-interest-bar');
+
+        body.innerHTML = `<div class="results-loading">${I18N.results_loading}</div>`;
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        // Reset interest bar
+        document.getElementById('interest-prompt').textContent = I18N.interest_prompt;
+        document.getElementById('btn-interested').textContent = I18N.interest_yes;
+        document.getElementById('btn-not-interested').textContent = I18N.interest_no;
+        document.getElementById('interest-reason-row').style.display = 'none';
+        document.getElementById('interest-feedback').style.display = 'none';
+        document.getElementById('interest-reason').placeholder = I18N.interest_reason_placeholder;
+        pendingInterest = null;
+
+        try {
+            const res = await fetch(`/api/search/posting/${postingId}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const p = await res.json();
+
+            const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+            const seenDate = p.first_seen ? new Date(p.first_seen).toLocaleDateString(locale) : '';
+            const lastDate = p.last_seen ? new Date(p.last_seen).toLocaleDateString(locale) : '';
+
+            let html = `
+                <div class="detail-header">
+                    <span class="tile-domain-dot" style="background:${p.domain_color}; width:14px; height:14px;"></span>
+                    <span class="detail-domain">${tDomain(p.domain)}</span>
+                    <span class="detail-ql">${p.ql_label}</span>
+                </div>
+                <h2 class="detail-title">${escHtml(p.job_title)}</h2>
+            `;
+
+            // Info grid
+            const infoRows = [];
+            if (p.employer) infoRows.push([I18N.detail_employer, escHtml(p.employer) + (p.employer_industry ? ` <span class="detail-dim">(${escHtml(p.employer_industry)})</span>` : '')]);
+            if (p.location) infoRows.push([I18N.detail_location, escHtml(p.location)]);
+            if (p.start_date) infoRows.push([I18N.detail_start_date, escHtml(p.start_date)]);
+            if (p.contract_type) infoRows.push([I18N.detail_contract, escHtml(p.contract_type)]);
+            if (p.work_hours) infoRows.push([I18N.detail_hours, escHtml(p.work_hours)]);
+            if (p.source) infoRows.push([I18N.detail_source, escHtml(p.source)]);
+            if (seenDate) infoRows.push([I18N.detail_seen_since, seenDate + (lastDate && lastDate !== seenDate ? ` — ${lastDate}` : '')]);
+
+            if (infoRows.length) {
+                html += `<div class="detail-info-grid">` +
+                    infoRows.map(([label, val]) => `<div class="detail-info-label">${label}</div><div class="detail-info-value">${val}</div>`).join('') +
+                `</div>`;
+            }
+
+            // Summary
+            if (p.summary) {
+                html += `<div class="detail-section">
+                    <h4>${I18N.detail_summary}</h4>
+                    <p>${escHtml(p.summary)}</p>
+                </div>`;
+            }
+
+            // Description
+            if (p.job_description) {
+                html += `<div class="detail-section">
+                    <h4>${I18N.detail_description}</h4>
+                    <div class="detail-description">${escHtml(p.job_description)}</div>
+                </div>`;
+            }
+
+            // External link
+            if (p.external_url) {
+                html += `<div class="detail-actions">
+                    <a href="${p.external_url}" target="_blank" rel="noopener" class="btn-external-link">${I18N.results_external} ↗</a>
+                </div>`;
+            }
+
+            body.innerHTML = html;
+
+            // Show existing interest state
+            if (p.interested === true) {
+                showInterestState(true);
+            } else if (p.interested === false) {
+                showInterestState(false);
+            }
+        } catch(e) {
+            body.innerHTML = `<div class="results-empty">${I18N.network_error}</div>`;
+        }
+    }
+
+    function closePostingModal() {
+        const overlay = document.getElementById('posting-modal-overlay');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+        currentPostingId = null;
+    }
+
+    document.getElementById('posting-modal-close').addEventListener('click', closePostingModal);
+    document.getElementById('posting-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closePostingModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('posting-modal-overlay').classList.contains('open')) {
+            closePostingModal();
+        }
+    });
+
+    // ============================================================
+    // INTEREST FEEDBACK
+    // ============================================================
+    document.getElementById('btn-interested').addEventListener('click', function() {
+        pendingInterest = true;
+        document.getElementById('interest-reason-row').style.display = 'flex';
+        document.getElementById('interest-reason').focus();
+        this.classList.add('active');
+        document.getElementById('btn-not-interested').classList.remove('active');
+        // Can submit immediately (reason is optional)
+        submitInterest();
+    });
+
+    document.getElementById('btn-not-interested').addEventListener('click', function() {
+        pendingInterest = false;
+        document.getElementById('interest-reason-row').style.display = 'flex';
+        document.getElementById('interest-reason').focus();
+        this.classList.add('active');
+        document.getElementById('btn-interested').classList.remove('active');
+        // Show reason input but don't submit yet — reason is more valuable for "not interested"
+    });
+
+    document.getElementById('btn-interest-submit').addEventListener('click', submitInterest);
+    document.getElementById('interest-reason').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); submitInterest(); }
+    });
+
+    async function submitInterest() {
+        if (pendingInterest === null || !currentPostingId) return;
+        const reason = document.getElementById('interest-reason').value.trim() || null;
+
+        try {
+            const res = await fetch('/api/search/interest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    posting_id: currentPostingId,
+                    interested: pendingInterest,
+                    reason: reason,
+                }),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            showInterestState(pendingInterest);
+
+            // Update tile in grid
+            const tile = document.querySelector(`.result-tile[data-posting-id="${currentPostingId}"]`);
+            if (tile) {
+                tile.classList.remove('tile-interested', 'tile-not-interested');
+                tile.classList.add(pendingInterest ? 'tile-interested' : 'tile-not-interested');
+                // Update interest icon
+                tile.querySelectorAll('.tile-interest-icon').forEach(i => i.remove());
+                const header = tile.querySelector('.tile-header');
+                if (header) {
+                    const icon = document.createElement('span');
+                    icon.className = 'tile-interest-icon';
+                    icon.textContent = pendingInterest ? '👍' : '👎';
+                    icon.title = pendingInterest ? I18N.interest_already_yes : I18N.interest_already_no;
+                    header.appendChild(icon);
+                }
+            }
+        } catch(e) {
+            console.error('Interest save failed:', e);
+        }
+    }
+
+    function showInterestState(interested) {
+        document.getElementById('interest-reason-row').style.display = 'none';
+        const fb = document.getElementById('interest-feedback');
+        fb.style.display = '';
+        fb.textContent = I18N.interest_saved;
+        fb.className = 'interest-feedback ' + (interested ? 'interest-positive' : 'interest-negative');
+
+        document.getElementById('btn-interested').classList.toggle('active', interested === true);
+        document.getElementById('btn-not-interested').classList.toggle('active', interested === false);
     }
 
     // ============================================================
