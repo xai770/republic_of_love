@@ -84,15 +84,73 @@ Removed empty `archive/` directory (946 files previously cleaned to backups).
 Moved `turing_fetch` from 20:00 → **23:50** to catch late-posted jobs.
 Scraper health check moved from 19:45 → **23:35** (still 15 min before fetch).
 
-## Pipeline run verification
-Launched fresh pipeline run after all changes. Completed in ~74 minutes,
-all steps ran clean, 7 non-fatal errors (duplicates + stale warnings).
+## Pipeline run #1 — bug discovery
 
-**DB stats at end of run:**
-- Total postings: 239,465
-- Active postings: 229,690
-- Total embeddings: 265,844
-- Pending embed: 51
+First run after all changes. Completed in ~74 minutes. Looked clean on the
+surface, but closer inspection revealed **silent data loss**:
+
+### Bug 1: AA batch upsert `KeyError: 0`
+The `RETURNING (xmax = 0) AS was_inserted` result was accessed via `r[0]`
+(positional index), but our connection pool returns `RealDictCursor` by
+default — meaning results are `RealDictRow` dicts, not tuples. Every batch
+hit `KeyError: 0` in the exception handler, which **rolled back the entire
+batch**. Net result: 3,224 jobs silently dropped, zero new postings ingested.
+
+**Fix**: `r[0]` → `r['was_inserted']`.
+
+**Lesson**: Always access psycopg2 results by column name in this codebase.
+`RealDictCursor` is the default — positional indexing will silently break.
+
+### Bug 2: pipeline_health "Steps completed: 0"
+`pipeline_health.py` searched for the literal word `'Step'` in log lines, but
+the actual log format uses `[n/5]` markers. The step counter never found a
+match. Fixed with regex: `r'\[(\d+)[a-z]?/5\]'` + `✅...complete` patterns.
+
+### Bug 3: extracted_summary 17 failures in 0.0s
+All 17 subjects fail the QA word-overlap check (`WORD_OVERLAP_THRESHOLD = 0.5`)
+— the LLM produces summaries where >50% of words can't be traced to the source
+text. **Not a code bug** — the hallucination detector is working correctly.
+These are genuinely poor LLM outputs from qwen2.5:7b on short Deutsche Bank
+descriptions.
+
+**All fixes committed as `e5a76bc`.**
+
+## Pipeline run #2 — verification
+
+Ran pipeline again to verify fixes. Completed in 16.6 minutes.
+
+### AA upsert: confirmed working
+- **Before fix**: 0 new, 0 existing, 7 KeyErrors → all data silently lost
+- **After fix**: new: 1,159, existing: 2,105 → zero errors
+
+### Full pipeline results
+| Step | Result |
+|------|--------|
+| [1/5] AA fetch | 236,562 postings (1,159 new) |
+| [2/5] DB fetch | 4,062 postings |
+| [3/5] Berufenet Phase 1 | 500 titles → 140 classified (1 OWL, 11 embed, 128 LLM) |
+| [3/5] Berufenet Phase 2 | 93 titles → 25 classified |
+| [3/5] Berufenet Phase 3 | Auto-triage: 212 resolved, 58 rejected |
+| [3b/5] Domain cascade | 900 KldB + 232/362 keyword/LLM classified (64%) |
+| [3c/5] Geo state | 0/4,060 resolved (no new cities) |
+| [3d/5] Qual backfill | 451 total (289 direct + 162 synonym) |
+| [4/5] Daemon: embeddings | 51 success in 5.9s |
+| [4/5] Daemon: job_desc | 1,121 success, 45 failed (HTTP timeouts) |
+| [4/5] Daemon: extracted_summary | 0/17 — QA rejections (not a bug) |
+| [4/5] Daemon: domain_gate | 16 success |
+| [5/5] Description retry | 24/1,282 newly resolved (2%) |
+
+### Pipeline health report
+- Steps completed: **10** (was stuck at 0 before fix)
+- New postings (24h): 3,124
+- Updated postings (24h): 21,755
+- New embeddings (24h): 41,878
+- Pending embeddings: 715 (from newly ingested postings — will clear next run)
+
+**Final DB stats:**
+- Total postings: 240,624
+- Active postings: 230,849
+- Total embeddings: 265,894
 
 ## Commits today
 | Hash | Description |
@@ -104,3 +162,5 @@ all steps ran clean, 7 non-fatal errors (duplicates + stale warnings).
 | `040ef81` | fix: live streaming via tee |
 | `34c14b8` | fix: berufenet progress logging 5s |
 | `62e7dfd` | codebase quality: BaseActor, batch upserts, tests, DB safety |
+| `25f2cac` | docs: daily notes |
+| `e5a76bc` | fix: AA upsert RealDictRow + pipeline_health step detection |
