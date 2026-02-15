@@ -598,6 +598,7 @@ class TuringDaemon:
         
         # Run with thread pool
         start_time = time.time()
+        last_progress_log = start_time
         
         try:
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -623,9 +624,11 @@ class TuringDaemon:
                             rate_limited = True
                             break
                     
-                    # Progress logging
-                    if completed % 500 == 0:
-                        elapsed = time.time() - start_time
+                    # Progress logging — at most once every 5 seconds
+                    now = time.time()
+                    if now - last_progress_log >= 5:
+                        last_progress_log = now
+                        elapsed = now - start_time
                         rate = completed / elapsed if elapsed > 0 else 0
                         self.logger.info(
                             f"  Progress: {completed}/{len(subjects)} "
