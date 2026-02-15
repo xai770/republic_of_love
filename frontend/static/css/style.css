@@ -893,6 +893,15 @@ body {
     --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
     --accent-primary: #7f9cf5;
     --accent-hover: #667eea;
+
+    /* Original :root variables — used by messages, chat, and other pages */
+    --bg: #1a202c;
+    --card-bg: #2d3748;
+    --text: #f7fafc;
+    --border: #4a5568;
+    --primary: #7f9cf5;
+    --primary-dark: #667eea;
+    --bg-hover: rgba(255, 255, 255, 0.08);
 }
 
 /* Apply variables to key elements */
