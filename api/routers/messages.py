@@ -55,7 +55,8 @@ class MessageSummary(BaseModel):
     recipient_type: Optional[str] = None  # Set when message is TO an actor
     direction: str = "incoming"  # 'incoming' (from actor/user) or 'outgoing' (to actor)
     subject: Optional[str]
-    preview: str  # First ~100 chars of body
+    body: str  # Full message body
+    preview: str  # First ~100 chars of body (for sidebar)
     posting_id: Optional[int]
     is_read: bool
     created_at: datetime
@@ -165,6 +166,7 @@ async def list_messages(
             recipient_type=row["recipient_type"],
             direction=direction,
             subject=row["subject"],
+            body=row["body"],
             preview=preview,
             posting_id=row["posting_id"],
             is_read=row["is_read"],

@@ -160,6 +160,8 @@ Think of yourself as sitting next to the yogi at a coffee shop, helping them nav
 - NEVER recommend matches below 30% — if no good matches exist, say so honestly
 - Don't overwhelm new users with match details — just mention the count
 - When the user asks to search for jobs (e.g. "Pflege in Frankfurt"), say you'll set the filters — the system handles the rest. Do NOT list imaginary search results.
+- **LISTEN to what the user actually says.** If they tell you something about themselves (e.g. "I'm the developer", "I'm testing", "I work at X"), acknowledge it and respond naturally. Do NOT ignore their message and push onboarding steps.
+- If the user already has a profile (shown below), do NOT suggest uploading a CV.
 
 ## Examples of How You Sound
 
@@ -211,6 +213,8 @@ Stell dir vor, du sitzt neben dem Yogi im Café und hilfst bei der Jobsuche in D
 - NIEMALS Matches unter 30% empfehlen — wenn keine guten Matches da sind, sag es ehrlich
 - Neue Nutzer nicht mit Match-Details überschütten — nur die Anzahl nennen
 - Wenn der Nutzer nach Jobs sucht (z.B. "Pflege in Frankfurt"), sag dass du die Filter setzt — das System erledigt den Rest. Erfinde KEINE Suchergebnisse.
+- **HÖRE zu, was der Nutzer wirklich sagt.** Wenn er dir etwas über sich erzählt (z.B. "Ich bin der Entwickler", "Ich teste gerade", "Ich arbeite bei X"), geh darauf ein und antworte natürlich. Ignoriere NICHT seine Nachricht um Onboarding-Schritte zu pushen.
+- Wenn der Nutzer bereits ein Profil hat (siehe unten), schlage NICHT vor, einen Lebenslauf hochzuladen.
 
 ## So klingst du (Beispiele)
 
@@ -313,12 +317,18 @@ def format_yogi_context(ctx: dict, uses_du: bool, language: str) -> str:
         summary_label = 'Summary' if language == 'en' else 'Zusammenfassung'
         lines.append(f"{summary_label}: {ctx['profile_summary']}")
     
-    # ── No profile yet ──
+    # ── Profile status ──
     if not ctx.get('has_profile'):
         if language == 'en':
-            lines.append("(No profile uploaded yet — encourage them to create one)")
+            lines.append("(No profile uploaded yet — if relevant, mention they can create one under Profile)")
         else:
-            lines.append("(Noch kein Profil hochgeladen — ermutige zum Erstellen)")
+            lines.append("(Noch kein Profil hochgeladen — wenn passend, erwähne dass sie eins unter Profil erstellen können)")
+    else:
+        # User already has a profile — NEVER suggest uploading a CV again
+        if language == 'en':
+            lines.append("(Profile exists — do NOT suggest uploading a CV. If skills list is empty, you may suggest adding skills under Profile.)")
+        else:
+            lines.append("(Profil vorhanden — schlage NICHT vor, einen Lebenslauf hochzuladen. Wenn die Skill-Liste leer ist, kannst du vorschlagen, Skills unter Profil hinzuzufügen.)")
     
     # ── Matches ──
     if ctx.get('match_count', 0) > 0:
