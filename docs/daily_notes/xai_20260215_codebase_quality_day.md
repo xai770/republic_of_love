@@ -152,6 +152,67 @@ Ran pipeline again to verify fixes. Completed in 16.6 minutes.
 - Active postings: 230,849
 - Total embeddings: 265,894
 
+## Closing loose ends (evening)
+
+### Pipeline health: step checklist + ETA (`5f34751`)
+`tools/pipeline_health.py` now shows a per-step checklist with durations:
+```
+Step checklist:
+  [1/5] AA fetch .............. ✅  2m 14s
+  [2/5] DB fetch .............. ✅  0m 32s
+  ...
+```
+Parses from the **last** `[1/5]` marker in the log, so it always reports the
+most recent run even if previous runs are in the same log file.
+
+### Description retry: 2-strike rule (`5f34751`)
+`postings__job_description_U.py`: work_query now filters
+`COALESCE(processing_failures, 0) < 2` (was 3). Preflight also checks `>= 2`.
+Split pipeline_health report: **57 retryable** vs **444 given up**.
+
+### Actor audit (`5f34751`)
+Reviewed all 19 actors. Outcome:
+- **1 retired**: `postings__row_CU.py` → moved to `archive/dead_actors_20260215/`
+  (posting insertion now handled by batch upsert in AA/DB actors)
+- **2 investigate**: `owl_pending__atomize_U__ava.py` (unclear if still needed),
+  `postings__external_partners_U.py` (no partner sources active)
+- **2 not wired**: `y2y__match_detector_C.py`, `postings__external_description_U.py`
+  (code exists but not in daemon's actor list)
+- **13 keep**: all other actors are active and healthy
+
+### Berufenet retry infinite loop fix (`10fd880`)
+`scripts/berufenet_description_retry.py` was re-processing ~1,258 rejected
+items every single night (10.9 min wasted compute) because it made no DB
+change when the LLM confirmed "NONE". Now marks rejected items:
+```sql
+UPDATE owl_pending
+SET processed_by = 'description_retry_rejected', processed_at = NOW()
+WHERE pending_id = %s
+```
+Query filters also exclude `processed_by = 'description_retry_rejected'`.
+
+### Lazy posting validation (`10fd880`)
+Added freshness checking to match display endpoints. When a candidate views
+their matches, postings not validated in the last 24 hours get a background
+HEAD request to their `external_url`:
+- **404** → posting invalidated (`invalidated = true`, reason noted)
+- **200** → `last_validated_at` updated to NOW()
+- Capped at 20 postings per API request to limit load
+- Runs in a daemon thread — doesn't block the API response
+- All three match endpoints (`list`, `detail`, `stats`) filter out invalidated postings
+
+Schema: `ALTER TABLE postings ADD COLUMN last_validated_at TIMESTAMP WITH TIME ZONE`
+
+### Geo state 0/4,060 — not a bug
+Investigated: all unresolved `location_state` entries are Deutsche Bank
+international offices (Pune, Bangalore, Bucharest, New York, etc.) + 1,856
+"Unknown" locations. German locations are already resolved. No code change needed.
+
+### extracted_summary 17 failures — analysis
+All 17 are posting_ids 251525–251556. Descriptions are 2.9K–6.7K chars (not
+short). QA word-overlap check is correctly rejecting LLM hallucinations. These
+are genuinely poor qwen2.5:7b outputs on Deutsche Bank job descriptions.
+
 ## Commits today
 | Hash | Description |
 |------|-------------|
@@ -164,3 +225,6 @@ Ran pipeline again to verify fixes. Completed in 16.6 minutes.
 | `62e7dfd` | codebase quality: BaseActor, batch upserts, tests, DB safety |
 | `25f2cac` | docs: daily notes |
 | `e5a76bc` | fix: AA upsert RealDictRow + pipeline_health step detection |
+| `70ba383` | docs: daily notes v2 |
+| `5f34751` | pipeline health checklist, description 2-strike, row_CU retirement |
+| `10fd880` | lazy posting validation + berufenet retry marker |
