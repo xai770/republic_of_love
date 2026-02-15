@@ -555,6 +555,7 @@ class TuringDaemon:
         self._consecutive_403s = 0
         self._vpn_rotation_count = 0
         self._request_count = 0
+        rate_limited = False
         
         # Create batch ticket
         ticket_id = self._create_batch_ticket(task_type, len(subjects))
@@ -583,8 +584,8 @@ class TuringDaemon:
                     # Check rate limit threshold
                     if self._consecutive_403s >= CONSECUTIVE_403_THRESHOLD:
                         if not self._handle_rate_limit():
-                            self.logger.error("Rate limit exhausted, stopping")
-                            self.running = False
+                            self.logger.error(f"Rate limit exhausted for {name}, moving to next actor")
+                            rate_limited = True
                             break
                     
                     # Progress logging
