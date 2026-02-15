@@ -42,17 +42,17 @@ Date: 2026-01-15 (updated 2026-02-03 - removed translation logic)
 """
 
 import os
+import re
 import psycopg2.extras
 import requests
 
+from core.base_actor import ProcessingActor, BAD_DATA_PATTERNS
 from core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 # Config
-TASK_TYPE_ID = 3335  # session_a_extract_summary
 INSTRUCTION_ID = 3328  # Extract with gemma3:1b (but we'll use qwen2.5-coder:7b)
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 
 # Model - same as lily_cps_extract for GPU efficiency (directive #14)
 MODEL = "qwen2.5-coder:7b"
@@ -60,142 +60,114 @@ MODEL = "qwen2.5-coder:7b"
 # Validation settings
 WORD_OVERLAP_THRESHOLD = 0.5  # 50% of words in a sentence must be in source
 MIN_WORD_LENGTH = 4  # Ignore short words (the, and, etc.)
-MAX_RETRIES = 1  # Retry once with stricter prompt if hallucinations detected
-
-# Bad data patterns - if LLM says this, input was insufficient
-BAD_DATA_PATTERNS = [
-    'not specified in the given text',
-    'not specified in the text',
-    'not mentioned in the text',
-    'not provided in the text',
-    'information not available',
-    'cannot be determined from',
-]
 
 
-class SummaryExtractActor:
-    """Thick actor for extracting job posting summaries."""
+class SummaryExtractActor(ProcessingActor):
+    """Thick actor for extracting job posting summaries.
     
-    def __init__(self, db_conn=None):
-        if db_conn:
-            self.conn = db_conn
-            self._owns_connection = False
-        else:
-            self.conn = None  # Will be set when needed
-            self._owns_connection = False
-        self.input_data = None
-        # Track LLM calls for auditability (stored in tickets.output.llm_calls)
-        self._llm_calls = []
+    Uses ProcessingActor's 3-phase structure:
+      1. Preflight: check description exists and is long enough
+      2. Work: LLM extraction with word-overlap validation
+      3. Save: write to postings.extracted_summary
+    """
     
-    def __del__(self):
-        if self._owns_connection and self.conn:
-            self.conn.close()
+    TASK_TYPE_ID = 3335
+    MAX_RETRIES = 1
     
-    def process(self) -> dict:
-        """Main entry point called by pull_daemon."""
-        posting_id = self.input_data.get('subject_id') or self.input_data.get('posting_id')
+    # ========================================================================
+    # PHASE 1: PREFLIGHT
+    # ========================================================================
+    
+    def _preflight(self, subject_id: int) -> dict:
+        """Check posting exists and has sufficient description."""
+        posting = self._get_posting(subject_id)
+        if not posting:
+            return {'ok': False, 'reason': 'NOT_FOUND', 'message': f'Posting {subject_id} not found'}
         
-        if not posting_id:
-            return {'error': 'No posting_id in input', 'success': False}
-        
-        try:
-            # 1. Fetch posting data
-            posting = self._get_posting(posting_id)
-            if not posting:
-                return {'error': f'Posting {posting_id} not found', 'success': False}
-            
-            # 2. Check for description (preflight)
-            description = posting.get('job_description')
-            if not description or len(description.strip()) < 100:
-                return {
-                    'success': False,
-                    'skip_reason': 'NO_DESCRIPTION',
-                    'error': f'Posting {posting_id} has insufficient description ({len(description) if description else 0} chars)',
-                    'posting_id': posting_id
-                }
-            
-            # 3. Get instruction template
-            template = self._get_instruction_template()
-            if not template:
-                return {'error': 'Instruction template not found', 'success': False}
-            
-            # 4. Extract and validate with retry loop
-            response = None
-            hallucinations = []
-            validation_passed = False
-            retries = 0
-            
-            while retries <= MAX_RETRIES:
-                # Build prompt (stricter on retry)
-                if retries == 0:
-                    prompt = template.replace('{variations_param_1}', description)
-                else:
-                    # Stricter prompt on retry - emphasize no hallucinations
-                    prompt = self._get_strict_prompt(template, description, hallucinations)
-                
-                response = self._call_llm(prompt, purpose=f'summary_extract_attempt_{retries}')
-                
-                if not response or len(response.strip()) < 50:
-                    return {
-                        'error': 'Empty or too short LLM response',
-                        'success': False,
-                        'response_length': len(response) if response else 0,
-                        'llm_calls': self._llm_calls
-                    }
-                
-                # 5. Semantic validation against source
-                validation_passed, hallucinations = self._validate_semantic_containment(
-                    source=description, 
-                    summary=response
-                )
-                
-                if validation_passed:
-                    break
-                
-                retries += 1
-            
-            # 5b. Check for bad data patterns (LLM couldn't extract)
-            bad_data_warnings = self._detect_bad_data(response)
-            
-            # 6. Save to postings (with warning if validation failed)
-            self._save_summary(posting_id, response)
-            
-            result = {
-                'success': True,
-                'posting_id': posting_id,
-                'summary_length': len(response),
-                'summary_preview': response[:200] + '...' if len(response) > 200 else response,
-                'validation_passed': validation_passed,
-                'retries': retries,
-                'llm_calls': self._llm_calls,
-                'bad_data_warnings': bad_data_warnings
+        description = posting.get('job_description')
+        if not description or len(description.strip()) < 100:
+            return {
+                'ok': False,
+                'reason': 'NO_DESCRIPTION',
+                'message': f'Posting {subject_id} has insufficient description ({len(description) if description else 0} chars)',
             }
-            
-            if not validation_passed:
-                result['warning'] = 'Saved with ungrounded claims'
-                result['hallucinations'] = hallucinations
-            
-            if bad_data_warnings:
-                result['warning'] = result.get('warning', '') + '; Bad input data detected'
-                result['bad_data_count'] = len(bad_data_warnings)
-            
-            return result
-            
-        except Exception as e:
-            return {'error': str(e), 'success': False, 'llm_calls': self._llm_calls}
+        
+        template = self._get_instruction_template()
+        if not template:
+            return {'ok': False, 'reason': 'NO_TEMPLATE', 'message': 'Instruction template not found'}
+        
+        return {'ok': True, 'data': {'posting': posting, 'template': template, 'description': description}}
     
-    def _detect_bad_data(self, response: str) -> list[str]:
-        """Detect if LLM response indicates bad/insufficient input data."""
-        warnings = []
-        response_lower = response.lower()
-        for pattern in BAD_DATA_PATTERNS:
-            if pattern in response_lower:
-                warnings.append(pattern)
-        return warnings
+    # ========================================================================
+    # PHASE 2: PROCESS
+    # ========================================================================
+    
+    def _do_work(self, data: dict, feedback=None) -> dict:
+        """Extract summary using LLM with word-overlap validation."""
+        description = data['description']
+        template = data['template']
+        
+        # Build prompt (stricter on retry if feedback provided)
+        if feedback:
+            prompt = self._get_strict_prompt(template, description, feedback)
+        else:
+            prompt = template.replace('{variations_param_1}', description)
+        
+        response = self.call_llm(prompt, model=MODEL, temperature=0.1, timeout=240)
+        
+        if not response or len(response.strip()) < 50:
+            return {
+                'success': False,
+                'error': 'Empty or too short LLM response',
+                'response_length': len(response) if response else 0,
+            }
+        
+        # Semantic validation against source
+        validation_passed, hallucinations = self._validate_semantic_containment(
+            source=description, summary=response)
+        
+        bad_data_warnings = [p for p in BAD_DATA_PATTERNS if p in response.lower()]
+        
+        result = {
+            'success': True,
+            'summary': response.strip(),
+            'summary_length': len(response),
+            'validation_passed': validation_passed,
+            'bad_data_warnings': bad_data_warnings,
+        }
+        
+        if not validation_passed:
+            result['hallucinations'] = hallucinations
+        
+        return result
+    
+    def _qa_check(self, data: dict, result: dict) -> dict:
+        """Check word overlap validation passed."""
+        if result.get('validation_passed', True):
+            return {'passed': True}
+        
+        hallucinations = result.get('hallucinations', [])
+        return {
+            'passed': False,
+            'reason': f'{len(hallucinations)} ungrounded claims',
+            'feedback': hallucinations,
+        }
+    
+    # ========================================================================
+    # PHASE 3: SAVE
+    # ========================================================================
+    
+    def _save_result(self, subject_id: int, result: dict) -> None:
+        """Save extracted summary to postings table."""
+        cur = self.cursor()
+        cur.execute("""
+            UPDATE postings SET extracted_summary = %s WHERE posting_id = %s
+        """, (result['summary'], subject_id))
+        self.commit()
     
     def _get_posting(self, posting_id: int) -> dict | None:
         """Fetch posting data for summary extraction."""
-        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = self.cursor()
         cur.execute("""
             SELECT posting_id, job_title, job_description
             FROM postings
@@ -206,9 +178,8 @@ class SummaryExtractActor:
     
     def _get_instruction_template(self) -> str | None:
         """Fetch instruction template from database, with fallback."""
-        # First try database
         try:
-            cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur = self.cursor()
             cur.execute(
                 "SELECT input_template FROM instructions WHERE instruction_id = %s",
                 (INSTRUCTION_ID,)
@@ -235,57 +206,6 @@ Job Posting:
 {variations_param_1}
 
 Summary:'''
-    
-    def _call_llm(self, prompt: str, purpose: str = 'summary_extract') -> str:
-        """Call LLM via Ollama and track for auditability."""
-        import time
-        start_time = time.time()
-        
-        temperature, seed = self._get_llm_settings()
-        
-        response = requests.post(OLLAMA_URL, json={
-            'model': MODEL,
-            'prompt': prompt,
-            'stream': False,
-            'options': {
-                'temperature': temperature,
-                'seed': seed,
-                'num_predict': 2048  # Enough for summary + translation
-            }
-        }, timeout=240)  # 4 min timeout for large docs
-        
-        elapsed_ms = int((time.time() - start_time) * 1000)
-        response_text = response.json().get('response', '')
-        
-        # Track for auditability
-        self._llm_calls.append({
-            'purpose': purpose,
-            'model': MODEL,
-            'prompt_chars': len(prompt),
-            'response_chars': len(response_text),
-            'elapsed_ms': elapsed_ms,
-            'temperature': temperature,
-            'seed': seed,
-            'prompt': prompt,
-            'response': response_text
-        })
-        
-        return response_text
-    
-    def _get_llm_settings(self) -> tuple:
-        """Get LLM settings. Uses defaults since task_types table may not exist."""
-        # Default settings for summary extraction - low temperature for consistency
-        return 0.1, 42
-    
-    def _save_summary(self, posting_id: int, summary: str):
-        """Save extracted summary to postings table."""
-        cur = self.conn.cursor()
-        cur.execute("""
-            UPDATE postings
-            SET extracted_summary = %s
-            WHERE posting_id = %s
-        """, (summary.strip(), posting_id))
-        self.conn.commit()
     
     def _get_strict_prompt(self, template: str, description: str, hallucinations: list) -> str:
         """Build stricter prompt for retry, emphasizing no hallucinations."""
@@ -370,60 +290,57 @@ def main():
     
     with get_connection() as conn:
         actor = SummaryExtractActor(conn)
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        
-        if args.posting_id:
-            # Single posting mode
-            actor.input_data = {'posting_id': args.posting_id}
-            result = actor.process()
-            logger.info("Result: %s", result)
-        else:
-            # Batch mode
-            limit = args.batch if args.batch > 0 else 1
+        try:
+            cur = actor.cursor()
             
-            # Build query with optional source filter
-            source_filter = "AND source = %s" if args.source else ""
-            query = f"""
-                SELECT posting_id FROM postings 
-                WHERE extracted_summary IS NULL 
-                  AND job_description IS NOT NULL
-                  AND LENGTH(job_description) > 100
-                  {source_filter}
-                ORDER BY posting_id
-                LIMIT %s
-            """
-            
-            if args.source:
-                cur.execute(query, (args.source, limit))
-            else:
-                cur.execute(query, (limit,))
-            
-            rows = cur.fetchall()
-            
-            if not rows:
-                logger.info("No postings need summary extraction %s", f' for source={args.source}' if args.source else '')
-                return
-            
-            logger.info("Processing %s postings...", len(rows))
-            success = 0
-            failed = 0
-            skipped = 0
-            
-            for i, row in enumerate(rows, 1):
-                actor.input_data = {'posting_id': row['posting_id']}
+            if args.posting_id:
+                actor.input_data = {'posting_id': args.posting_id}
                 result = actor.process()
+                logger.info("Result: %s", result)
+            else:
+                limit = args.batch if args.batch > 0 else 1
                 
-                if result.get('success'):
-                    success += 1
-                    logger.info("[%s/%s]%s", i, len(rows), row['posting_id'])
-                elif result.get('skip_reason'):
-                    skipped += 1
-                    logger.info("[%s/%s]%s: %s", i, len(rows), row['posting_id'], result.get('skip_reason'))
+                source_filter = "AND source = %s" if args.source else ""
+                query = f"""
+                    SELECT posting_id FROM postings 
+                    WHERE extracted_summary IS NULL 
+                      AND job_description IS NOT NULL
+                      AND LENGTH(job_description) > 100
+                      {source_filter}
+                    ORDER BY posting_id
+                    LIMIT %s
+                """
+                
+                if args.source:
+                    cur.execute(query, (args.source, limit))
                 else:
-                    failed += 1
-                    logger.error("[%s/%s]%s: %s", i, len(rows), row['posting_id'], result.get('error', 'Unknown'))
-            
-            logger.info("\nDone: %s success,%s skipped,%s failed", success, skipped, failed)
+                    cur.execute(query, (limit,))
+                
+                rows = cur.fetchall()
+                
+                if not rows:
+                    logger.info("No postings need summary extraction %s",
+                                f' for source={args.source}' if args.source else '')
+                    return
+                
+                logger.info("Processing %s postings...", len(rows))
+                success = failed = skipped = 0
+                
+                for i, row in enumerate(rows, 1):
+                    actor.input_data = {'posting_id': row['posting_id']}
+                    result = actor.process()
+                    
+                    if result.get('success'):
+                        success += 1
+                    elif result.get('skip_reason'):
+                        skipped += 1
+                    else:
+                        failed += 1
+                    actor.log_progress(i, len(rows), f"{success} ok, {skipped} skip, {failed} fail")
+                
+                logger.info("Done: %s success, %s skipped, %s failed", success, skipped, failed)
+        finally:
+            actor.cleanup()
 
 
 if __name__ == '__main__':

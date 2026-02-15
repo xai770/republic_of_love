@@ -358,6 +358,10 @@ class BeesiteDBJobFetcher:
         """
         Insert new postings into database.
         
+        Phase 1: Batch-identify existing jobs (one SELECT).
+        Phase 2: Batch-update last_seen_at + revalidate (one or two UPDATEs).
+        Phase 3: For new jobs only, fetch Workday descriptions and INSERT.
+        
         Returns stats dict with counts.
         """
         cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -371,85 +375,108 @@ class BeesiteDBJobFetcher:
             'errors': 0
         }
         
-        for i, job in enumerate(jobs, 1):
+        # ------------------------------------------------------------------
+        # Phase 1: Identify ALL existing jobs in one query
+        # ------------------------------------------------------------------
+        all_ext_ids = [job['external_id'] for job in jobs]
+        cur.execute("""
+            SELECT external_id, posting_id, invalidated
+            FROM postings WHERE external_id = ANY(%s)
+        """, (all_ext_ids,))
+        existing_map = {r['external_id']: r for r in cur.fetchall()}
+        
+        # ------------------------------------------------------------------
+        # Phase 2: Batch update existing jobs
+        # ------------------------------------------------------------------
+        if existing_map:
+            # Revalidate any that were invalidated (job came back!)
+            invalidated_ids = [
+                r['posting_id'] for r in existing_map.values() if r['invalidated']
+            ]
+            if invalidated_ids:
+                cur.execute("""
+                    UPDATE postings 
+                    SET last_seen_at = NOW(),
+                        invalidated = FALSE,
+                        invalidated_reason = NULL,
+                        invalidated_at = NULL,
+                        posting_status = 'active'
+                    WHERE posting_id = ANY(%s)
+                """, (invalidated_ids,))
+                stats['revalidated'] = len(invalidated_ids)
+            
+            # Touch last_seen_at for the rest
+            active_ids = [
+                r['posting_id'] for r in existing_map.values() if not r['invalidated']
+            ]
+            if active_ids:
+                cur.execute("""
+                    UPDATE postings SET last_seen_at = NOW()
+                    WHERE posting_id = ANY(%s)
+                """, (active_ids,))
+            
+            stats['existing'] = len(existing_map)
+            self.conn.commit()
+        
+        # ------------------------------------------------------------------
+        # Phase 3: Fetch descriptions and insert NEW jobs only
+        # ------------------------------------------------------------------
+        new_jobs = [j for j in jobs if j['external_id'] not in existing_map]
+        if new_jobs:
+            logger.info("Existing: %d (revalidated: %d), new candidates: %d",
+                        stats['existing'], stats['revalidated'], len(new_jobs))
+        
+        for i, job in enumerate(new_jobs, 1):
             try:
-                # Check if job already exists
-                cur.execute(
-                    "SELECT posting_id, invalidated FROM postings WHERE external_id = %s",
-                    (job['external_id'],)
-                )
-                existing = cur.fetchone()
-                
-                if existing:
-                    # Update last_seen_at for existing posting
-                    # Also re-validate if it was invalidated (job came back!)
-                    if existing['invalidated']:
-                        cur.execute("""
-                            UPDATE postings 
-                            SET last_seen_at = NOW(),
-                                invalidated = FALSE,
-                                invalidated_reason = NULL,
-                                invalidated_at = NULL,
-                                posting_status = 'active'
-                            WHERE posting_id = %s
-                        """, (existing['posting_id'],))
-                        stats['revalidated'] += 1
-                    else:
-                        cur.execute(
-                            "UPDATE postings SET last_seen_at = NOW() WHERE posting_id = %s",
-                            (existing['posting_id'],)
-                        )
-                    stats['existing'] += 1
-                    continue
-                
-                # NEW JOB: Fetch description from Workday before inserting
                 apply_url = job.get('apply_uri', '')
                 description = None
                 
                 if apply_url:
                     description = self._fetch_description_from_workday(apply_url)
-                    # Rate limit - be nice to Workday
                     time.sleep(0.2)
                 
                 if not description:
-                    # No description = don't insert (shell posting is useless)
                     stats['no_description'] += 1
-                    if i % 20 == 0 or i == len(jobs):
-                        logger.warning("[%s/%s] Skipped %s jobs (no description)", i, len(jobs), stats['no_description'])
+                    if i % 20 == 0 or i == len(new_jobs):
+                        logger.warning("[%s/%s new] Skipped %s jobs (no description)",
+                                       i, len(new_jobs), stats['no_description'])
                     continue
                 
-                # Insert new posting WITH description
                 cur.execute("""
                     INSERT INTO postings (
                         external_id, external_job_id, posting_name, job_title, location_city, 
                         source, external_url, source_metadata, job_description,
                         first_seen_at, last_seen_at
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    ON CONFLICT (external_job_id)
+                        WHERE invalidated = false AND external_job_id IS NOT NULL
+                    DO NOTHING
                     RETURNING posting_id
                 """, (
                     job['external_id'],
-                    job['external_id'],  # external_job_id = external_id
-                    job['title'],  # posting_name = title
+                    job['external_id'],
+                    job['title'],
                     job['title'],
                     job['location'],
                     'deutsche_bank',
-                    apply_url or 'https://careers.db.com',  # NOT NULL
+                    apply_url or 'https://careers.db.com',
                     json.dumps(job['raw_data']),
                     description
                 ))
                 
                 row = cur.fetchone()
-                posting_id = row['posting_id']
-                stats['new'] += 1
-                
-                if stats['new'] % 10 == 0:
-                    self.conn.commit()  # Periodic commit
-                    logger.info("[%s/%s]%s new postings inserted...", i, len(jobs), stats['new'])
+                if row:
+                    stats['new'] += 1
+                    if stats['new'] % 10 == 0:
+                        self.conn.commit()
+                        logger.info("[%s/%s new] %s postings inserted...",
+                                    i, len(new_jobs), stats['new'])
                 
             except Exception as e:
                 self.conn.rollback()
                 stats['errors'] += 1
-                logger.error("Error inserting job %s: %s: %s", job['external_id'], type(e).__name__, e)
+                logger.error("Error inserting job %s: %s: %s",
+                             job['external_id'], type(e).__name__, e)
         
         self.conn.commit()
         return stats

@@ -608,65 +608,31 @@ class ArbeitsagenturJobFetcher:
     
     def _save_postings(self, jobs: List[Dict]) -> Dict:
         """
-        Save jobs to the postings table.
+        Save jobs to the postings table using batch ON CONFLICT upsert.
         
-        Uses external_job_id (refnr) for deduplication.
+        Uses external_job_id (refnr) for deduplication via the
+        idx_postings_external_job_id_unique partial index.
+        
+        One INSERT ... ON CONFLICT per batch instead of row-by-row
+        SELECT + UPDATE/INSERT — ~50x faster, minimal lock contention.
         """
         stats = {
             'fetched': len(jobs),
             'new': 0,
             'existing': 0,
+            'descriptions_updated': 0,
             'errors': 0,
         }
         
-        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = self.conn.cursor()
+        BATCH_SIZE = 500
         
-        for i, job in enumerate(jobs, 1):
-            try:
-                # Check if job already exists (by refnr)
-                cur.execute("""
-                    SELECT posting_id, posting_status, job_description
-                    FROM postings
-                    WHERE external_job_id = %s
-                """, (job['refnr'],))
-                
-                existing = cur.fetchone()
-                
-                if existing:
-                    # Update last_seen_at for existing job
-                    # Also update description if we have a better one (longer than metadata-only)
-                    new_desc = job.get('job_description', '')
-                    old_desc = existing.get('job_description', '') or ''
-                    
-                    if new_desc and len(new_desc) > len(old_desc) + 50:
-                        # We have a significantly better description - update it
-                        cur.execute("""
-                            UPDATE postings 
-                            SET last_seen_at = NOW(),
-                                job_description = %s
-                            WHERE posting_id = %s
-                        """, (new_desc, existing['posting_id']))
-                        stats['existing'] += 1
-                        stats['descriptions_updated'] = stats.get('descriptions_updated', 0) + 1
-                    else:
-                        cur.execute("""
-                            UPDATE postings 
-                            SET last_seen_at = NOW()
-                            WHERE posting_id = %s
-                        """, (existing['posting_id'],))
-                        stats['existing'] += 1
-                    continue
-                
-                # Insert new posting
-                cur.execute("""
-                    INSERT INTO postings (
-                        external_id, external_job_id, posting_name, job_title, beruf,
-                        location_city, location_postal_code, location_state, location_country, 
-                        source, external_url, source_metadata, job_description,
-                        first_seen_at, last_seen_at, posting_status
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), 'active')
-                    RETURNING posting_id
-                """, (
+        for batch_start in range(0, len(jobs), BATCH_SIZE):
+            batch = jobs[batch_start:batch_start + BATCH_SIZE]
+            
+            values = []
+            for job in batch:
+                values.append((
                     job['external_id'],
                     job['refnr'],
                     job['employer'] or job['title'],  # posting_name = employer or title
@@ -682,23 +648,53 @@ class ArbeitsagenturJobFetcher:
                         'search_context': job['search_context'],
                         'published_date': job['published_date'],
                         'entry_date': job['entry_date'],
-                        'raw_api_response': job['raw_data'],  # Store full API response!
+                        'raw_api_response': job['raw_data'],
                     }),
-                    job['job_description'],
+                    job.get('job_description'),
                 ))
+            
+            try:
+                results = psycopg2.extras.execute_values(cur, """
+                    INSERT INTO postings (
+                        external_id, external_job_id, posting_name, job_title, beruf,
+                        location_city, location_postal_code, location_state, location_country,
+                        source, external_url, source_metadata, job_description,
+                        first_seen_at, last_seen_at, posting_status
+                    ) VALUES %s
+                    ON CONFLICT (external_job_id)
+                        WHERE invalidated = false AND external_job_id IS NOT NULL
+                    DO UPDATE SET
+                        last_seen_at = NOW(),
+                        job_description = CASE
+                            WHEN EXCLUDED.job_description IS NOT NULL
+                                 AND LENGTH(EXCLUDED.job_description) >
+                                     LENGTH(COALESCE(postings.job_description, '')) + 50
+                            THEN EXCLUDED.job_description
+                            ELSE postings.job_description
+                        END
+                    RETURNING (xmax = 0) AS was_inserted
+                """, values,
+                    template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), 'active')",
+                    fetch=True
+                )
                 
-                stats['new'] += 1
+                batch_new = sum(1 for r in results if r[0])
+                batch_existing = len(results) - batch_new
+                stats['new'] += batch_new
+                stats['existing'] += batch_existing
+                self.conn.commit()
                 
-                if stats['new'] % 25 == 0:
-                    self.conn.commit()
-                    logger.info("[%s/%s]%s new postings inserted...", i, len(jobs), stats['new'])
-                
+                logger.info("[%d/%d] %d new, %d existing (batch: +%d new, +%d existing)",
+                            min(batch_start + BATCH_SIZE, len(jobs)), len(jobs),
+                            stats['new'], stats['existing'], batch_new, batch_existing)
+            
             except Exception as e:
                 self.conn.rollback()
-                stats['errors'] += 1
-                logger.error("Error inserting job %s: %s: %s", job['refnr'], type(e).__name__, e)
+                stats['errors'] += len(batch)
+                logger.error("Batch error at rows %d-%d: %s: %s",
+                             batch_start, batch_start + len(batch),
+                             type(e).__name__, e)
         
-        self.conn.commit()
         return stats
 
 
