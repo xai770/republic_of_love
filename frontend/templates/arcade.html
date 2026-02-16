@@ -76,10 +76,10 @@
         position: relative;
         width: 600px;
         height: 700px;
-        border: 2px solid #333;
+        border: 2px solid #440066;
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 0 40px rgba(100,100,255,0.15), inset 0 0 60px rgba(0,0,0,0.5);
+        box-shadow: 0 0 30px rgba(255,0,255,0.2), 0 0 60px rgba(0,255,255,0.1), inset 0 0 60px rgba(0,0,0,0.5);
         image-rendering: pixelated;
     }
 
@@ -168,7 +168,7 @@
         letter-spacing: 0.15em;
     }
 
-    .go-title { color: #f44; text-shadow: 0 0 12px #f44, 0 0 24px #f00; }
+    .go-title { color: #ff0000; text-shadow: 0 0 12px #ff0000, 0 0 24px #ff0000, 0 0 40px #ff00ff; }
     .lb-title { color: #0ff; text-shadow: 0 0 12px #0ff, 0 0 24px #08f; font-size: 1.6rem; }
 
     .arcade-subtitle { font-family: 'Courier New', monospace; font-size: 1.1rem; color: #aaa; }
@@ -180,11 +180,11 @@
         text-align: center;
         line-height: 1.9;
     }
-    .rule-good { color: #4f4; }
-    .rule-bad { color: #f84; }
-    .rule-warn { color: #f44; }
-    .rule-power { color: #0ff; }
-    .rule-boss { color: #f0f; }
+    .rule-good { color: #00ff00; text-shadow: 0 0 4px #00ff00; }
+    .rule-bad { color: #ff8800; text-shadow: 0 0 4px #ff8800; }
+    .rule-warn { color: #ff0000; text-shadow: 0 0 4px #ff0000; }
+    .rule-power { color: #00ffff; text-shadow: 0 0 4px #00ffff; }
+    .rule-boss { color: #ff00ff; text-shadow: 0 0 4px #ff00ff; }
 
     .arcade-btn {
         font-family: 'Courier New', monospace;
@@ -283,20 +283,20 @@
     ];
 
     const POWERUP_TYPES = [
-        { emoji: '🛡️', name: 'Schild',       color: '#0ff', duration: 300, type: 'shield' },
-        { emoji: '⚡',  name: 'Schnell',      color: '#ff0', duration: 400, type: 'speed' },
-        { emoji: '❤️', name: 'Extra Leben',   color: '#f44', duration: 0,   type: 'life' },
-        { emoji: '🧲', name: 'Magnet',        color: '#f0f', duration: 350, type: 'magnet' },
-        { emoji: '💎', name: 'Doppel-Punkte', color: '#0f0', duration: 300, type: 'double' },
-        { emoji: '🔥', name: 'Feuerball',     color: '#f80', duration: 250, type: 'fire' },
+        { emoji: '🛡️', name: 'Schild',       color: '#00ffff', duration: 300, type: 'shield' },
+        { emoji: '⚡',  name: 'Schnell',      color: '#ffff00', duration: 400, type: 'speed' },
+        { emoji: '❤️', name: 'Extra Leben',   color: '#ff0000', duration: 0,   type: 'life' },
+        { emoji: '🧲', name: 'Magnet',        color: '#ff00ff', duration: 350, type: 'magnet' },
+        { emoji: '💎', name: 'Doppel-Punkte', color: '#00ff00', duration: 300, type: 'double' },
+        { emoji: '🔥', name: 'Feuerball',     color: '#ff8800', duration: 250, type: 'fire' },
     ];
 
     const WEAPONS = {
-        pea:    { name: '🔫 Pea Shooter', rate: 12, damage: 1, count: 1, speed: 8,  color: '#0ff', size: 3 },
-        double: { name: '🔫🔫 Doppel',     rate: 12, damage: 1, count: 2, speed: 8,  color: '#0ff', size: 3 },
-        spread: { name: '🌟 Spread',       rate: 15, damage: 1, count: 3, speed: 7,  color: '#ff0', size: 3, spread: true },
-        laser:  { name: '⚡ Laser',         rate: 6,  damage: 2, count: 1, speed: 14, color: '#f0f', size: 2, isLaser: true },
-        rocket: { name: '🚀 Rakete',       rate: 25, damage: 5, count: 1, speed: 6,  color: '#f44', size: 5, explosive: true },
+        pea:    { name: '🔫 Pea Shooter', rate: 12, damage: 1, count: 1, speed: 8,  color: '#00ffff', size: 3 },
+        double: { name: '🔫🔫 Doppel',     rate: 12, damage: 1, count: 2, speed: 8,  color: '#00ffff', size: 3 },
+        spread: { name: '🌟 Spread',       rate: 15, damage: 1, count: 3, speed: 7,  color: '#ffff00', size: 3, spread: true },
+        laser:  { name: '⚡ Laser',         rate: 6,  damage: 2, count: 1, speed: 14, color: '#ff00ff', size: 2, isLaser: true },
+        rocket: { name: '🚀 Rakete',       rate: 25, damage: 5, count: 1, speed: 6,  color: '#ff0000', size: 5, explosive: true },
     };
     const WEAPON_ORDER = ['pea', 'double', 'spread', 'laser', 'rocket'];
 
@@ -389,7 +389,7 @@
             attackRate: t.attackRate, attackTimer: 0,
             phase: 'enter', wobble: 0, flashTimer: 0, moveDir: 1,
         };
-        floatText(W/2, H/2, '⚠️ BOSS: ' + t.name + '! ⚠️', '#f0f', 80);
+        floatText(W/2, H/2, '⚠️ BOSS: ' + t.name + '! ⚠️', '#ff00ff', 80);
         screenShake = 15;
     }
 
@@ -421,16 +421,18 @@
     // ═══════════════════════════════════════════════════════
 
     function explode(x, y, color, count, sz) {
+        const neonMix = ['#ff0000','#ff00ff','#00ffff','#ffff00','#00ff00','#ff0066'];
         for (let i = 0; i < count; i++) {
-            particles.push({ x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 15+Math.random()*20, color, size: (sz||2)+Math.random()*3 });
+            const c = Math.random() < 0.3 ? neonMix[Math.floor(Math.random()*neonMix.length)] : color;
+            particles.push({ x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 15+Math.random()*20, color: c, size: (sz||2)+Math.random()*3 });
         }
     }
 
     function bigExplosion(x, y) {
-        const colors = ['#f44','#f80','#ff0','#fff'];
-        for (let i = 0; i < 40; i++) {
-            const a = Math.random()*Math.PI*2, s = 2+Math.random()*6;
-            particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 20+Math.random()*30, color: colors[Math.floor(Math.random()*4)], size: 2+Math.random()*5 });
+        const colors = ['#ff0000','#ff8800','#ffff00','#ffffff','#ff00ff','#00ffff'];
+        for (let i = 0; i < 50; i++) {
+            const a = Math.random()*Math.PI*2, s = 2+Math.random()*7;
+            particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 20+Math.random()*35, color: colors[Math.floor(Math.random()*colors.length)], size: 2+Math.random()*5 });
         }
         screenShake = 10;
     }
@@ -455,26 +457,26 @@
         switch (pu.type) {
             case 'life':
                 lives = Math.min(lives + 1, 5);
-                floatText(player.x+16, player.y-10, '+1 ❤️', '#f44'); break;
+                floatText(player.x+16, player.y-10, '+1 ❤️', '#ff0000'); break;
             case 'shield':
                 player.invincible = pu.duration;
                 activePowerups.shield = pu.duration;
-                floatText(player.x+16, player.y-10, '🛡️ Schild!', '#0ff'); break;
+                floatText(player.x+16, player.y-10, '🛡️ Schild!', '#00ffff'); break;
             case 'speed':
                 player.speed = 7;
                 activePowerups.speed = pu.duration;
-                floatText(player.x+16, player.y-10, '⚡ Schnell!', '#ff0'); break;
+                floatText(player.x+16, player.y-10, '⚡ Schnell!', '#ffff00'); break;
             case 'magnet':
                 activePowerups.magnet = pu.duration;
-                floatText(player.x+16, player.y-10, '🧲 Magnet!', '#f0f'); break;
+                floatText(player.x+16, player.y-10, '🧲 Magnet!', '#ff00ff'); break;
             case 'double':
                 activePowerups.double = pu.duration;
-                floatText(player.x+16, player.y-10, '💎 2x Punkte!', '#0f0'); break;
+                floatText(player.x+16, player.y-10, '💎 2x Punkte!', '#00ff00'); break;
             case 'fire':
                 const wi = WEAPON_ORDER.indexOf(currentWeapon);
                 if (wi < WEAPON_ORDER.length - 1) { currentWeapon = WEAPON_ORDER[wi+1]; weaponTimer = pu.duration; }
                 else { weaponTimer += pu.duration; }
-                floatText(player.x+16, player.y-10, '🔥 '+WEAPONS[currentWeapon].name+'!', '#f80'); break;
+                floatText(player.x+16, player.y-10, '🔥 '+WEAPONS[currentWeapon].name+'!', '#ff8800'); break;
         }
     }
 
@@ -524,7 +526,7 @@
             if (level === 3 && currentWeapon === 'pea') { currentWeapon = 'double'; weaponTimer = 0; }
             if (level === 7 && weaponTimer <= 0) { currentWeapon = 'spread'; weaponTimer = 0; }
             if (level === 12 && weaponTimer <= 0) { currentWeapon = 'laser'; weaponTimer = 0; }
-            floatText(W/2, H/2, 'LEVEL '+level+'!', '#ff0', 60);
+            floatText(W/2, H/2, 'LEVEL '+level+'!', '#ffff00', 60);
             screenShake = 5;
             if (level % 5 === 0 && level >= 5) spawnBoss();
         }
@@ -543,21 +545,21 @@
                 if (boss.attackTimer >= boss.attackRate) {
                     boss.attackTimer = 0;
                     const cx = boss.x + boss.w/2, cy = boss.y + boss.h;
-                    bossProjectiles.push({ x: cx, y: cy, vx: -1, vy: 2, size: 4, color: '#f44' });
-                    bossProjectiles.push({ x: cx, y: cy, vx: 0,  vy: 2.5, size: 5, color: '#f80' });
-                    bossProjectiles.push({ x: cx, y: cy, vx: 1,  vy: 2, size: 4, color: '#f44' });
+                    bossProjectiles.push({ x: cx, y: cy, vx: -1, vy: 2, size: 4, color: '#ff0000' });
+                    bossProjectiles.push({ x: cx, y: cy, vx: 0,  vy: 2.5, size: 5, color: '#ff8800' });
+                    bossProjectiles.push({ x: cx, y: cy, vx: 1,  vy: 2, size: 4, color: '#ff00ff' });
                 }
             } else if (boss.phase === 'dying') {
                 boss.flashTimer++;
                 if (boss.flashTimer % 5 === 0) {
                     explode(boss.x+Math.random()*boss.w, boss.y+Math.random()*boss.h,
-                        ['#f44','#ff0','#f80','#fff'][Math.floor(Math.random()*4)], 5);
+                        ['#ff0000','#ffff00','#ff8800','#ff00ff'][Math.floor(Math.random()*4)], 5);
                 }
                 if (boss.flashTimer > 60) {
                     bigExplosion(boss.x+boss.w/2, boss.y+boss.h/2);
                     const pts = Math.round(boss.pts * getComboMult() * (activePowerups.double ? 2 : 1));
                     score += pts;
-                    floatText(boss.x+boss.w/2, boss.y, '+'+pts+' 💀👑', '#ff0', 60);
+                    floatText(boss.x+boss.w/2, boss.y, '+'+pts+' 💀👑', '#ffff00', 60);
                     addCombo(); stats.killed++;
                     bossActive = null;
                 }
@@ -568,7 +570,7 @@
                     if (b.x > boss.x && b.x < boss.x+boss.w && b.y > boss.y && b.y < boss.y+boss.h) {
                         boss.hp -= b.dmg; boss.flashTimer = 3;
                         bullets.splice(i, 1);
-                        explode(b.x, b.y, '#ff0', 3, 2);
+                    explode(b.x, b.y, '#ffff00', 3, 2);
                         if (boss.hp <= 0) { boss.phase = 'dying'; boss.flashTimer = 0; }
                     }
                 }
@@ -594,10 +596,10 @@
 
             // Weapon trail effects
             if (b.weapon === 'rocket' && frame % 2 === 0) {
-                particles.push({x:b.x+(Math.random()-0.5)*4, y:b.y+8, vx:(Math.random()-0.5)*1.5, vy:1+Math.random()*2, life:8+Math.random()*8, color:['#f80','#ff0','#f44'][Math.floor(Math.random()*3)], size:2+Math.random()*3});
+                particles.push({x:b.x+(Math.random()-0.5)*4, y:b.y+8, vx:(Math.random()-0.5)*1.5, vy:1+Math.random()*2, life:8+Math.random()*8, color:['#ff8800','#ffff00','#ff0000'][Math.floor(Math.random()*3)], size:2+Math.random()*3});
             }
             if (b.weapon === 'laser' && frame % 3 === 0) {
-                particles.push({x:b.x+(Math.random()-0.5)*8, y:b.y+Math.random()*14, vx:(Math.random()-0.5)*3, vy:(Math.random()-0.5)*2, life:5+Math.random()*5, color:'#f0f', size:1+Math.random()*2});
+                particles.push({x:b.x+(Math.random()-0.5)*8, y:b.y+Math.random()*14, vx:(Math.random()-0.5)*3, vy:(Math.random()-0.5)*2, life:5+Math.random()*5, color:['#ff00ff','#00ffff'][Math.floor(Math.random()*2)], size:1+Math.random()*2});
             }
 
             for (let j = enemies.length-1; j >= 0; j--) {
@@ -612,21 +614,21 @@
                                 if (!ek.good) {
                                     const pts = Math.round(ek.pts * getComboMult() * (activePowerups.double?2:1));
                                     score += pts; stats.killed++; addCombo();
-                                    floatText(ek.x+ek.w/2, ek.y, '+'+pts+' 💥', '#ff0');
+                                    floatText(ek.x+ek.w/2, ek.y, '+'+pts+' 💥', '#ffff00');
                                 } else {
                                     score = Math.max(0, score-25); stats.friendly_fire++;
                                     combo = 0; comboTimer = 0;
-                                    floatText(ek.x+ek.w/2, ek.y, '-25 💔', '#f44');
+                                    floatText(ek.x+ek.w/2, ek.y, '-25 💔', '#ff0000');
                                 }
-                                explode(ek.x+ek.w/2, ek.y+ek.h/2, '#f80', 8);
+                                explode(ek.x+ek.w/2, ek.y+ek.h/2, '#ff8800', 8);
                                 enemies.splice(k, 1); if (k < j) j--;
                             }
                         }
                     } else if (e.good) {
                         score = Math.max(0, score-25); stats.friendly_fire++;
                         combo = 0; comboTimer = 0;
-                        explode(e.x+e.w/2, e.y+e.h/2, '#4f4', 10);
-                        floatText(e.x+e.w/2, e.y, '-25 🍎💔', '#f44');
+                        explode(e.x+e.w/2, e.y+e.h/2, '#00ff00', 10);
+                        floatText(e.x+e.w/2, e.y, '-25 🍎💔', '#ff0000');
                         enemies.splice(j, 1);
                     } else {
                         e.hp -= b.dmg; e.flashTimer = 4;
@@ -634,11 +636,11 @@
                             const mult = getComboMult() * (activePowerups.double?2:1);
                             const pts = Math.round(e.pts * mult);
                             score += pts; stats.killed++; addCombo();
-                            explode(e.x+e.w/2, e.y+e.h/2, '#f84', 12);
-                            floatText(e.x+e.w/2, e.y, '+'+pts+(combo>=3?' 🔥':''), '#ff0');
+                            explode(e.x+e.w/2, e.y+e.h/2, '#ff4400', 12);
+                            floatText(e.x+e.w/2, e.y, '+'+pts+(combo>=3?' 🔥':''), '#ffff00');
                             enemies.splice(j, 1);
                         } else {
-                            explode(b.x, b.y, '#fff', 3, 1);
+                            explode(b.x, b.y, '#ffffff', 3, 1);
                         }
                     }
                     bullets.splice(i, 1); break;
@@ -666,8 +668,8 @@
                 const mult = getComboMult() * (activePowerups.double?2:1);
                 const pts = Math.round(e.pts * mult);
                 score += pts; stats.collected++; addCombo();
-                explode(e.x+e.w/2, e.y, '#0f0', 15);
-                floatText(e.x+e.w/2, e.y, '+'+pts+' '+e.emoji, '#0f0');
+                explode(e.x+e.w/2, e.y, '#00ff00', 15);
+                floatText(e.x+e.w/2, e.y, '+'+pts+' '+e.emoji, '#00ff00');
                 enemies.splice(i, 1); continue;
             }
 
@@ -675,7 +677,7 @@
             if (e.y > H) {
                 if (!e.good) {
                     lives--; stats.missed++; combo = 0; comboTimer = 0;
-                    floatText(e.x+e.w/2, H-40, '💀 entwischt!', '#f44');
+                    floatText(e.x+e.w/2, H-40, '💀 entwischt!', '#ff0000');
                     if (lives <= 0) { gameOver(); return; }
                 }
                 enemies.splice(i, 1);
@@ -720,8 +722,8 @@
         if (player.invincible) return;
         lives--; combo = 0; comboTimer = 0;
         player.invincible = 90; screenShake = 8;
-        explode(player.x+player.w/2, player.y+player.h/2, '#f44', 15);
-        floatText(player.x+player.w/2, player.y-20, '💥 OUCH!', '#f44');
+        explode(player.x+player.w/2, player.y+player.h/2, '#ff0000', 15);
+        floatText(player.x+player.w/2, player.y-20, '💥 OUCH!', '#ff0000');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -735,50 +737,112 @@
         }
 
         // Background
-        ctx.fillStyle = '#0a0a1a';
+        ctx.fillStyle = '#050510';
         ctx.fillRect(-5, -5, W+10, H+10);
 
-        // Starfield
+        // Neon horizon grid (80s)
+        ctx.save();
+        ctx.lineWidth = 0.5;
+        for (let gy = Math.floor(H*0.65); gy <= H; gy += 25) {
+            const a = (gy - H*0.65) / (H*0.35);
+            ctx.strokeStyle = '#ff00ff';
+            ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 3;
+            ctx.globalAlpha = 0.03 + a * 0.06;
+            ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        }
+        ctx.globalAlpha = 0.04;
+        for (let gx = 0; gx <= W; gx += 40) {
+            ctx.beginPath(); ctx.moveTo(gx, Math.floor(H*0.65)); ctx.lineTo(gx, H); ctx.stroke();
+        }
+        ctx.restore();
+
+        // Neon starfield
+        const neonStarColors = ['#00ffff','#ff00ff','#ffff00','#00ff00','#ff0066','#ffffff'];
         for (let layer = 0; layer < 3; layer++) {
             const speed = 0.1 + layer * 0.15;
-            ctx.fillStyle = 'rgba(255,255,255,' + (0.08 + layer * 0.06) + ')';
             for (let i = 0; i < 25; i++) {
                 const sx = (i*137+layer*91+42) % W;
                 const sy = ((i*251+layer*173+frame*speed) % H + H) % H;
-                ctx.fillRect(sx, sy, layer===2?2:1, layer===2?2:1);
+                const sc = neonStarColors[(i+layer*3) % neonStarColors.length];
+                const sz = layer === 2 ? 2 : 1;
+                ctx.save();
+                ctx.fillStyle = sc;
+                ctx.shadowColor = sc; ctx.shadowBlur = layer*3+2;
+                ctx.globalAlpha = 0.15 + layer * 0.12;
+                ctx.fillRect(sx, sy, sz, sz);
+                ctx.restore();
             }
         }
 
-        // Player trail
+        // Player trail — neon afterglow
         if (activePowerups.speed) {
+            const trailNeon = ['#ff00ff','#00ffff','#ffff00','#00ff00'];
             player.trail.forEach((t, i) => {
-                ctx.globalAlpha = (i/player.trail.length) * 0.3;
-                ctx.fillStyle = '#0ff';
-                ctx.fillRect(t.x-4, t.y-4, 8, 8);
+                ctx.save();
+                const c = trailNeon[i % trailNeon.length];
+                ctx.globalAlpha = (i/player.trail.length) * 0.45;
+                ctx.fillStyle = c;
+                ctx.shadowColor = c; ctx.shadowBlur = 12;
+                ctx.beginPath(); ctx.arc(t.x, t.y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
             });
-            ctx.globalAlpha = 1;
         }
 
-        // Player
+        // Player — multi-neon ship
         const blinkOff = player.invincible > 0 && Math.floor(frame/4) % 2;
         if (!blinkOff) {
             ctx.save();
-            ctx.fillStyle = activePowerups.shield ? '#ff0' : '#0ff';
-            ctx.shadowColor = activePowerups.shield ? '#ff0' : '#0ff';
-            ctx.shadowBlur = activePowerups.shield ? 14 : 8;
-            ctx.fillRect(player.x+12, player.y+4, 8, 16);
-            ctx.fillRect(player.x+10, player.y, 12, 8);
-            ctx.fillRect(player.x+4, player.y+8, 8, 4);
-            ctx.fillRect(player.x+20, player.y+8, 8, 4);
-            ctx.fillRect(player.x+6, player.y+20, 20, 4);
-            ctx.fillRect(player.x+4, player.y+24, 8, 4);
-            ctx.fillRect(player.x+20, player.y+24, 8, 4);
-            ctx.fillStyle = '#ff0';
-            ctx.fillRect(player.x+15, player.y+2, 2, 2);
+            const px = player.x, py = player.y;
+            // Outer aura — magenta halo
+            ctx.fillStyle = 'rgba(255,0,255,0.05)';
+            ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 30;
+            ctx.beginPath(); ctx.arc(px+16, py+14, 26, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+            // Engine glow — pure green
+            ctx.fillStyle = '#00ff00';
+            ctx.shadowColor = '#00ff00'; ctx.shadowBlur = 18;
+            ctx.fillRect(px+12, py+26, 8, 4);
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(px+10, py+30, 12, 2+Math.random()*3);
+            ctx.globalAlpha = 1;
+            // Body — pure cyan
+            ctx.fillStyle = '#00ffff';
+            ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 12;
+            ctx.fillRect(px+12, py+4, 8, 16);
+            ctx.fillRect(px+10, py, 12, 8);
+            // Wings — pure magenta
+            ctx.fillStyle = '#ff00ff';
+            ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 10;
+            ctx.fillRect(px+4, py+8, 8, 4);
+            ctx.fillRect(px+20, py+8, 8, 4);
+            // Wing tips — pure yellow
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 8;
+            ctx.fillRect(px+2, py+10, 4, 2);
+            ctx.fillRect(px+26, py+10, 4, 2);
+            // Fuselage — cyan lower
+            ctx.fillStyle = '#00ffff';
+            ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 8;
+            ctx.fillRect(px+6, py+20, 20, 4);
+            ctx.fillRect(px+4, py+24, 8, 4);
+            ctx.fillRect(px+20, py+24, 8, 4);
+            // Cockpit — pure yellow glow
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 12;
+            ctx.fillRect(px+14, py+1, 4, 4);
+            // White-hot cockpit center
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(px+15, py+2, 2, 2);
             if (activePowerups.shield) {
-                ctx.strokeStyle = '#0ff'; ctx.lineWidth = 2;
-                ctx.globalAlpha = 0.4 + Math.sin(frame*0.1)*0.2;
-                ctx.beginPath(); ctx.arc(player.x+16, player.y+14, 22, 0, Math.PI*2); ctx.stroke();
+                // Dual neon shield rings
+                ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2;
+                ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
+                ctx.globalAlpha = 0.5 + Math.sin(frame*0.1)*0.2;
+                ctx.beginPath(); ctx.arc(px+16, py+14, 22, 0, Math.PI*2); ctx.stroke();
+                ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 1;
+                ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 10;
+                ctx.globalAlpha = 0.3 + Math.sin(frame*0.15)*0.2;
+                ctx.beginPath(); ctx.arc(px+16, py+14, 25, 0, Math.PI*2); ctx.stroke();
                 ctx.globalAlpha = 1;
             }
             ctx.restore();
@@ -810,23 +874,26 @@
                 ctx.quadraticCurveTo(b.x+(Math.random()-0.5)*3, b.y+6+flameH*0.7, b.x+5+(Math.random()-0.5)*2, b.y+6);
                 ctx.closePath(); ctx.fill();
                 // Rocket body
-                ctx.fillStyle = '#c33';
+                ctx.fillStyle = '#ff0000';
+                ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 8;
                 ctx.beginPath();
                 ctx.moveTo(b.x, b.y-6); ctx.lineTo(b.x-5, b.y+2);
                 ctx.lineTo(b.x-4, b.y+6); ctx.lineTo(b.x+4, b.y+6);
                 ctx.lineTo(b.x+5, b.y+2); ctx.closePath(); ctx.fill();
                 // Nose shine
-                ctx.fillStyle = '#f66';
+                ctx.fillStyle = '#ff0066';
+                ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 6;
                 ctx.beginPath(); ctx.moveTo(b.x, b.y-5);
                 ctx.lineTo(b.x-2, b.y+1); ctx.lineTo(b.x+1, b.y+1);
                 ctx.closePath(); ctx.fill();
                 // Fins
-                ctx.fillStyle = '#a22';
+                ctx.fillStyle = '#ff00ff';
+                ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 5;
                 ctx.beginPath(); ctx.moveTo(b.x-4, b.y+3); ctx.lineTo(b.x-8, b.y+8); ctx.lineTo(b.x-4, b.y+6); ctx.fill();
                 ctx.beginPath(); ctx.moveTo(b.x+4, b.y+3); ctx.lineTo(b.x+8, b.y+8); ctx.lineTo(b.x+4, b.y+6); ctx.fill();
                 // Ambient glow
-                ctx.shadowColor = '#f80'; ctx.shadowBlur = 15;
-                ctx.fillStyle = 'rgba(255,100,0,0.08)';
+                ctx.shadowColor = '#ff8800'; ctx.shadowBlur = 18;
+                ctx.fillStyle = 'rgba(255,136,0,0.1)';
                 ctx.beginPath(); ctx.arc(b.x, b.y, 14, 0, Math.PI*2); ctx.fill();
 
             } else if (b.weapon === 'laser' || b.isLaser) {
@@ -900,78 +967,166 @@
             ctx.restore();
         }
 
-        // Boss projectiles
+        // Boss projectiles — neon orbs
         for (const bp of bossProjectiles) {
             ctx.save();
-            ctx.fillStyle = bp.color; ctx.shadowColor = bp.color; ctx.shadowBlur = 6;
+            // Outer glow
+            ctx.fillStyle = bp.color; ctx.shadowColor = bp.color; ctx.shadowBlur = 20;
+            ctx.globalAlpha = 0.12;
+            ctx.beginPath(); ctx.arc(bp.x, bp.y, bp.size+6, 0, Math.PI*2); ctx.fill();
+            // Secondary ring
+            ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 1;
+            ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 8;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath(); ctx.arc(bp.x, bp.y, bp.size+3, 0, Math.PI*2); ctx.stroke();
+            // Core
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = bp.color; ctx.shadowColor = bp.color; ctx.shadowBlur = 12;
             ctx.beginPath(); ctx.arc(bp.x, bp.y, bp.size, 0, Math.PI*2); ctx.fill();
+            // White-hot center
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(bp.x, bp.y, bp.size*0.4, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
 
-        // Enemies
+        // Enemies — neon halos
         for (const e of enemies) {
             ctx.save();
             const wobbleX = e.good ? 0 : Math.sin(e.wobble)*2;
+            const ecx = e.x + e.w/2 + wobbleX, ecy = e.y + e.h/2;
+            const er = e.w * 0.45;
             if (e.flashTimer > 0) ctx.globalAlpha = 0.5+Math.sin(e.flashTimer*4)*0.5;
-            ctx.shadowColor = e.good ? '#0f0' : '#f44'; ctx.shadowBlur = e.good ? 10 : 6;
+            // Outer neon ring
+            const c1 = e.good ? '#00ff00' : '#ff0000';
+            const c2 = e.good ? '#ffff00' : '#ff00ff';
+            ctx.beginPath(); ctx.arc(ecx, ecy, er+8, 0, Math.PI*2);
+            ctx.strokeStyle = c2; ctx.lineWidth = 1;
+            ctx.shadowColor = c2; ctx.shadowBlur = 14;
+            ctx.globalAlpha = (e.flashTimer > 0 ? 0.3 : 0.2) + Math.sin(e.wobble*2)*0.1;
+            ctx.stroke();
+            // Inner neon ring
+            ctx.beginPath(); ctx.arc(ecx, ecy, er+3, 0, Math.PI*2);
+            ctx.strokeStyle = c1; ctx.lineWidth = 1.5;
+            ctx.shadowColor = c1; ctx.shadowBlur = 8;
+            ctx.globalAlpha = (e.flashTimer > 0 ? 0.4 : 0.3) + Math.sin(e.wobble*3)*0.1;
+            ctx.stroke();
+            // Emoji
+            ctx.globalAlpha = e.flashTimer > 0 ? 0.5+Math.sin(e.flashTimer*4)*0.5 : 1;
+            ctx.shadowColor = c1; ctx.shadowBlur = e.good ? 14 : 8;
             ctx.font = (e.w*0.85)+'px serif';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(e.emoji, e.x+e.w/2+wobbleX, e.y+e.h/2);
+            ctx.fillText(e.emoji, ecx, ecy);
+            // HP bar — pure neon
             if (!e.good && e.maxHp > 1 && e.hp > 0) {
-                ctx.fillStyle = '#333'; ctx.fillRect(e.x, e.y-6, e.w, 3);
-                ctx.fillStyle = e.hp > e.maxHp*0.5 ? '#0f0' : e.hp > e.maxHp*0.25 ? '#ff0' : '#f44';
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#111'; ctx.fillRect(e.x, e.y-6, e.w, 3);
+                const hc = e.hp > e.maxHp*0.5 ? '#00ff00' : e.hp > e.maxHp*0.25 ? '#ffff00' : '#ff0000';
+                ctx.fillStyle = hc; ctx.shadowColor = hc; ctx.shadowBlur = 4;
                 ctx.fillRect(e.x, e.y-6, e.w*(e.hp/e.maxHp), 3);
             }
             ctx.restore();
         }
 
-        // Power-ups
+        // Power-ups — multi-neon glow
         for (const pu of powerups) {
             ctx.save();
             const bob = Math.sin(pu.wobble*2)*3;
+            const pcx = pu.x+pu.w/2, pcy = pu.y+pu.h/2+bob;
+            // Secondary color ring
+            const sec = pu.color === '#00ffff' ? '#ff00ff' : pu.color === '#ff00ff' ? '#00ffff' : pu.color === '#ffff00' ? '#ff00ff' : '#00ffff';
+            ctx.beginPath(); ctx.arc(pcx, pcy, 18, 0, Math.PI*2);
+            ctx.strokeStyle = sec; ctx.lineWidth = 1;
+            ctx.shadowColor = sec; ctx.shadowBlur = 16;
+            ctx.globalAlpha = 0.25 + Math.sin(pu.wobble*4)*0.15;
+            ctx.stroke();
+            // Primary ring
+            ctx.beginPath(); ctx.arc(pcx, pcy, 13, 0, Math.PI*2);
+            ctx.strokeStyle = pu.color; ctx.lineWidth = 1.5;
             ctx.shadowColor = pu.color; ctx.shadowBlur = 12;
+            ctx.globalAlpha = 0.5 + Math.sin(pu.wobble*3)*0.3;
+            ctx.stroke();
+            // Fill glow
+            ctx.fillStyle = pu.color; ctx.shadowBlur = 22;
+            ctx.globalAlpha = 0.06;
+            ctx.beginPath(); ctx.arc(pcx, pcy, 16, 0, Math.PI*2); ctx.fill();
+            // Emoji
+            ctx.globalAlpha = 1;
+            ctx.shadowColor = pu.color; ctx.shadowBlur = 14;
             ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(pu.emoji, pu.x+pu.w/2, pu.y+pu.h/2+bob);
-            ctx.strokeStyle = pu.color; ctx.lineWidth = 1;
-            ctx.globalAlpha = 0.4+Math.sin(pu.wobble*3)*0.3;
-            ctx.beginPath(); ctx.arc(pu.x+pu.w/2, pu.y+pu.h/2+bob, 14, 0, Math.PI*2); ctx.stroke();
+            ctx.fillText(pu.emoji, pcx, pcy);
             ctx.restore();
         }
 
-        // Boss
+        // Boss — neon aura
         if (bossActive) {
             const boss = bossActive;
             ctx.save();
-            ctx.shadowColor = '#f0f'; ctx.shadowBlur = 20;
-            if (boss.flashTimer > 0 && boss.phase !== 'dying') ctx.globalAlpha = 0.5;
+            const bcx = boss.x+boss.w/2, bcy = boss.y+boss.h/2;
+            const br = boss.w*0.55;
+            // Triple neon aura
+            ctx.beginPath(); ctx.arc(bcx, bcy, br+20, 0, Math.PI*2);
+            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 1;
+            ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
+            ctx.globalAlpha = 0.15 + Math.sin(boss.wobble)*0.1;
+            ctx.stroke();
+            ctx.beginPath(); ctx.arc(bcx, bcy, br+12, 0, Math.PI*2);
+            ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 1.5;
+            ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
+            ctx.globalAlpha = 0.25 + Math.sin(boss.wobble*1.5)*0.1;
+            ctx.stroke();
+            ctx.beginPath(); ctx.arc(bcx, bcy, br+5, 0, Math.PI*2);
+            ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 1;
+            ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 10;
+            ctx.globalAlpha = 0.3 + Math.sin(boss.wobble*2)*0.15;
+            ctx.stroke();
+            // Aura fill
+            ctx.fillStyle = '#ff00ff'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 30;
+            ctx.globalAlpha = 0.04;
+            ctx.beginPath(); ctx.arc(bcx, bcy, br+15, 0, Math.PI*2); ctx.fill();
+            // Emoji
+            ctx.globalAlpha = boss.flashTimer > 0 && boss.phase !== 'dying' ? 0.5 : 1;
+            ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 25;
             ctx.font = boss.w+'px serif';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(boss.emoji, boss.x+boss.w/2, boss.y+boss.h/2);
+            ctx.fillText(boss.emoji, bcx, bcy);
+            // HP bar
             if (boss.phase !== 'dying') {
-                const barW = boss.w+40, barX = boss.x+boss.w/2-barW/2, barY = boss.y+boss.h+6;
-                ctx.fillStyle = '#222'; ctx.fillRect(barX, barY, barW, 6);
+                ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+                const barW = boss.w+40, barX = bcx-barW/2, barY = boss.y+boss.h+6;
+                ctx.fillStyle = '#111'; ctx.fillRect(barX, barY, barW, 6);
                 const hpPct = boss.hp/boss.maxHp;
-                ctx.fillStyle = hpPct > 0.5 ? '#f0f' : hpPct > 0.25 ? '#f80' : '#f44';
+                const hpCol = hpPct > 0.5 ? '#ff00ff' : hpPct > 0.25 ? '#ff8800' : '#ff0000';
+                ctx.fillStyle = hpCol; ctx.shadowColor = hpCol; ctx.shadowBlur = 6;
                 ctx.fillRect(barX, barY, barW*hpPct, 6);
-                ctx.font = 'bold 10px Courier New'; ctx.fillStyle = '#f0f';
-                ctx.textAlign = 'center'; ctx.fillText(boss.name, boss.x+boss.w/2, barY+16);
+                ctx.font = 'bold 10px Courier New'; ctx.fillStyle = '#ff00ff';
+                ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 4;
+                ctx.textAlign = 'center'; ctx.fillText(boss.name, bcx, barY+16);
             }
             ctx.restore();
         }
 
-        // Particles
+        // Particles — neon glow
         for (const p of particles) {
             const alpha = Math.min(1, p.life/15);
             if (p.text) {
+                ctx.save();
                 ctx.globalAlpha = alpha;
                 ctx.font = 'bold 14px Courier New'; ctx.fillStyle = p.color;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.shadowColor = p.color; ctx.shadowBlur = 4;
+                ctx.shadowColor = p.color; ctx.shadowBlur = 8;
                 ctx.fillText(p.text, p.x, p.y);
-                ctx.shadowBlur = 0; ctx.textAlign = 'start'; ctx.globalAlpha = 1;
+                ctx.restore();
             } else {
-                ctx.globalAlpha = alpha; ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, p.size, p.size); ctx.globalAlpha = 1;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color; ctx.shadowBlur = p.size * 3;
+                ctx.beginPath(); ctx.arc(p.x + p.size/2, p.y + p.size/2, Math.max(p.size/2, 0.5), 0, Math.PI*2); ctx.fill();
+                if (p.size > 3) {
+                    ctx.fillStyle = '#ffffff'; ctx.globalAlpha = alpha * 0.6;
+                    ctx.beginPath(); ctx.arc(p.x + p.size/2, p.y + p.size/2, p.size*0.2, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.restore();
             }
         }
 
