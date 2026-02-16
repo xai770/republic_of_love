@@ -479,7 +479,7 @@ def arcade_leaderboard(request: Request, conn=Depends(get_db)):
             LIMIT 20
         """)
         cols = [d[0] for d in cur.description]
-        top = [dict(zip(cols, row)) for row in cur.fetchall()]
+        top = [dict(row) for row in cur.fetchall()]
 
         # User's personal best
         cur.execute("""
@@ -491,10 +491,10 @@ def arcade_leaderboard(request: Request, conn=Depends(get_db)):
         """, (user["user_id"],))
         row = cur.fetchone()
         personal = {
-            "best_score": row[0] or 0,
-            "games_played": row[1] or 0,
-            "total_kills": row[2] or 0,
-            "total_fruits": row[3] or 0,
+            "best_score": row["best_score"] or 0,
+            "games_played": row["games_played"] or 0,
+            "total_kills": row["total_kills"] or 0,
+            "total_fruits": row["total_fruits"] or 0,
         }
 
     # Serialize datetimes
