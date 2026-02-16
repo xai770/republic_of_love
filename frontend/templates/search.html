@@ -65,7 +65,7 @@
                 <!-- 30-day sparkline -->
                 <div class="intel-section" id="intel-activity" style="display:none;">
                     <h4 class="intel-title">📊 30 Tage</h4>
-                    <canvas id="sparkline-canvas" width="260" height="52" style="width:100%;height:52px;"></canvas>
+                    <canvas id="sparkline-canvas" width="320" height="100" style="width:100%;height:100px;"></canvas>
                 </div>
 
                 <!-- States + Professions side by side -->
@@ -497,26 +497,31 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     // MAP MARKERS (individual postings)
     // ============================================================
+    function markerRadius(zoom) {
+        if (zoom <= 6) return 3;
+        if (zoom <= 8) return 4;
+        if (zoom <= 10) return 5;
+        return 7;
+    }
+
     function renderMarkers(markers) {
         if (markerLayer) { map.removeLayer(markerLayer); markerLayer = null; }
         if (!markers || markers.length === 0) return;
 
-        // Only show individual markers at zoom >= 8 (closer view)
-        // At zoom < 8, heatmap gives better overview
         const zoom = map.getZoom();
-
         markerLayer = L.layerGroup();
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const markerColor = isDark ? '#60a5fa' : '#3b82f6';
+        const markerColor = isDark ? '#60a5fa' : '#2563eb';
+        const borderColor = isDark ? '#93c5fd' : '#1d4ed8';
         const textColor = isDark ? '#e2e8f0' : '#1e293b';
 
         markers.forEach(m => {
             const cm = L.circleMarker([m.lat, m.lon], {
-                radius: zoom >= 10 ? 5 : 4,
-                color: markerColor,
+                radius: markerRadius(zoom),
+                color: borderColor,
                 fillColor: markerColor,
-                fillOpacity: 0.7,
-                weight: 1,
+                fillOpacity: 0.8,
+                weight: 1.5,
             });
 
             // Tooltip on hover
@@ -527,7 +532,7 @@ window.SEARCH_TOUR_I18N = {
                 `<strong style="color:${textColor}">${title}</strong>${employer}${city}`,
                 {
                     direction: 'top',
-                    offset: [0, -6],
+                    offset: [0, -8],
                     className: 'posting-marker-tooltip'
                 }
             );
@@ -535,22 +540,17 @@ window.SEARCH_TOUR_I18N = {
             markerLayer.addLayer(cm);
         });
 
-        // Show markers when zoomed in enough
-        if (zoom >= 8) {
-            markerLayer.addTo(map);
-        }
+        // Always show markers — visible at every zoom level
+        markerLayer.addTo(map);
     }
 
-    // Toggle markers visibility based on zoom level
+    // Adjust marker size on zoom change
     map.on('zoomend', function() {
-        const zoom = map.getZoom();
-        if (markerLayer) {
-            if (zoom >= 8 && !map.hasLayer(markerLayer)) {
-                markerLayer.addTo(map);
-            } else if (zoom < 8 && map.hasLayer(markerLayer)) {
-                map.removeLayer(markerLayer);
-            }
-        }
+        if (!markerLayer) return;
+        const r = markerRadius(map.getZoom());
+        markerLayer.eachLayer(function(layer) {
+            layer.setRadius(r);
+        });
     });
 
     // ============================================================
@@ -658,41 +658,114 @@ window.SEARCH_TOUR_I18N = {
         ctx.scale(dpr, dpr);
         const W = rect.width, H = rect.height;
 
-        const maxCount = Math.max(...days.map(d => d.count), 1);
-        const pad = 2;  // padding
-        const usableW = W - pad * 2, usableH = H - pad * 2;
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const lineColor = isDark ? '#4ade80' : '#22c55e';
+        const fillTop = isDark ? 'rgba(74,222,128,0.30)' : 'rgba(34,197,94,0.25)';
+        const fillBot = isDark ? 'rgba(74,222,128,0.0)' : 'rgba(34,197,94,0.0)';
+        const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(100,116,139,0.12)';
+        const weekColor = isDark ? 'rgba(148,163,184,0.30)' : 'rgba(100,116,139,0.25)';
+        const textCol = isDark ? '#94a3b8' : '#94a3b8';
 
-        // Build points
+        // Layout: left margin for Y-axis, bottom for date labels
+        const marginL = 36, marginB = 16, marginT = 4, marginR = 4;
+        const plotW = W - marginL - marginR;
+        const plotH = H - marginT - marginB;
+
+        const maxCount = Math.max(...days.map(d => d.count), 1);
+
+        // --- Y-axis steps ---
+        // Pick nice step: 1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,...
+        function niceStep(max) {
+            const rough = max / 3;
+            const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+            const residual = rough / mag;
+            if (residual <= 1.5) return mag;
+            if (residual <= 3.5) return 2 * mag;
+            if (residual <= 7.5) return 5 * mag;
+            return 10 * mag;
+        }
+        const step = niceStep(maxCount);
+        const yMax = Math.ceil(maxCount / step) * step;
+
+        ctx.font = '9px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+
+        // Draw Y-axis grid lines + labels
+        for (let v = 0; v <= yMax; v += step) {
+            const y = marginT + plotH - (v / yMax) * plotH;
+            // Grid line
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(marginL, y);
+            ctx.lineTo(W - marginR, y);
+            ctx.stroke();
+            // Label
+            const label = v >= 1000 ? (v / 1000) + 'k' : v.toString();
+            ctx.fillStyle = textCol;
+            ctx.fillText(label, marginL - 4, y);
+        }
+
+        // Build data points in plot area
         const points = days.map((d, i) => ({
-            x: pad + (i / (days.length - 1)) * usableW,
-            y: pad + usableH - (d.count / maxCount) * usableH,
+            x: marginL + (i / (days.length - 1)) * plotW,
+            y: marginT + plotH - (d.count / yMax) * plotH,
             count: d.count,
             date: d.date,
         }));
 
-        // Gradient fill under the line: strong green → transparent
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const lineColor = isDark ? '#4ade80' : '#22c55e';
-        const fillTop = isDark ? 'rgba(74,222,128,0.35)' : 'rgba(34,197,94,0.3)';
-        const fillBot = isDark ? 'rgba(74,222,128,0.0)' : 'rgba(34,197,94,0.0)';
+        // --- Vertical grid lines ---
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        days.forEach((d, i) => {
+            const x = points[i].x;
+            const dt = new Date(d.date + 'T00:00:00');
+            const dow = dt.getDay(); // 0=Sun, 1=Mon
 
-        // Draw filled area
+            if (dow === 1) {
+                // Monday — solid week line + date label
+                ctx.strokeStyle = weekColor;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(x, marginT);
+                ctx.lineTo(x, marginT + plotH);
+                ctx.stroke();
+                // Date label
+                const lbl = dt.getDate() + '.' + (dt.getMonth() + 1) + '.';
+                ctx.fillStyle = textCol;
+                ctx.font = '8px system-ui, sans-serif';
+                ctx.fillText(lbl, x, marginT + plotH + 3);
+            } else {
+                // Other days — dotted lines
+                ctx.strokeStyle = gridColor;
+                ctx.lineWidth = 0.5;
+                ctx.setLineDash([2, 3]);
+                ctx.beginPath();
+                ctx.moveTo(x, marginT);
+                ctx.lineTo(x, marginT + plotH);
+                ctx.stroke();
+            }
+        });
+        ctx.setLineDash([]);
+
+        // --- Gradient fill under the line ---
         ctx.beginPath();
-        ctx.moveTo(points[0].x, H);
+        ctx.moveTo(points[0].x, marginT + plotH);
         points.forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.lineTo(points[points.length - 1].x, H);
+        ctx.lineTo(points[points.length - 1].x, marginT + plotH);
         ctx.closePath();
-        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        const grad = ctx.createLinearGradient(0, marginT, 0, marginT + plotH);
         grad.addColorStop(0, fillTop);
         grad.addColorStop(1, fillBot);
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // Draw line
+        // --- Smooth line ---
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
         for (let i = 1; i < points.length; i++) {
-            // Smooth curve between points
             const prev = points[i - 1], curr = points[i];
             const cpx = (prev.x + curr.x) / 2;
             ctx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
@@ -701,23 +774,21 @@ window.SEARCH_TOUR_I18N = {
         ctx.lineWidth = 2;
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
-        // Glow
         ctx.shadowColor = lineColor;
         ctx.shadowBlur = 4;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Tooltip on hover — show date + count
+        // --- Hover tooltip ---
         canvas.onmousemove = function(e) {
             const br = canvas.getBoundingClientRect();
             const mx = e.clientX - br.left;
-            // Find nearest point
             let closest = points[0], minDist = 9999;
             for (const p of points) {
                 const dist = Math.abs(p.x - mx);
                 if (dist < minDist) { minDist = dist; closest = p; }
             }
-            canvas.title = closest.date + ': ' + closest.count;
+            canvas.title = closest.date + ': ' + closest.count.toLocaleString();
         };
     }
 
