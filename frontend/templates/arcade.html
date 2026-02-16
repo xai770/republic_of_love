@@ -1235,7 +1235,7 @@
                 html += '<tr><td class="lb-rank">' + medal + '</td><td>' + name + '</td><td>' + entry.score + '</td><td>' + entry.level + '</td><td>' + entry.monsters_killed + '</td><td>' + entry.fruits_collected + '</td></tr>';
             });
             if (data.top.length === 0) {
-                html += '<tr><td colspan="6" style="text-align:center; color:#666; padding:20px;">Noch keine Einträge. Sei die Erste!</td></tr>';
+                html += '<tr><td colspan="6" style="text-align:center; color:#666; padding:20px;">Noch keine Einträge. Spiel los!</td></tr>';
             }
             html += '</table>';
             document.getElementById('lb-loading').style.display = 'none';
@@ -1250,6 +1250,8 @@
     // ═══════════════════════════════════════════════════════
 
     document.addEventListener('keydown', function(e) {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         keys[e.key] = true;
         if (e.key === ' ' && gameRunning) { e.preventDefault(); fireBullet(); }
         if (e.key === 'Enter' && !gameRunning) { e.preventDefault(); startGame(); }
@@ -1266,6 +1268,8 @@
     });
 
     window.addEventListener('keydown', function(e) {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
     }, { passive: false });
 
