@@ -89,7 +89,7 @@ fi
 
 # Cleanup function to resume Berufenet on exit (even on error)
 # ============================================================================
-# NOTIFICATION HELPER - Push alerts via ntfy.sh
+# NOTIFICATION HELPER - Push alerts via ntfy.sh + Signal
 # ============================================================================
 # Subscribe on phone: ntfy.sh/ty-pipeline (install ntfy app from F-Droid/Play/App Store)
 NTFY_TOPIC="ty-pipeline"
@@ -100,12 +100,19 @@ notify() {
     local priority="${3:-default}"  # low, default, high, urgent
     local tags="${4:-}"             # emoji tags: warning, white_check_mark, etc.
     
+    # ntfy.sh (push notification)
     curl -s \
         -H "Title: $title" \
         -H "Priority: $priority" \
         ${tags:+-H "Tags: $tags"} \
         -d "$message" \
         "https://ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1 || true
+
+    # Signal (via lib/signal_notify.py — sends if SIGNAL_SENDER is configured)
+    python3 -c "
+from lib.signal_notify import send_alert
+send_alert('$title\n$message')
+" 2>/dev/null || true
 }
 
 cleanup() {
@@ -523,6 +530,23 @@ with get_connection() as conn:
 
 # Send success notification
 notify "Pipeline OK" "$(date '+%H:%M') — Pipeline complete. Check logs for stats." "low" "white_check_mark"
+
+# Send Signal summary with detailed stats (if configured)
+python3 -c "
+from lib.signal_notify import send_signal, _signal_available, PREFIX
+if _signal_available():
+    from core.database import get_connection
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute('SELECT COUNT(*) as cnt FROM postings')
+        total = cur.fetchone()['cnt']
+        cur.execute('SELECT COUNT(*) as cnt FROM postings WHERE berufenet_id IS NOT NULL')
+        berufenet = cur.fetchone()['cnt']
+        cur.execute('SELECT COUNT(*) as cnt FROM embeddings')
+        embeds = cur.fetchone()['cnt']
+        pct = round(100*berufenet/total, 1) if total else 0
+        send_signal(f'{PREFIX} ✅ Pipeline complete\n\n📊 {total:,} postings | {pct}% Berufenet | {embeds:,} embeddings')
+" 2>/dev/null || true
 
 # Post pipeline summary to talent.yoga messages
 ts "Sending pipeline health report to talent.yoga..."

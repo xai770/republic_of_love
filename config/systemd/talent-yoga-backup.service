@@ -1,0 +1,12 @@
+[Unit]
+Description=talent.yoga daily backup (incremental rsync + PG dump)
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=xai
+Group=xai
+WorkingDirectory=/home/xai/Documents/ty_learn
+ExecStart=/home/xai/Documents/ty_learn/scripts/backup_all.sh
+StandardOutput=append:/home/xai/Documents/ty_learn/logs/backup_all.log
+StandardError=append:/home/xai/Documents/ty_learn/logs/backup_all.log

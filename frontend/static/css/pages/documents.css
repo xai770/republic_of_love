@@ -1,0 +1,326 @@
+/* Documents Page Styles */
+.documents-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.documents-container {
+    width: 100%;
+}
+
+.documents-header {
+    margin-bottom: 1.5rem;
+}
+
+.documents-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+    color: var(--text);
+}
+
+.documents-subtitle {
+    color: var(--text-muted);
+    margin: 0.5rem 0 0;
+}
+
+/* Type Filters */
+.doc-type-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.doc-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.doc-filter:hover {
+    background: var(--bg-hover);
+}
+
+.doc-filter.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.doc-filter .filter-count {
+    font-size: 0.75rem;
+    background: rgba(0,0,0,0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+}
+
+.doc-filter.active .filter-count {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Documents Grid */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.doc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.doc-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.doc-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.doc-type-icon {
+    font-size: 1.5rem;
+    background: var(--bg-hover);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.doc-card-title {
+    flex: 1;
+}
+
+.doc-card-title h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.doc-type-badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.doc-card-preview {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.doc-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+}
+
+.doc-author {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Empty & Loading States */
+.empty-state, .loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Document Viewer Modal */
+.doc-viewer-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+}
+
+.doc-viewer-modal.hidden {
+    display: none;
+}
+
+.doc-viewer-content {
+    background: var(--bg-card);
+    border-radius: 16px;
+    max-width: calc(100% - 4rem);
+    max-height: 90vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.doc-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.doc-viewer-title h2 {
+    margin: 0.5rem 0 0;
+    font-size: 1.25rem;
+}
+
+.doc-viewer-meta {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-hover);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.doc-viewer-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+    line-height: 1.7;
+    color: var(--text);  /* Fix dark mode font color */
+}
+
+.doc-viewer-body h1, .doc-viewer-body h2, .doc-viewer-body h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.doc-viewer-body p {
+    margin-bottom: 1rem;
+}
+
+.doc-viewer-body ul, .doc-viewer-body ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.doc-viewer-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.25rem;
+}
+
+.btn-close:hover {
+    color: var(--text);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .documents-page {
+        padding: 1rem;
+    }
+    
+    .documents-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .doc-type-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+    }
+    
+    .doc-filter {
+        white-space: nowrap;
+    }
+}
+
+/* Theme Toggle Icons */
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: inline; }
+[data-theme="dark"] .theme-toggle { background: rgba(255,255,255,0.1); }
+[data-theme="dark"] .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+/* Language Toggle */
+.lang-toggle {
+    display: flex;
+    gap: 0.25rem;
+    background: rgba(255,255,255,0.6);
+    border-radius: 1rem;
+    padding: 0.25rem;
+}
+
+.lang-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+}
+
+.lang-btn:hover {
+    color: #2d3748;
+}
+
+.lang-btn.active {
+    background: white;
+    color: #2d3748;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+

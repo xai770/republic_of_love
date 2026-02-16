@@ -302,6 +302,47 @@ Mira: match quality gate (>30%), Doug newsletter wired in, persistent memory via
 
 ---
 
+## End-of-Session Discipline
+
+Every session must end with a daily note. No exceptions.
+
+### What to write (docs/daily_notes/YYYY-MM-DD_slug.md)
+
+1. **What changed** — commits, line counts, what was added/fixed/removed
+2. **What broke** — errors hit, regressions, things that needed rollback
+3. **Dropped balls** — things that came up but weren't done (e.g. missing cron scripts, Signal registration pending)
+4. **Next session** — what to pick up, ordered by priority
+
+### When to write it
+
+Before the last commit of the session. The daily note IS part of the commit.
+
+### Why this matters
+
+Without it, the next session starts cold. The conversation summary helps but decays. The daily note is the source of truth for "where we left off."
+
+### Template
+
+```markdown
+# YYYY-MM-DD: One-Line Summary
+
+## Done
+- commit `abc1234`: what it did
+- commit `def5678`: what it did
+
+## Broke
+- (what broke and how it was fixed)
+
+## Dropped Balls
+- (thing that needs doing but wasn't done — why)
+
+## Next Session
+1. First priority
+2. Second priority
+```
+
+---
+
 ## Cross-References
 
 | Document | What It Covers |
