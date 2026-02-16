@@ -457,7 +457,7 @@ async def submit_arcade_score(request: Request, conn=Depends(get_db)):
             body.get("monsters_killed", 0), body.get("fruits_collected", 0),
             body.get("friendly_fire", 0), body.get("duration_seconds")
         ))
-        score_id = cur.fetchone()[0]
+        score_id = cur.fetchone()["id"]
         conn.commit()
     return {"ok": True, "id": score_id}
 
