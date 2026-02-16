@@ -59,7 +59,7 @@ config/     Systemd service units, logrotate config
 - [x] Scraper health check (pre-flight, 23:35)
 - [x] Stale posting invalidation (nightly, 03:00)
 - [ ] Skills extraction (paused — waiting for pipeline redesign)
-- [ ] Pipeline alerting (errors → Telegram/webhook, next session)
+- [x] Pipeline alerting (Signal via signal-cli, Feb 16)
 
 ### Mira (AI Career Companion)
 - [x] Bilingual chat (DE/EN) with language detection
@@ -149,7 +149,7 @@ config/     Systemd service units, logrotate config
 ## Next Up
 
 ### High Priority
-- [ ] **Pipeline alerting** — errors → Telegram/webhook notification
+- [x] **Pipeline alerting** — errors → Signal via signal-cli (lib/signal_notify.py)
 - [ ] **Profile builder UI** — let yogis create profiles in-app
 - [ ] **Match notification** — email/push when new matches appear
 - [ ] **Mira memory** — persist conversation context across sessions

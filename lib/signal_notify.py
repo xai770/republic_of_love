@@ -32,8 +32,16 @@ import subprocess
 import os
 import logging
 from typing import Optional
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Load .env from project root
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent / ".env")
+except ImportError:
+    pass
 
 # Config — loaded from env or .env
 SIGNAL_CLI = os.getenv("SIGNAL_CLI", os.path.expanduser("~/.local/bin/signal-cli"))
