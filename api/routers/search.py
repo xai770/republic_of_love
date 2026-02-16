@@ -541,52 +541,84 @@ def search_intelligence(
     conn=Depends(get_db),
 ):
     """
-    Intelligence panel data for the current domain selection.
+    Intelligence panel data for the current search filters.
     Returns: activity (14-day sparkline), states ranking, professions ranking.
-    Only returns data when at least one domain is selected.
+    Works with or without domain selection.
     """
-    if not req.domains:
-        return {"activity": [], "states": [], "professions": []}
+    has_domains = bool(req.domains)
 
     with conn.cursor() as cur:
         # ── 14-day activity (new postings per day) ───────────────
-        cur.execute("""
-            SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-            WHERE p.enabled = true AND p.invalidated = false
-              AND SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)
-              AND p.first_seen_at > NOW() - INTERVAL '14 days'
-            GROUP BY day ORDER BY day
-        """, [req.domains])
+        if has_domains:
+            cur.execute("""
+                SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
+                FROM postings p
+                JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                WHERE p.enabled = true AND p.invalidated = false
+                  AND SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)
+                  AND p.first_seen_at > NOW() - INTERVAL '14 days'
+                GROUP BY day ORDER BY day
+            """, [req.domains])
+        else:
+            cur.execute("""
+                SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
+                FROM postings p
+                WHERE p.enabled = true AND p.invalidated = false
+                  AND p.berufenet_id IS NOT NULL
+                  AND p.first_seen_at > NOW() - INTERVAL '14 days'
+                GROUP BY day ORDER BY day
+            """)
         activity = [{"date": str(r['day']), "count": r['count']} for r in cur.fetchall()]
 
         # ── States ranking (fresh_14d from demand_snapshot) ──────
-        cur.execute("""
-            SELECT location_state,
-                   SUM(fresh_14d) AS fresh,
-                   SUM(total_postings) AS total
-            FROM demand_snapshot
-            WHERE domain_code = ANY(%s) AND berufenet_id IS NULL
-            GROUP BY location_state
-            ORDER BY fresh DESC
-        """, [req.domains])
+        if has_domains:
+            cur.execute("""
+                SELECT location_state,
+                       SUM(fresh_14d) AS fresh,
+                       SUM(total_postings) AS total
+                FROM demand_snapshot
+                WHERE domain_code = ANY(%s) AND berufenet_id IS NULL
+                GROUP BY location_state
+                ORDER BY fresh DESC
+            """, [req.domains])
+        else:
+            cur.execute("""
+                SELECT location_state,
+                       SUM(fresh_14d) AS fresh,
+                       SUM(total_postings) AS total
+                FROM demand_snapshot
+                WHERE berufenet_id IS NULL
+                GROUP BY location_state
+                ORDER BY fresh DESC
+            """)
         states = [
             {"state": r['location_state'], "fresh": r['fresh'], "total": r['total']}
             for r in cur.fetchall()
         ]
 
         # ── Professions ranking (top 15 by fresh_14d nationally) ─
-        cur.execute("""
-            SELECT berufenet_name AS name,
-                   SUM(fresh_14d) AS fresh,
-                   SUM(total_postings) AS total
-            FROM demand_snapshot
-            WHERE domain_code = ANY(%s) AND berufenet_id IS NOT NULL
-            GROUP BY berufenet_name
-            ORDER BY fresh DESC
-            LIMIT 15
-        """, [req.domains])
+        if has_domains:
+            cur.execute("""
+                SELECT berufenet_name AS name,
+                       SUM(fresh_14d) AS fresh,
+                       SUM(total_postings) AS total
+                FROM demand_snapshot
+                WHERE domain_code = ANY(%s) AND berufenet_id IS NOT NULL
+                GROUP BY berufenet_name
+                ORDER BY fresh DESC
+                LIMIT 15
+            """, [req.domains])
+        else:
+            cur.execute("""
+                SELECT berufenet_name AS name,
+                       SUM(fresh_14d) AS fresh,
+                       SUM(total_postings) AS total
+                FROM demand_snapshot
+                WHERE berufenet_id IS NOT NULL
+                GROUP BY berufenet_name
+                ORDER BY fresh DESC
+                LIMIT 15
+            """)
         professions = [
             {"name": r['name'], "fresh": r['fresh'], "total": r['total']}
             for r in cur.fetchall()

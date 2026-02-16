@@ -614,16 +614,13 @@ window.SEARCH_TOUR_I18N = {
     }
 
     async function loadIntelligence() {
-        if (state.domains.length === 0) {
-            document.getElementById('intel-activity').style.display = 'none';
-            document.getElementById('intel-split').style.display = 'none';
-            return;
-        }
         try {
+            const body = {};
+            if (state.domains.length > 0) body.domains = state.domains;
             const res = await fetch('/api/search/intelligence', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domains: state.domains }),
+                body: JSON.stringify(body),
             });
             if (!res.ok) return;
             const data = await res.json();
