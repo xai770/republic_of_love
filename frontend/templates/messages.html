@@ -3,11 +3,10 @@
 {% block title %}Messages — talent.yoga{% endblock %}
 
 {% block content %}
-<div class="app-layout">
+<div class="app-layout messages-page">
     {% include "partials/header.html" %}
     
-    {% set active_page = 'messages' %}
-    {% include "partials/sidebar.html" %}
+    {# Sidebar hidden on messages — chat-list serves as left nav #}
     
     <main class="main-content chat-container">
         <!-- Left: Chat List (Conversations) -->
@@ -64,6 +63,26 @@
 </div>
 
 <style>
+/* Messages page: no sidebar, full width */
+.messages-page .main-content {
+    margin-left: 0 !important;
+}
+
+/* System event notices (logon/logoff) */
+.system-event {
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+.system-event span {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--text-muted, #94a3b8);
+    background: var(--bg-card, rgba(255,255,255,0.5));
+    padding: 0.2rem 0.75rem;
+    border-radius: 1rem;
+}
+
 /* WhatsApp-style Chat Layout */
 .chat-container {
     display: flex;
@@ -677,6 +696,18 @@ function renderChatMessages() {
             lastDate = msgDate;
         }
         
+        // System events (logon/logoff) — show as subtle inline notices
+        if (msg.message_type === 'event' && (msg.body === 'logon' || msg.body === 'logoff')) {
+            const icon = msg.body === 'logon' ? '🟢' : '🔴';
+            const label = msg.body === 'logon' ? 'Logged in' : 'Logged out';
+            html += `
+                <div class="system-event">
+                    <span>${icon} ${label} — ${formatTimeShort(msg.created_at)}</span>
+                </div>
+            `;
+            return;
+        }
+
         // Determine if sent by user or received from actor
         const isSent = msg.direction === 'outgoing' || msg.sender_type === 'user';
         const bubbleClass = isSent ? 'sent' : 'received';
