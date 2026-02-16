@@ -43,8 +43,14 @@
                     </select>
                 </div>
                 <div id="search-map"></div>
-                <div class="map-freshness" id="freshness-badge" style="display:none;">
-                    <span id="fresh-count">0</span> {{ t('search.fresh_this_week') }}
+                <div class="map-stats" id="map-stats">
+                    <div class="search-total" id="search-total">
+                        <span class="total-number">—</span>
+                        <span class="total-label">{{ t('search.positions_found') }}</span>
+                    </div>
+                    <div class="map-freshness" id="freshness-badge" style="display:none;">
+                        <span id="fresh-count">0</span> {{ t('search.fresh_this_week') }}
+                    </div>
                 </div>
             </div>
 
@@ -54,10 +60,6 @@
                 <div class="ql-buttons" id="ql-buttons">
                     <!-- Rendered by JS -->
                     <div class="panel-loading">{{ t('search.loading') }}</div>
-                </div>
-                <div class="search-total" id="search-total">
-                    <span class="total-number">—</span>
-                    <span class="total-label">{{ t('search.positions_found') }}</span>
                 </div>
             </div>
         </div>
@@ -84,7 +86,11 @@
         <!-- Posting detail modal -->
         <div class="posting-modal-overlay" id="posting-modal-overlay">
             <div class="posting-modal">
-                <button class="posting-modal-close" id="posting-modal-close">&times;</button>
+                <div class="posting-modal-toolbar">
+                    <button class="posting-modal-feedback" id="posting-modal-feedback"
+                            onclick="openFeedbackWidget()" title="{{ t('search.report_issue') }}">💡</button>
+                    <button class="posting-modal-close" id="posting-modal-close">&times;</button>
+                </div>
                 <div class="posting-modal-body" id="posting-modal-body">
                     <!-- Filled by JS -->
                 </div>

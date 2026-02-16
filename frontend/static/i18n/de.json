@@ -78,8 +78,7 @@
     "new_matches": "Neue Matches",
     "unread_matches": "Ungelesene",
     "saved_matches": "Gespeicherte",
-    "open_applications": "Bewerbungen",
-    "click_to_complete": "Anklicken zum Ergänzen"
+    "open_applications": "Bewerbungen"
   },
   "quick_actions": {
     "title": "Schnellaktionen",
@@ -230,7 +229,8 @@
     "interest_reason_placeholder": "Warum? (optional — hilft uns, besser zu suchen)",
     "interest_saved": "Danke für dein Feedback!",
     "interest_already_yes": "Du hast Interesse bekundet",
-    "interest_already_no": "Du hast abgelehnt"
+    "interest_already_no": "Du hast abgelehnt",
+    "report_issue": "Fehler melden"
   },
   "footer": {
     "impressum": "Impressum",

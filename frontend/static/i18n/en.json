@@ -224,7 +224,8 @@
     "interest_reason_placeholder": "Why? (optional — helps us improve our search)",
     "interest_saved": "Thanks for your feedback!",
     "interest_already_yes": "You expressed interest",
-    "interest_already_no": "You passed on this"
+    "interest_already_no": "You passed on this",
+    "report_issue": "Report issue"
   },
   "footer": {
     "impressum": "Legal Notice",

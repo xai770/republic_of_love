@@ -211,7 +211,7 @@ def search_preview(
                 "codes": DOMAIN_NAMES.get(name, []),
                 "selected": bool(req.domains and any(c in req.domains for c in DOMAIN_NAMES.get(name, [])))
             }
-            for name, count in sorted(domain_agg.items(), key=lambda x: -x[1])
+            for name, count in sorted(domain_agg.items(), key=lambda x: x[0])
         ]
 
         # --- By QL (always unfiltered by QL, but filtered by domain + geo) ---
