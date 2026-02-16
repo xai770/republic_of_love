@@ -9,8 +9,13 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List
 import json
+import threading
+import logging
 
 from api.deps import get_db, require_user
+from lib.posting_verifier import queue_stale_verification, find_stale_posting_ids
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["search"])
 
@@ -131,8 +136,8 @@ def search_preview(
     All filters optional — no filters = everything.
     """
     with conn.cursor() as cur:
-        # Build WHERE clauses
-        wheres = ["p.berufenet_id IS NOT NULL"]
+        # Build WHERE clauses — always exclude invalidated/disabled postings
+        wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         params = []
 
         if req.domains:
@@ -391,7 +396,8 @@ def search_results(
     Paginated with offset/limit. Returns posting details + user interest status.
     """
     with conn.cursor() as cur:
-        wheres = ["p.berufenet_id IS NOT NULL"]
+        # Always exclude invalidated/disabled postings
+        wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         params = []
 
         if req.domains:
@@ -469,6 +475,14 @@ def search_results(
                 "first_seen": row['first_seen_at'].isoformat() if row['first_seen_at'] else None,
                 "interested": row['interested'],  # None, True, or False
             })
+
+        # Lazy verification: queue stale postings for background checking.
+        # This runs AFTER we return results — user sees immediate response,
+        # stale postings get verified in background for next search.
+        result_ids = [r['posting_id'] for r in results]
+        stale_ids = find_stale_posting_ids(result_ids, conn)
+        if stale_ids:
+            queue_stale_verification(stale_ids)
 
         return {
             "results": results,

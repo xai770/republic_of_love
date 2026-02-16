@@ -110,6 +110,18 @@ were discussed/planned but not yet implemented:
    `nightly_invalidate_stale.py` cron runs at 03:00 but these survive it.
    Need to check: is the threshold too conservative, or are these genuinely
    still appearing in AA results?
+   
+   **→ RESOLVED:** Implemented lazy verification (Google-style). Instead of
+   bulk nightly invalidation, postings are verified on-demand when they
+   appear in search results and haven't been checked in 24 hours. Background
+   thread checks AA search API (or HEAD/GET for non-AA), updates
+   `last_validated_at` on success, sets `invalidated=true` on 404/gone.
+   Max 5 per search, 0.3s rate limit. New files:
+   - `lib/posting_verifier.py` — verification logic + background thread
+   - `api/routers/search.py` — added `enabled=true AND invalidated=false`
+     filter (was missing!), wired lazy verification after results return.
+   Also found: search was showing disabled and invalidated postings to users
+   (no filter at all). Fixed.
 
 3. **5 duplicate external_ids** (pipeline health): Persistent across runs.
    Likely legitimate — same job posted under slightly different metadata.
