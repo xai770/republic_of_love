@@ -126,6 +126,15 @@ were discussed/planned but not yet implemented:
 3. **5 duplicate external_ids** (pipeline health): Persistent across runs.
    Likely legitimate — same job posted under slightly different metadata.
    Should investigate and either dedupe or accept.
+   
+   **→ RESOLVED:** Investigated — 99 duplicate pairs found, but ALL have
+   pattern: one invalidated + one active (job re-fetched after invalidation).
+   Zero active-active duplicates. A unique index on `external_job_id`
+   already prevents duplicates during upsert. Added second partial unique
+   index on `external_id` for belt-and-suspenders:
+   `CREATE UNIQUE INDEX idx_postings_external_id_active ON postings (external_id)
+   WHERE external_id IS NOT NULL AND invalidated = false AND enabled = true`
+   Migration: `migrations/unique_active_external_id_20260216.sql`
 
 4. **ROADMAP.md is stale** (last updated Feb 11): Metrics, cron time
    (still says 22:00, actually 23:50), test count (says 192, likely
