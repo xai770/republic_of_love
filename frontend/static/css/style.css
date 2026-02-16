@@ -4880,7 +4880,10 @@ body {
     z-index: 400;
 }
 
-/* CartoDB tiles have native dark variant — no filter needed */
+/* Dark mode — invert map tiles for dark appearance (OSM.DE has no native dark) */
+[data-theme="dark"] #search-map .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(1.05) contrast(0.9);
+}
 
 /* Posting marker tooltip on map */
 .posting-marker-tooltip {

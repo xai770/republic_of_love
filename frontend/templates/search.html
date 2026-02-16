@@ -280,22 +280,12 @@ window.SEARCH_TOUR_I18N = {
         scrollWheelZoom: true,
     });
 
-    // Tile layer — CartoDB Positron (light) / Dark Matter (dark)
-    const isDarkMap = document.documentElement.getAttribute('data-theme') === 'dark';
-    const tileLight = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-    const tileDark  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    let tileLayer = L.tileLayer(isDarkMap ? tileDark : tileLight, {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19,
+    // Tile layer — OpenStreetMap.DE (German labels)
+    const tileUrl = 'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
+    let tileLayer = L.tileLayer(tileUrl, {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> Mitwirkende',
+        maxZoom: 18,
     }).addTo(map);
-
-    // Switch tiles when theme changes
-    const _themeObs = new MutationObserver(function() {
-        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-        tileLayer.setUrl(dark ? tileDark : tileLight);
-    });
-    _themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     // Dedicated pane for heatmap — semi-transparent so tiles show through
     map.createPane('heatPane');
