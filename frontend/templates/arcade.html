@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block title %}Frustrationsabbau — talent.yoga{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    {% include "partials/header.html" %}
+
+    {% set active_page = 'arcade' %}
+    {% include "partials/sidebar.html" %}
+
+    <main class="main-content" style="padding:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#0a0a1a;">
+
+        <div id="arcade-wrap">
+            <!-- Start screen -->
+            <div id="start-screen" class="arcade-overlay">
+                <div class="arcade-title">FRUSTRATIONSABBAU</div>
+                <div class="arcade-subtitle">🧘 Yogi vs. Bad Jobs 👾</div>
+                <div class="arcade-rules">
+                    <p>◀ ▶ Bewegen &nbsp; LEERTASTE Schießen</p>
+                    <p class="rule-good">🟢 Gute Jobs einsammeln = +50</p>
+                    <p class="rule-bad">🔴 Schlechte Jobs abschießen = +10</p>
+                    <p class="rule-warn">⚠️ Gute Jobs nicht abschießen!</p>
+                </div>
+                <button id="btn-start" class="arcade-btn">▶ START</button>
+            </div>
+
+            <!-- Game over screen -->
+            <div id="gameover-screen" class="arcade-overlay" style="display:none;">
+                <div class="arcade-title go-title">GAME OVER</div>
+                <div id="final-score" class="arcade-score"></div>
+                <div id="final-stats" class="arcade-stats"></div>
+                <button id="btn-restart" class="arcade-btn">🔄 NOCHMAL</button>
+            </div>
+
+            <canvas id="game-canvas" width="600" height="700"></canvas>
+
+            <!-- HUD -->
+            <div id="hud">
+                <span id="hud-score">Score: 0</span>
+                <span id="hud-lives">❤️❤️❤️</span>
+                <span id="hud-level">Level 1</span>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<style>
+    #arcade-wrap {
+        position: relative;
+        width: 600px;
+        height: 700px;
+        border: 2px solid #333;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0 40px rgba(100,100,255,0.15), inset 0 0 60px rgba(0,0,0,0.5);
+        image-rendering: pixelated;
+    }
+
+    #game-canvas {
+        display: block;
+        background: #0a0a1a;
+    }
+
+    /* CRT scanline overlay */
+    #arcade-wrap::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            transparent 0px,
+            transparent 2px,
+            rgba(0,0,0,0.08) 2px,
+            rgba(0,0,0,0.08) 4px
+        );
+    }
+
+    #hud {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 14px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        font-weight: bold;
+        color: #0f0;
+        text-shadow: 0 0 6px #0f0;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .arcade-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10,10,26,0.92);
+        z-index: 10;
+        gap: 1rem;
+    }
+
+    .arcade-title {
+        font-family: 'Courier New', monospace;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff0;
+        text-shadow: 0 0 12px #ff0, 0 0 24px #f80;
+        text-align: center;
+        letter-spacing: 0.15em;
+    }
+
+    .go-title { color: #f44; text-shadow: 0 0 12px #f44, 0 0 24px #f00; }
+
+    .arcade-subtitle {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        color: #aaa;
+    }
+
+    .arcade-rules {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #888;
+        text-align: center;
+        line-height: 2;
+    }
+    .rule-good { color: #4f4; }
+    .rule-bad { color: #f84; }
+    .rule-warn { color: #f44; }
+
+    .arcade-btn {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+        padding: 0.7rem 2.5rem;
+        border: 2px solid #0f0;
+        background: transparent;
+        color: #0f0;
+        cursor: pointer;
+        text-shadow: 0 0 6px #0f0;
+        border-radius: 4px;
+        transition: all 0.2s;
+        margin-top: 0.5rem;
+    }
+
+    .arcade-btn:hover {
+        background: #0f02;
+        box-shadow: 0 0 20px rgba(0,255,0,0.3);
+    }
+
+    .arcade-score {
+        font-family: 'Courier New', monospace;
+        font-size: 2.5rem;
+        color: #ff0;
+        text-shadow: 0 0 10px #ff0;
+    }
+
+    .arcade-stats {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #aaa;
+        text-align: center;
+        line-height: 1.8;
+    }
+
+    @media (max-width: 640px) {
+        #arcade-wrap { width: 100vw; height: 80vh; }
+        #game-canvas { width: 100%; height: 100%; }
+    }
+</style>
+
+<script>
+(function() {
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // ── Job titles (real German ones for flavor) ─────────────────
+    const BAD_JOBS = [
+        'Unbezahltes Praktikum',
+        'Social Media Guru',
+        '10 Jahre Erfahrung (Junior)',
+        'Pflichtpraktikum 0€',
+        'Work-Life-Balance: nein',
+        'Familienunternehmen*',
+        'Flexible Arbeitszeit**',
+        'Startup—Equity only',
+        'Kaltakquise Champion',
+        'SAP Berater 12€/h',
+        'Full Stack für 30k',
+        'DevOps+Design+PM+CEO',
+        '\"Hands-on Mentalität\"',
+        'Obstkorb & Kicker',
+        'Teamplayer (= Überstunden)',
+        'Agile Coach (Powerpoint)',
+        'Ninja Rockstar Dev',
+        'Growth Hacker Intern',
+        'Büro mit Aussicht*',
+        'Befristet (1 Monat)',
+    ];
+
+    const GOOD_JOBS = [
+        'Softwareentwickler/in 85k',
+        'Data Engineer Remote',
+        'Teamlead 95k + Bonus',
+        'Pflegefachkraft 4200€',
+        'Meister/in Elektro 65k',
+        'UX Designer 70k Remote',
+        'DevOps Engineer 80k',
+        'Projektleiter/in 78k',
+        'Fachkraft Logistik 48k',
+        'KFZ-Mechatroniker 52k',
+        'IT-Security 90k',
+        'Bauingenieur/in 72k',
+        'Maschinenbauer/in 68k',
+        'Controller/in 65k',
+        'Vertriebsleiter/in 82k',
+    ];
+
+    // ── Game state ──────────────────────────────────────────────
+    let player, bullets, jobs, particles, score, lives, level, frame;
+    let gameRunning = false;
+    let keys = {};
+    let stats = { killed: 0, collected: 0, missed: 0, friendly_fire: 0 };
+
+    function initGame() {
+        player = { x: W / 2, y: H - 50, w: 32, h: 32, speed: 5 };
+        bullets = [];
+        jobs = [];
+        particles = [];
+        score = 0; lives = 3; level = 1; frame = 0;
+        stats = { killed: 0, collected: 0, missed: 0, friendly_fire: 0 };
+        updateHUD();
+    }
+
+    // ── Spawn ───────────────────────────────────────────────────
+    function spawnJob() {
+        const isGood = Math.random() < 0.3;
+        const titles = isGood ? GOOD_JOBS : BAD_JOBS;
+        const title = titles[Math.floor(Math.random() * titles.length)];
+        const w = Math.min(ctx.measureText(title).width + 20, 220);
+        jobs.push({
+            x: Math.random() * (W - w),
+            y: -30,
+            w: w,
+            h: 24,
+            speed: 0.8 + Math.random() * 0.5 + level * 0.15,
+            title: title,
+            good: isGood,
+            flash: 0,
+        });
+    }
+
+    // ── Particles ───────────────────────────────────────────────
+    function explode(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x, y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                life: 20 + Math.random() * 15,
+                color: color,
+                size: 2 + Math.random() * 3,
+            });
+        }
+    }
+
+    function floatText(x, y, text, color) {
+        particles.push({
+            x, y, vx: 0, vy: -1.5,
+            life: 40, color, size: 0,
+            text: text,
+        });
+    }
+
+    // ── Update ──────────────────────────────────────────────────
+    function update() {
+        frame++;
+
+        // Player movement
+        if (keys['ArrowLeft'] || keys['a']) player.x = Math.max(0, player.x - player.speed);
+        if (keys['ArrowRight'] || keys['d']) player.x = Math.min(W - player.w, player.x + player.speed);
+
+        // Spawn rate based on level
+        const spawnRate = Math.max(30, 70 - level * 5);
+        if (frame % spawnRate === 0) spawnJob();
+
+        // Level up every 200 points
+        const newLevel = Math.floor(score / 200) + 1;
+        if (newLevel > level) {
+            level = newLevel;
+            floatText(W / 2, H / 2, `LEVEL ${level}!`, '#ff0');
+        }
+
+        // Bullets
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].y -= 8;
+            if (bullets[i].y < -10) { bullets.splice(i, 1); continue; }
+
+            // Hit detection
+            for (let j = jobs.length - 1; j >= 0; j--) {
+                const b = bullets[i], jb = jobs[j];
+                if (b && b.x > jb.x && b.x < jb.x + jb.w && b.y > jb.y && b.y < jb.y + jb.h) {
+                    bullets.splice(i, 1);
+                    if (jb.good) {
+                        // Penalty for shooting good jobs!
+                        score = Math.max(0, score - 25);
+                        stats.friendly_fire++;
+                        explode(jb.x + jb.w / 2, jb.y + jb.h / 2, '#4f4', 10);
+                        floatText(jb.x + jb.w / 2, jb.y, '-25 💔', '#f44');
+                    } else {
+                        score += 10;
+                        stats.killed++;
+                        explode(jb.x + jb.w / 2, jb.y + jb.h / 2, '#f84', 15);
+                        floatText(jb.x + jb.w / 2, jb.y, '+10', '#ff0');
+                    }
+                    jobs.splice(j, 1);
+                    break;
+                }
+            }
+        }
+
+        // Jobs fall
+        for (let i = jobs.length - 1; i >= 0; i--) {
+            jobs[i].y += jobs[i].speed;
+
+            // Collect good jobs by touching
+            if (jobs[i].good) {
+                const jb = jobs[i];
+                if (player.x < jb.x + jb.w && player.x + player.w > jb.x &&
+                    player.y < jb.y + jb.h && player.y + player.h > jb.y) {
+                    score += 50;
+                    stats.collected++;
+                    explode(jb.x + jb.w / 2, jb.y, '#0f0', 20);
+                    floatText(jb.x + jb.w / 2, jb.y, '+50 ⭐', '#0f0');
+                    jobs.splice(i, 1);
+                    continue;
+                }
+            }
+
+            // Off screen
+            if (jobs[i] && jobs[i].y > H) {
+                if (!jobs[i].good) {
+                    // Bad job escaped = lose a life
+                    lives--;
+                    stats.missed++;
+                    floatText(jobs[i].x + jobs[i].w / 2, H - 40, '💀', '#f44');
+                }
+                jobs.splice(i, 1);
+                if (lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        // Particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        updateHUD();
+    }
+
+    // ── Draw ────────────────────────────────────────────────────
+    function draw() {
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(0, 0, W, H);
+
+        // Starfield (static from frame)
+        ctx.fillStyle = '#ffffff15';
+        for (let i = 0; i < 50; i++) {
+            const sx = (i * 137 + 42) % W;
+            const sy = ((i * 251 + frame * 0.2) % H + H) % H;
+            ctx.fillRect(sx, sy, 1, 1);
+        }
+
+        // Player (pixel yogi)
+        ctx.save();
+        ctx.fillStyle = '#0ff';
+        ctx.shadowColor = '#0ff';
+        ctx.shadowBlur = 8;
+        // Body
+        ctx.fillRect(player.x + 12, player.y + 4, 8, 16);
+        // Head
+        ctx.fillRect(player.x + 10, player.y, 12, 8);
+        // Arms
+        ctx.fillRect(player.x + 4, player.y + 8, 8, 4);
+        ctx.fillRect(player.x + 20, player.y + 8, 8, 4);
+        // Legs (lotus pose)
+        ctx.fillRect(player.x + 6, player.y + 20, 20, 4);
+        ctx.fillRect(player.x + 4, player.y + 24, 8, 4);
+        ctx.fillRect(player.x + 20, player.y + 24, 8, 4);
+        // Glow dot (third eye)
+        ctx.fillStyle = '#ff0';
+        ctx.fillRect(player.x + 15, player.y + 2, 2, 2);
+        ctx.restore();
+
+        // Bullets
+        ctx.fillStyle = '#0ff';
+        ctx.shadowColor = '#0ff';
+        ctx.shadowBlur = 4;
+        bullets.forEach(b => {
+            ctx.fillRect(b.x - 1, b.y, 3, 8);
+        });
+        ctx.shadowBlur = 0;
+
+        // Jobs
+        ctx.font = 'bold 11px Courier New';
+        jobs.forEach(j => {
+            const glow = j.good ? '#0f04' : '#f0004';
+            ctx.fillStyle = j.good ? '#143' : '#311';
+            ctx.strokeStyle = j.good ? '#4f4' : '#f44';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(j.x, j.y, j.w, j.h, 3);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = j.good ? '#4f4' : '#f84';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(j.title, j.x + 6, j.y + j.h / 2, j.w - 12);
+
+            // Icon
+            ctx.font = '10px serif';
+            ctx.fillText(j.good ? '💰' : '💩', j.x + j.w - 16, j.y + j.h / 2);
+            ctx.font = 'bold 11px Courier New';
+        });
+
+        // Particles
+        particles.forEach(p => {
+            const alpha = Math.min(1, p.life / 15);
+            if (p.text) {
+                ctx.globalAlpha = alpha;
+                ctx.font = 'bold 14px Courier New';
+                ctx.fillStyle = p.color;
+                ctx.textAlign = 'center';
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.textAlign = 'start';
+                ctx.globalAlpha = 1;
+            } else {
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                ctx.globalAlpha = 1;
+            }
+        });
+    }
+
+    // ── HUD ─────────────────────────────────────────────────────
+    function updateHUD() {
+        document.getElementById('hud-score').textContent = `Score: ${score}`;
+        document.getElementById('hud-lives').textContent = '❤️'.repeat(Math.max(0, lives));
+        document.getElementById('hud-level').textContent = `Level ${level}`;
+    }
+
+    // ── Game loop ───────────────────────────────────────────────
+    let animId;
+    function loop() {
+        if (!gameRunning) return;
+        update();
+        draw();
+        animId = requestAnimationFrame(loop);
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('gameover-screen').style.display = 'none';
+        initGame();
+        gameRunning = true;
+        loop();
+    }
+
+    function gameOver() {
+        gameRunning = false;
+        cancelAnimationFrame(animId);
+        document.getElementById('final-score').textContent = score;
+        document.getElementById('final-stats').innerHTML =
+            `💀 ${stats.killed} schlechte Jobs vernichtet<br>` +
+            `⭐ ${stats.collected} gute Jobs eingesammelt<br>` +
+            `😰 ${stats.missed} entwischt<br>` +
+            `💔 ${stats.friendly_fire} Friendly Fire`;
+        document.getElementById('gameover-screen').style.display = '';
+    }
+
+    // ── Input ───────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+        keys[e.key] = true;
+        if (e.key === ' ' && gameRunning) {
+            e.preventDefault();
+            // Rate limit: max 1 bullet per 8 frames
+            if (!bullets.length || bullets[bullets.length - 1].y < player.y - 30) {
+                bullets.push({ x: player.x + player.w / 2, y: player.y - 4 });
+            }
+        }
+        if (e.key === 'Enter' && !gameRunning) {
+            e.preventDefault();
+            startGame();
+        }
+    });
+    document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+    // Buttons
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-restart').addEventListener('click', startGame);
+
+    // Prevent scroll on arrow keys
+    window.addEventListener('keydown', e => {
+        if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // ── Attract mode: animate title screen ──────────────────────
+    (function attractMode() {
+        if (gameRunning) return;
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(0, 0, W, H);
+        // Slow falling job titles as background
+        const t = Date.now() / 40;
+        ctx.font = '10px Courier New';
+        ctx.globalAlpha = 0.15;
+        for (let i = 0; i < 12; i++) {
+            const title = BAD_JOBS[i % BAD_JOBS.length];
+            const x = (i * 137) % W;
+            const y = ((t + i * 60) % (H + 40)) - 20;
+            ctx.fillStyle = '#f44';
+            ctx.fillText(title, x, y);
+        }
+        ctx.globalAlpha = 1;
+        if (!gameRunning) requestAnimationFrame(attractMode);
+    })();
+
+})();
+</script>
+{% endblock %}

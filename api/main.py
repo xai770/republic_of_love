@@ -424,6 +424,21 @@ def terms_page(request: Request):
     })
 
 
+@app.get("/arcade")
+def arcade_page(request: Request, conn=Depends(get_db)):
+    """Frustrationsabbau — retro arcade game."""
+    if not templates:
+        return {"error": "Frontend not configured"}
+    user = get_current_user(request, conn)
+    if not user:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("arcade.html", {
+        "request": request,
+        "user": user,
+        **get_i18n_context(request)
+    })
+
+
 @app.get("/finances")
 def finances_page(request: Request):
     """Public finances/ledger page."""
