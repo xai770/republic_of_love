@@ -532,7 +532,7 @@ def record_interest(
 class IntelligenceRequest(BaseModel):
     domains: Optional[List[str]] = None   # selected KLDB 2-digit codes
     ql: Optional[List[int]] = None
-    days: int = 14
+    days: int = 30
 
 @router.post("/search/intelligence")
 def search_intelligence(
@@ -556,7 +556,7 @@ def search_intelligence(
                 JOIN berufenet b ON b.berufenet_id = p.berufenet_id
                 WHERE p.enabled = true AND p.invalidated = false
                   AND SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)
-                  AND p.first_seen_at > NOW() - INTERVAL '14 days'
+                  AND p.first_seen_at > NOW() - INTERVAL '30 days'
                 GROUP BY day ORDER BY day
             """, [req.domains])
         else:
@@ -565,7 +565,7 @@ def search_intelligence(
                 FROM postings p
                 WHERE p.enabled = true AND p.invalidated = false
                   AND p.berufenet_id IS NOT NULL
-                  AND p.first_seen_at > NOW() - INTERVAL '14 days'
+                  AND p.first_seen_at > NOW() - INTERVAL '30 days'
                 GROUP BY day ORDER BY day
             """)
         activity = [{"date": str(r['day']), "count": r['count']} for r in cur.fetchall()]
