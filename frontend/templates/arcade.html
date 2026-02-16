@@ -44,6 +44,10 @@
                 <div id="final-score" class="arcade-score"></div>
                 <div id="final-stats" class="arcade-stats"></div>
                 <div id="new-record" class="new-record" style="display:none;">🏆 NEUER REKORD! 🏆</div>
+                <div class="arcade-name-entry">
+                    <label class="name-label">DEIN NAME</label>
+                    <input type="text" id="arcade-name" class="arcade-name-input" maxlength="20" placeholder="???" autocomplete="off">
+                </div>
                 <button id="btn-restart" class="arcade-btn">🔄 NOCHMAL</button>
                 <button id="btn-go-lb" class="arcade-btn btn-secondary">🏆 BESTENLISTE</button>
             </div>
@@ -212,6 +216,42 @@
 
     .arcade-score { font-family: 'Courier New', monospace; font-size: 2.5rem; color: #ff0; text-shadow: 0 0 10px #ff0; }
     .arcade-stats { font-family: 'Courier New', monospace; font-size: 0.85rem; color: #aaa; text-align: center; line-height: 1.8; }
+
+    .arcade-name-entry {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0.3rem 0;
+    }
+    .name-label {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8rem;
+        color: #00ffff;
+        text-shadow: 0 0 6px #00ffff;
+        letter-spacing: 0.15em;
+    }
+    .arcade-name-input {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #ffff00;
+        text-shadow: 0 0 8px #ffff00;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid #ff00ff;
+        box-shadow: 0 2px 8px rgba(255,0,255,0.3);
+        outline: none;
+        text-align: center;
+        width: 160px;
+        padding: 4px 0;
+        caret-color: #00ffff;
+        text-transform: uppercase;
+    }
+    .arcade-name-input::placeholder { color: #444; text-shadow: none; }
+    .arcade-name-input:focus {
+        border-color: #00ffff;
+        box-shadow: 0 2px 12px rgba(0,255,255,0.4);
+    }
 
     .new-record {
         font-family: 'Courier New', monospace; font-size: 1.2rem; color: #ff0;
@@ -1191,21 +1231,42 @@
         const isRecord = score > personalBest;
         document.getElementById('new-record').style.display = isRecord ? '' : 'none';
         if (isRecord) personalBest = score;
-        document.getElementById('gameover-screen').style.display = '';
 
+        // Pre-fill name from last used or display_name
+        const nameInput = document.getElementById('arcade-name');
+        if (!nameInput.value) nameInput.value = arcadePlayerName || '';
+        document.getElementById('gameover-screen').style.display = '';
+        nameInput.focus();
+
+        // Store pending score for submission
+        pendingScore = {
+            score, level,
+            monsters_killed: stats.killed,
+            fruits_collected: stats.collected,
+            friendly_fire: stats.friendly_fire,
+            duration_seconds: duration,
+        };
+    }
+
+    let pendingScore = null;
+    let arcadePlayerName = '';
+
+    async function submitPendingScore() {
+        if (!pendingScore) return;
+        const nameInput = document.getElementById('arcade-name');
+        const name = nameInput.value.trim();
+        if (name) arcadePlayerName = name;
         try {
             await fetch('/api/arcade/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    score, level,
-                    monsters_killed: stats.killed,
-                    fruits_collected: stats.collected,
-                    friendly_fire: stats.friendly_fire,
-                    duration_seconds: duration,
+                    ...pendingScore,
+                    player_name: name || undefined,
                 }),
             });
         } catch (e) { console.warn('Could not submit score:', e); }
+        pendingScore = null;
     }
 
     // ═══════════════════════════════════════════════════════
@@ -1223,6 +1284,7 @@
             const data = await res.json();
             const p = data.personal;
             personalBest = p.best_score;
+            if (data.display_name) arcadePlayerName = data.display_name;
             document.getElementById('lb-personal').innerHTML =
                 'Dein Rekord: <span style="color:#ff0">' + p.best_score + '</span> · ' +
                 p.games_played + ' Spiele · ' + p.total_kills + ' 👾 · ' + p.total_fruits + ' 🍎';
@@ -1254,14 +1316,29 @@
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         keys[e.key] = true;
         if (e.key === ' ' && gameRunning) { e.preventDefault(); fireBullet(); }
-        if (e.key === 'Enter' && !gameRunning) { e.preventDefault(); startGame(); }
+        if (e.key === 'Enter' && !gameRunning) { e.preventDefault(); submitPendingScore().then(() => startGame()); }
     });
     document.addEventListener('keyup', function(e) { keys[e.key] = false; });
 
     document.getElementById('btn-start').addEventListener('click', startGame);
-    document.getElementById('btn-restart').addEventListener('click', startGame);
-    document.getElementById('btn-leaderboard').addEventListener('click', showLeaderboard);
+    document.getElementById('btn-restart').addEventListener('click', async function() {
+        await submitPendingScore();
+        startGame();
+    });
+    document.getElementById('btn-leaderboard').addEventListener('click', async function() {
+        await submitPendingScore();
+        showLeaderboard();
+    });
     document.getElementById('btn-go-lb').addEventListener('click', showLeaderboard);
+
+    // Enter in name input => submit score + restart
+    document.getElementById('arcade-name').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            submitPendingScore().then(() => startGame());
+        }
+    });
     document.getElementById('btn-lb-back').addEventListener('click', function() {
         document.getElementById('leaderboard-screen').style.display = 'none';
         document.getElementById('start-screen').style.display = '';
