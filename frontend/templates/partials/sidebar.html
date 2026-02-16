@@ -28,6 +28,14 @@
             </span>
             <span class="nav-label">{{ t('nav.search') }}</span>
         </a>
+
+        {# 3b. Opportunity Landscape #}
+        <a href="/landscape" class="nav-item {{ 'active' if active_page == 'landscape' else '' }}" data-tooltip="Opportunity Landscape">
+            <span class="nav-icon-wrap" style="background: #e8eaf6;">
+                <span class="nav-icon">🗺️</span>
+            </span>
+            <span class="nav-label">Landscape</span>
+        </a>
         
         {# 4. My Active Postings (Jobs/Matches) #}
         <a href="/matches" class="nav-item {{ 'active' if active_page == 'matches' else '' }}" data-tooltip="{{ t('nav.jobs') }}">

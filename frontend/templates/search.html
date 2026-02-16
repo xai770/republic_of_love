@@ -451,12 +451,27 @@ window.SEARCH_TOUR_I18N = {
     function renderHeatmap(points) {
         if (heatLayer) map.removeLayer(heatLayer);
         if (!points || points.length === 0) return;
+
+        // Use 90th percentile for max to prevent outlier dominance
+        const weights = points.map(p => p[2]).sort((a, b) => a - b);
+        const p90 = weights[Math.floor(weights.length * 0.9)] || 1;
+        const maxW = Math.max(p90 * 1.5, 1);
+
         heatLayer = L.heatLayer(points, {
-            radius: 18,
-            blur: 22,
-            maxZoom: 12,
-            max: Math.max(...points.map(p => p[2])),
-            gradient: { 0.2: '#2196F3', 0.4: '#4CAF50', 0.6: '#FFEB3B', 0.8: '#FF9800', 1.0: '#F44336' }
+            radius: 22,
+            blur: 28,
+            maxZoom: 13,
+            minOpacity: 0.35,
+            max: maxW,
+            gradient: {
+                0.0: '#f0f4ff',
+                0.15: '#93c5fd',
+                0.35: '#3b82f6',
+                0.55: '#22c55e',
+                0.70: '#facc15',
+                0.85: '#f97316',
+                1.0:  '#ef4444'
+            }
         }).addTo(map);
     }
 

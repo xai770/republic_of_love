@@ -528,6 +528,12 @@ with get_connection() as conn:
     print(f'  Pending embed:    {pending:,}')
 "
 
+# ── Market Intelligence: Demand Snapshot ──────────────────────
+ts "Computing demand snapshot..."
+python3 scripts/compute_demand_snapshot.py 2>&1 | ts_prefix
+ts "Computing profession similarity..."
+python3 scripts/compute_profession_similarity.py 2>&1 | ts_prefix
+
 # Send success notification
 notify "Pipeline OK" "$(date '+%H:%M') — Pipeline complete. Check logs for stats." "low" "white_check_mark"
 

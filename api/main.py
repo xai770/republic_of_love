@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from api.config import FRONTEND_URL, DEBUG
-from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback
+from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence
 from api.deps import get_current_user, get_db
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
@@ -71,6 +71,7 @@ app.include_router(events.router, prefix="/api")
 app.include_router(visualization.router)
 app.include_router(admin.router)
 app.include_router(feedback.router, prefix="/api", tags=["feedback"])
+app.include_router(intelligence.router, prefix="/api")
 app.include_router(feedback.router, prefix="/admin", tags=["feedback-admin"], include_in_schema=False)
 
 
@@ -193,6 +194,48 @@ def search_page(request: Request, conn=Depends(get_db)):
     return templates.TemplateResponse("search.html", {
         "request": request,
         "user": user,
+        **get_i18n_context(request)
+    })
+
+
+@app.get("/landscape")
+def landscape_page_redirect(request: Request, conn=Depends(get_db)):
+    """Opportunity Landscape page — market intelligence."""
+    if not templates:
+        return {"error": "Frontend not configured"}
+
+    user = get_current_user(request, conn)
+    if not user:
+        return RedirectResponse(url="/", status_code=302)
+
+    from api.routers.intelligence import KLDB_DOMAIN_NAMES
+    from psycopg2.extras import RealDictCursor
+
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT DISTINCT domain_code, total_postings
+            FROM demand_snapshot WHERE berufenet_id IS NULL ORDER BY domain_code
+        """)
+        domains_raw = cur.fetchall()
+        cur.execute("SELECT DISTINCT location_state FROM demand_snapshot ORDER BY location_state")
+        states = [r['location_state'] for r in cur.fetchall()]
+
+    domain_map = {}
+    for row in domains_raw:
+        code = row['domain_code']
+        name = KLDB_DOMAIN_NAMES.get(code, f'Unbekannt ({code})')
+        if name not in domain_map:
+            domain_map[name] = {"codes": [], "total": 0}
+        domain_map[name]["codes"].append(code)
+        domain_map[name]["total"] += row['total_postings']
+
+    domains = sorted(domain_map.items(), key=lambda x: x[0])
+
+    return templates.TemplateResponse("landscape.html", {
+        "request": request,
+        "user": user,
+        "domains": domains,
+        "states": states,
         **get_i18n_context(request)
     })
 
