@@ -526,6 +526,80 @@ def record_interest(
 
 
 # ============================================================
+# Search intelligence — activity + state ranking + profession ranking
+# ============================================================
+
+class IntelligenceRequest(BaseModel):
+    domains: Optional[List[str]] = None   # selected KLDB 2-digit codes
+    ql: Optional[List[int]] = None
+    days: int = 14
+
+@router.post("/search/intelligence")
+def search_intelligence(
+    req: IntelligenceRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Intelligence panel data for the current domain selection.
+    Returns: activity (14-day sparkline), states ranking, professions ranking.
+    Only returns data when at least one domain is selected.
+    """
+    if not req.domains:
+        return {"activity": [], "states": [], "professions": []}
+
+    with conn.cursor() as cur:
+        # ── 14-day activity (new postings per day) ───────────────
+        cur.execute("""
+            SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
+            FROM postings p
+            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE p.enabled = true AND p.invalidated = false
+              AND SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)
+              AND p.first_seen_at > NOW() - INTERVAL '14 days'
+            GROUP BY day ORDER BY day
+        """, [req.domains])
+        activity = [{"date": str(r['day']), "count": r['count']} for r in cur.fetchall()]
+
+        # ── States ranking (fresh_14d from demand_snapshot) ──────
+        cur.execute("""
+            SELECT location_state,
+                   SUM(fresh_14d) AS fresh,
+                   SUM(total_postings) AS total
+            FROM demand_snapshot
+            WHERE domain_code = ANY(%s) AND berufenet_id IS NULL
+            GROUP BY location_state
+            ORDER BY fresh DESC
+        """, [req.domains])
+        states = [
+            {"state": r['location_state'], "fresh": r['fresh'], "total": r['total']}
+            for r in cur.fetchall()
+        ]
+
+        # ── Professions ranking (top 15 by fresh_14d nationally) ─
+        cur.execute("""
+            SELECT berufenet_name AS name,
+                   SUM(fresh_14d) AS fresh,
+                   SUM(total_postings) AS total
+            FROM demand_snapshot
+            WHERE domain_code = ANY(%s) AND berufenet_id IS NOT NULL
+            GROUP BY berufenet_name
+            ORDER BY fresh DESC
+            LIMIT 15
+        """, [req.domains])
+        professions = [
+            {"name": r['name'], "fresh": r['fresh'], "total": r['total']}
+            for r in cur.fetchall()
+        ]
+
+    return {
+        "activity": activity,
+        "states": states,
+        "professions": professions,
+    }
+
+
+# ============================================================
 # Posting detail — full posting info for modal
 # ============================================================
 

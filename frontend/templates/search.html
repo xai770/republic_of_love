@@ -54,12 +54,30 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Qualification Level -->
+            <!-- RIGHT: Intelligence panel -->
             <div class="search-panel panel-ql">
                 <h3 class="panel-title">{{ t('search.ql_title') }}</h3>
-                <div class="ql-buttons" id="ql-buttons">
+                <div class="ql-buttons ql-compact" id="ql-buttons">
                     <!-- Rendered by JS -->
                     <div class="panel-loading">{{ t('search.loading') }}</div>
+                </div>
+
+                <!-- 14-day sparkline -->
+                <div class="intel-section" id="intel-activity" style="display:none;">
+                    <h4 class="intel-title">📊 14 Tage</h4>
+                    <div class="sparkline-wrap" id="sparkline-bars"></div>
+                </div>
+
+                <!-- States + Professions side by side -->
+                <div class="intel-split" id="intel-split" style="display:none;">
+                    <div class="intel-list-col">
+                        <h4 class="intel-title">📍 Bundesländer</h4>
+                        <div class="intel-list" id="intel-states"></div>
+                    </div>
+                    <div class="intel-list-col">
+                        <h4 class="intel-title">🔀 Berufe</h4>
+                        <div class="intel-list" id="intel-professions"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -563,6 +581,62 @@ window.SEARCH_TOUR_I18N = {
     }
 
     // ============================================================
+    // INTELLIGENCE PANEL — sparkline + state/profession rankings
+    // ============================================================
+    function renderSparkline(days) {
+        const wrap = document.getElementById('sparkline-bars');
+        const section = document.getElementById('intel-activity');
+        if (!days || days.length === 0) { section.style.display = 'none'; return; }
+        section.style.display = '';
+        const maxCount = Math.max(...days.map(d => d.count), 1);
+        wrap.innerHTML = days.map(d => {
+            const h = Math.max(2, Math.round((d.count / maxCount) * 46));
+            return `<div class="sparkline-bar" style="height:${h}px;" title="${d.date}: ${d.count}"></div>`;
+        }).join('');
+    }
+
+    function renderIntelList(containerId, items, labelKey) {
+        const el = document.getElementById(containerId);
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        if (!items || items.length === 0) {
+            el.innerHTML = '<div class="intel-empty">—</div>';
+            return;
+        }
+        el.innerHTML = items.map((item, i) => {
+            const name = item[labelKey] || '—';
+            const abbr = labelKey === 'state' ? name.replace(/-.+$/, '').substring(0, 18) : name.substring(0, 22);
+            return `<div class="intel-row" title="${name}: ${item.fresh}">
+                <span class="intel-rank">${i + 1}.</span>
+                <span class="intel-name">${abbr}</span>
+                <span class="intel-count">${item.fresh.toLocaleString(locale)}</span>
+            </div>`;
+        }).join('');
+    }
+
+    async function loadIntelligence() {
+        if (state.domains.length === 0) {
+            document.getElementById('intel-activity').style.display = 'none';
+            document.getElementById('intel-split').style.display = 'none';
+            return;
+        }
+        try {
+            const res = await fetch('/api/search/intelligence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domains: state.domains }),
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            renderSparkline(data.activity);
+            document.getElementById('intel-split').style.display = '';
+            renderIntelList('intel-states', data.states, 'state');
+            renderIntelList('intel-professions', data.professions, 'name');
+        } catch(e) {
+            console.warn('Intelligence load failed:', e);
+        }
+    }
+
+    // ============================================================
     // MAIN SEARCH
     // ============================================================
     let searchPending = false;
@@ -599,6 +673,9 @@ window.SEARCH_TOUR_I18N = {
             renderTotal(data.total);
             renderFreshness(data.fresh_count);
             renderFilterPills();
+
+            // Load intelligence data (sparkline + rankings)
+            loadIntelligence();
 
             // Load matching postings as result tiles
             loadResults(true);
