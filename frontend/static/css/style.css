@@ -4880,10 +4880,7 @@ body {
     z-index: 400;
 }
 
-/* Dark mode: invert+hue-rotate map tiles for dark appearance */
-[data-theme="dark"] .leaflet-tile-pane {
-    filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
-}
+/* CartoDB tiles have native dark variant — no filter needed */
 
 /* Posting marker tooltip on map */
 .posting-marker-tooltip {
