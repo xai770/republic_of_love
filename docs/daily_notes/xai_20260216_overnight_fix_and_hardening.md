@@ -104,6 +104,14 @@ were discussed/planned but not yet implemented:
    rejects hallucinated output from qwen2.5:7b. Not urgent — these are
    edge cases for the 7b model. Consider: dedicated prompt for DB postings,
    or skip QA for high-quality descriptions.
+   
+   **→ RESOLVED:** Root cause: word-overlap QA validator was designed for
+   same-language extraction, but DB postings are German while summaries are
+   English. Legitimate translations flagged as "hallucinations" (0% overlap).
+   Fix: dropped word-overlap validation, kept bad-data-pattern and length
+   checks. Also fixed `external_url` — was storing `/apply` URLs instead of
+   description URLs (`regexp_replace` on 1,857 existing rows + actor fix).
+   Reprocessed all 18: 18/18 success, 0 missing summaries for Deutsche Bank.
 
 2. **Stale postings cleanup** (pipeline health): 2,114 stale postings
    (first seen >30d, last seen >7d, not invalidated). The

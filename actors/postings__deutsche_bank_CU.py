@@ -459,7 +459,7 @@ class BeesiteDBJobFetcher:
                     job['title'],
                     job['location'],
                     'deutsche_bank',
-                    apply_url or 'https://careers.db.com',
+                    (apply_url or 'https://careers.db.com').rstrip('/').removesuffix('/apply'),
                     json.dumps(job['raw_data']),
                     description
                 ))
