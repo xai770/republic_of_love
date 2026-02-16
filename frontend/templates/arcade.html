@@ -323,7 +323,7 @@
     let screenShake = 0, gameStartTime = 0, personalBest = 0, lastFireFrame = 0;
 
     function initGame() {
-        player = { x: W/2 - 16, y: H - 55, w: 32, h: 32, speed: 4, invincible: 0, trail: [] };
+        player = { x: W/2 - 16, y: H - 55, w: 32, h: 32, speed: 4, vx: 0, invincible: 0, trail: [] };
         bullets = []; enemies = []; powerups = []; particles = []; bossProjectiles = [];
         bossActive = null;
         score = 0; lives = 3; level = 1; frame = 0;
@@ -369,7 +369,7 @@
 
         enemies.push({
             x: Math.random() * (W - size), y: -size, w: size, h: size,
-            speed: (data.fast ? 2.5 : 0.8) + Math.random() * 0.5 + level * 0.12,
+            speed: (data.fast ? 1.5 : 0.5) + Math.random() * 0.3 + level * 0.07,
             emoji: data.emoji, name: data.name,
             hp: data.hp || 1, maxHp: data.hp || 1, pts: data.pts || 10,
             good: isGood, fast: data.fast || false,
@@ -383,7 +383,7 @@
         const t = BOSSES[bossIdx];
         bossActive = {
             x: W/2 - t.size/2, y: -t.size, targetY: 60,
-            w: t.size, h: t.size, speed: 1.5,
+            w: t.size, h: t.size, speed: 1,
             emoji: t.emoji, name: t.name,
             hp: t.hp, maxHp: t.hp, pts: t.pts,
             attackRate: t.attackRate, attackTimer: 0,
@@ -405,14 +405,14 @@
         const cy = player.y - 4;
 
         if (w.spread) {
-            bullets.push({ x: cx, y: cy, vx: -2, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, explosive: w.explosive });
-            bullets.push({ x: cx, y: cy, vx: 0,  vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, explosive: w.explosive });
-            bullets.push({ x: cx, y: cy, vx: 2,  vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, explosive: w.explosive });
+            bullets.push({ x: cx, y: cy, vx: -2, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, weapon: currentWeapon, explosive: w.explosive });
+            bullets.push({ x: cx, y: cy, vx: 0,  vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, weapon: currentWeapon, explosive: w.explosive });
+            bullets.push({ x: cx, y: cy, vx: 2,  vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, weapon: currentWeapon, explosive: w.explosive });
         } else if (w.count === 2) {
-            bullets.push({ x: cx-6, y: cy, vx: 0, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size });
-            bullets.push({ x: cx+6, y: cy, vx: 0, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size });
+            bullets.push({ x: cx-6, y: cy, vx: 0, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, weapon: currentWeapon });
+            bullets.push({ x: cx+6, y: cy, vx: 0, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, weapon: currentWeapon });
         } else {
-            bullets.push({ x: cx, y: cy, vx: 0, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, explosive: w.explosive, isLaser: w.isLaser });
+            bullets.push({ x: cx, y: cy, vx: 0, vy: -w.speed, dmg: w.damage, color: w.color, size: w.size, weapon: currentWeapon, explosive: w.explosive, isLaser: w.isLaser });
         }
     }
 
@@ -496,16 +496,24 @@
         if (screenShake > 0) screenShake--;
         if (player.invincible > 0) player.invincible--;
 
-        // Movement
-        const spd = player.speed;
-        if (keys['ArrowLeft'] || keys['a']) player.x = Math.max(0, player.x - spd);
-        if (keys['ArrowRight'] || keys['d']) player.x = Math.min(W - player.w, player.x + spd);
+        // Movement (analog joystick momentum)
+        const accel = 0.55, friction = 0.88, maxSpd = player.speed;
+        if (keys['ArrowLeft'] || keys['a']) player.vx -= accel;
+        else if (keys['ArrowRight'] || keys['d']) player.vx += accel;
+        else player.vx *= friction;
+        player.vx = Math.max(-maxSpd, Math.min(maxSpd, player.vx));
+        if (Math.abs(player.vx) < 0.08) player.vx = 0;
+        player.x += player.vx;
+        player.x = Math.max(0, Math.min(W - player.w, player.x));
         player.trail.push({ x: player.x + player.w/2, y: player.y + player.h/2 });
         if (player.trail.length > 8) player.trail.shift();
 
+        // Auto-fire when space held
+        if (keys[' ']) fireBullet();
+
         // Spawning
         if (!bossActive) {
-            const spawnRate = Math.max(25, 65 - level * 3);
+            const spawnRate = Math.max(40, 85 - level * 3);
             if (frame % spawnRate === 0) spawnEnemy();
         }
 
@@ -535,9 +543,9 @@
                 if (boss.attackTimer >= boss.attackRate) {
                     boss.attackTimer = 0;
                     const cx = boss.x + boss.w/2, cy = boss.y + boss.h;
-                    bossProjectiles.push({ x: cx, y: cy, vx: -1.5, vy: 3, size: 4, color: '#f44' });
-                    bossProjectiles.push({ x: cx, y: cy, vx: 0,    vy: 4, size: 5, color: '#f80' });
-                    bossProjectiles.push({ x: cx, y: cy, vx: 1.5,  vy: 3, size: 4, color: '#f44' });
+                    bossProjectiles.push({ x: cx, y: cy, vx: -1, vy: 2, size: 4, color: '#f44' });
+                    bossProjectiles.push({ x: cx, y: cy, vx: 0,  vy: 2.5, size: 5, color: '#f80' });
+                    bossProjectiles.push({ x: cx, y: cy, vx: 1,  vy: 2, size: 4, color: '#f44' });
                 }
             } else if (boss.phase === 'dying') {
                 boss.flashTimer++;
@@ -583,6 +591,14 @@
             const b = bullets[i];
             b.x += (b.vx || 0); b.y += b.vy;
             if (b.y < -10 || b.x < -10 || b.x > W+10) { bullets.splice(i, 1); continue; }
+
+            // Weapon trail effects
+            if (b.weapon === 'rocket' && frame % 2 === 0) {
+                particles.push({x:b.x+(Math.random()-0.5)*4, y:b.y+8, vx:(Math.random()-0.5)*1.5, vy:1+Math.random()*2, life:8+Math.random()*8, color:['#f80','#ff0','#f44'][Math.floor(Math.random()*3)], size:2+Math.random()*3});
+            }
+            if (b.weapon === 'laser' && frame % 3 === 0) {
+                particles.push({x:b.x+(Math.random()-0.5)*8, y:b.y+Math.random()*14, vx:(Math.random()-0.5)*3, vy:(Math.random()-0.5)*2, life:5+Math.random()*5, color:'#f0f', size:1+Math.random()*2});
+            }
 
             for (let j = enemies.length-1; j >= 0; j--) {
                 const e = enemies[j];
@@ -768,17 +784,119 @@
             ctx.restore();
         }
 
-        // Bullets
+        // === BULLETS (Spectacular Weapons) ===
         for (const b of bullets) {
             ctx.save();
-            ctx.fillStyle = b.color; ctx.shadowColor = b.color;
-            ctx.shadowBlur = b.isLaser ? 10 : 4;
-            if (b.isLaser) {
-                ctx.fillRect(b.x-1, b.y, 2, 14);
-                ctx.globalAlpha = 0.4; ctx.fillRect(b.x-3, b.y, 6, 14);
+            const t = frame * 0.15;
+
+            if (b.weapon === 'rocket') {
+                // 🚀 FLAMING ROCKET
+                const exGlow = ctx.createRadialGradient(b.x, b.y+12, 0, b.x, b.y+12, 20);
+                exGlow.addColorStop(0, 'rgba(255,128,0,0.4)');
+                exGlow.addColorStop(1, 'transparent');
+                ctx.fillStyle = exGlow;
+                ctx.fillRect(b.x-20, b.y-8, 40, 40);
+                // Exhaust flame
+                const flameH = 10 + Math.random() * 8;
+                const flameGrad = ctx.createLinearGradient(b.x, b.y+6, b.x, b.y+6+flameH);
+                flameGrad.addColorStop(0, '#fff');
+                flameGrad.addColorStop(0.2, '#ff0');
+                flameGrad.addColorStop(0.6, '#f80');
+                flameGrad.addColorStop(1, 'rgba(255,0,0,0)');
+                ctx.fillStyle = flameGrad;
+                ctx.beginPath();
+                ctx.moveTo(b.x-5+(Math.random()-0.5)*2, b.y+6);
+                ctx.quadraticCurveTo(b.x+(Math.random()-0.5)*3, b.y+6+flameH*0.7, b.x, b.y+6+flameH);
+                ctx.quadraticCurveTo(b.x+(Math.random()-0.5)*3, b.y+6+flameH*0.7, b.x+5+(Math.random()-0.5)*2, b.y+6);
+                ctx.closePath(); ctx.fill();
+                // Rocket body
+                ctx.fillStyle = '#c33';
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y-6); ctx.lineTo(b.x-5, b.y+2);
+                ctx.lineTo(b.x-4, b.y+6); ctx.lineTo(b.x+4, b.y+6);
+                ctx.lineTo(b.x+5, b.y+2); ctx.closePath(); ctx.fill();
+                // Nose shine
+                ctx.fillStyle = '#f66';
+                ctx.beginPath(); ctx.moveTo(b.x, b.y-5);
+                ctx.lineTo(b.x-2, b.y+1); ctx.lineTo(b.x+1, b.y+1);
+                ctx.closePath(); ctx.fill();
+                // Fins
+                ctx.fillStyle = '#a22';
+                ctx.beginPath(); ctx.moveTo(b.x-4, b.y+3); ctx.lineTo(b.x-8, b.y+8); ctx.lineTo(b.x-4, b.y+6); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(b.x+4, b.y+3); ctx.lineTo(b.x+8, b.y+8); ctx.lineTo(b.x+4, b.y+6); ctx.fill();
+                // Ambient glow
+                ctx.shadowColor = '#f80'; ctx.shadowBlur = 15;
+                ctx.fillStyle = 'rgba(255,100,0,0.08)';
+                ctx.beginPath(); ctx.arc(b.x, b.y, 14, 0, Math.PI*2); ctx.fill();
+
+            } else if (b.weapon === 'laser' || b.isLaser) {
+                // ⚡ LASER BEAM
+                ctx.fillStyle = 'rgba(255,0,255,0.06)';
+                ctx.fillRect(b.x-14, b.y-2, 28, 20);
+                ctx.globalAlpha = 0.2 + Math.sin(t*3)*0.15;
+                ctx.fillStyle = '#f0f';
+                ctx.fillRect(b.x-7, b.y, 14, 16);
+                ctx.globalAlpha = 1;
+                ctx.shadowColor = '#f0f'; ctx.shadowBlur = 14;
+                ctx.fillStyle = '#f0f';
+                ctx.fillRect(b.x-3, b.y, 6, 16);
+                // White hot core
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(b.x-1, b.y+1, 2, 14);
+                // Electric crackle
+                ctx.strokeStyle = '#f0f'; ctx.lineWidth = 1;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath(); ctx.moveTo(b.x, b.y);
+                for (let seg = 0; seg < 4; seg++) ctx.lineTo(b.x+(Math.random()-0.5)*14, b.y+seg*4);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+
+            } else if (b.weapon === 'spread') {
+                // 🌟 SPREAD - energy shards
+                ctx.shadowColor = '#ff0'; ctx.shadowBlur = 10;
+                ctx.fillStyle = '#ff0';
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y-6); ctx.lineTo(b.x-4, b.y);
+                ctx.lineTo(b.x, b.y+6); ctx.lineTo(b.x+4, b.y);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y-3); ctx.lineTo(b.x-1.5, b.y);
+                ctx.lineTo(b.x, b.y+3); ctx.lineTo(b.x+1.5, b.y);
+                ctx.closePath(); ctx.fill();
+                ctx.globalAlpha = 0.3; ctx.fillStyle = '#ff0';
+                ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1;
+
+            } else if (b.weapon === 'double') {
+                // 🔫🔫 DOUBLE - energy bolts
+                ctx.shadowColor = '#0ff'; ctx.shadowBlur = 8;
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(b.x-2, b.y, 4, 10);
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(b.x-1, b.y, 2, 8);
+                ctx.globalAlpha = 0.4; ctx.fillStyle = '#0ff';
+                ctx.fillRect(b.x-1, b.y+10, 2, 6);
+                ctx.globalAlpha = 0.15;
+                ctx.fillRect(b.x-1, b.y+16, 2, 5);
+                ctx.globalAlpha = 1;
+
             } else {
-                ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2);
+                // 🔫 PEA - glowing energy orb
+                ctx.shadowColor = '#0ff'; ctx.shadowBlur = 8;
+                ctx.globalAlpha = 0.3; ctx.fillStyle = '#0ff';
+                ctx.beginPath(); ctx.arc(b.x, b.y+2, 6, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1; ctx.fillStyle = '#0ff';
+                ctx.beginPath(); ctx.arc(b.x, b.y+2, 3, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(b.x, b.y+2, 1.5, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 0.4; ctx.fillStyle = '#0ff';
+                ctx.fillRect(b.x-1, b.y+5, 2, 5);
+                ctx.globalAlpha = 0.15;
+                ctx.fillRect(b.x-0.5, b.y+10, 1, 4);
+                ctx.globalAlpha = 1;
             }
+
             ctx.restore();
         }
 
