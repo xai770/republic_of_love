@@ -439,6 +439,72 @@ def arcade_page(request: Request, conn=Depends(get_db)):
     })
 
 
+@app.post("/api/arcade/score")
+async def submit_arcade_score(request: Request, conn=Depends(get_db)):
+    """Submit a game score to the leaderboard."""
+    user = get_current_user(request, conn)
+    if not user:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    body = await request.json()
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO arcade_scores (user_id, score, level, monsters_killed,
+                                       fruits_collected, friendly_fire, duration_seconds)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            user["user_id"], body.get("score", 0), body.get("level", 1),
+            body.get("monsters_killed", 0), body.get("fruits_collected", 0),
+            body.get("friendly_fire", 0), body.get("duration_seconds")
+        ))
+        score_id = cur.fetchone()[0]
+        conn.commit()
+    return {"ok": True, "id": score_id}
+
+
+@app.get("/api/arcade/leaderboard")
+def arcade_leaderboard(request: Request, conn=Depends(get_db)):
+    """Top 20 scores of all time + current user's best."""
+    user = get_current_user(request, conn)
+    if not user:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT a.score, a.level, a.monsters_killed, a.fruits_collected,
+                   a.friendly_fire, a.duration_seconds, a.created_at,
+                   u.display_name, u.avatar_url
+            FROM arcade_scores a
+            JOIN users u ON u.user_id = a.user_id
+            ORDER BY a.score DESC
+            LIMIT 20
+        """)
+        cols = [d[0] for d in cur.description]
+        top = [dict(zip(cols, row)) for row in cur.fetchall()]
+
+        # User's personal best
+        cur.execute("""
+            SELECT MAX(score) as best_score,
+                   COUNT(*) as games_played,
+                   SUM(monsters_killed) as total_kills,
+                   SUM(fruits_collected) as total_fruits
+            FROM arcade_scores WHERE user_id = %s
+        """, (user["user_id"],))
+        row = cur.fetchone()
+        personal = {
+            "best_score": row[0] or 0,
+            "games_played": row[1] or 0,
+            "total_kills": row[2] or 0,
+            "total_fruits": row[3] or 0,
+        }
+
+    # Serialize datetimes
+    for entry in top:
+        if entry.get("created_at"):
+            entry["created_at"] = entry["created_at"].isoformat()
+
+    return {"top": top, "personal": personal}
+
+
 @app.get("/finances")
 def finances_page(request: Request):
     """Public finances/ledger page."""
