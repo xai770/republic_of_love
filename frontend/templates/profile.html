@@ -35,7 +35,7 @@
     <div class="profile-form {% if not profile %}hidden{% endif %}" id="profile-form">
         <section class="form-section">
             <h2>Basic Info</h2>
-            <form id="basic-info-form" hx-put="/api/profiles/me" hx-swap="none">
+            <form id="basic-info-form" onsubmit="saveBasicInfo(event)">
                 <div class="form-row">
                     <label for="name">Full Name</label>
                     <input type="text" id="name" name="name" value="{{ profile.display_name or '' }}" required>
@@ -352,6 +352,33 @@ function selectMethod(method) {
     document.getElementById('profile-form').classList.remove('hidden');
     if (method === 'upload') {
         showUploadModal();
+    }
+}
+
+// Basic Info save (creates profile for new users via upsert)
+async function saveBasicInfo(event) {
+    event.preventDefault();
+    const data = {
+        name: document.getElementById('name').value || null,
+        title: document.getElementById('title').value || null,
+        location: document.getElementById('location').value || null
+    };
+    try {
+        const resp = await fetch('/api/profiles/me', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if (!resp.ok) throw new Error('Save failed');
+        // If this was the first save (new user), reload to get full editor
+        const methodSelect = document.getElementById('method-select');
+        if (methodSelect && !methodSelect.classList.contains('hidden')) {
+            location.reload();
+        } else {
+            alert('Saved!');
+        }
+    } catch (err) {
+        alert('Error saving basic info: ' + err.message);
     }
 }
 

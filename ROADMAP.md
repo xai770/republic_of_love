@@ -89,7 +89,7 @@ config/     Systemd service units, logrotate config
 - [x] Feedback widget (screenshot + annotation)
 - [x] BI dashboard redirect (bi.talent.yoga)
 - [x] Logon/logoff event rendering in messages
-- [ ] Profile builder UI — let yogis create profiles in-app
+- [x] Profile builder UI — let yogis create profiles in-app
 - [ ] Search/filter UI for postings (UI exists, needs refinement)
 
 ---
@@ -113,6 +113,10 @@ config/     Systemd service units, logrotate config
 - [x] Systemd service units created (FastAPI + BI)
 - [x] Test suite expanded (192 → 328 tests, 13 files)
 - [x] Daily notes discipline established
+- [x] Profile builder UI — auto-create profile (upsert), basic info/CV/work-history/preferences
+- [x] Search map zoom fix (feedback #61 — invalidateSize on browser zoom)
+- [x] CSS consolidation (inline dark-mode → style.css, landscape + documents)
+- [x] Pipeline Signal alerting (lib/signal_notify.py → signal-cli)
 
 ### February 11, 2026 (20 items)
 - [x] Mira router split (1,162-line monolith → 8-file package)
@@ -150,11 +154,12 @@ config/     Systemd service units, logrotate config
 
 ### High Priority
 - [x] **Pipeline alerting** — errors → Signal via signal-cli (lib/signal_notify.py)
-- [ ] **Profile builder UI** — let yogis create profiles in-app
+- [x] **Profile builder UI** — auto-create profile on first visit (upsert), form/CV/work-history/preferences
 - [ ] **Match notification** — email/push when new matches appear
 - [ ] **Mira memory** — persist conversation context across sessions
 - [ ] **Skills extraction v2** — actor redesign for 242k posting scale
 - [x] **CSS consolidation** — inline dark-mode styles merged into style.css (landscape, documents)
+- [x] **Search map zoom fix** — feedback #61 resolved (invalidateSize on browser zoom)
 
 ### Medium Priority
 - [ ] Multi-source job fetching (StepStone, LinkedIn scraping)

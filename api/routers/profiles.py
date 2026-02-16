@@ -13,6 +13,25 @@ from api.deps import get_db, require_user
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
 
+def _ensure_profile(user: dict, conn) -> int:
+    """Return existing profile_id or create a new profile row for this user."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        row = cur.fetchone()
+        if row:
+            return row['profile_id']
+        # Auto-create with display_name as initial full_name
+        display = user.get('display_name') or user.get('yogi_name') or 'New Yogi'
+        email = user.get('email')
+        cur.execute("""
+            INSERT INTO profiles (full_name, email, user_id, profile_source)
+            VALUES (%s, %s, %s, 'self')
+            RETURNING profile_id
+        """, (display, email, user['user_id']))
+        conn.commit()
+        return cur.fetchone()['profile_id']
+
+
 class ProfileSkill(BaseModel):
     skill: str
     years: Optional[int] = None
@@ -74,6 +93,9 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
     Get the current user's profile.
     Returns profile linked to authenticated user.
     """
+    # Auto-create profile if missing
+    _ensure_profile(user, conn)
+
     with conn.cursor() as cur:
         # Get profile linked to this user (including preferences)
         cur.execute("""
@@ -84,9 +106,6 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
             WHERE user_id = %s
         """, (user['user_id'],))
         profile = cur.fetchone()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="No profile linked to this account")
         
         # Parse skills from JSON array
         import json
@@ -152,12 +171,8 @@ def update_my_profile(
     Update the current user's profile.
     """
     with conn.cursor() as cur:
-        # Get existing profile
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
-        profile = cur.fetchone()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        # Ensure profile exists (auto-create for new users)
+        profile_id = _ensure_profile(user, conn)
         
         # Build update query dynamically
         updates = []
@@ -174,7 +189,7 @@ def update_my_profile(
         
         if updates:
             updates.append("updated_at = NOW()")
-            values.append(profile['profile_id'])
+            values.append(profile_id)
             cur.execute(f"""
                 UPDATE profiles SET {', '.join(updates)}
                 WHERE profile_id = %s
@@ -195,11 +210,7 @@ def update_my_preferences(
     Update job search preferences (target roles, locations, salary, seniority).
     """
     with conn.cursor() as cur:
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
-        profile = cur.fetchone()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        profile_id = _ensure_profile(user, conn)
         
         # Build update query
         updates = []
@@ -223,7 +234,7 @@ def update_my_preferences(
         
         if updates:
             updates.append("updated_at = NOW()")
-            values.append(profile['profile_id'])
+            values.append(profile_id)
             cur.execute(f"""
                 UPDATE profiles SET {', '.join(updates)}
                 WHERE profile_id = %s
@@ -286,7 +297,7 @@ def get_my_work_history(user: dict = Depends(require_user), conn=Depends(get_db)
         cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
         profile = cur.fetchone()
         if not profile:
-            raise HTTPException(status_code=404, detail="No profile linked to this account")
+            return []  # No profile yet — return empty list
         
         cur.execute("""
             SELECT work_history_id, company_name as company, job_title as title,
@@ -308,10 +319,7 @@ def add_work_history(
 ):
     """Add a new work history entry."""
     with conn.cursor() as cur:
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
-        profile = cur.fetchone()
-        if not profile:
-            raise HTTPException(status_code=404, detail="No profile linked to this account")
+        profile_id = _ensure_profile(user, conn)
         
         cur.execute("""
             INSERT INTO profile_work_history 
@@ -322,7 +330,7 @@ def add_work_history(
                       start_date, end_date, job_description as description,
                       location, is_current, duration_months
         """, (
-            profile['profile_id'], entry.company, entry.title,
+            profile_id, entry.company, entry.title,
             entry.start_date, entry.end_date, entry.description,
             entry.location, entry.is_current
         ))
