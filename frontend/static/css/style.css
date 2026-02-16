@@ -4894,6 +4894,9 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     max-width: 280px;
 }
+
+/* Clickable markers — pointer cursor */
+#search-map .leaflet-interactive { cursor: pointer; }
 [data-theme="dark"] .posting-marker-tooltip {
     background: #1e293b;
     border-color: #334155;

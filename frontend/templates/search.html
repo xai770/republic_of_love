@@ -545,6 +545,12 @@ window.SEARCH_TOUR_I18N = {
                 }
             );
 
+            // Click → open posting detail modal
+            cm.on('click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                openPostingDetail(m.id);
+            });
+
             markerLayer.addLayer(cm);
         });
 
