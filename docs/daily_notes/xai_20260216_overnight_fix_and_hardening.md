@@ -382,3 +382,113 @@ Priority order for the process improvements:
 4. **Pipeline alerting** — next session (needs Telegram/webhook setup)
 
 *CSS consolidation and Mira intelligence deferred to separate sessions.*
+
+---
+
+## Evening session — Search page polish (feedback #84–#100)
+
+**Session:** ~evening, responding to live user feedback on the search page.
+
+### 20. Sparkline improvements — feedback #84, #85 (`985f615`)
+
+Sparkline was a flat green line with no context. Added:
+- **Y-axis step labels** with `niceStep()` algorithm (auto-rounds to 5/10/25/50/100/250…)
+- **Week grid lines** on Mondays with date labels below
+- **Dotted day grid lines** for finer granularity
+- Markers shown at all zoom levels (later refined in #92)
+
+### 21. State name truncation — feedback #86 (`0f3e7e2`)
+
+Intel panel truncated "Nordrhein-Westfalen" → "Nordrhein" because of a
+regex `.replace(/-.+$/, '')`. Removed the JS truncation; CSS
+`text-overflow: ellipsis` handles overflow gracefully.
+
+### 22. Sparkline fading line + marker zoom gate — feedback #91, #92 (`b180fae`)
+
+- **#91:** Sparkline line now fades from grey (left/old) to green
+  (right/recent) — visually communicates that older postings expire
+- **#92:** Markers hidden until zoom ≥ 8 (too cluttered at country overview).
+  Added zoom badge (bottom-left, "Zoom N") and hint banner ("🔍 Zoom in to
+  see job markers") that fades away once zoomed in
+
+### 23. Map tile rendering — feedback #97, #100 (`b985b8b`, `2a5fb05`)
+
+Map showed heatmap over blank white background — no tiles visible.
+
+**Root cause:** Heatmap was fully opaque, covering the tile layer entirely.
+
+**Fix:** Created dedicated Leaflet pane `heatPane` at z-index 350 with
+opacity 0.45. Reduced heatmap radius (22→18), blur (28→22),
+minOpacity (0.35→0.12). Switched gradient colors from solid hex to rgba
+with alpha channel.
+
+### 24. Map marker click-to-detail (`c82d29d`)
+
+Clicking a map marker now opens the same posting detail modal as clicking
+a result tile below. Added `L.DomEvent.stopPropagation` to prevent the
+click from propagating to the map. Pointer cursor on markers via CSS.
+
+### 25. Tile provider switch — blank map fix (`eb58691`)
+
+Tiles still weren't rendering — OSM main servers appeared to be blocking
+browser requests (server-side curl worked fine). Switched to CartoDB
+(Positron light / Dark Matter dark) with MutationObserver for theme switching.
+
+### 26. German map labels (`b8e5ab1`)
+
+CartoDB tiles had English labels ("Bavaria", "North Rhine-Westphalia").
+Researched providers: found **OpenStreetMap.DE** (`tile.openstreetmap.de`)
+with guaranteed German labels, free, maxZoom 18.
+
+Replaced CartoDB with OSM.DE. Added CSS filter for dark mode:
+`invert(1) hue-rotate(180deg) brightness(1.05) contrast(0.9)` on
+`.leaflet-tile-pane`. Updated attribution to German "Mitwirkende".
+
+### Evening commits
+
+| Hash | Description |
+|------|-------------|
+| `985f615` | fix(search): markers visible, sparkline grid+legend — #84 #85 |
+| `0f3e7e2` | fix(search): show full state names in intel panel — #86 |
+| `b180fae` | fix(search): sparkline fading line + marker zoom gate — #91 #92 |
+| `b985b8b` | fix(search): make map tiles visible through heatmap overlay |
+| `2a5fb05` | fix(search): reduce heatmap opacity for better tile visibility |
+| `c82d29d` | feat(search): click map marker to open posting detail modal |
+| `eb58691` | fix(search): switch tiles from OSM to CartoDB — fixes blank map |
+| `b8e5ab1` | fix(search): switch tiles to OpenStreetMap.DE for German labels |
+
+---
+
+## End-of-day summary for Sandy
+
+**Feb 16 was a full-day session — 34 commits across infrastructure,
+features, and search page polish.**
+
+**Infrastructure & reliability:**
+- Fixed cursor bug causing 1,254 pipeline errors per run → 0 errors
+- Lazy posting verification — stale jobs auto-removed from search results
+- Signal alerting — pipeline failures now send push notifications to phone
+- BI dashboard auto-start via cron
+- 89 new API tests (total: 404 passing)
+- Unique index preventing duplicate postings
+
+**Search page (market intelligence):**
+- Intelligence panel built into search: domain bars, QL bars, 30-day
+  sparkline, top states, top professions — all reactive to filters
+- Sparkline: Y-axis labels, week/day grid, grey→green fade showing recency
+- Interactive map: heatmap overlay, clickable markers opening job details,
+  zoom-gated markers with hint banner, German-labeled tiles (OSM.DE),
+  dark mode support
+- Fixed map rendering issues (tile visibility, browser zoom, provider switch)
+
+**User-facing fixes:**
+- Messages page: removed wasted sidebar space, added logon/logoff events
+- Profile builder: new users can now create profiles (was 404-ing)
+- Domain filter bug fixed, interaction endpoint guards added
+- Full state names in intel panel (no more "Nordrhein" truncation)
+
+**Fun:**
+- Frustrationsabbau arcade game: Space Invaders variant with bosses,
+  weapon power-ups, combo system, 80s neon visuals, leaderboard
+
+**Tests:** 404 passing, 41 deselected. All green.
