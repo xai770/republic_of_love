@@ -64,8 +64,23 @@ class StateTransitionRequest(BaseModel):
 # Helpers
 # ============================================================
 
+def _posting_exists(cur, posting_id: int) -> bool:
+    """Check that a posting exists (enabled + not invalidated)."""
+    cur.execute(
+        "SELECT 1 FROM postings WHERE posting_id = %s AND enabled = true AND invalidated = false",
+        (posting_id,),
+    )
+    return cur.fetchone() is not None
+
+
 def get_or_create_interaction(cur, user_id: int, posting_id: int) -> dict:
-    """Get existing interaction or create new one."""
+    """Get existing interaction or create new one.
+
+    Raises 404 if the posting doesn't exist.
+    """
+    if not _posting_exists(cur, posting_id):
+        raise HTTPException(status_code=404, detail="Posting not found")
+
     cur.execute("""
         INSERT INTO user_posting_interactions (user_id, posting_id)
         VALUES (%s, %s)
@@ -469,7 +484,10 @@ def request_research(
     cur = conn.cursor()
     user_id = user['user_id']
     
-    # Ensure interaction exists
+    # Ensure posting + interaction exist
+    if not _posting_exists(cur, posting_id):
+        raise HTTPException(status_code=404, detail="Posting not found")
+
     cur.execute("""
         INSERT INTO user_posting_interactions (user_id, posting_id)
         VALUES (%s, %s)
