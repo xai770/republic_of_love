@@ -427,7 +427,8 @@ def search_results(
         where_sql = " AND ".join(wheres)
 
         # Fetch postings with LEFT JOIN to interest table for this user
-        query_params = params + [user['user_id'], req.limit, req.offset]
+        # user_id must come first — it's used in the JOIN before WHERE params
+        query_params = [user['user_id']] + params + [req.limit, req.offset]
         cur.execute(f"""
             SELECT
                 p.posting_id,
