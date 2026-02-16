@@ -801,7 +801,7 @@ window.SEARCH_TOUR_I18N = {
         }
         el.innerHTML = items.map((item, i) => {
             const name = item[labelKey] || '—';
-            const abbr = labelKey === 'state' ? name.replace(/-.+$/, '').substring(0, 18) : name.substring(0, 22);
+            const abbr = name;
             return `<div class="intel-row" title="${name}: ${item.fresh}">
                 <span class="intel-rank">${i + 1}.</span>
                 <span class="intel-name">${abbr}</span>
