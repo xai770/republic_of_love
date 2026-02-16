@@ -6336,3 +6336,51 @@ body {
 [data-theme="dark"] .feedback-btn:hover {
     background: rgba(239, 68, 68, 0.2);
 }
+
+/* ═══════════════════════════════════════════════════
+   CONSOLIDATED DARK MODE — Moved from inline <style> blocks
+   Feb 16, 2026
+   ═══════════════════════════════════════════════════ */
+
+/* -- Landscape page -- */
+[data-theme="dark"] .landscape-title { color: #e2e8f0; }
+[data-theme="dark"] .landscape-select {
+    background: #2d3748; color: #e2e8f0; border-color: #4a5568;
+}
+[data-theme="dark"] .landscape-narrative {
+    background: linear-gradient(135deg, #1a365d, #234e52);
+    border-color: #2a4365; color: #bee3f8;
+}
+[data-theme="dark"] .landscape-card {
+    background: #2d3748; border-color: #4a5568;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .landscape-card-title { color: #a0aec0; }
+[data-theme="dark"] .region-item { border-color: #4a5568; }
+[data-theme="dark"] .region-item.highlight {
+    background: #2d3748; border-color: #4a5568;
+}
+[data-theme="dark"] .region-name { color: #e2e8f0; }
+[data-theme="dark"] .region-count { color: #a0aec0; }
+[data-theme="dark"] .region-bar-wrap { background: #4a5568; }
+[data-theme="dark"] .prof-item { border-color: #4a5568; }
+[data-theme="dark"] .prof-item:hover { background: #4a5568; }
+[data-theme="dark"] .prof-name { color: #e2e8f0; }
+[data-theme="dark"] .related-item { border-color: #4a5568; }
+[data-theme="dark"] .related-name { color: #e2e8f0; }
+[data-theme="dark"] .activity-bar { background: #4299e1; }
+[data-theme="dark"] .activity-bar:hover { background: #63b3ed; }
+
+/* -- Admin: feedback -- */
+/* NOTE: Admin pages have their own base.html and don't load style.css.
+   Admin dark mode rules stay inline in their respective templates:
+   admin/feedback.html, admin/owl_browser.html, admin/owl_triage.html */
+
+/* -- Documents page: theme toggle icons -- */
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: inline; }
+
+/* -- Journey board (prototype) -- */
+[data-theme="dark"] .journey-board {
+    background: linear-gradient(135deg, #1e1b4b 0%, #134e4a 50%, #1e1b4b 100%);
+}

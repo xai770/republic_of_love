@@ -154,7 +154,7 @@ config/     Systemd service units, logrotate config
 - [ ] **Match notification** — email/push when new matches appear
 - [ ] **Mira memory** — persist conversation context across sessions
 - [ ] **Skills extraction v2** — actor redesign for 242k posting scale
-- [ ] **CSS consolidation** — merge inline dark-mode styles into single stylesheet
+- [x] **CSS consolidation** — inline dark-mode styles merged into style.css (landscape, documents)
 
 ### Medium Priority
 - [ ] Multi-source job fetching (StepStone, LinkedIn scraping)
