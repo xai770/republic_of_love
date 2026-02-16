@@ -671,6 +671,9 @@ window.SEARCH_TOUR_I18N = {
             renderFreshness(data.fresh_count);
             renderFilterPills();
 
+            // Force map tile refresh after render
+            setTimeout(() => map.invalidateSize(), 50);
+
             // Load intelligence data (sparkline + rankings)
             loadIntelligence();
 
@@ -1311,7 +1314,19 @@ window.SEARCH_TOUR_I18N = {
             const mapEl = document.getElementById('search-map');
             const ro = new ResizeObserver(() => map.invalidateSize());
             ro.observe(mapEl);
+            // Also watch the panels container (catches grid reflow on zoom)
+            const panels = document.querySelector('.search-panels');
+            if (panels) ro.observe(panels);
         }
+        // Browser zoom triggers 'resize' — Leaflet needs invalidateSize
+        let _zoomTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(_zoomTimer);
+            _zoomTimer = setTimeout(() => {
+                map.invalidateSize();
+                map.setView(map.getCenter());
+            }, 150);
+        });
         // Vibrate + open Mira
         triggerMiraGreeting();
     }
