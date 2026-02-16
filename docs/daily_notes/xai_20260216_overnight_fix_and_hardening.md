@@ -79,6 +79,90 @@ conversations list — wasted horizontal space.
 - Added system-event rendering for logon/logoff messages — shows as subtle
   inline green/red dot notices (WhatsApp-style)
 
+### 6. Extracted summary failures + Deutsche Bank cleanup (`4b77f92`)
+
+17–18 LLM summary failures per run — all Deutsche Bank postings. Root
+cause: word-overlap QA validator designed for same-language extraction, but
+DB postings are German while summaries are English. Legitimate translations
+flagged as "hallucinations" (0% overlap).
+
+**Fix:** Dropped word-overlap validation, kept bad-data-pattern and length
+checks. Also fixed `external_url` — was storing `/apply` URLs instead of
+description URLs (`regexp_replace` on 1,857 rows + actor fix). Reprocessed:
+18/18 success, 0 missing summaries for Deutsche Bank.
+
+### 7. Lazy posting verification + search safety (`1a8af0b`)
+
+Search was showing disabled and invalidated postings (no filter at all!).
+Implemented Google-style lazy verification: postings checked on-demand when
+they appear in search results and haven't been verified in 24 hours.
+Background thread checks AA search API, max 5 per search, 0.3s rate limit.
+
+- `lib/posting_verifier.py` — verification logic + background thread
+- `api/routers/search.py` — added `enabled=true AND invalidated=false` filter
+
+### 8. Unique active external_id index (`91d69ab`)
+
+Investigated 99 duplicate external_id pairs — all were one
+invalidated + one active (re-fetched after invalidation). Zero
+active-active duplicates. Added partial unique index as belt-and-suspenders.
+
+### 9. API test coverage expansion (`bc403a6`)
+
+89 new tests across 19 test classes. Total now: 404 passing. Covers auth
+flow, messages API, feedback API, search endpoints, profile operations.
+
+### 10. Domain filter fix + UI batch (`1dc6603`, `1bfbf15`, `59a405e`)
+
+- Guard interaction endpoints against non-existent posting IDs
+- Fix domain filter breaking search results (feedback #22)
+- Alpha-sort domains, stats below map, zen feedback button (#20 #23 #25)
+
+### 11. Opportunity Landscape — Market Intelligence (`64f5e2a`)
+
+Nate's daily note: move from "job search" to "labour navigation." Built:
+
+- `demand_snapshot` table (10,358 rows) — daily batch aggregation of
+  posting counts by state × domain × profession
+- `profession_similarity` table (8,461 pairs) — embedding cosine similarity
+  between professions for "related opportunities" suggestions
+- `compute_demand_snapshot.py` + `compute_profession_similarity.py` batch scripts
+- Intelligence API router with 4 endpoints (regional, related, activity, overview)
+- Landscape UI page at `/landscape`
+- Heatmap tuning: 90th percentile normalization, 7-stop gradient
+- Pipeline hooks in `turing_fetch.sh`
+- Migration: `025_demand_snapshot.sql`
+
+### 12. Search intelligence panel (`c03ff89`, `dd78821`, `24caa3f`)
+
+Gershon's feedback: intelligence should be ON the search page, not a
+separate page. Built into the right panel:
+
+- Compact QL bars (matching domain bar density)
+- 30-day sparkline showing daily posting activity
+- Two side-by-side ranked lists: top states + top professions
+- Works for all postings or filtered by domain
+- Dark mode support
+
+### 13. Restart script (`591e7e8`)
+
+`tools/turing_restart.sh` — kills uvicorn, restarts with --reload, logs to
+`logs/uvicorn.log`. Quick way to bounce the server during development.
+
+### 14. Frustrationsabbau — Arcade Game (`e0285ce`, `8e2f709`)
+
+Mysti's idea: retro arcade game for frustrated job seekers. Built:
+
+- HTML5 Canvas Space Invaders variant at `/arcade`
+- Player: pixel yogi in lotus pose with cyan glow
+- Monsters (👾👹💀🐛🦇🕷️🐍👻🧟🤖😈🦂) fall from top — shoot for +10
+- Fruits (🍎🍊🍋🍇🍉🍓🍌🫐🥝🍑) fall too — collect for +50
+- Rare ⭐ star worth 100 pts
+- Friendly fire penalty: -25 for shooting fruits
+- Monsters escaping = lose a life (3 lives)
+- Levels increase speed. CRT scanline overlay. Particle effects.
+- Sidebar link: 👾 Frustabbau
+
 ---
 
 ## Commits today
@@ -89,6 +173,22 @@ conversations list — wasted horizontal space.
 | `dbe72d4` | fix: /bi redirect instead of iframe |
 | `18bfb13` | add: start_bi.sh + @reboot cron for BI auto-start |
 | `6184d61` | fix: messages sidebar removal + logon/logoff event rendering |
+| `22fa6d8` | hardening: systemd services, ROADMAP refresh, API tests |
+| `896ab98` | CSS consolidation + backup unification |
+| `1a8af0b` | feat: lazy posting verification + search safety filters |
+| `91d69ab` | unique partial index on external_id |
+| `4b77f92` | fix: extracted_summary failures + Deutsche Bank URL cleanup |
+| `bc403a6` | test: 89 new tests across 19 classes |
+| `1dc6603` | fix: guard interaction endpoints |
+| `1bfbf15` | fix: domain filter breaking search |
+| `59a405e` | ui: feedback #20 #23 #25 |
+| `64f5e2a` | feat: opportunity landscape — market intelligence |
+| `c03ff89` | feat: search intelligence panel |
+| `dd78821` | fix: intelligence for all postings |
+| `24caa3f` | feat: 30-day sparkline |
+| `591e7e8` | add: turing_restart.sh |
+| `e0285ce` | feat: Frustrationsabbau arcade game |
+| `8e2f709` | refactor(arcade): monsters & fruits |
 
 ---
 
