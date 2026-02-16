@@ -163,6 +163,57 @@ Mysti's idea: retro arcade game for frustrated job seekers. Built:
 - Levels increase speed. CRT scanline overlay. Particle effects.
 - Sidebar link: 👾 Frustabbau
 
+### 15. Arcade full rebuild — bosses, weapons, leaderboard (`440a51b`–`f0a6c10`)
+
+Mysti loved the arcade. Extensive overhaul across 6 commits:
+
+- **Boss fights** every 5 levels with health bars and unique attack patterns
+- **Weapon system**: spreadshot, laser beam, homing missiles — collected via power-ups
+- **Combo/multiplier** system for consecutive hits
+- **Leaderboard** — top 10 scores in DB, classic 3-char name entry screen
+- **80s neon overhaul** — pure saturated colors, multi-glow halos, neon grid floor, glowing particles
+- **Physics tuning** — slower start pace, momentum-based movement, spectacular weapon visuals
+- **Bug fixes**: RealDictCursor dict access (not tuples), space bar not triggering feedback widget, gender-neutral leaderboard text ("Yogis" not "Guys")
+
+### 16. Signal pipeline alerting (`a1c8205`)
+
+`lib/signal_notify.py` existed but didn't load `.env` — SIGNAL_SENDER was
+always None. Added `from dotenv import load_dotenv` call. Tested all 3
+message types: `send_alert()`, `send_pipeline_summary()`, `send_error()` —
+all delivered to phone via signal-cli.
+
+`scripts/turing_fetch.sh` was already wired with `notify()` helper calling
+both ntfy.sh and signal_notify.py on failure and completion.
+
+### 17. Search map zoom fix — feedback #61 (`442c25b`)
+
+**Issue:** Grey Leaflet tiles when zooming browser (viewport DPR 0.895).
+
+**Root cause:** `ResizeObserver` on `#search-map` alone doesn't detect
+browser zoom changes — the element doesn't resize, the viewport does.
+
+**Fix:** Added `window.addEventListener('resize', ...)` with debounced
+`map.invalidateSize()`, observed `.search-panels` container for grid
+reflow, and called `invalidateSize()` after each `doSearch()` render.
+
+### 18. CSS consolidation (`5f72d82`)
+
+Moved 23 inline dark-mode declarations from `landscape.html` and
+`documents_old_grid.html` into `frontend/static/css/style.css`. Admin
+pages (`admin/*.html`) keep inline CSS — they use `admin/base.html` which
+doesn't load `style.css`. Bumped cache version to `v=20260216e`.
+
+### 19. Profile builder — upsert for new users (`de163a8`)
+
+Profile builder UI already existed (form, CV upload, work history CRUD,
+preferences, notifications) but **new users couldn't use it** — all
+endpoints returned 404 when no profile row existed.
+
+**Fix:** Added `_ensure_profile(user, conn)` helper that auto-creates a
+`profiles` row on first interaction. All 5 profile endpoints now use it.
+Also converted basic info form from broken htmx `hx-put` (form-encoded to
+JSON endpoint) to proper `fetch()` with JSON body.
+
 ---
 
 ## Commits today
@@ -189,6 +240,19 @@ Mysti's idea: retro arcade game for frustrated job seekers. Built:
 | `591e7e8` | add: turing_restart.sh |
 | `e0285ce` | feat: Frustrationsabbau arcade game |
 | `8e2f709` | refactor(arcade): monsters & fruits |
+| `1be695c` | docs: update daily notes with afternoon session |
+| `0c13bab` | fix: rename 'System' to 'Arden' in messages |
+| `440a51b` | feat(arcade): full rebuild — bosses, weapons, power-ups, combos, leaderboard |
+| `e5261ee` | feat(arcade): slower pace, momentum physics, spectacular weapons |
+| `f43be05` | feat(arcade): 80s neon overhaul — pure colors, multi-glow, neon grid |
+| `ff6016a` | fix(arcade): leaderboard KeyError — RealDictCursor dicts not tuples |
+| `8e10a19` | fix(arcade): score submission KeyError |
+| `509db8e` | fix(arcade): space bar in inputs, gender-neutral leaderboard text |
+| `f0a6c10` | feat(arcade): classic name entry for leaderboard |
+| `a1c8205` | feat: Signal pipeline alerting — live and tested |
+| `442c25b` | fix: search map grey tiles on browser zoom (#61) |
+| `5f72d82` | feat: CSS consolidation — inline dark-mode → style.css |
+| `de163a8` | feat: profile builder — auto-create profile for new users (upsert) |
 
 ---
 

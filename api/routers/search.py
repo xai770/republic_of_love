@@ -257,6 +257,34 @@ def search_preview(
         """, params)
         heatmap = [[float(r['lat']), float(r['lon']), r['weight']] for r in cur.fetchall()]
 
+        # --- Map markers (individual postings with lat/lon, max 500) ---
+        cur.execute(f"""
+            SELECT
+                p.posting_id,
+                p.job_title,
+                p.location_city,
+                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' as employer,
+                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT) as lat,
+                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT) as lon
+            FROM postings p
+            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE {where_sql}
+              AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
+            ORDER BY p.first_seen_at DESC NULLS LAST
+            LIMIT 500
+        """, params)
+        markers = [
+            {
+                "id": r['posting_id'],
+                "t": (r['job_title'] or '')[:60],
+                "e": (r['employer'] or '')[:40],
+                "c": r['location_city'] or '',
+                "lat": round(float(r['lat']), 4),
+                "lon": round(float(r['lon']), 4),
+            }
+            for r in cur.fetchall()
+        ]
+
         # --- Freshness (postings in last 7 days within current filters) ---
         cur.execute(f"""
             SELECT COUNT(*) as fresh
@@ -272,6 +300,7 @@ def search_preview(
             "by_domain": by_domain,
             "by_ql": by_ql,
             "heatmap": heatmap,
+            "markers": markers,
             "fresh_count": fresh_count,
         }
 
@@ -568,7 +597,15 @@ def search_intelligence(
                   AND p.first_seen_at > NOW() - INTERVAL '30 days'
                 GROUP BY day ORDER BY day
             """)
-        activity = [{"date": str(r['day']), "count": r['count']} for r in cur.fetchall()]
+        raw_activity = {str(r['day']): r['count'] for r in cur.fetchall()}
+        
+        # Fill in missing days with zero counts (ensure full 30-day span)
+        from datetime import date, timedelta
+        today = date.today()
+        activity = []
+        for i in range(29, -1, -1):  # 30 days, oldest first
+            d = today - timedelta(days=i)
+            activity.append({"date": str(d), "count": raw_activity.get(str(d), 0)})
 
         # ── States ranking (fresh_14d from demand_snapshot) ──────
         if has_domains:

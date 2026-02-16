@@ -4880,6 +4880,21 @@ body {
     z-index: 400;
 }
 
+/* Posting marker tooltip on map */
+.posting-marker-tooltip {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    max-width: 280px;
+}
+[data-theme="dark"] .posting-marker-tooltip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
 .map-freshness {
     padding: 0.25rem 0.5rem;
     background: #e8fdf0;
