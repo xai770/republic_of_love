@@ -322,12 +322,13 @@ def process(limit: int = 0, dry_run: bool = False):
                     resolved += 1
                 else:
                     # Mark as tried so we don't retry every night
-                    cur.execute("""
-                        UPDATE owl_pending
-                        SET processed_by = 'description_retry_rejected',
-                            processed_at = NOW()
-                        WHERE pending_id = %s
-                    """, (item['pending_id'],))
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE owl_pending
+                            SET processed_by = 'description_retry_rejected',
+                                processed_at = NOW()
+                            WHERE pending_id = %s
+                        """, (item['pending_id'],))
                     conn.commit()
                     still_rejected += 1
 
