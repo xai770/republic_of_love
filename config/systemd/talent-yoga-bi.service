@@ -1,0 +1,25 @@
+[Unit]
+Description=talent.yoga BI Dashboard (Streamlit)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xai
+Group=xai
+WorkingDirectory=/home/xai/Documents/ty_learn
+ExecStart=/home/xai/.local/bin/streamlit run tools/bi_app.py --server.port 8501 --server.headless true --server.address 0.0.0.0
+Restart=always
+RestartSec=5
+Environment="PATH=/home/xai/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Logging
+StandardOutput=append:/home/xai/Documents/ty_learn/logs/bi_app.log
+StandardError=append:/home/xai/Documents/ty_learn/logs/bi_app.log
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

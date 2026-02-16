@@ -1,0 +1,25 @@
+[Unit]
+Description=talent.yoga FastAPI Application
+After=network-online.target postgresql.service ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xai
+Group=xai
+WorkingDirectory=/home/xai/Documents/ty_learn
+ExecStart=/home/xai/.local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+Environment="PATH=/home/xai/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Logging
+StandardOutput=append:/home/xai/Documents/ty_learn/logs/app.log
+StandardError=append:/home/xai/Documents/ty_learn/logs/app.log
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
