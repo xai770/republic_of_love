@@ -90,6 +90,7 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
   "certifications": ["cert1", "cert2", ...],
   "work_history": [
     {{
+      "real_company_name": "<ACTUAL company name from CV, for registry lookup — will be stripped before output>",
       "employer_description": "<generalized company description>",
       "role": "<role title only, e.g. 'Senior Project Manager' — NO company name here>",
       "duration_years": <number>,
@@ -181,6 +182,23 @@ async def extract_and_anonymize(
     
     # Validate structure
     parsed = _validate_and_normalize(parsed, yogi_name)
+    
+    # Override employer_description with registry lookup (canonical + bilingual)
+    if conn:
+        from core.company_anonymizer import lookup_or_queue
+        for wh_entry in parsed.get('work_history', []):
+            real_company = wh_entry.pop('_real_company_name', None)
+            if real_company:
+                try:
+                    registry_desc = lookup_or_queue(conn, real_company, lang='en')
+                    if registry_desc:
+                        wh_entry['employer_description'] = registry_desc
+                except Exception as e:
+                    logger.debug(f"Registry lookup failed for '{real_company}': {e}")
+    else:
+        # Strip the temp field even without conn
+        for wh_entry in parsed.get('work_history', []):
+            wh_entry.pop('_real_company_name', None)
     
     # PII safety check
     detector = PIIDetector(conn)
@@ -305,13 +323,17 @@ def _validate_and_normalize(data: dict, yogi_name: str) -> dict:
     if isinstance(certs, list):
         result['certifications'] = [str(c).strip() for c in certs if c][:10]
     
-    # Work history
+    # Work history — override employer_description with registry if available
     wh = data.get('work_history', [])
     if isinstance(wh, list):
         for entry in wh[:15]:  # Cap at 15 roles
             if isinstance(entry, dict):
+                real_name = entry.pop('real_company_name', None)
+                desc = str(entry.get('employer_description', 'a company'))
+                
                 result['work_history'].append({
-                    'employer_description': str(entry.get('employer_description', 'a company')),
+                    '_real_company_name': real_name,  # kept temporarily for registry lookup
+                    'employer_description': desc,
                     'role': str(entry.get('role', 'unknown role')),
                     'duration_years': entry.get('duration_years'),
                     'industry': str(entry.get('industry', '')),
