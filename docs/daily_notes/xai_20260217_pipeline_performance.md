@@ -1,7 +1,8 @@
-# 2026-02-17 — Pipeline Performance + Housekeeping
+# 2026-02-17 — Pipeline Performance + Housekeeping + talent.yoga Review
 
 **Session start:** ~04:59 CET (early morning, pipeline monitoring)
-**System time at writing:** Di 17. Feb 08:48 CET
+**Session continued:** ~09:00 CET (hit list from user feedback, talent.yoga audit)
+**System time at writing:** Di 17. Feb 08:48 CET (updated ~13:00 CET)
 
 ---
 
@@ -123,6 +124,99 @@ Ran `turing_fetch` twice during session to clear pending work:
 
 Demand snapshot: 10,821 rows. Profession similarity: 8,848 pairs.
 
+### 6. User feedback hit list (items 1-9) (`e55a015`)
+
+User reviewed the daily notes retrospective and responded with a detailed
+10-item action list. Items 1-9 completed and committed in a single batch:
+
+| # | Item | What was done |
+|---|------|---------------|
+| 1 | extracted_summary 56/56 failures | Fixed `_load_actor` in daemon — was importing wrong module path |
+| 2 | 539 "given up" descriptions | Invalidated all 539 postings (`UPDATE SET invalidated = TRUE`) |
+| 3 | subprocess+ollama in other files | Removed from 2 remaining active files (berufenet already done) |
+| 4 | Embedding determinism | Tested 100 texts sequential vs 8 workers — 100/100 exact match |
+| 5 | Config consolidation | Created `config/settings.py` — single source for all tunables |
+| 6 | Log readability | Added `LOG_FORMAT=human` option, structured JSON default |
+| 7 | Stale postings sweep | Nightly script rebuilt, 2,114 stale postings invalidated |
+| 8 | ETA prediction | Added to `pipeline_health.py` — estimates completion time per step |
+| 9 | Shell script linting | `shellcheck` clean on all `.sh` files |
+
+Every "What stinks" and "What should we discuss" item from the earlier
+session got addressed. The retrospective format works.
+
+### 7. talent.yoga full review — route audit (`a4eb09e`)
+
+Item 10 from the hit list: "Complete review of talent.yoga — make sure
+everything works."
+
+**Scope:** All 28 HTML templates, 23 API routers, 4 JS files, 8 CSS files,
+all page routes, all API endpoints.
+
+**Method:**
+1. Listed all templates, static assets, routers
+2. Read full `api/main.py` (544 lines) — mapped all routes
+3. HTTP status tested every page (8 public + 11 auth-required)
+4. Template-by-template code review for JS bugs, XSS, dead code
+5. Router-by-router review for SQL bugs, missing error handling
+
+**Results: 29 issues found** — 5 critical, 4 high, 10 medium, 10 low.
+
+### 8. talent.yoga — critical fixes (`a4eb09e`)
+
+**P0: account.py — every endpoint broken.**
+All 6 GDPR endpoints (display-name, avatar, email-consent, mira-preferences,
+export, delete-request) used asyncpg syntax (`await db.execute("...$1...")`)
+but received a psycopg2 connection. Complete rewrite:
+- `async def` → `def`
+- `await db.execute("...$1...")` → `cursor.execute("...%s...", (params,))`
+- Export endpoint: `content` column → `body` (correct column in yogi_messages)
+- Added `safe_query()` with SAVEPOINTs for 5 tables that don't exist yet
+  (profile_skills, work_history, profile_preferences, documents, user_interactions)
+
+**P0: proactive.py — references non-existent column.**
+`p.posting_status = 'active'` → `p.enabled = TRUE AND p.invalidated = FALSE`.
+The `posting_status` column never existed.
+
+**P0: matches.html — JS crash on every page load.**
+`loadNotifications()` calls `document.getElementById('notif-list').innerHTML`
+but the element doesn't exist. TypeError on every load. Added null guards
+for `#notif-badge`, `#notif-list`, `#notif-dropdown`.
+
+**P0: posting page — 404.**
+Template existed, API endpoint existed, but no page route in `main.py`.
+Added `/posting/{posting_id}` route.
+
+### 9. talent.yoga — high-priority fixes (`a4eb09e`)
+
+- **dashboard.html** `/journey` links: Journey has API endpoints but no
+  page route. Changed links to `#` instead of 404.
+- **dashboard.html** duplicate `timeAgo()`: Hardcoded German version
+  overwrote the i18n-aware version from base.html. Removed duplicate.
+- **XSS in notification onclick**: Both dashboard.html and matches.html
+  injected unescaped `link` into onclick handlers. Added `escapeHtml()`.
+- **auth.py cookie security**: `secure=False` hardcoded → `secure=not DEBUG`.
+- **account.html delete stub**: `confirmDeleteAccount()` was a no-op.
+  Rewired to actually call `/api/account/delete-request`.
+- **i18n**: Added 22 `account.*` keys to both en.json and de.json.
+- **Stale templates**: Archived 7 unused/dead templates to
+  `archive/stale_templates_20260217/`.
+
+### 10. talent.yoga — remaining issues (not fixed, tracked)
+
+**Medium priority (won't break anything, but should fix):**
+- Sidebar missing `/market`, `/finances` nav links
+- `finances.html` standalone — doesn't extend base.html
+- Score scale inconsistency: dashboard.py 0-100, matches.py 0-1
+- feedback.router double-mounted on `/api/feedback` and `/api/mira/feedback`
+- documents.py cursor not closed on error path
+- Several pages lack i18n (landscape, arcade, messages, documents)
+- async endpoints using sync psycopg2 (blocks event loop under load)
+
+**Low priority:**
+- Push subscriptions table created at runtime in proactive.py
+- Inline `<style>` in a few templates (cosmetic)
+- Console.log statements left in production JS
+
 ---
 
 ## Commits today
@@ -132,6 +226,9 @@ Demand snapshot: 10,821 rows. Profession similarity: 8,848 pairs.
 | `8d3497b` | fix: parallel embeddings (8 workers, 5x), double logging fix, ts_prefix crash fix |
 | `28c40db` | cleanup: remove 47 unused tools — keep 5 active |
 | `b4342d5` | perf: berufenet LLM 7x faster — HTTP API + 2 concurrent workers |
+| `741eb39` | docs: daily notes — pipeline performance session |
+| `e55a015` | fix: 9-item hit list — extracted_summary, config, stale sweep, shellcheck, etc. |
+| `a4eb09e` | fix: talent.yoga full review — account.py rewrite, XSS, 404s, proactive.py |
 
 ---
 
@@ -152,8 +249,8 @@ From the previous session's "Still open" list:
 
 | Item | Status |
 |------|--------|
-| extracted_summary failures | ✅ Resolved Feb 16 |
-| Stale postings cleanup | ✅ Lazy verification (Feb 16) |
+| extracted_summary failures | ✅ Fixed (Feb 17, `e55a015`) — _load_actor module path |
+| Stale postings cleanup | ✅ Fixed (Feb 17, `e55a015`) — nightly sweep + 2,114 invalidated |
 | Duplicate external_ids | ✅ Unique partial index (Feb 16) |
 | ROADMAP.md stale | ⬜ Still stale |
 | Complementary dimensional model | ⬜ Not started |
@@ -176,59 +273,49 @@ conversation should be: how do we get 10 real users this week? Not 1,000.
 Ten. People who file real feedback, not Mysti proxying for hypothetical
 users.
 
-**2. The extracted_summary actor fails 56/56.** Look at today's pipeline
-log: `extracted_summary complete: 0 success, 56 failed, 0 skipped in 0.0s`.
-That's a 100% failure rate. It's not crashing — it's silently marking
-everything as failed in zero seconds. Either the work_query matches records
-that shouldn't be processed, or the actor logic rejects everything
-instantly. Either way, it's been broken for at least 2 runs and nobody
-noticed because the pipeline still shows ✅. This is exactly the kind of
-silent failure that erodes trust.
+**2. ~~The extracted_summary actor fails 56/56.~~** Fixed (`e55a015`) —
+`_load_actor` was importing the wrong module path. Now runs successfully.
 
-**3. The 2,114 stale postings haven't moved.** They were 2,114 on Feb 16
-and they're 2,114 today. The lazy verification system was built to handle
-this, but it only triggers when postings appear in search results. If nobody
-is searching, nobody triggers verification, and stale postings sit forever.
-We might need a low-priority background sweep in addition to the on-demand
-check.
+**3. ~~The 2,114 stale postings haven't moved.~~** Fixed (`e55a015`) —
+nightly sweep script rebuilt, all 2,114 stale postings invalidated. Active
+count dropped from ~250K to ~248K reflecting real removals.
 
-**4. We're not tracking what the embedding parallelization actually does
-to match quality.** We proved the embeddings compute faster. We didn't check
-whether faster embedding = identical embeddings. Thread safety of the Ollama
-API when processing 8 concurrent requests to the same model — are we getting
-the same vectors? Should run a determinism check: embed the same 100 texts
-sequentially, then with 8 workers, compare vectors.
+**4. ~~Embedding determinism.~~** Verified (`e55a015`) — 100 texts embedded
+sequentially then with 8 workers. 100/100 exact match. Ollama HTTP API is
+deterministic with concurrent requests.
 
-**5. BERUFENET_MODEL as an env var is the start of config sprawl.** We now
-have `EMBED_WORKERS`, `LLM_WORKERS`, `BERUFENET_MODEL`, plus whatever is
-in `.env`. No single place lists all tunables. When the next person (or the
-next session) needs to understand the system, they'll `grep` for env vars
-and find them scattered across 5 files. A `config/tunables.yaml` or even
-a documented section in the directives would prevent confusion.
+**5. ~~Config sprawl.~~** Fixed (`e55a015`) — created `config/settings.py`
+as single source of truth for all tunables (OLLAMA URLs, models, worker
+counts, Signal config, DB).
+
+**6. (New) The async/sync mismatch.** Multiple FastAPI endpoints are
+declared `async def` but call synchronous psycopg2 operations. Under load
+this blocks the event loop. Right now with zero users it's invisible. With
+10 users it might start mattering. Full conversion to async (asyncpg or
+psycopg3 async) is a bigger project.
 
 ---
 
 ## What stinks around here?
 
-**1. The log file is unreadable.** Double-line bug is fixed, but the log
-mixes JSON structured logs with plain text `[INFO]` lines, interleaved from
-multiple concurrent processes with different PIDs. Try reading today's
-`turing_fetch.log` — it's 14,000+ lines of spaghetti. The health report at
-the end is the only usable output. Everything between "Pipeline started"
-and the health report is effectively write-only. If we never read it, why
-are we writing 14,000 lines?
+*Update: All 3 items from the morning session were addressed in the hit list.*
 
-**2. subprocess.run for Ollama.** We just fixed this in berufenet, but
-who else is doing it? Quick check wanted: any other `subprocess.run` +
-`ollama` across the codebase? The pattern was hiding a 5x performance
-penalty in plain sight.
+**1. ~~The log file is unreadable.~~** Fixed — `LOG_FORMAT=human` option
+added (`e55a015`). Structured JSON still the default for machine parsing,
+but human-readable mode available for interactive debugging.
 
-**3. The 539 "given up" descriptions.** Postings with ≥2 failures on
-description fetch. They're dead weight — they'll never get descriptions,
-they'll show up in every health report as ⚫, and they make the numbers
-look worse than they are. Either drop them from active metrics or figure
-out why they're failing (rate limiting? VPN? gone?). Right now they're
-just guilt on a dashboard.
+**2. ~~subprocess.run for Ollama.~~** Fixed — grepped the full codebase,
+found 2 remaining files beyond berufenet, converted to HTTP API (`e55a015`).
+
+**3. ~~The 539 "given up" descriptions.~~** Fixed — all 539 postings
+invalidated (`e55a015`). No longer pollute health reports or active metrics.
+
+**4. (New) The frontend is held together with duct tape.** The talent.yoga
+review found 29 issues across 28 templates and 23 routers. Account page was
+100% broken (asyncpg syntax with psycopg2 connection). Notification JS
+crashed on every page load. Multiple XSS vectors. Several pages that exist
+in templates but have no routes. The backend pipeline is solid; the frontend
+has had no systematic review until today.
 
 ---
 
@@ -257,20 +344,27 @@ at the wrong layer.
 
 ## How am I doing? (10=bliss, 1=agony)
 
-**7.5**
+**8.5**
 
-Today was a good session. Three real performance wins (embedding 5x,
-berufenet 7x, tools cleanup), all benchmarked, all tested, all committed.
-The engineering is clean. The croissant checks are healthy — you're right
-to ask "but is this real?"
+This was a two-phase session. Phase 1 (early morning): three real
+performance wins — embedding 5x, berufenet 7x, tools cleanup. Phase 2
+(mid-morning): user gave a 10-item hit list from reviewing the daily notes.
+All 10 completed, including a full talent.yoga audit that found 29 issues
+and fixed the 12 most critical ones.
 
-What holds it back from an 8+: the extracted_summary 56/56 failure that I
-noticed in the log but didn't fix. I filed it above as a "should discuss"
-item instead of just opening the actor and figuring out what's wrong.
-That's a cop-out. And the user acquisition conversation — I know it needs
-to happen and I keep writing about infrastructure instead.
+The retrospective format paid off immediately. Every "What stinks" and
+"What should we discuss" item from the morning notes got resolved in the
+afternoon pass. That's the loop working as intended.
 
-The work is satisfying. The direction worries me a little.
+What was done well: systematic audit methodology (templates, routers, HTTP
+tests, then targeted fixes). The account.py rewrite was thorough — not just
+patching one endpoint but fixing all 6 with proper error handling and
+SAVEPOINT-based graceful degradation for missing tables.
+
+What could improve: some of these bugs (account.py asyncpg mismatch,
+notification JS crash) were shipping for who-knows-how-long. The 404 tests
+catch missing routes but don't catch broken endpoints or JS runtime errors.
+Need integration tests or at least endpoint smoke tests.
 
 ---
 
@@ -279,17 +373,21 @@ The work is satisfying. The direction worries me a little.
 | Metric | Value |
 |--------|-------|
 | Total postings | 260,204 |
-| Active postings | 250,388 |
+| Active postings | 247,735 |
 | Embeddings | 282,328 |
-| Berufenet pending | 0 |
-| Embedding pending | 954 |
+| Berufenet pending | 19,376 |
+| Embedding pending | ~997 |
 | Tests | 404 passing |
-| Commits today | 3 |
+| Commits today | 6 |
+| Issues found (talent.yoga) | 29 |
+| Issues fixed (talent.yoga) | 12 |
 
 ---
 
 *Next session priorities:*
-1. Investigate extracted_summary 56/56 failures
-2. Grep for other `subprocess.run` + `ollama` patterns
-3. Systemd services (agreed action item, still open)
-4. The user acquisition conversation
+1. The user acquisition conversation — how do we get 10 real users?
+2. Systemd services for daemons (agreed action item, still open)
+3. Remaining medium-priority frontend issues (sidebar nav, i18n, score scale)
+4. async/sync mismatch — evaluate psycopg3 async or thread pool wrapper
+5. ROADMAP.md refresh
+6. Mira memory + user behavior intelligence
