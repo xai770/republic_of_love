@@ -88,11 +88,22 @@ let currentSender = null;
 let messagesBySender = {};
 let unreadCounts = {};
 
+// Actors that should always appear in the chat list (even with no messages yet)
+const ALWAYS_SHOW = ['mira', 'adele'];
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadMessages();
     await loadUnreadCounts();
     buildConversations();
+    
+    // Ensure key actors always appear, even without prior messages
+    ALWAYS_SHOW.forEach(actor => {
+        if (!messagesBySender[actor]) {
+            messagesBySender[actor] = [];
+        }
+    });
+    
     renderChatList();
     
     // Auto-select first conversation with unread, or just first
@@ -161,19 +172,21 @@ function renderChatList() {
         return;
     }
     
-    // Sort senders by most recent message
+    // Sort senders by most recent message (empty conversations go to bottom)
     senders.sort((a, b) => {
-        const aLast = messagesBySender[a][messagesBySender[a].length - 1];
-        const bLast = messagesBySender[b][messagesBySender[b].length - 1];
-        return new Date(bLast.created_at) - new Date(aLast.created_at);
+        const aMsgs = messagesBySender[a];
+        const bMsgs = messagesBySender[b];
+        const aTime = aMsgs.length > 0 ? new Date(aMsgs[aMsgs.length - 1].created_at) : new Date(0);
+        const bTime = bMsgs.length > 0 ? new Date(bMsgs[bMsgs.length - 1].created_at) : new Date(0);
+        return bTime - aTime;
     });
     
     container.innerHTML = senders.map(senderKey => {
         const actor = ACTORS[senderKey] || ACTORS.system;
         const messages = messagesBySender[senderKey];
-        const lastMsg = messages[messages.length - 1];
-        const preview = lastMsg.subject || lastMsg.preview || 'No subject';
-        const time = formatTime(lastMsg.created_at);
+        const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+        const preview = lastMsg ? (lastMsg.subject || lastMsg.preview || 'No subject') : (senderKey === 'adele' ? 'Start building your profile' : 'Start a conversation');
+        const time = lastMsg ? formatTime(lastMsg.created_at) : '';
         const unread = unreadCounts[senderKey] || 0;
         const isActive = senderKey === currentSender;
         
