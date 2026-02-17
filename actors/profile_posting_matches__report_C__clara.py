@@ -94,10 +94,13 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
     """Load profile with skills from profiles.skill_keywords."""
     cur = conn.cursor()
     
-    # Basic info with skills + experience level for qualification gate
+    # Basic info — use yogi_name for anonymity (never expose real name)
     cur.execute("""
-        SELECT profile_id, full_name, current_title, skill_keywords, experience_level
-        FROM profiles WHERE profile_id = %s
+        SELECT p.profile_id, COALESCE(u.yogi_name, p.full_name) AS display_name,
+               p.current_title, p.skill_keywords, p.experience_level
+        FROM profiles p
+        LEFT JOIN users u ON p.user_id = u.user_id
+        WHERE p.profile_id = %s
     """, (profile_id,))
     row = cur.fetchone()
     if not row:
@@ -105,7 +108,7 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
     
     profile = {
         'profile_id': row['profile_id'],
-        'name': row['full_name'],
+        'name': row['display_name'],
         'title': row['current_title'],
         'skills': [],
         'domains': [],  # Deprecated: was from profile_facets

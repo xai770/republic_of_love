@@ -37,8 +37,9 @@
             <h2>Basic Info</h2>
             <form id="basic-info-form" onsubmit="saveBasicInfo(event)">
                 <div class="form-row">
-                    <label for="name">Full Name</label>
+                    <label for="name">Display Name (Yogi Name)</label>
                     <input type="text" id="name" name="name" value="{{ profile.display_name or '' }}" required>
+                    <small>This is shown to employers — never your real name</small>
                 </div>
                 <div class="form-row">
                     <label for="title">Current Title</label>

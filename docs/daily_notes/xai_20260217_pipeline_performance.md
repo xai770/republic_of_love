@@ -322,6 +322,39 @@ Reviewed all existing profile infrastructure:
 4. Negative filter — low ratings auto-suppress similar categories
 5. Cover letter download
 
+### 14. Profile anonymization — PII exposed on /profile (`6e1d02d` → fixing)
+
+**Problem:** https://talent.yoga/profile displays real name ("Gershon
+Pollatschek") and real company names (Deutsche Bank, Novartis, Commerzbank,
+etc.). Zero anonymization on the profile page.
+
+**Root cause:** Profile was imported via `profile_source = 'markdown'` —
+a legacy import script that predates the anonymizer. Two data paths:
+- CV upload → `core/cv_anonymizer.py` → clean (name → yogi_name,
+  companies → generalized) ✓
+- Manual/markdown import → raw data → `full_name = real name`,
+  `company_name = real company name` ✗
+
+**What was wrong (5 things):**
+1. `profiles.full_name` stores real names — displayed on profile page
+2. `profile_work_history.company_name` stores real company names
+3. `/api/profiles/me` returns `full_name` directly as `display_name`
+4. Profile page form shows real name in the "Full Name" input field
+5. No anonymization layer between DB and UI for pre-anonymizer data
+
+**Fix approach:**
+1. Profile page: display `yogi_name` from users table, not `full_name`
+2. Re-anonymize Gershon's work history through the anonymizer
+3. Profile page: show generalized companies, not raw `company_name`
+4. Future: Adele interactive profile builder — yogi never types company
+   names directly, Adele generalizes on input
+
+**Bigger picture (noted for later):**
+- Adele = conversational profile builder: asks questions, yogi replies,
+  Adele creates the anonymized CV
+- This replaces both the manual form and the CV upload — one path, always
+  anonymized
+
 ---
 
 ## Dropped balls — review of Feb 16 notes

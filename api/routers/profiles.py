@@ -23,14 +23,14 @@ def _ensure_profile(user: dict, conn) -> int:
         row = cur.fetchone()
         if row:
             return row['profile_id']
-        # Auto-create with display_name as initial full_name
-        display = user.get('display_name') or user.get('yogi_name') or 'New Yogi'
+        # Auto-create with yogi_name (never store real names)
+        yogi_name = user.get('yogi_name') or 'New Yogi'
         email = user.get('email')
         cur.execute("""
             INSERT INTO profiles (full_name, email, user_id, profile_source)
             VALUES (%s, %s, %s, 'self')
             RETURNING profile_id
-        """, (display, email, user['user_id']))
+        """, (yogi_name, email, user['user_id']))
         conn.commit()
         return cur.fetchone()['profile_id']
 
@@ -100,13 +100,14 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
     _ensure_profile(user, conn)
 
     with conn.cursor() as cur:
-        # Get profile linked to this user (including preferences)
+        # Get profile — use yogi_name for display (never expose real name)
         cur.execute("""
-            SELECT profile_id, full_name as display_name, email, 
-                   current_title as title, desired_locations[1] as location,
-                   desired_roles, desired_locations, skill_keywords
-            FROM profiles
-            WHERE user_id = %s
+            SELECT p.profile_id, u.yogi_name as display_name, p.email,
+                   p.current_title as title, p.desired_locations[1] as location,
+                   p.desired_roles, p.desired_locations, p.skill_keywords
+            FROM profiles p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE p.user_id = %s
         """, (user['user_id'],))
         profile = cur.fetchone()
         
@@ -255,9 +256,10 @@ def get_profile(profile_id: int, user: dict = Depends(require_user), conn=Depend
     """
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT profile_id, full_name as display_name, email, user_id
-            FROM profiles
-            WHERE profile_id = %s
+            SELECT p.profile_id, u.yogi_name as display_name, p.email, p.user_id
+            FROM profiles p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE p.profile_id = %s
         """, (profile_id,))
         profile = cur.fetchone()
         
