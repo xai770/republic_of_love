@@ -412,6 +412,36 @@ async function sendMessage() {
         return;
     }
     
+    // Adele — route through /api/adele/chat for interactive profile building
+    if (currentSender === 'adele') {
+        try {
+            const res = await fetch('/api/adele/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                const replyMsg = {
+                    message_id: Date.now() + 1,
+                    sender_type: 'adele',
+                    direction: 'incoming',
+                    subject: null,
+                    body: data.reply || 'Hmm...',
+                    preview: (data.reply || 'Hmm...').substring(0, 100),
+                    created_at: new Date().toISOString(),
+                    is_read: true
+                };
+                messagesBySender[currentSender].push(replyMsg);
+                renderChatMessages();
+            }
+        } catch (err) {
+            console.warn('Adele chat failed:', err);
+        }
+        return;
+    }
+    
     // All other actors — send via messages API
     try {
         const res = await fetch('/api/messages/send', {
