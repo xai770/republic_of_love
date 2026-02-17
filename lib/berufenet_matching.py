@@ -19,8 +19,7 @@ from typing import Optional, Tuple
 
 import requests
 
-BERUFENET_MODEL = os.getenv('BERUFENET_MODEL', 'qwen2.5:7b')
-OLLAMA_GENERATE_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
+from config.settings import BERUFENET_MODEL, OLLAMA_GENERATE_URL
 
 # Thresholds derived from 100-title POC with V5 clean matching (no artificial /in)
 THRESHOLD_AUTO_ACCEPT = 0.85  # 9% - very reliable

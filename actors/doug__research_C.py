@@ -59,7 +59,7 @@ logger = get_logger(__name__)
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
+from config.settings import OLLAMA_GENERATE_URL as OLLAMA_URL
 LLM_MODEL = "qwen2.5:7b"  # For summarizing search results
 
 # Doug's personality

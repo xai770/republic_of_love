@@ -49,10 +49,10 @@ logger = get_logger(__name__)
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
+from config.settings import OLLAMA_EMBED_URL as OLLAMA_URL
 MODEL = "bge-m3:567m"
 BATCH_SIZE = 100  # Commit every N embeddings
-EMBED_WORKERS = int(os.getenv('EMBED_WORKERS', '8'))  # Parallel Ollama requests (GPU saturates at ~8)
+from config.settings import EMBED_WORKERS  # Parallel Ollama requests (GPU saturates at ~8)
 
 
 def compute_text_hash(text: str) -> str:

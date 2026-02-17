@@ -331,7 +331,12 @@ class TuringDaemon:
             return []
     
     def _load_actor(self, task_type: Dict):
-        """Load actor class from script_path."""
+        """Load actor class from script_path.
+        
+        Finds the most-derived actor class in the module.
+        Uses MRO length to prefer subclasses over imported base classes
+        (e.g. SummaryExtractActor over ProcessingActor).
+        """
         script_path = task_type.get('script_path')
         if not script_path:
             raise ValueError(f"No script_path for {task_type['task_type_name']}")
@@ -344,11 +349,17 @@ class TuringDaemon:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         
-        # Find actor class
+        # Collect all candidate classes with a process() method
+        BASE_CLASSES = {'ScriptActorBase', 'BaseActor', 'ProcessingActor', 'ScriptActor'}
+        candidates = []
         for name in dir(module):
             obj = getattr(module, name)
-            if isinstance(obj, type) and name != 'ScriptActorBase' and hasattr(obj, 'process'):
-                return obj
+            if isinstance(obj, type) and name not in BASE_CLASSES and hasattr(obj, 'process'):
+                candidates.append(obj)
+        
+        if candidates:
+            # Pick the most-derived class (longest MRO = most specific)
+            return max(candidates, key=lambda cls: len(cls.__mro__))
         
         raise ValueError(f"No actor class found in {script_path}")
     

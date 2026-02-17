@@ -79,16 +79,12 @@ class StructuredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON"""
         
-        # Base log data
+        # Base log data — slim format for single-server deployment
         log_data: Dict[str, Any] = {
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'ts': datetime.utcnow().strftime('%H:%M:%S'),
             'level': record.levelname,
             'logger': record.name,
             'message': record.getMessage(),
-            'hostname': self.hostname,
-            'pid': self.pid,
-            'thread': record.thread,
-            'thread_name': record.threadName
         }
         
         # Add file/line info for DEBUG level

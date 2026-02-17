@@ -45,9 +45,9 @@ from core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
+from config.settings import OLLAMA_EMBED_URL as OLLAMA_URL
 EMBED_MODEL = "bge-m3:567m"
-LLM_WORKERS = int(os.getenv('LLM_WORKERS', '2'))
+from config.settings import LLM_WORKERS
 
 THRESHOLD_AUTO_ACCEPT = 0.85
 THRESHOLD_LLM_VERIFY = 0.70

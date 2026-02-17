@@ -49,6 +49,8 @@ source venv/bin/activate
 
 # CRITICAL: Disable Python output buffering so logs appear in real-time
 export PYTHONUNBUFFERED=1
+# Human-readable logs (not JSON) — single server, human readers
+export LOG_FORMAT=human
 
 # ============================================================================
 # LOGGING - Always append to logs/nightly_fetch.log
@@ -218,8 +220,8 @@ if [ "$1" = "debug" ] || [ "$1" = "--debug" ]; then
     echo "🔒 Lock file:"
     if [ -f "$LOCKFILE" ]; then
         echo "   EXISTS: $LOCKFILE"
-        echo "   PID: $(cat $LOCKFILE)"
-        echo "   Process alive: $(kill -0 $(cat $LOCKFILE) 2>/dev/null && echo 'YES' || echo 'NO')"
+        echo "   PID: $(cat "$LOCKFILE")"
+        echo "   Process alive: $(kill -0 "$(cat "$LOCKFILE")" 2>/dev/null && echo 'YES' || echo 'NO')"
     else
         echo "   No lock file"
     fi

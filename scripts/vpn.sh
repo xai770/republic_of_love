@@ -12,7 +12,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_DIR="/etc/openvpn/client"
-CREDS_FILE="$CONFIG_DIR/proton-creds.txt"
 PID_FILE="/var/run/openvpn-proton.pid"
 LOG_FILE="$PROJECT_DIR/logs/vpn.log"
 
@@ -100,7 +99,7 @@ cmd_up() {
     sudo openvpn --config "$config" --daemon --log "$LOG_FILE" --writepid "$PID_FILE"
     
     # Wait for connection - poll every 0.2s instead of 1s
-    for i in {1..50}; do
+    for _ in {1..50}; do
         sleep 0.2
         if ip addr show tun0 &>/dev/null; then
             log "Connected!"
@@ -154,11 +153,13 @@ cmd_rotate() {
     # ProtonVPN's de config load-balances across German servers
     # Just disconnect and reconnect to get a new IP
     log "Rotating VPN (reconnect to get new server)..."
-    local old_ip=$(get_public_ip)
+    local old_ip
+    old_ip=$(get_public_ip)
     cmd_down
     sleep 0.5
     cmd_up "de"  # Use de config which has all German servers
-    local new_ip=$(get_public_ip)
+    local new_ip
+    new_ip=$(get_public_ip)
     log "IP changed: $old_ip → $new_ip"
 }
 

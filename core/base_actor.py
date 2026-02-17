@@ -56,7 +56,7 @@ logger = get_logger(__name__)
 # SHARED CONSTANTS
 # ============================================================================
 
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
+from config.settings import OLLAMA_GENERATE_URL as OLLAMA_URL
 
 # Bad data patterns — if LLM says this, input was insufficient (skip, don't fail)
 BAD_DATA_PATTERNS = [

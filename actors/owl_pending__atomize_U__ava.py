@@ -81,7 +81,7 @@ logger = get_logger(__name__)
 # ============================================================================
 TASK_TYPE_ID = 1306  # owl_pending_auto_triage
 
-OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
+from config.settings import OLLAMA_GENERATE_URL as OLLAMA_URL
 MODEL = "qwen2.5-coder:7b"
 
 # Threshold for "already atomic" - skip LLM for short items

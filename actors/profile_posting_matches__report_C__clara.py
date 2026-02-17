@@ -31,8 +31,11 @@ Task Type ID: TBD
 
 import sys
 import json
+import os
 import re
 from typing import Dict, Any, Optional, List, Tuple
+
+import requests
 
 from core.database import get_connection
 
@@ -404,19 +407,20 @@ CRITICAL RULES:
     return prompt
 
 
+from config.settings import OLLAMA_GENERATE_URL as OLLAMA_GENERATE_URL
+
+
 def call_llm(prompt: str) -> Dict:
     """Call the LLM and parse response."""
-    import subprocess
-    
     try:
-        result = subprocess.run(
-            ['ollama', 'run', MODEL],
-            input=prompt,
-            capture_output=True,
-            text=True,
-            timeout=120
+        resp = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={'model': MODEL, 'prompt': prompt, 'stream': False,
+                  'options': {'temperature': 0, 'seed': 42}},
+            timeout=120,
         )
-        response = result.stdout.strip()
+        resp.raise_for_status()
+        response = resp.json().get('response', '').strip()
         
         # Try to extract JSON from response
         # Sometimes model wraps in markdown

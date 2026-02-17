@@ -203,6 +203,53 @@ def get_pending_work() -> dict:
         }
 
 
+def get_eta_prediction(pending: dict) -> dict:
+    """Predict ETA for pending work based on historical ticket throughput.
+    
+    Queries the last 7 days of completed tickets to calculate per-subject
+    processing rates, then multiplies by current pending counts.
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 
+                tt.task_type_name,
+                ROUND(AVG(
+                    CASE WHEN (t.output->>'success_count')::int > 0
+                    THEN EXTRACT(EPOCH FROM (t.completed_at - t.started_at))
+                         / (t.output->>'success_count')::int
+                    END
+                )::numeric, 3) AS secs_per_subject
+            FROM tickets t
+            JOIN task_types tt ON t.task_type_id = tt.task_type_id
+            WHERE t.status = 'completed'
+              AND t.started_at > NOW() - INTERVAL '7 days'
+              AND t.completed_at IS NOT NULL
+              AND (t.output->>'success_count')::int > 0
+            GROUP BY tt.task_type_name
+        """)
+        rates = {row['task_type_name']: float(row['secs_per_subject']) for row in cur.fetchall()}
+
+    # Map pending work to task_type rates
+    estimates = {}
+    mapping = {
+        'job_description_backfill': ('no_desc_retryable', pending.get('no_desc_retryable', 0)),
+        'owl_pending_auto_triage': ('need_berufenet', pending.get('need_berufenet', 0)),
+        'extracted_summary': ('need_summary', pending.get('need_summary', 0)),
+        'embedding_generator': ('need_embedding', pending.get('need_embedding', 0)),
+    }
+
+    total_secs = 0
+    for task_name, (label, count) in mapping.items():
+        rate = rates.get(task_name, 0)
+        if rate and count:
+            est_secs = rate * count
+            estimates[label] = {'count': count, 'rate': rate, 'est_secs': est_secs}
+            total_secs += est_secs
+
+    return {'estimates': estimates, 'total_secs': total_secs, 'rates': rates}
+
+
 def get_recent_activity() -> dict:
     """Get counts of recent activity."""
     with get_connection() as conn:
@@ -371,6 +418,25 @@ def render_ascii(last_run: dict, pending: dict, activity: dict, anomalies: list,
     lines.append(f"   {status_icon(pending['need_berufenet'], 500)} Need berufenet match:     {pending['need_berufenet']:,}")
     lines.append(f"   {status_icon(pending['need_summary'], 100)} Need LLM summary:         {pending['need_summary']:,}")
     lines.append(f"   {status_icon(pending['need_embedding'], 500)} Need embedding:           {pending['need_embedding']:,}")
+    
+    # ETA predictions
+    eta = get_eta_prediction(pending)
+    if eta['total_secs'] > 0:
+        lines.append("")
+        lines.append("⏱️  ETA (based on last 7 days throughput)")
+        lines.append("-" * 70)
+        for label, est in eta['estimates'].items():
+            mins = est['est_secs'] / 60
+            if mins < 60:
+                time_str = f"{mins:.0f}m"
+            else:
+                time_str = f"{mins/60:.1f}h"
+            lines.append(f"   {label}: {est['count']:,} × {est['rate']:.2f}s/ea = ~{time_str}")
+        total_mins = eta['total_secs'] / 60
+        if total_mins < 60:
+            lines.append(f"   Total: ~{total_mins:.0f} minutes")
+        else:
+            lines.append(f"   Total: ~{total_mins/60:.1f} hours")
     
     # Anomalies
     lines.append("")

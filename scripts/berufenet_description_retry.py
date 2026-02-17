@@ -41,6 +41,8 @@ import os
 import sys
 import time
 
+import requests
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import psycopg2
@@ -103,13 +105,14 @@ def _truncate_description(desc: str, max_chars: int = 800) -> str:
     return truncated + "..."
 
 
+from config.settings import OLLAMA_GENERATE_URL
+
+
 def _llm_triage_with_description(job_title: str, description: str, candidates: list[dict]) -> list[int]:
     """
     Ask LLM to pick matches using title + description context.
     Returns list of 0-based indices, or empty list if NONE.
     """
-    import subprocess
-
     cands_text = "\n".join(
         f"  {i+1}. {c.get('name', '?')} (score: {c.get('score', 0):.3f})"
         for i, c in enumerate(candidates)
@@ -122,14 +125,14 @@ def _llm_triage_with_description(job_title: str, description: str, candidates: l
     )
 
     try:
-        result = subprocess.run(
-            ['ollama', 'run', LLM_MODEL],
-            input=prompt,
-            capture_output=True,
-            text=True,
+        resp = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={'model': LLM_MODEL, 'prompt': prompt, 'stream': False,
+                  'options': {'temperature': 0, 'seed': 42}},
             timeout=90,
         )
-        answer = result.stdout.strip().upper()
+        resp.raise_for_status()
+        answer = resp.json().get('response', '').strip().upper()
 
         if 'NONE' in answer:
             return []
