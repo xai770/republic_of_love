@@ -917,7 +917,9 @@ _CONFIRM_PATTERNS = re.compile(
     r'looks?\s*good|sieht\s*gut\s*aus|save|speichern|genau|perfect|perfekt|'
     r'alles\s*richtig|that\'?s\s*(?:right|correct)|y|ja\s*passt|ja,?\s*passt|'
     r'passt\s*so|sieht\s*richtig\s*aus|looks?\s*correct|save\s*it|'
-    r'ja,?\s*sieht\s*gut\s*aus|yes,?\s*save|ja,?\s*speichern)\s*[.!]*$',
+    r'ja,?\s*sieht\s*gut\s*aus|yes,?\s*save|ja,?\s*speichern|'
+    r'yes,?\s*save\s*it|ja,?\s*save|yes,?\s*(?:please|bitte)|'
+    r'(?:yes|ja|yep|sure),?\s*(?:looks?\s*good|passt|save\s*it|perfect|perfekt))\s*[.!]*$',
     re.IGNORECASE
 )
 
