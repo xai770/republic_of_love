@@ -13,8 +13,14 @@ Philosophy: No artificial similarity boosts (/in suffixes etc).
 Let the semantic meaning drive the match.
 """
 
+import os
 import re
 from typing import Optional, Tuple
+
+import requests
+
+BERUFENET_MODEL = os.getenv('BERUFENET_MODEL', 'qwen2.5:7b')
+OLLAMA_GENERATE_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 
 # Thresholds derived from 100-title POC with V5 clean matching (no artificial /in)
 THRESHOLD_AUTO_ACCEPT = 0.85  # 9% - very reliable
@@ -209,12 +215,12 @@ Candidates:
 Answer (numbers only):"""
 
 
-def llm_triage_pick(job_title: str, candidates: list[dict], model: str = "qwen2.5:7b") -> list[int]:
+def llm_triage_pick(job_title: str, candidates: list[dict], model: str = None) -> list[int]:
     """
     Ask LLM to pick the best match(es) from a list of candidates.
     Returns list of 0-based indices of matching candidates, or empty list.
     """
-    import subprocess
+    model = model or BERUFENET_MODEL
 
     cands_text = "\n".join(
         f"  {i+1}. {c.get('name', '?')} (score: {c.get('score', 0):.3f})"
@@ -227,14 +233,12 @@ def llm_triage_pick(job_title: str, candidates: list[dict], model: str = "qwen2.
     )
 
     try:
-        result = subprocess.run(
-            ['ollama', 'run', model],
-            input=prompt,
-            capture_output=True,
-            text=True,
+        resp = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={'model': model, 'prompt': prompt, 'stream': False},
             timeout=60
         )
-        answer = result.stdout.strip().upper()
+        answer = resp.json().get('response', '').strip().upper()
 
         if 'NONE' in answer:
             return []
@@ -277,35 +281,34 @@ Match: "{berufenet_match}"
 Answer:"""
 
 
-def llm_verify_match(job_title: str, berufenet_match: str, model: str = "qwen2.5:7b") -> str:
+def llm_verify_match(job_title: str, berufenet_match: str, model: str = None) -> str:
     """
     Use LLM to verify if job title matches Berufenet profession.
-    
+    Uses Ollama HTTP API (not subprocess) for speed.
+
     Args:
         job_title: Cleaned job title from posting
         berufenet_match: Best Berufenet match from embedding
-        model: Ollama model to use
-        
+        model: Ollama model to use (default: BERUFENET_MODEL env var)
+
     Returns:
         "YES", "NO", or "UNCERTAIN"
     """
-    import subprocess
-    
+    model = model or BERUFENET_MODEL
+
     prompt = LLM_VERIFY_PROMPT.format(
         job_title=job_title,
         berufenet_match=berufenet_match
     )
-    
+
     try:
-        result = subprocess.run(
-            ['ollama', 'run', model],
-            input=prompt,
-            capture_output=True,
-            text=True,
+        resp = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={'model': model, 'prompt': prompt, 'stream': False},
             timeout=60
         )
-        answer = result.stdout.strip().upper()
-        
+        answer = resp.json().get('response', '').strip().upper()
+
         if 'YES' in answer:
             return 'YES'
         elif 'NO' in answer:

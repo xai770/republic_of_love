@@ -29,6 +29,7 @@ Usage:
 import argparse
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
@@ -46,6 +47,7 @@ logger = get_logger(__name__)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
 EMBED_MODEL = "bge-m3:567m"
+LLM_WORKERS = int(os.getenv('LLM_WORKERS', '2'))
 
 THRESHOLD_AUTO_ACCEPT = 0.85
 THRESHOLD_LLM_VERIFY = 0.70
@@ -274,6 +276,8 @@ def process_batch(batch_size: int, phase2: bool = False):
     logger.info("%s", '='*60)
     logger.info("Batch size: %s", batch_size)
     logger.info("Phase 2 (embedding+LLM): %s", 'enabled' if phase2 else 'disabled — OWL only')
+    if phase2:
+        logger.info("LLM workers: %s (set LLM_WORKERS env to change)", LLM_WORKERS)
 
     conn = get_connection_raw()
     cur = conn.cursor()
@@ -315,18 +319,18 @@ def process_batch(batch_size: int, phase2: bool = False):
     stats = {'owl_hit': 0, 'owl_unanimous': 0, 'owl_majority': 0, 'embed_auto': 0, 'llm_yes': 0, 'escalated': 0, 'null': 0, 'error': 0}
     start_time = time.time()
     last_progress_log = start_time
+    processed = 0
 
-    for i, row in enumerate(titles):
+    # --- Phase 1: OWL lookup (instant, sequential) ---
+    phase2_queue = []  # titles that need Phase 2
+
+    for row in titles:
         title = row['job_title']
-
-        # Clean the title
         cleaned = clean_job_title(title)
 
-        # === Phase 1: OWL Lookup ===
         match = owl_lookup(cleaned, cur)
 
         if match:
-            # OWL hit — instant, reliable
             confidence = match.get('confidence', 'owl')
             score = 1.0 if confidence == 'owl' else 0.95 if confidence == 'owl_unanimous' else 0.90
             cur.execute("""
@@ -353,88 +357,11 @@ def process_batch(batch_size: int, phase2: bool = False):
             else:
                 stats['owl_hit'] += 1
             conn.commit()
-            continue
-
-        # === Phase 2: Embedding + LLM (optional) ===
-        if phase2 and beruf_df is not None:
-            candidates = embedding_top5(cleaned, beruf_df, beruf_embeddings)
-
-            if not candidates:
-                stats['error'] += 1
-                cur.execute("""
-                    UPDATE postings
-                    SET berufenet_verified = 'error'
-                    WHERE job_title = %s AND berufenet_id IS NULL
-                """, (title,))
-                conn.commit()
-                continue
-
-            result = llm_pick_best(cleaned, candidates)
-
-            if result['confident']:
-                m = result['match']
-
-                # Find the OWL entity for this berufenet profession
-                cur.execute("""
-                    SELECT owl_id FROM owl
-                    WHERE owl_type = 'berufenet'
-                      AND metadata->>'berufenet_id' = %s
-                """, (str(m['berufenet_id']),))
-                owl_row = cur.fetchone()
-
-                # Add as OWL synonym (probationary → confirmed after 2nd observation)
-                if owl_row:
-                    add_owl_synonym(owl_row['owl_id'], cleaned, cur, conn)
-
-                # Update the posting
-                verified = result['method']
-                cur.execute("""
-                    UPDATE postings
-                    SET berufenet_id = %s,
-                        berufenet_name = %s,
-                        berufenet_kldb = %s,
-                        qualification_level = %s,
-                        berufenet_score = %s,
-                        berufenet_verified = %s
-                    WHERE job_title = %s AND berufenet_id IS NULL
-                """, (
-                    m['berufenet_id'],
-                    m['berufenet_name'],
-                    m['berufenet_kldb'],
-                    m['qualification_level'],
-                    m['score'],
-                    verified,
-                    title,
-                ))
-                conn.commit()
-
-                if 'llm' in verified:
-                    stats['llm_yes'] += 1
-                else:
-                    stats['embed_auto'] += 1
-            else:
-                # Not confident — escalate to owl_pending for human review
-                escalate_to_owl_pending(cleaned, candidates, cur, conn)
-                stats['escalated'] += 1
-
-                # Use terminal state based on rejection reason (prevents Phase 2 re-processing)
-                reason = result.get('reason', 'no_match')
-                terminal_state = {
-                    'low_score': 'no_match',
-                    'llm_no': 'llm_no',
-                    'llm_uncertain': 'llm_uncertain',
-                    'no_candidates': 'error',
-                }.get(reason, 'no_match')
-
-                cur.execute("""
-                    UPDATE postings
-                    SET berufenet_score = %s,
-                        berufenet_verified = %s
-                    WHERE job_title = %s AND berufenet_id IS NULL
-                """, (candidates[0]['score'] if candidates else 0, terminal_state, title))
-                conn.commit()
+            processed += 1
+        elif phase2 and beruf_df is not None:
+            phase2_queue.append((title, cleaned))
         else:
-            # Phase 2 disabled — mark as pending_owl so Phase 1 doesn't reprocess
+            # Phase 2 disabled — mark as pending_owl
             cur.execute("""
                 UPDATE postings
                 SET berufenet_verified = 'pending_owl'
@@ -443,15 +370,109 @@ def process_batch(batch_size: int, phase2: bool = False):
             """, (title,))
             conn.commit()
             stats['null'] += 1
+            processed += 1
 
-        # Progress — at most once every 5 seconds
-        now = time.time()
-        if now - last_progress_log >= 5:
-            last_progress_log = now
-            elapsed = now - start_time
-            rate = (i + 1) / elapsed
-            owl_total = stats['owl_hit'] + stats['owl_unanimous'] + stats['owl_majority']
-            logger.info("%s/%s (%.1f/s) — owl: %s (exact:%s unan:%s maj:%s) embed: %s llm: %s esc: %s null: %s", i+1, len(titles), rate, owl_total, stats['owl_hit'], stats['owl_unanimous'], stats['owl_majority'], stats['embed_auto'], stats['llm_yes'], stats['escalated'], stats['null'])
+    owl_total = stats['owl_hit'] + stats['owl_unanimous'] + stats['owl_majority']
+    logger.info("Phase 1 complete: %s OWL hits, %s need Phase 2", owl_total, len(phase2_queue))
+
+    # --- Phase 2: Embedding + LLM (GPU, concurrent) ---
+    if phase2_queue:
+
+        def _phase2_worker(title_cleaned):
+            """GPU-heavy work: embed title → find candidates → LLM verify. Thread-safe (no DB)."""
+            title, cleaned = title_cleaned
+            try:
+                candidates = embedding_top5(cleaned, beruf_df, beruf_embeddings)
+                if not candidates:
+                    return (title, cleaned, 'error', None, None)
+                result = llm_pick_best(cleaned, candidates)
+                return (title, cleaned, 'ok', result, candidates)
+            except Exception as e:
+                logger.error("Phase 2 error for '%s': %s", cleaned, e)
+                return (title, cleaned, 'error', None, None)
+
+        with ThreadPoolExecutor(max_workers=LLM_WORKERS) as executor:
+            futures = {executor.submit(_phase2_worker, tc): tc for tc in phase2_queue}
+
+            for future in as_completed(futures):
+                title, cleaned, status, result, candidates = future.result()
+                processed += 1
+
+                if status == 'error' or result is None:
+                    stats['error'] += 1
+                    cur.execute("""
+                        UPDATE postings
+                        SET berufenet_verified = 'error'
+                        WHERE job_title = %s AND berufenet_id IS NULL
+                    """, (title,))
+                    conn.commit()
+                elif result['confident']:
+                    m = result['match']
+
+                    # Find the OWL entity for this berufenet profession
+                    cur.execute("""
+                        SELECT owl_id FROM owl
+                        WHERE owl_type = 'berufenet'
+                          AND metadata->>'berufenet_id' = %s
+                    """, (str(m['berufenet_id']),))
+                    owl_row = cur.fetchone()
+
+                    if owl_row:
+                        add_owl_synonym(owl_row['owl_id'], cleaned, cur, conn)
+
+                    verified = result['method']
+                    cur.execute("""
+                        UPDATE postings
+                        SET berufenet_id = %s,
+                            berufenet_name = %s,
+                            berufenet_kldb = %s,
+                            qualification_level = %s,
+                            berufenet_score = %s,
+                            berufenet_verified = %s
+                        WHERE job_title = %s AND berufenet_id IS NULL
+                    """, (
+                        m['berufenet_id'],
+                        m['berufenet_name'],
+                        m['berufenet_kldb'],
+                        m['qualification_level'],
+                        m['score'],
+                        verified,
+                        title,
+                    ))
+                    conn.commit()
+
+                    if 'llm' in verified:
+                        stats['llm_yes'] += 1
+                    else:
+                        stats['embed_auto'] += 1
+                else:
+                    escalate_to_owl_pending(cleaned, candidates, cur, conn)
+                    stats['escalated'] += 1
+
+                    reason = result.get('reason', 'no_match')
+                    terminal_state = {
+                        'low_score': 'no_match',
+                        'llm_no': 'llm_no',
+                        'llm_uncertain': 'llm_uncertain',
+                        'no_candidates': 'error',
+                    }.get(reason, 'no_match')
+
+                    cur.execute("""
+                        UPDATE postings
+                        SET berufenet_score = %s,
+                            berufenet_verified = %s
+                        WHERE job_title = %s AND berufenet_id IS NULL
+                    """, (candidates[0]['score'] if candidates else 0, terminal_state, title))
+                    conn.commit()
+
+                # Progress — at most once every 5 seconds
+                now = time.time()
+                if now - last_progress_log >= 5:
+                    last_progress_log = now
+                    elapsed = now - start_time
+                    rate = processed / elapsed
+                    owl_total = stats['owl_hit'] + stats['owl_unanimous'] + stats['owl_majority']
+                    logger.info("%s/%s (%.1f/s) — owl: %s (exact:%s unan:%s maj:%s) embed: %s llm: %s esc: %s null: %s", processed, len(titles), rate, owl_total, stats['owl_hit'], stats['owl_unanimous'], stats['owl_majority'], stats['embed_auto'], stats['llm_yes'], stats['escalated'], stats['null'])
 
     elapsed = time.time() - start_time
 
