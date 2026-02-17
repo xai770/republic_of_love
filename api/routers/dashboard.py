@@ -85,7 +85,7 @@ def get_home_stats(
             LEFT JOIN user_posting_interactions i
                 ON i.user_id = %s AND i.posting_id = m.posting_id
             WHERE m.profile_id = %s
-              AND m.skill_match_score > 30
+              AND m.skill_match_score > 0.30
         """, (user_id, profile_id))
 
         row = cur.fetchone()
@@ -200,7 +200,7 @@ def get_journey_stats(
                 FROM profile_posting_matches m
                 LEFT JOIN user_posting_interactions i
                     ON i.user_id = %s AND i.posting_id = m.posting_id
-                WHERE m.profile_id = %s AND m.skill_match_score > 30
+                WHERE m.profile_id = %s AND m.skill_match_score > 0.30
             """, (user_id, profile_id))
             mrow = cur.fetchone()
             new_matches = mrow['new_count'] or 0

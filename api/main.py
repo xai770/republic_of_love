@@ -72,6 +72,7 @@ app.include_router(visualization.router)
 app.include_router(admin.router)
 app.include_router(feedback.router, prefix="/api", tags=["feedback"])
 app.include_router(intelligence.router, prefix="/api")
+# Admin mount: same router exposed at /admin/feedback for admin dashboard & template links
 app.include_router(feedback.router, prefix="/admin", tags=["feedback-admin"], include_in_schema=False)
 
 
