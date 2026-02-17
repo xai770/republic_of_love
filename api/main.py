@@ -389,6 +389,24 @@ def report_page(match_id: int, request: Request, conn=Depends(get_db)):
     })
 
 
+@app.get("/posting/{posting_id}")
+def posting_page(posting_id: int, request: Request, conn=Depends(get_db)):
+    """Job posting detail page."""
+    if not templates:
+        return {"error": "Frontend not configured"}
+
+    user = get_current_user(request, conn)
+    if not user:
+        return RedirectResponse(url="/", status_code=302)
+
+    return templates.TemplateResponse("posting.html", {
+        "request": request,
+        "user": user,
+        "posting_id": posting_id,
+        **get_i18n_context(request)
+    })
+
+
 # --- Legal Pages (no auth required) ---
 
 @app.get("/impressum")

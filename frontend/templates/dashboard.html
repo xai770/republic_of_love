@@ -85,28 +85,28 @@
                     <h2 class="journey-column-title">{{ t('dashboard.journey_apply') }}</h2>
                 </div>
                 <div class="journey-steps">
-                    <a href="/journey" class="journey-step" id="step-c1" data-step="ship_documents">
+                    <a href="#" class="journey-step" id="step-c1" data-step="ship_documents">
                         <span class="step-status" id="status-c1">💤</span>
                         <div class="step-content">
                             <div class="step-label">{{ t('dashboard.step_ship_documents') }}</div>
                             <div class="step-detail" id="detail-c1"></div>
                         </div>
                     </a>
-                    <a href="/journey" class="journey-step" id="step-c2" data-step="await_reply">
+                    <a href="#" class="journey-step" id="step-c2" data-step="await_reply">
                         <span class="step-status" id="status-c2">💤</span>
                         <div class="step-content">
                             <div class="step-label">{{ t('dashboard.step_await_reply') }}</div>
                             <div class="step-detail" id="detail-c2"></div>
                         </div>
                     </a>
-                    <a href="/journey" class="journey-step" id="step-c3" data-step="train_coach">
+                    <a href="#" class="journey-step" id="step-c3" data-step="train_coach">
                         <span class="step-status" id="status-c3">💤</span>
                         <div class="step-content">
                             <div class="step-label">{{ t('dashboard.step_train_coach') }}</div>
                             <div class="step-detail" id="detail-c3"></div>
                         </div>
                     </a>
-                    <a href="/journey" class="journey-step" id="step-c4" data-step="interview">
+                    <a href="#" class="journey-step" id="step-c4" data-step="interview">
                         <span class="step-status" id="status-c4">💤</span>
                         <div class="step-content">
                             <div class="step-label">{{ t('dashboard.step_interview') }}</div>
@@ -433,7 +433,7 @@ function renderNotifications(notifications) {
 
     list.innerHTML = notifications.map(n => `
         <li class="notification-item ${n.read_at ? '' : 'unread'}"
-            onclick="clickNotification(${n.notification_id}, '${n.link || ''}')">
+            onclick="clickNotification(${n.notification_id}, '${escapeHtml(n.link || '')}')">
             <div class="notification-title">${escapeHtml(n.title)}</div>
             ${n.message ? `<div class="notification-message">${escapeHtml(n.message)}</div>` : ''}
             <div class="notification-time">${timeAgo(n.created_at)}</div>
@@ -451,16 +451,6 @@ async function markAllRead(e) {
     e.stopPropagation();
     await fetch('/api/notifications/read-all', { method: 'POST' });
     loadNotifications();
-}
-
-function timeAgo(dateStr) {
-    const date = new Date(dateStr);
-    const diff = Math.floor((Date.now() - date) / 1000);
-    if (diff < 60) return 'Gerade eben';
-    if (diff < 3600) return Math.floor(diff / 60) + ' Min.';
-    if (diff < 86400) return Math.floor(diff / 3600) + ' Std.';
-    if (diff < 604800) return Math.floor(diff / 86400) + ' Tage';
-    return date.toLocaleDateString('de-DE');
 }
 
 // Close dropdown on outside click
@@ -574,7 +564,7 @@ async function loadNextSteps() {
             icon: '📅',
             title: 'Termin mit Adele buchen',
             desc: 'Persönliche Beratung für deine nächsten Schritte',
-            href: '/journey'
+            href: '#'
         });
         
     } catch (err) {

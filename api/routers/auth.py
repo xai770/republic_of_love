@@ -170,7 +170,7 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
         key="session",
         value=session_token,
         httponly=True,
-        secure=False,  # Set True in production with HTTPS
+        secure=not DEBUG,  # True in production (HTTPS), False in dev
         samesite="lax",
         max_age=SESSION_EXPIRE_HOURS * 3600,
     )

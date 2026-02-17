@@ -81,7 +81,8 @@ async def get_proactive_messages(
             JOIN postings p ON i.posting_id = p.posting_id
             WHERE i.user_id = %s
               AND i.is_favorited = TRUE
-              AND p.posting_status = 'active'
+              AND p.enabled = TRUE
+              AND p.invalidated = FALSE
         """, (user['user_id'],))
         saved_open = cur.fetchone()['cnt']
 

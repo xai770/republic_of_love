@@ -240,5 +240,29 @@
   "feedback": {
     "title": "Fehler melden",
     "button_tooltip": "Fehler melden"
+  },
+  "account": {
+    "identity": "Identität",
+    "display_name": "Anzeigename",
+    "name_hint": "Dieser Name wird im Leaderboard und in Nachrichten angezeigt.",
+    "avatar": "Avatar",
+    "mira_prefs": "Mira-Einstellungen",
+    "language": "Sprache",
+    "address_me": "Anrede",
+    "tone": "Tonalität",
+    "tone_friendly": "Freundlich",
+    "tone_concise": "Knapp",
+    "tone_professional": "Professionell",
+    "reach_me": "Erreichbarkeit",
+    "dream_job_question": "Sollen wir dich per E-Mail benachrichtigen, wenn wir deinen Traumjob finden?",
+    "yes_email": "Ja, per E-Mail",
+    "no_email": "Nein, danke",
+    "consent_given": "Benachrichtigungen aktiviert",
+    "revoke": "Widerrufen",
+    "my_data": "Meine Daten",
+    "gdpr_hint": "Du hast das Recht auf eine Kopie aller Daten, die wir über dich speichern.",
+    "download_data": "Meine Daten herunterladen",
+    "delete_account": "Konto löschen",
+    "delete_warning": "Dein Konto und alle Daten werden innerhalb von 30 Tagen unwiderruflich gelöscht."
   }
 }

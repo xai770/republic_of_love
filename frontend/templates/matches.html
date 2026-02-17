@@ -666,10 +666,10 @@ async function loadNotifications() {
         if (countRes.ok) {
             const count = await countRes.json();
             const badge = document.getElementById('notif-badge');
-            if (count.unread > 0) {
+            if (badge && count.unread > 0) {
                 badge.textContent = count.unread > 9 ? '9+' : count.unread;
                 badge.classList.remove('hidden');
-            } else {
+            } else if (badge) {
                 badge.classList.add('hidden');
             }
         }
@@ -687,6 +687,7 @@ async function loadNotifications() {
 
 function renderNotifications(notifications) {
     const list = document.getElementById('notif-list');
+    if (!list) return;
     
     if (notifications.length === 0) {
         list.innerHTML = '<li class="notification-empty">No notifications</li>';
@@ -695,7 +696,7 @@ function renderNotifications(notifications) {
     
     list.innerHTML = notifications.map(n => `
         <li class="notification-item ${n.read_at ? '' : 'unread'}" 
-            onclick="clickNotification(${n.notification_id}, '${n.link || ''}')">
+            onclick="clickNotification(${n.notification_id}, '${escapeHtml(n.link || '')}')">
             <div class="notification-title">${escapeHtml(n.title)}</div>
             ${n.message ? `<div class="notification-message">${escapeHtml(n.message)}</div>` : ''}
             <div class="notification-time">${timeAgo(n.created_at)}</div>
@@ -706,7 +707,7 @@ function renderNotifications(notifications) {
 function toggleNotifications(e) {
     e.stopPropagation();
     const dropdown = document.getElementById('notif-dropdown');
-    dropdown.classList.toggle('show');
+    if (dropdown) dropdown.classList.toggle('show');
 }
 
 async function clickNotification(id, link) {
@@ -741,7 +742,8 @@ function timeAgo(dateStr) {
 // Close dropdown on outside click
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.nav-notifications')) {
-        document.getElementById('notif-dropdown').classList.remove('show');
+        const dd = document.getElementById('notif-dropdown');
+        if (dd) dd.classList.remove('show');
     }
 });
 </script>

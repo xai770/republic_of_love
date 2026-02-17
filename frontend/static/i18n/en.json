@@ -235,5 +235,29 @@
   "feedback": {
     "title": "Report an issue",
     "button_tooltip": "Report an issue"
+  },
+  "account": {
+    "identity": "Identity",
+    "display_name": "Display Name",
+    "name_hint": "This name is shown in the leaderboard and messages.",
+    "avatar": "Avatar",
+    "mira_prefs": "Mira Preferences",
+    "language": "Language",
+    "address_me": "Address me as",
+    "tone": "Tone",
+    "tone_friendly": "Friendly",
+    "tone_concise": "Concise",
+    "tone_professional": "Professional",
+    "reach_me": "How to reach me",
+    "dream_job_question": "Should we email you when we find your dream job?",
+    "yes_email": "Yes, email me",
+    "no_email": "No thanks",
+    "consent_given": "Notifications enabled",
+    "revoke": "Revoke",
+    "my_data": "My Data",
+    "gdpr_hint": "You have the right to a copy of all data we store about you.",
+    "download_data": "Download my data",
+    "delete_account": "Delete account",
+    "delete_warning": "This will permanently delete your account and all data within 30 days."
   }
 }
