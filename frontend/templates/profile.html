@@ -262,11 +262,15 @@
             <p>Parsing your CV...</p>
         </div>
         <div id="upload-results" class="hidden">
-            <h3>Found Work Experiences</h3>
+            <h3>Anonymized Profile Preview</h3>
+            <p class="help-text">Review the extracted data. Company names and dates have been anonymized.</p>
+            <div id="parsed-summary" style="margin-bottom:1rem;"></div>
+            <div id="parsed-skills" style="margin-bottom:1rem;"></div>
+            <h4>Work History</h4>
             <div id="parsed-jobs"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
-                <button class="btn" onclick="importSelectedJobs()">Import Selected</button>
+                <button class="btn" onclick="importCVData()">Import to Profile</button>
             </div>
         </div>
         <p class="help-text privacy-note">⚠️ Your CV is processed locally and not stored. We only extract work history.</p>
@@ -530,39 +534,94 @@ async function uploadCV(file) {
     }
 }
 
-let parsedJobs = [];
+let parsedCVData = null;
 
-function showParsedJobs(jobs) {
-    parsedJobs = jobs;
+function showParsedJobs(data) {
+    parsedCVData = data;
     document.getElementById('upload-progress').classList.add('hidden');
     document.getElementById('upload-results').classList.remove('hidden');
-    
+
+    // Summary
+    const summary = document.getElementById('parsed-summary');
+    const parts = [];
+    if (data.current_title) parts.push(`<strong>${data.current_title}</strong>`);
+    if (data.career_level) parts.push(`Level: ${data.career_level}`);
+    if (data.years_experience) parts.push(`${data.years_experience} years experience`);
+    if (data.profile_summary) parts.push(`<em>${data.profile_summary}</em>`);
+    summary.innerHTML = parts.join(' · ');
+
+    // Skills
+    const skillsEl = document.getElementById('parsed-skills');
+    const allSkills = [
+        ...(data.skills || []),
+        ...(data.languages || []),
+        ...(data.certifications || [])
+    ];
+    if (allSkills.length > 0) {
+        skillsEl.innerHTML = '<h4>Skills & Languages</h4><div class="skills-container">' +
+            allSkills.map(s => `<span class="skill-tag">${s}</span>`).join('') +
+            '</div>';
+    }
+
+    // Work history
     const container = document.getElementById('parsed-jobs');
-    container.innerHTML = jobs.map((job, i) => `
+    const history = data.work_history || [];
+    if (history.length === 0) {
+        container.innerHTML = '<p class="help-text">No work history extracted.</p>';
+        return;
+    }
+    container.innerHTML = history.map((job, i) => `
         <div class="parsed-job">
             <label>
                 <input type="checkbox" checked data-index="${i}">
-                <strong>${job.company || 'Unknown Company'}</strong> — ${job.title || 'Unknown Title'}
-                <br><small>${job.start_date || '?'} - ${job.end_date || 'Present'}</small>
+                <strong>${job.employer_description || 'a company'}</strong> — ${job.role || 'unknown role'}
+                <br><small>${job.duration_years ? job.duration_years + ' years' : ''} ${job.industry ? '· ' + job.industry : ''}</small>
+                ${job.key_responsibilities && job.key_responsibilities.length > 0
+                    ? '<br><small>' + job.key_responsibilities.slice(0, 3).join('; ') + '</small>'
+                    : ''}
             </label>
         </div>
     `).join('');
 }
 
-async function importSelectedJobs() {
-    const checkboxes = document.querySelectorAll('#parsed-jobs input:checked');
-    const selectedJobs = Array.from(checkboxes).map(cb => parsedJobs[cb.dataset.index]);
-    
-    for (const job of selectedJobs) {
-        await fetch('/api/profiles/me/work-history', {
+async function importCVData() {
+    if (!parsedCVData) return;
+
+    // Filter work_history to only checked entries
+    const checkboxes = document.querySelectorAll('#parsed-jobs input[type=checkbox]');
+    const selectedWork = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => parsedCVData.work_history[parseInt(cb.dataset.index)]);
+
+    const payload = {
+        current_title: parsedCVData.current_title || null,
+        career_level: parsedCVData.career_level || null,
+        years_experience: parsedCVData.years_experience || null,
+        skills: parsedCVData.skills || [],
+        languages: parsedCVData.languages || [],
+        certifications: parsedCVData.certifications || [],
+        profile_summary: parsedCVData.profile_summary || null,
+        work_history: selectedWork,
+        education: parsedCVData.education || []
+    };
+
+    try {
+        const resp = await fetch('/api/profiles/me/import-cv', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(job)
+            body: JSON.stringify(payload)
         });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || 'Import failed');
+        }
+        const result = await resp.json();
+        closeUploadModal();
+        alert(result.message || 'Profile imported!');
+        location.reload();
+    } catch (err) {
+        alert('Error importing CV: ' + err.message);
     }
-    
-    closeUploadModal();
-    loadWorkHistory();
 }
 
 // Skills

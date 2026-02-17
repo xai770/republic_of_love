@@ -62,6 +62,30 @@ def _validate_postings_background(posting_ids: List[int]):
 router = APIRouter(prefix="/matches", tags=["matches"])
 
 
+def _get_suppressed_kldb(cur, profile_id: int, threshold: int = 3, min_count: int = 2) -> list:
+    """
+    Get KldB groups the yogi has consistently rated poorly.
+
+    If a yogi rates 2+ postings in the same KldB group (first 4 digits)
+    at or below the threshold, that group is suppressed from future matches.
+
+    Returns list of 4-digit KldB prefixes to exclude.
+    """
+    cur.execute("""
+        SELECT LEFT(p.berufenet_kldb, 4) AS kldb_group, count(*) AS cnt
+        FROM profile_posting_matches m
+        JOIN postings p ON m.posting_id = p.posting_id
+        WHERE m.profile_id = %s
+          AND m.user_rating IS NOT NULL
+          AND m.user_rating <= %s
+          AND p.berufenet_kldb IS NOT NULL
+          AND length(p.berufenet_kldb) >= 4
+        GROUP BY LEFT(p.berufenet_kldb, 4)
+        HAVING count(*) >= %s
+    """, (profile_id, threshold, min_count))
+    return [row['kldb_group'] for row in cur.fetchall()]
+
+
 class MatchSummary(BaseModel):
     match_id: int
     posting_id: int
@@ -117,6 +141,12 @@ def list_my_matches(
         """
         params = [profile['profile_id']]
         
+        # Suppress KldB groups the yogi consistently rates poorly
+        suppressed = _get_suppressed_kldb(cur, profile['profile_id'])
+        if suppressed:
+            query += " AND (p.berufenet_kldb IS NULL OR LEFT(p.berufenet_kldb, 4) != ALL(%s))"
+            params.append(suppressed)
+
         if recommendation:
             query += " AND m.recommendation = %s"
             params.append(recommendation.upper())
@@ -141,6 +171,83 @@ def list_my_matches(
             ).start()
         
         return [MatchSummary(**{k: v for k, v in row.items() if k != 'last_validated_at'}) for row in rows]
+
+
+@router.get("/queue")
+def get_next_match(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Get the next unrated match for the yogi to review.
+
+    Returns a single match with Clara's analysis, cover letter or no-go
+    narrative, and posting details. The yogi rates it, then calls again
+    for the next one. Returns null when queue is empty.
+
+    Priority: highest skill_match_score first, recommendation=APPLY first.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        if not profile:
+            return {"match": None, "remaining": 0}
+
+        # Get next unrated match — best quality first, skip suppressed categories
+        suppressed = _get_suppressed_kldb(cur, profile['profile_id'])
+        suppress_clause = ""
+        params = [profile['profile_id']]
+        if suppressed:
+            suppress_clause = " AND (p.berufenet_kldb IS NULL OR LEFT(p.berufenet_kldb, 4) != ALL(%s))"
+            params.append(suppressed)
+
+        cur.execute(f"""
+            SELECT m.match_id, m.posting_id, m.skill_match_score,
+                   m.recommendation, m.confidence,
+                   m.go_reasons, m.nogo_reasons,
+                   m.cover_letter, m.nogo_narrative,
+                   m.match_rate, m.domain_gate_passed, m.gate_reason,
+                   p.job_title, p.source, p.location,
+                   p.extracted_summary, p.external_url,
+                   p.berufenet_name, p.qualification_level
+            FROM profile_posting_matches m
+            JOIN postings p ON m.posting_id = p.posting_id
+            WHERE m.profile_id = %s
+              AND m.user_rating IS NULL
+              AND COALESCE(p.invalidated, false) = false
+              {suppress_clause}
+            ORDER BY
+                CASE WHEN m.recommendation = 'APPLY' THEN 0 ELSE 1 END,
+                m.skill_match_score DESC
+            LIMIT 1
+        """, params)
+        match = cur.fetchone()
+
+        # Count remaining (same suppression applied)
+        remaining_params = [profile['profile_id']]
+        remaining_suppress = ""
+        if suppressed:
+            remaining_suppress = " AND (p.berufenet_kldb IS NULL OR LEFT(p.berufenet_kldb, 4) != ALL(%s))"
+            remaining_params.append(suppressed)
+
+        cur.execute(f"""
+            SELECT count(*) as remaining
+            FROM profile_posting_matches m
+            JOIN postings p ON m.posting_id = p.posting_id
+            WHERE m.profile_id = %s
+              AND m.user_rating IS NULL
+              AND COALESCE(p.invalidated, false) = false
+              {remaining_suppress}
+        """, remaining_params)
+        remaining = cur.fetchone()['remaining']
+
+        if not match:
+            return {"match": None, "remaining": 0}
+
+        return {
+            "match": dict(match),
+            "remaining": remaining
+        }
 
 
 class MatchStats(BaseModel):
@@ -253,21 +360,25 @@ def get_match_detail(match_id: int, user: dict = Depends(require_user), conn=Dep
 
 
 class RatingInput(BaseModel):
-    rating: int  # 1-5 stars OR -1/+1 for thumbs
+    rating: int  # 1-10 interest scale
     feedback: Optional[str] = None
+    decision: Optional[str] = None  # skip, apply, maybe
 
 
 @router.post("/{match_id}/rate")
 def rate_match(
     match_id: int,
-    rating: int = Query(..., ge=1, le=5, description="Rating 1-5"),
-    feedback: Optional[str] = Query(None, description="Optional feedback"),
+    body: RatingInput,
     user: dict = Depends(require_user),
     conn=Depends(get_db)
 ):
     """
-    Rate a match (1-5 stars).
+    Rate a match (1-10 interest scale) with optional feedback and decision.
+    1 = not interested at all, 10 = very interested.
     """
+    if not 1 <= body.rating <= 10:
+        raise HTTPException(status_code=400, detail="Rating must be 1-10")
+
     with conn.cursor() as cur:
         # Verify ownership
         cur.execute("""
@@ -285,12 +396,15 @@ def rate_match(
         
         cur.execute("""
             UPDATE profile_posting_matches
-            SET user_rating = %s, user_feedback = %s, rated_at = NOW()
+            SET user_rating = %s, user_feedback = %s,
+                user_decision = COALESCE(%s, user_decision),
+                rated_at = NOW()
             WHERE match_id = %s
-        """, (rating, feedback, match_id))
+        """, (body.rating, body.feedback, body.decision, match_id))
         conn.commit()
         
-        return {"status": "ok", "rating": rating, "feedback": feedback}
+        return {"status": "ok", "rating": body.rating,
+                "feedback": body.feedback, "decision": body.decision}
 
 
 @router.post("/{match_id}/thumbs")
@@ -672,5 +786,45 @@ def get_calibration_metrics(
                 "partial": 0.60,
                 "cutoff": 0.50
             }
+        }
+
+
+@router.get("/suppressed-categories")
+def get_suppressed_categories(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Show which job categories are being suppressed based on the yogi's
+    low ratings. Transparent — the yogi can see why certain jobs are hidden.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        profile = cur.fetchone()
+        if not profile:
+            return {"suppressed": [], "message": "No profile found"}
+
+        # Get suppressed groups with details
+        cur.execute("""
+            SELECT LEFT(p.berufenet_kldb, 4) AS kldb_group,
+                   mode() WITHIN GROUP (ORDER BY p.berufenet_name) AS example_profession,
+                   count(*) AS low_rated_count,
+                   round(avg(m.user_rating), 1) AS avg_rating
+            FROM profile_posting_matches m
+            JOIN postings p ON m.posting_id = p.posting_id
+            WHERE m.profile_id = %s
+              AND m.user_rating IS NOT NULL
+              AND m.user_rating <= 3
+              AND p.berufenet_kldb IS NOT NULL
+              AND length(p.berufenet_kldb) >= 4
+            GROUP BY LEFT(p.berufenet_kldb, 4)
+            HAVING count(*) >= 2
+            ORDER BY count(*) DESC
+        """, (profile['profile_id'],))
+        rows = cur.fetchall()
+
+        return {
+            "suppressed": [dict(r) for r in rows],
+            "message": f"{len(rows)} job categories suppressed based on your ratings"
         }
 

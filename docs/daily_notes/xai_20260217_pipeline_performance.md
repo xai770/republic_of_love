@@ -229,6 +229,98 @@ Added `/posting/{posting_id}` route.
 | `741eb39` | docs: daily notes — pipeline performance session |
 | `e55a015` | fix: 9-item hit list — extracted_summary, config, stale sweep, shellcheck, etc. |
 | `a4eb09e` | fix: talent.yoga full review — account.py rewrite, XSS, 404s, proactive.py |
+| `afcf767` | docs: daily notes update — sections 6-10, commit table, retrospective |
+| `807a12c` | fix: score scale 30→0.30, documents.py cursor leaks, feedback mount comment |
+| `b5a9a4d` | feat: berufenet enrichment — re-classify failures with description/web context |
+
+---
+
+### 11. Desk clearing (`807a12c`)
+
+Three medium-priority items from the talent.yoga review resolved:
+
+- **Score scale**: `dashboard.py` filtered `skill_match_score > 30` on 0-1
+  float values — effectively zero matches ever shown. Changed to `> 0.30`.
+- **Cursor leaks**: `documents.py` had 6 endpoints + 1 helper using bare
+  `cur = conn.cursor()` without cleanup. Wrapped all in `with conn.cursor()`.
+- **Feedback double-mount**: Added clarifying comment in `main.py` explaining
+  the intentional dual mount (`/api/feedback` + `/admin/feedback`).
+
+### 12. Berufenet enrichment — 19K failure analysis + solution (`b5a9a4d`)
+
+Deep SQL analysis of the 19,376 "pending" berufenet cases revealed they're
+all legitimately unclassifiable **by title alone**:
+
+| Status | Count | What happened |
+|--------|-------|---------------|
+| `no_match` | 16,825 | Embedding score < 0.70, never sent to LLM |
+| `llm_uncertain` | 1,385 | LLM couldn't decide |
+| `llm_no` | 1,040 | LLM said NO |
+| `error` | 126 | Processing errors |
+
+**Key insight:** 12,236 scored 0.60–0.69 (close miss). Titles like
+"Mitarbeiter im Handwerk" or "Hilfskraft Lagerlogistik" are too vague for
+embedding, but nearly all (19,374/19,376) have a `job_description` that
+reveals the actual profession.
+
+**Built a 2-stage enrichment pipeline:**
+
+- **Stage A (description):** embed title → top-5 candidates → new LLM prompt
+  with job description excerpt (500 chars) as context → classify
+- **Stage B (web search, optional `--web`):** if Stage A fails, search DDG
+  for `"{title} Beruf Stellenbeschreibung"` → retry LLM with web context
+
+**New code:**
+- `lib/berufenet_matching.py`: `llm_classify_enriched()`, `web_search_job_context()`
+- `actors/postings__berufenet_U.py`: `enrich_batch()`, `--enrich N`, `--web`
+
+**Results (test + first batch):**
+| Batch | Classified | Rejected | Errors | Rate |
+|-------|-----------|----------|--------|------|
+| 20 titles (test) | 20 (100%) | 0 | 0 | 0.2/s |
+| 500 titles (batch) | 462 (92%) | 37 | 1 | 0.2/s |
+
+614 postings reclassified, 46 confidently rejected. Spot-check of
+classifications showed strong accuracy (Sozialpädagoge → Sozialarbeiter,
+Hauswirtschaftliche Mitarbeiterin → Hauswirtschafter/in, etc.).
+
+### 13. Profile / CV / Matching — architecture review + build plan
+
+Reviewed all existing profile infrastructure:
+
+| Layer | Status | Location |
+|-------|--------|----------|
+| CV upload + anonymize | Built | `POST /profiles/me/parse-cv` → `core/cv_anonymizer.py` |
+| Profile CRUD | Built | `api/routers/profiles.py` (590 lines) |
+| Match report (Clara) | Built, 28 matches | `actors/profile_posting_matches__report_C__clara.py` |
+| DB schema | Solid | `profiles` (30 cols), `profile_posting_matches` (25 cols), `profile_work_history` (17 cols) |
+| Match feedback | Schema only | `user_rating`, `user_feedback`, `user_decision` columns exist, no UI or endpoints |
+| Live data | Thin | 5 profiles, 26 work entries, 28 matches |
+
+**Gap analysis:**
+
+1. **CV import last-mile**: `parse-cv` returns anonymized JSON but there's
+   no confirmation step or save-to-profile endpoint. The yogi sees the
+   extracted data but can't approve/edit/store it.
+2. **Match feedback flow**: `profile_posting_matches` has `user_rating`
+   (int), `user_feedback` (text), `user_decision` (text) columns — but no
+   API endpoint to submit ratings, and no UI to display matches with a
+   rating widget.
+3. **Feedback loop**: Ratings don't influence future matching. Three options
+   evaluated:
+   - **A. Negative keyword filter** — suppress berufenet categories from
+     low-rated matches (2h, SQL only)
+   - **B. Embedding drift** — build preference vector from rating history
+     (half day)
+   - **C. LLM preference extraction** — extract rules from feedback text
+     (1 day)
+
+**Build order (implementing now):**
+1. CV import endpoint — write anonymized JSON → profile + work_history
+2. Match rating endpoint — `PUT /matches/{id}/rate`
+3. Match queue view — show next unrated match with Clara's artifacts
+4. Negative filter — low ratings auto-suppress similar categories
+5. Cover letter download
 
 ---
 
@@ -375,19 +467,20 @@ Need integration tests or at least endpoint smoke tests.
 | Total postings | 260,204 |
 | Active postings | 247,735 |
 | Embeddings | 282,328 |
-| Berufenet pending | 19,376 |
+| Berufenet pending | 19,376 → 18,716 (660 resolved via enrichment) |
 | Embedding pending | ~997 |
 | Tests | 404 passing |
-| Commits today | 6 |
+| PG cache hit ratio | 99.99% overall |
+| Commits today | 9 |
 | Issues found (talent.yoga) | 29 |
-| Issues fixed (talent.yoga) | 12 |
+| Issues fixed (talent.yoga) | 15 |
 
 ---
 
 *Next session priorities:*
-1. The user acquisition conversation — how do we get 10 real users?
-2. Systemd services for daemons (agreed action item, still open)
-3. Remaining medium-priority frontend issues (sidebar nav, i18n, score scale)
-4. async/sync mismatch — evaluate psycopg3 async or thread pool wrapper
-5. ROADMAP.md refresh
-6. Mira memory + user behavior intelligence
+1. Profile/CV/matching build (in progress — see section 13)
+2. Run remaining berufenet enrichment batches (~16K titles left)
+3. The user acquisition conversation — how do we get 10 real users?
+4. Systemd services for daemons (agreed action item, still open)
+5. async/sync mismatch — evaluate psycopg3 async or thread pool wrapper
+6. ROADMAP.md refresh

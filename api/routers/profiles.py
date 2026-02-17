@@ -5,8 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
+import json as _json
 import tempfile
 import os
+
+from psycopg2.extras import Json
 
 from api.deps import get_db, require_user
 
@@ -554,6 +557,117 @@ async def parse_cv(
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+# --- CV Import (save anonymized data to profile) ---
+
+class CVWorkEntry(BaseModel):
+    employer_description: str = "a company"
+    role: str = "unknown role"
+    duration_years: Optional[float] = None
+    industry: Optional[str] = None
+    key_responsibilities: List[str] = []
+
+
+class CVEducationEntry(BaseModel):
+    level: str = "unknown"
+    field: Optional[str] = None
+    duration_years: Optional[float] = None
+
+
+class CVImportRequest(BaseModel):
+    """Anonymized CV data from parse-cv, reviewed/edited by the yogi."""
+    current_title: Optional[str] = None
+    career_level: Optional[str] = None
+    years_experience: Optional[int] = None
+    skills: List[str] = []
+    languages: List[str] = []
+    certifications: List[str] = []
+    profile_summary: Optional[str] = None
+    work_history: List[CVWorkEntry] = []
+    education: List[CVEducationEntry] = []
+
+
+@router.post("/me/import-cv")
+def import_cv(
+    data: CVImportRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Save anonymized CV data to profile after yogi review.
+
+    Flow: parse-cv → yogi reviews/edits → import-cv saves to DB.
+    Writes profile fields + work history + skill_keywords in one transaction.
+    Replaces existing work history from previous CV imports (idempotent).
+    """
+    profile_id = _ensure_profile(user, conn)
+
+    with conn.cursor() as cur:
+        # Merge all keyword-type data into skill_keywords
+        all_keywords = list(dict.fromkeys(
+            data.skills + data.languages + data.certifications
+        ))  # dedupe, preserve order
+
+        # Update profile fields
+        cur.execute("""
+            UPDATE profiles SET
+                current_title = COALESCE(%s, current_title),
+                experience_level = COALESCE(%s, experience_level),
+                years_of_experience = COALESCE(%s, years_of_experience),
+                skill_keywords = %s,
+                profile_summary = COALESCE(%s, profile_summary),
+                profile_source = 'cv_import',
+                skills_extraction_status = 'imported',
+                updated_at = NOW()
+            WHERE profile_id = %s
+        """, (
+            data.current_title,
+            data.career_level,
+            data.years_experience,
+            Json(all_keywords),
+            data.profile_summary,
+            profile_id
+        ))
+
+        # Remove previous CV-imported work history (keep manually added ones)
+        cur.execute("""
+            DELETE FROM profile_work_history
+            WHERE profile_id = %s AND extraction_status = 'imported'
+        """, (profile_id,))
+
+        # Insert work history entries
+        imported_count = 0
+        for entry in data.work_history:
+            duration_months = None
+            if entry.duration_years is not None:
+                duration_months = int(entry.duration_years * 12)
+
+            description = '; '.join(entry.key_responsibilities) if entry.key_responsibilities else None
+
+            cur.execute("""
+                INSERT INTO profile_work_history
+                    (profile_id, company_name, job_title, duration_months,
+                     job_description, extraction_status)
+                VALUES (%s, %s, %s, %s, %s, 'imported')
+            """, (
+                profile_id,
+                entry.employer_description,
+                entry.role,
+                duration_months,
+                description
+            ))
+            imported_count += 1
+
+        conn.commit()
+
+    return {
+        "status": "ok",
+        "profile_id": profile_id,
+        "skills_imported": len(all_keywords),
+        "work_entries_imported": imported_count,
+        "message": f"Profile updated: {len(all_keywords)} skills, {imported_count} work entries imported"
+    }
 
 
 # --- Skills Endpoint ---
