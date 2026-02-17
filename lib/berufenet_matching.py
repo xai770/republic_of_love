@@ -318,6 +318,147 @@ def llm_verify_match(job_title: str, berufenet_match: str, model: str = None) ->
         return 'ERROR'
 
 
+# =============================================================================
+# Enriched matching — uses job description / web context for disambiguation
+# =============================================================================
+
+LLM_CLASSIFY_ENRICHED_PROMPT = """You are a German job classification expert.
+A job posting's title alone was too vague for automatic classification.
+You now have additional context. Classify it into the BEST Berufenet profession.
+
+CANDIDATES (sorted by embedding similarity to the title):
+{candidates_text}
+
+JOB TITLE: "{job_title}"
+
+ADDITIONAL CONTEXT:
+{context}
+
+RULES:
+- Pick the single best candidate number, or NONE if none fit
+- Qualification level matters: Helfer (1) ≠ Fachkraft (2) ≠ Spezialist (3) ≠ Experte (4)
+- Use the context to understand which profession this actually is
+- If the job is genuinely multi-disciplinary with no clear primary, say NONE
+- Answer format: just the number (e.g. "2") or "NONE"
+
+Answer:"""
+
+
+def llm_classify_enriched(
+    job_title: str,
+    candidates: list[dict],
+    job_description: str = None,
+    web_context: str = None,
+    model: str = None,
+) -> Optional[int]:
+    """
+    Ask LLM to classify a job using enriched context (description and/or web results).
+
+    Returns 0-based index of the best candidate, or None if NONE/error.
+    """
+    model = model or BERUFENET_MODEL
+
+    cands_text = "\n".join(
+        f"  {i+1}. {c.get('berufenet_name', c.get('name', '?'))} "
+        f"(KLDB: {c.get('berufenet_kldb', c.get('kldb', '?'))}, "
+        f"score: {c.get('score', 0):.3f})"
+        for i, c in enumerate(candidates[:5])
+    )
+
+    # Build context block
+    context_parts = []
+    if job_description:
+        # Truncate to ~500 chars — enough to understand the role, not so much it drowns the prompt
+        desc_excerpt = job_description[:500].strip()
+        if len(job_description) > 500:
+            desc_excerpt += "..."
+        context_parts.append(f"Job description excerpt:\n{desc_excerpt}")
+    if web_context:
+        context_parts.append(f"Web search results:\n{web_context[:400]}")
+
+    context = "\n\n".join(context_parts) if context_parts else "No additional context available."
+
+    prompt = LLM_CLASSIFY_ENRICHED_PROMPT.format(
+        job_title=job_title,
+        candidates_text=cands_text,
+        context=context,
+    )
+
+    try:
+        resp = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={'model': model, 'prompt': prompt, 'stream': False,
+                  'options': {'temperature': 0.1}},
+            timeout=60,
+        )
+        answer = resp.json().get('response', '').strip().upper()
+
+        # Strip thinking tags
+        import re as _re
+        answer = _re.sub(r'<THINK>.*?</THINK>', '', answer, flags=_re.DOTALL).strip()
+
+        if 'NONE' in answer:
+            return None
+
+        # Extract first number
+        for token in answer.replace(',', ' ').split():
+            token = token.strip('.')
+            if token.isdigit():
+                idx = int(token) - 1  # 1-based → 0-based
+                if 0 <= idx < len(candidates):
+                    return idx
+        return None
+    except Exception:
+        return None
+
+
+def web_search_job_context(job_title: str, timeout: int = 12) -> Optional[str]:
+    """
+    Search DuckDuckGo for a job title to get profession context.
+    Returns a short text summary of search results, or None.
+
+    Uses ddgr CLI (installed) with JSON output.
+    Falls back to DuckDuckGo Lite via requests if ddgr fails.
+    """
+    import subprocess
+    import json as _json
+
+    query = f"{job_title} Beruf Stellenbeschreibung"
+    try:
+        result = subprocess.run(
+            ['ddgr', '--json', '--num', '3', query],
+            capture_output=True, text=True, timeout=timeout
+        )
+        if result.returncode == 0 and result.stdout:
+            hits = _json.loads(result.stdout)
+            parts = []
+            for h in hits[:3]:
+                title = h.get('title', '')
+                abstract = h.get('abstract', '')
+                if abstract:
+                    parts.append(f"{title}: {abstract}")
+            if parts:
+                return "\n".join(parts)
+    except Exception:
+        pass
+
+    # Fallback: DuckDuckGo Lite via requests
+    try:
+        url = f"https://lite.duckduckgo.com/lite/?q={query.replace(' ', '+')}"
+        resp = requests.get(url, timeout=timeout, headers={
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) Gecko/20100101 Firefox/120.0'
+        })
+        if resp.status_code == 200:
+            snippets = re.findall(r'<td[^>]*class="result-snippet"[^>]*>(.*?)</td>', resp.text, re.DOTALL)
+            if snippets:
+                clean = [re.sub(r'<[^>]+>', '', s).strip() for s in snippets[:3]]
+                return "\n".join(s for s in clean if s)
+    except Exception:
+        pass
+
+    return None
+
+
 if __name__ == "__main__":
     # Test cleaning
     test_cases = [

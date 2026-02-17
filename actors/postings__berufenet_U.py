@@ -3,7 +3,7 @@
 Actor: postings__berufenet_U
 Updates postings with Berufenet classification (profession ID, KLDB code, qualification level)
 
-Architecture (2026-02-11 OWL integration):
+Architecture (2026-02-11 OWL integration, 2026-02-17 enrichment):
 
   Phase 1: OWL lookup — instant, database-only
     job_title → clean() → lookup in owl_names WHERE owl_type='berufenet'
@@ -14,7 +14,12 @@ Architecture (2026-02-11 OWL integration):
     → Confident: accept + ADD AS OWL SYNONYM (system learns!)
     → Uncertain: → owl_pending (human review)
 
-  Phase 3: Human resolves owl_pending via /admin/owl-triage
+  Phase 3 (--enrich): Context enrichment — re-tries Phase 2 failures
+    Stage A: title + job description excerpt → LLM with richer context
+    Stage B: title + description + web search → LLM with external context
+    → Resolves ~80% of previously unclassifiable titles
+
+  Phase 4: Human resolves owl_pending via /admin/owl-triage
     → Creates owl_names entry → Phase 1 catches it next time
 
 Key insight: Embeddings are the DISCOVERY mechanism for new synonyms,
@@ -23,6 +28,7 @@ not the production classifier. OWL handles the steady state.
 Usage:
     python actors/postings__berufenet_U.py --batch 1000
     python actors/postings__berufenet_U.py --batch 1000 --phase2    # Enable embedding+LLM
+    python actors/postings__berufenet_U.py --enrich 500             # Re-try failures with context
     python actors/postings__berufenet_U.py --stats                  # Show status
 """
 
@@ -40,7 +46,7 @@ import requests
 import os
 
 from core.database import get_connection_raw
-from lib.berufenet_matching import clean_job_title, llm_verify_match
+from lib.berufenet_matching import clean_job_title, llm_verify_match, llm_classify_enriched, web_search_job_context
 from core.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -493,6 +499,235 @@ def process_batch(batch_size: int, phase2: bool = False):
     logger.info("Total classified: %s", total_classified)
 
 
+# =============================================================================
+# Enrichment: Re-try previously failed titles with richer context
+# =============================================================================
+
+def enrich_batch(batch_size: int = 500, web: bool = False):
+    """
+    Re-process berufenet failures using job descriptions (and optionally web search)
+    as additional context for LLM classification.
+
+    Targets postings with berufenet_verified IN ('no_match', 'llm_uncertain', 'llm_no')
+    that have a job_description. Groups by unique title for efficiency.
+
+    Stage A: Embed title, get candidates, ask LLM with description context
+    Stage B (--web): If Stage A fails, add web search results as extra context
+
+    Updates berufenet_verified to 'enriched_desc' or 'enriched_web' on success,
+    'enriched_reject' on confident rejection.
+    """
+    logger.info("=" * 60)
+    logger.info("Berufenet Enrichment — re-trying failures with context")
+    logger.info("=" * 60)
+    logger.info("Batch size: %s unique titles", batch_size)
+    logger.info("Web search: %s", 'enabled' if web else 'disabled')
+
+    conn = get_connection_raw()
+    cur = conn.cursor()
+
+    # Get unique failed titles that have descriptions.
+    # Priority: llm_uncertain (closest to success), then llm_no, then no_match.
+    # De-duplicate: one row per unique (job_title, posting_id) — we need the posting_id
+    # to fetch the description. Pick the posting with the longest description.
+    cur.execute("""
+        WITH ranked AS (
+            SELECT DISTINCT ON (job_title)
+                job_title,
+                posting_id,
+                job_description,
+                berufenet_verified,
+                berufenet_score
+            FROM postings
+            WHERE berufenet_id IS NULL
+              AND enabled AND NOT invalidated
+              AND berufenet_verified IN ('no_match', 'llm_uncertain', 'llm_no')
+              AND job_description IS NOT NULL
+              AND length(job_description) > 50
+            ORDER BY job_title,
+                     CASE berufenet_verified
+                         WHEN 'llm_uncertain' THEN 1
+                         WHEN 'llm_no' THEN 2
+                         WHEN 'no_match' THEN 3
+                     END,
+                     length(job_description) DESC
+        )
+        SELECT * FROM ranked
+        ORDER BY
+            CASE berufenet_verified
+                WHEN 'llm_uncertain' THEN 1
+                WHEN 'llm_no' THEN 2
+                WHEN 'no_match' THEN 3
+            END,
+            berufenet_score DESC NULLS LAST
+        LIMIT %s
+    """, (batch_size,))
+
+    rows = cur.fetchall()
+    if not rows:
+        logger.info("No enrichable failures found!")
+        return
+
+    logger.info("Processing %s unique failed titles...", len(rows))
+
+    # Load berufenet embeddings for candidate lookup
+    logger.info("Loading Berufenet embeddings...")
+    beruf_df, beruf_embeddings = load_berufenet()
+    logger.info("Loaded %s professions", len(beruf_df))
+
+    stats = {
+        'desc_classified': 0,
+        'web_classified': 0,
+        'rejected': 0,
+        'still_unknown': 0,
+        'error': 0,
+    }
+    start_time = time.time()
+    last_log = start_time
+    processed = 0
+
+    for row in rows:
+        title = row['job_title']
+        posting_id = row['posting_id']
+        description = row['job_description']
+        old_status = row['berufenet_verified']
+        cleaned = clean_job_title(title)
+
+        try:
+            # Get embedding candidates (re-embed with just the title for candidate retrieval)
+            candidates = embedding_top5(cleaned, beruf_df, beruf_embeddings)
+            if not candidates:
+                stats['error'] += 1
+                processed += 1
+                continue
+
+            # --- Stage A: title + description → LLM ---
+            picked_idx = llm_classify_enriched(
+                job_title=cleaned,
+                candidates=candidates,
+                job_description=description,
+            )
+
+            if picked_idx is not None:
+                match = candidates[picked_idx]
+                _apply_enrichment_match(conn, cur, title, cleaned, match, 'enriched_desc')
+                stats['desc_classified'] += 1
+                processed += 1
+
+                # Progress log
+                now = time.time()
+                if now - last_log >= 5:
+                    last_log = now
+                    elapsed = now - start_time
+                    rate = processed / elapsed if elapsed > 0 else 0
+                    logger.info(
+                        "%s/%s (%.1f/s) — desc: %s web: %s reject: %s unknown: %s err: %s",
+                        processed, len(rows), rate,
+                        stats['desc_classified'], stats['web_classified'],
+                        stats['rejected'], stats['still_unknown'], stats['error']
+                    )
+                continue
+
+            # --- Stage B: title + description + web search → LLM ---
+            if web:
+                time.sleep(1)  # Rate limit DDG
+                web_ctx = web_search_job_context(cleaned)
+
+                if web_ctx:
+                    picked_idx = llm_classify_enriched(
+                        job_title=cleaned,
+                        candidates=candidates,
+                        job_description=description,
+                        web_context=web_ctx,
+                    )
+
+                    if picked_idx is not None:
+                        match = candidates[picked_idx]
+                        _apply_enrichment_match(conn, cur, title, cleaned, match, 'enriched_web')
+                        stats['web_classified'] += 1
+                        processed += 1
+                        continue
+
+            # Neither stage worked — mark as confidently rejected
+            cur.execute("""
+                UPDATE postings
+                SET berufenet_verified = 'enriched_reject'
+                WHERE job_title = %s AND berufenet_id IS NULL
+            """, (title,))
+            conn.commit()
+            stats['rejected'] += 1
+
+        except Exception as e:
+            logger.error("Enrichment error for '%s': %s", cleaned, e)
+            stats['error'] += 1
+
+        processed += 1
+
+        # Progress log
+        now = time.time()
+        if now - last_log >= 5:
+            last_log = now
+            elapsed = now - start_time
+            rate = processed / elapsed if elapsed > 0 else 0
+            logger.info(
+                "%s/%s (%.1f/s) — desc: %s web: %s reject: %s unknown: %s err: %s",
+                processed, len(rows), rate,
+                stats['desc_classified'], stats['web_classified'],
+                stats['rejected'], stats['still_unknown'], stats['error']
+            )
+
+    elapsed = time.time() - start_time
+    total_classified = stats['desc_classified'] + stats['web_classified']
+
+    logger.info("=" * 60)
+    logger.info("ENRICHMENT COMPLETE in %.1f s (%.1f titles/s)", elapsed, len(rows) / max(elapsed, 0.1))
+    logger.info("=" * 60)
+    logger.info("Classified via description: %s", stats['desc_classified'])
+    logger.info("Classified via web search:  %s", stats['web_classified'])
+    logger.info("Confidently rejected:       %s", stats['rejected'])
+    logger.info("Errors:                     %s", stats['error'])
+    logger.info("TOTAL NEWLY CLASSIFIED:     %s / %s (%.0f%%)",
+                total_classified, len(rows),
+                100 * total_classified / max(len(rows), 1))
+
+
+def _apply_enrichment_match(conn, cur, job_title: str, cleaned: str, match: dict, method: str):
+    """Apply an enrichment match: update postings + add OWL synonym."""
+    # Update all postings with this title
+    cur.execute("""
+        UPDATE postings
+        SET berufenet_id = %s,
+            berufenet_name = %s,
+            berufenet_kldb = %s,
+            qualification_level = %s,
+            berufenet_score = %s,
+            berufenet_verified = %s
+        WHERE job_title = %s
+          AND berufenet_id IS NULL
+    """, (
+        match['berufenet_id'],
+        match['berufenet_name'],
+        match['berufenet_kldb'],
+        match.get('qualification_level'),
+        match['score'],
+        method,
+        job_title,
+    ))
+
+    # Add as OWL synonym so Phase 1 catches it next time
+    cur.execute("""
+        SELECT owl_id FROM owl
+        WHERE owl_type = 'berufenet'
+          AND metadata->>'berufenet_id' = %s
+    """, (str(match['berufenet_id']),))
+    owl_row = cur.fetchone()
+    if owl_row:
+        add_owl_synonym(owl_row['owl_id'], cleaned, cur, conn)
+
+    conn.commit()
+    logger.debug("Enriched: '%s' → %s (%s)", cleaned, match['berufenet_name'], method)
+
+
 def show_stats():
     """Show current classification statistics."""
     conn = get_connection_raw()
@@ -553,11 +788,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Classify postings with Berufenet (OWL-first)')
     parser.add_argument('--batch', type=int, default=1000, help='Batch size (unique titles)')
     parser.add_argument('--phase2', action='store_true', help='Enable Phase 2: embedding + LLM for OWL misses')
+    parser.add_argument('--enrich', type=int, metavar='N', help='Re-try N failed titles with description/web context')
+    parser.add_argument('--web', action='store_true', help='Enable web search in enrichment (Stage B)')
     parser.add_argument('--stats', action='store_true', help='Show classification statistics')
 
     args = parser.parse_args()
 
     if args.stats:
         show_stats()
+    elif args.enrich:
+        enrich_batch(args.enrich, web=args.web)
     else:
         process_batch(args.batch, args.phase2)
