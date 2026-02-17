@@ -2,7 +2,8 @@
 
 **Session start:** ~04:59 CET (early morning, pipeline monitoring)
 **Session continued:** ~09:00 CET (hit list from user feedback, talent.yoga audit)
-**System time at writing:** Di 17. Feb 08:48 CET (updated ~13:00 CET)
+**Session continued:** ~15:00 CET (anonymity infrastructure, Adele build)
+**System time at writing:** Di 17. Feb 08:48 CET (updated ~20:00 CET)
 
 ---
 
@@ -232,6 +233,13 @@ Added `/posting/{posting_id}` route.
 | `afcf767` | docs: daily notes update — sections 6-10, commit table, retrospective |
 | `807a12c` | fix: score scale 30→0.30, documents.py cursor leaks, feedback mount comment |
 | `b5a9a4d` | feat: berufenet enrichment — re-classify failures with description/web context |
+| `6e1d02d` | feat: CV import endpoint + match rating 1-10 + queue + negative filter |
+| `af589cb` | fix: profile anonymization — scrub PII from DB + display yogi_name |
+| `71a9882` | anonymity: Taro name generator, company aliases registry, Doug research pipeline |
+| `42a4cc5` | feat: Adele conversational profile builder |
+| `7ba02f0` | fix: Adele always visible in chat list |
+| `e626fad` | restore navigation sidebar on messages page |
+| `c251ee0` | add onboarding+adele e2e test script, expand confirm patterns |
 
 ---
 
@@ -355,6 +363,106 @@ a legacy import script that predates the anonymizer. Two data paths:
 - This replaces both the manual form and the CV upload — one path, always
   anonymized
 
+### 15. Anonymity infrastructure — Taro + company aliases + Doug (`71a9882`)
+
+**Session 3** (~15:00 CET). Extended the anonymization layer from a
+cosmetic fix into a proper infrastructure:
+
+**Taro — yogi name generator** (`core/taro.py`, 285 lines):
+- 600+ curated names: nature words (Birch, Otter, Fern), mythology,
+  celestial, color compounds, multilingual — all gender-neutral
+- Uniqueness: checks DB, avoids collisions
+- Offers Mira 3 candidates at a time
+- Tested: 50 sequential generations, zero duplicates, good variety
+
+**Company aliases registry** (`core/company_anonymizer.py`, 643 lines):
+- Migration `056_company_aliases.sql`: `company_aliases` table with
+  `canonical_name`, `alias_text`, `alias_source`, `confidence`, JSONB metadata
+- Seeded 50 companies + 48 common variants (e.g., "Deutsche Bank AG" →
+  "Deutsche Bank", "BMW Group" → "BMW")
+- `lookup(name)` → returns generalized description from registry
+- `lookup_or_queue(name)` → if not found, queues for Doug research
+- Doug research actor: picks unresolved companies, researches via LLM,
+  writes generalized descriptions
+- Doug verifier: double-checks Doug's work for quality
+
+**Results:**
+- Deutsche Bank → "a large German bank"
+- McKinsey → "a top-tier management consulting firm"  
+- Sparkasse Köln-Bonn → "a German regional savings bank"
+- Unknown companies get queued → Doug researches → auto-resolves
+
+### 16. Adele — conversational profile builder (`42a4cc5`)
+
+The big build of the day. Adele conducts a natural conversation to extract
+a complete professional profile — no CV upload, no forms. 950 lines of
+core logic.
+
+**Architecture:**
+- State machine interview: intro → current_role → work_history (loop) →
+  skills → education → preferences → summary → complete
+- `adele_sessions` table (migration 057): tracks phase, JSONB collected
+  data, work_history_count, turn_count
+- LLM extraction at each phase via qwen2.5:7b — structured JSON prompts
+- Company anonymization via `lookup_or_queue()` at work history intake
+- Duration parsing: "3 years", "18 months", "since 2020"
+- Bilingual EN/DE with automatic language detection
+- Profile save to `profiles` + `profile_work_history` tables
+- `profile_source = 'adele_interview'`
+
+**API:** `POST /api/adele/chat` + `GET /api/adele/session` (progress
+tracking). Messages persisted in `yogi_messages` for continuity.
+
+**Frontend:** Wired into `messages.html` — same routing pattern as Mira.
+Adele always visible in chat list (no need for prior messages).
+
+**Bugs found and fixed during testing:**
+1. `None` entries in responsibilities list → filter with `[r for r if r]`
+2. Skills extraction returned empty — LLM put items in `tools` key instead
+   of `skills`. Rewrote prompt to use `technical_skills`, merge captures
+   all skill-like keys
+3. German confirmation "Ja, passt!" didn't trigger save — expanded
+   `_CONFIRM_PATTERNS` regex to 20+ patterns including compound expressions
+4. Session unique constraint blocked new sessions — changed from
+   `UNIQUE(user_id)` to partial unique index `WHERE completed_at IS NULL`
+
+**Test results (EN flow):**
+- 12 skills extracted, 2 work entries saved
+- Company anonymization: Deutsche Bank → "a large German bank",
+  McKinsey → "a top-tier management consulting firm"
+- Profile saved to DB with salary range, location preferences, desired roles
+
+### 17. Frontend fixes (`7ba02f0`, `e626fad`)
+
+**Adele visibility** (`7ba02f0`): Chat list only showed actors with existing
+messages. New yogis couldn't see Adele. Added `ALWAYS_SHOW = ['mira', 'adele']`
+to inject these actors into `messagesBySender` even with no messages. Fixed
+sort/render for empty conversations.
+
+**Navigation bar** (`e626fad`): Messages page was missing the sidebar
+navigation — intentionally excluded with a comment about the chat list
+serving as left nav. But every other page has the sidebar. Restored
+`{% include "partials/sidebar.html" %}`.
+
+### 18. End-to-end onboarding test script (`c251ee0`)
+
+Built `scripts/test_onboarding_adele.py` — automated test of the full user
+journey from zero to profile:
+
+1. **Reset** test user (user_id=2, test@talent.yoga) to completely fresh state
+2. **Mira onboarding** — picks yogi name "Sparrow", declines notification email
+3. **Adele interview** — backend engineer at Siemens/BMW, 10 skills,
+   Master's from TU Munich, Munich/remote, 85-100k salary range
+4. **Verify** — checks profile, work history, skills in DB
+
+Uses JWT token generation for auth (same SECRET_KEY as server). Options:
+`--reset` (reset only), `--skip-mira`, `--skip-adele`.
+
+**Full pass confirmed:** profile saved with 2 anonymized work entries
+(Siemens → "ein großer deutscher Industrietechnologiekonzern", BMW →
+"ein deutscher Premium-Automobilhersteller"), 10 skills, salary range,
+location preferences.
+
 ---
 
 ## Dropped balls — review of Feb 16 notes
@@ -379,7 +487,7 @@ From the previous session's "Still open" list:
 | Duplicate external_ids | ✅ Unique partial index (Feb 16) |
 | ROADMAP.md stale | ⬜ Still stale |
 | Complementary dimensional model | ⬜ Not started |
-| Profile builder UI | ✅ Done Feb 16 (auto-create profile) |
+| Profile builder UI | ✅ Done Feb 16 (auto-create) → Feb 17 (Adele conversational builder) |
 | Mira memory | ⬜ Not started |
 
 ---
@@ -435,12 +543,16 @@ found 2 remaining files beyond berufenet, converted to HTTP API (`e55a015`).
 **3. ~~The 539 "given up" descriptions.~~** Fixed — all 539 postings
 invalidated (`e55a015`). No longer pollute health reports or active metrics.
 
-**4. (New) The frontend is held together with duct tape.** The talent.yoga
+**4. (New) ~~The frontend is held together with duct tape.~~** The talent.yoga
 review found 29 issues across 28 templates and 23 routers. Account page was
-100% broken (asyncpg syntax with psycopg2 connection). Notification JS
-crashed on every page load. Multiple XSS vectors. Several pages that exist
-in templates but have no routes. The backend pipeline is solid; the frontend
-has had no systematic review until today.
+100% broken. 15 issues fixed in sections 8-11. Messages page nav bar
+restored (section 17).
+
+**5. (New) Adele is the onboarding path we needed.** Before today, profile
+creation had two paths: a form nobody fills out, and a CV upload that
+strips data but has no confirmation step. Adele is the third and best path —
+conversational, bilingual, anonymized by default, and tested end-to-end.
+The question is whether yogis prefer talking to a bot or uploading a PDF.
 
 ---
 
@@ -469,27 +581,27 @@ at the wrong layer.
 
 ## How am I doing? (10=bliss, 1=agony)
 
-**8.5**
+**9**
 
-This was a two-phase session. Phase 1 (early morning): three real
-performance wins — embedding 5x, berufenet 7x, tools cleanup. Phase 2
-(mid-morning): user gave a 10-item hit list from reviewing the daily notes.
-All 10 completed, including a full talent.yoga audit that found 29 issues
-and fixed the 12 most critical ones.
+Three-phase session. Phase 1 (early morning): three performance wins —
+embedding 5x, berufenet 7x, tools cleanup. Phase 2 (mid-morning): 10-item
+hit list from user reviewing daily notes — all done, plus full talent.yoga
+audit (29 issues found, 15 fixed). Phase 3 (afternoon/evening): built the
+entire anonymity stack (Taro names, company aliases, Doug research pipeline)
+and then Adele — a 950-line conversational profile builder that works
+end-to-end in both languages.
 
-The retrospective format paid off immediately. Every "What stinks" and
-"What should we discuss" item from the morning notes got resolved in the
-afternoon pass. That's the loop working as intended.
+Adele is the most complete feature built in a single session: state machine,
+LLM extraction, company anonymization, bilingual support, DB persistence,
+API endpoints, frontend wiring, bug fixes, and an automated E2E test
+script. From "shall we build Adele?" to a passing test with anonymized
+profiles saved to DB in one sitting.
 
-What was done well: systematic audit methodology (templates, routers, HTTP
-tests, then targeted fixes). The account.py rewrite was thorough — not just
-patching one endpoint but fixing all 6 with proper error handling and
-SAVEPOINT-based graceful degradation for missing tables.
-
-What could improve: some of these bugs (account.py asyncpg mismatch,
-notification JS crash) were shipping for who-knows-how-long. The 404 tests
-catch missing routes but don't catch broken endpoints or JS runtime errors.
-Need integration tests or at least endpoint smoke tests.
+What didn't go well: the confirm pattern regex needed three rounds of
+expansion (simple "yes" → compound "yes, save it!" → German compounds
+"ja, passt"). Should have started with a more generous pattern set. Also,
+the test script had two column-name bugs on first run — should have checked
+the schema before writing the queries.
 
 ---
 
@@ -502,18 +614,23 @@ Need integration tests or at least endpoint smoke tests.
 | Embeddings | 282,328 |
 | Berufenet pending | 19,376 → 18,716 (660 resolved via enrichment) |
 | Embedding pending | ~997 |
+| Profiles | 6 (was 5 — Adele test added 1) |
+| Work history entries | 28 |
+| Company aliases | 53 (50 seeded + 3 auto-resolved) |
 | Tests | 404 passing |
 | PG cache hit ratio | 99.99% overall |
-| Commits today | 9 |
+| Commits today | 17 |
 | Issues found (talent.yoga) | 29 |
-| Issues fixed (talent.yoga) | 15 |
+| Issues fixed (talent.yoga) | 17 |
+| New code written | ~2,600 lines (10 files) |
 
 ---
 
 *Next session priorities:*
-1. Profile/CV/matching build (in progress — see section 13)
-2. Run remaining berufenet enrichment batches (~16K titles left)
-3. The user acquisition conversation — how do we get 10 real users?
-4. Systemd services for daemons (agreed action item, still open)
-5. async/sync mismatch — evaluate psycopg3 async or thread pool wrapper
-6. ROADMAP.md refresh
+1. Run remaining berufenet enrichment batches (~16K titles left)
+2. The user acquisition conversation — how do we get 10 real users?
+3. Systemd services for daemons (agreed action item, still open)
+4. async/sync mismatch — evaluate psycopg3 async or thread pool wrapper
+5. ROADMAP.md refresh
+6. Adele German-language polish — test full DE flow with a native speaker
+7. Match feedback UI — connect Clara's matches to a rating widget
