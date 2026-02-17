@@ -31,6 +31,7 @@ import hashlib
 import time
 import argparse
 from typing import Optional, List, Dict, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 import psycopg2.extras
@@ -51,6 +52,7 @@ logger = get_logger(__name__)
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/embeddings'
 MODEL = "bge-m3:567m"
 BATCH_SIZE = 100  # Commit every N embeddings
+EMBED_WORKERS = int(os.getenv('EMBED_WORKERS', '8'))  # Parallel Ollama requests (GPU saturates at ~8)
 
 
 def compute_text_hash(text: str) -> str:
@@ -108,7 +110,7 @@ def get_postings_needing_embeddings(conn, limit: int) -> List[Dict[str, Any]]:
 
 
 def process_batch(limit: int = 1000):
-    """Process a batch of postings that need embeddings."""
+    """Process a batch of postings that need embeddings (parallel)."""
     conn = get_connection_raw()
     
     try:
@@ -118,41 +120,51 @@ def process_batch(limit: int = 1000):
             logger.info("No postings need embeddings")
             return
         
-        logger.info("Found %s postings needing embeddings", len(postings))
+        # Filter out texts too short
+        work = [(p['posting_id'], p['match_text']) for p in postings
+                if p['match_text'] and len(p['match_text']) >= 50]
+        
+        if not work:
+            logger.info("No postings with sufficient text")
+            return
+        
+        logger.info("Found %s postings needing embeddings (%s workers)", len(work), EMBED_WORKERS)
         
         start_time = time.time()
         success = 0
         failed = 0
         
-        for i, p in enumerate(postings):
-            posting_id = p['posting_id']
-            text = p['match_text']
-            
-            # Skip if text too short
-            if not text or len(text) < 50:
-                continue
-            
+        # Compute embeddings in parallel (GPU saturates at ~8 workers)
+        def embed_one(item):
+            posting_id, text = item
             embedding = get_embedding(text)
+            return posting_id, text, embedding
+        
+        with ThreadPoolExecutor(max_workers=EMBED_WORKERS) as pool:
+            futures = {pool.submit(embed_one, item): item for item in work}
             
-            if embedding:
-                save_embedding(conn, text, embedding, MODEL)
-                success += 1
+            for fut in as_completed(futures):
+                posting_id, text, embedding = fut.result()
                 
-                # Commit in batches
-                if success % BATCH_SIZE == 0:
-                    conn.commit()
-                    elapsed = time.time() - start_time
-                    rate = success / elapsed
-                    logger.info("%s/%s saved (%.1f/sec)", success, len(postings), rate)
-            else:
-                failed += 1
+                if embedding:
+                    save_embedding(conn, text, embedding, MODEL)
+                    success += 1
+                    
+                    # Commit in batches
+                    if success % BATCH_SIZE == 0:
+                        conn.commit()
+                        elapsed = time.time() - start_time
+                        rate = success / elapsed
+                        logger.info("%s/%s saved (%.1f/sec)", success, len(work), rate)
+                else:
+                    failed += 1
         
         # Final commit
         conn.commit()
         
         elapsed = time.time() - start_time
         rate = success / elapsed if elapsed > 0 else 0
-        logger.info("Done: %s embeddings in%.1fs (%.1f/sec)", success, elapsed, rate)
+        logger.info("Done: %s embeddings in %.1fs (%.1f/sec)", success, elapsed, rate)
         if failed:
             logger.warning("%s failed", failed)
             

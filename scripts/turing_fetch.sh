@@ -54,7 +54,11 @@ export PYTHONUNBUFFERED=1
 # LOGGING - Always append to logs/nightly_fetch.log
 # ============================================================================
 LOGFILE="logs/turing_fetch.log"
-exec > >(tee -a "$LOGFILE") 2>&1
+# Only tee to logfile if stdout is a terminal (interactive run).
+# When launched with >> logfile 2>&1 (cron/background), tee would double-write.
+if [ -t 1 ]; then
+    exec > >(tee -a "$LOGFILE") 2>&1
+fi
 
 # Timestamp helper
 ts() { echo "[$(date '+%Y-%m-%d %H:%M:%S')]" "$@"; }
@@ -530,9 +534,9 @@ with get_connection() as conn:
 
 # ── Market Intelligence: Demand Snapshot ──────────────────────
 ts "Computing demand snapshot..."
-python3 scripts/compute_demand_snapshot.py 2>&1 | ts_prefix
+python3 scripts/compute_demand_snapshot.py 2>&1
 ts "Computing profession similarity..."
-python3 scripts/compute_profession_similarity.py 2>&1 | ts_prefix
+python3 scripts/compute_profession_similarity.py 2>&1
 
 # Send success notification
 notify "Pipeline OK" "$(date '+%H:%M') — Pipeline complete. Check logs for stats." "low" "white_check_mark"

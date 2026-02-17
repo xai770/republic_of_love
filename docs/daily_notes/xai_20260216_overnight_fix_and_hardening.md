@@ -492,3 +492,72 @@ features, and search page polish.**
   weapon power-ups, combo system, 80s neon visuals, leaderboard
 
 **Tests:** 404 passing, 41 deselected. All green.
+
+---
+
+## Sandy's Review
+
+*Feb 16, 2026*
+
+I've been away four days. I told you to put the keyboard in Mysti's hands before building more features.
+
+You did both.
+
+### The Screenshot
+
+That search page. I need to say this clearly: **that is a real product.**
+
+212,235 Stellen gefunden. 89,748 neu diese Woche. Domain bars on the left, heatmap on a real map with German labels in the center, qualification distribution and 30-day sparkline on the right. Bundesländer ranked. Berufe ranked. Posting tiles below with qualification badges.
+
+That's not a prototype. That's not a demo. That's a labour market intelligence platform.
+
+### What Actually Happened (Feb 12–16)
+
+| Day | Theme | Commits |
+|-----|-------|---------|
+| Feb 15 (morning) | Codebase quality | 12 commits — BaseActor, batch upserts, pipeline reliability |
+| Feb 15 (afternoon) | User feedback | 12 commits — 8 feedback items resolved (#5–#15) |
+| Feb 16 (overnight) | Infrastructure | 19 commits — cursor fix, lazy verification, tests, Signal alerts |
+| Feb 16 (evening) | Search polish | 8 commits — sparkline, map tiles, markers, German labels |
+
+That's **51 commits in two days.** 404 tests passing.
+
+### The Three Things That Matter Most
+
+**1. You're eating your own cooking.** The feedback widget → DB → fix → resolve cycle is real. Feedback #5 through #100. Filed from the live site, fixed in the same session, committed. That's not QA theatre — that's a live feedback loop.
+
+**2. BaseActor.** 600 lines that eliminate entire categories of bugs: connection lifecycle, signal handlers, transaction discipline, progress logging. The `idle_in_transaction_session_timeout = 5min` at the database level is the kind of fix that prevents 3am pages. One actor refactored as proof (431 → 310 lines). The rest follow naturally.
+
+**3. Lazy posting verification.** Google-style: check on demand when results are shown, not in bulk overnight. Max 5 per search, 0.3s rate limit, background thread. And the discovery that search was showing invalidated postings *with no filter at all* — that's the kind of bug you only find when you take testing seriously.
+
+### The Arcade Game
+
+You built Space Invaders. With bosses, weapon power-ups, an 80s neon overhaul, and a leaderboard. Because Mysti said frustrated job seekers need to blow something up.
+
+I'm not going to pretend this is a business priority. But I will say: a product that has a personality is a product people remember. And 👾 Frustrationsabbau in the sidebar makes me smile.
+
+### The Numbers
+
+| Metric | Feb 12 | Feb 16 | Δ |
+|--------|--------|--------|---|
+| Postings | 205,054 | 242,444 | +37K |
+| Embeddings | 124,929 | 268,232 | +143K |
+| Berufenet coverage | 81% | 91% | +10% |
+| Tests | 304 | 404 | +100 |
+| Feedback resolved | 0 | ~25 | from zero |
+
+### My One Concern (Same as Last Time)
+
+The surface area is enormous now. Search page with cross-filters, map, heatmap, sparkline, intelligence panel. Arcade game with bosses and leaderboard. Onboarding with name validation and CV anonymizer. Lazy verification. Signal alerts. Profile builder. Journey tracker.
+
+You have 6 users and 404 tests. The tests help. The feedback loop helps more. But I'll keep saying it: **Mysti's hands on the keyboard is the test that matters.**
+
+Everything I see says you're getting close to that. The journey tracker (#10), the greeting suppression (#8), the "don't push onboarding when user has a profile" fix (#15) — those are all responses to what a real person experienced. That's the right direction.
+
+Keep going. But keep testing.
+
+---
+
+*— Sandy*
+
+*P.S. 89,748 neu diese Woche. The German labour market doesn't sleep, and neither does this pipeline.*
