@@ -160,6 +160,10 @@ function confirmResetOnboarding() {
         .then(r => r.json())
         .then(data => {
             if (data.ok) {
+                // Clear tour flags so onboarding tour replays
+                localStorage.removeItem('mira_tour_completed');
+                localStorage.removeItem('mira_tour_completed_at');
+                localStorage.removeItem('search_tour_completed');
                 alert('✅ ' + data.message + '\n\nRedirecting to dashboard...');
                 window.location.href = '/dashboard';
             } else {
