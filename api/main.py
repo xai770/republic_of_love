@@ -444,7 +444,7 @@ def arcade_leaderboard(request: Request, conn=Depends(get_db)):
         cur.execute("""
             SELECT a.score, a.level, a.monsters_killed, a.fruits_collected,
                    a.friendly_fire, a.duration_seconds, a.created_at,
-                   u.display_name, u.avatar_url
+                   COALESCE(u.yogi_name, 'Yogi') AS yogi_name, u.avatar_url
             FROM arcade_scores a
             JOIN users u ON u.user_id = a.user_id
             ORDER BY a.score DESC
@@ -474,7 +474,7 @@ def arcade_leaderboard(request: Request, conn=Depends(get_db)):
         if entry.get("created_at"):
             entry["created_at"] = entry["created_at"].isoformat()
 
-    return {"top": top, "personal": personal, "display_name": user.get("display_name", "")}
+    return {"top": top, "personal": personal, "yogi_name": user.get("yogi_name", "")}
 
 
 @app.get("/finances")

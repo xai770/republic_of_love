@@ -147,7 +147,8 @@ function confirmResetOnboarding() {
                 // Clear tour flags so onboarding tour replays
                 localStorage.removeItem('mira_tour_completed');
                 localStorage.removeItem('mira_tour_completed_at');
-                localStorage.removeItem('search_tour_completed');
+                localStorage.removeItem('mira_search_tour_completed');
+                localStorage.removeItem('mira_search_tour_completed_at');
                 alert('✅ ' + data.message + '\n\nRedirecting to dashboard...');
                 window.location.href = '/dashboard';
             } else {

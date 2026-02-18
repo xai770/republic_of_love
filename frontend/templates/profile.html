@@ -313,7 +313,7 @@ async function loadWorkHistory() {
                         <button onclick="deleteWorkHistory(${job.work_history_id})">🗑️</button>
                     </div>
                 </div>
-                ${job.description ? `<p class="description">${job.description.substring(0, 200)}${job.description.length > 200 ? '...' : ''}</p>` : ''}
+                ${job.description ? `<p class="description">${job.description}</p>` : ''}
             </div>
         `).join('');
     } catch (err) {

@@ -77,8 +77,8 @@ async def get_greeting(
     with conn.cursor() as cur:
         # Get user state
         cur.execute("""
-            SELECT u.created_at, u.last_login_at, u.display_name,
-                   p.profile_id, p.skill_keywords, p.full_name,
+            SELECT u.created_at, u.last_login_at, u.yogi_name,
+                   p.profile_id, p.skill_keywords,
                    p.experience_level, p.location
             FROM users u
             LEFT JOIN profiles p ON u.user_id = p.user_id
@@ -92,8 +92,8 @@ async def get_greeting(
         # Extract state
         created_at = row['created_at']
         last_login = row['last_login_at']
-        display_name = row['display_name'] or row['full_name'] or ''
-        first_name = display_name.split()[0] if display_name else ''
+        yogi_name = row['yogi_name'] or ''
+        first_name = yogi_name.split()[0] if yogi_name else ''
 
         is_new = (last_login is None or
                   (datetime.now() - created_at) < timedelta(hours=1))

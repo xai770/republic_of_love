@@ -1333,7 +1333,7 @@
         document.getElementById('new-record').style.display = isRecord ? '' : 'none';
         if (isRecord) personalBest = score;
 
-        // Pre-fill name from last used or display_name
+        // Pre-fill name from last used or yogi_name
         const nameInput = document.getElementById('arcade-name');
         if (!nameInput.value) nameInput.value = arcadePlayerName || '';
         document.getElementById('gameover-screen').style.display = '';
@@ -1385,7 +1385,7 @@
             const data = await res.json();
             const p = data.personal;
             personalBest = p.best_score;
-            if (data.display_name) arcadePlayerName = data.display_name;
+            if (data.yogi_name) arcadePlayerName = data.yogi_name;
             document.getElementById('lb-personal').innerHTML =
                 'Dein Rekord: <span style="color:#ff0">' + p.best_score + '</span> · ' +
                 p.games_played + ' Spiele · ' + p.total_kills + ' 👾 · ' + p.total_fruits + ' 🍎';
@@ -1394,7 +1394,7 @@
             let html = '<table class="lb-table"><tr><th></th><th>Spieler</th><th>Score</th><th>Lv</th><th>👾</th><th>🍎</th></tr>';
             data.top.forEach(function(entry, i) {
                 const medal = i < 3 ? '<span class="lb-medal">' + medals[i] + '</span>' : (i+1) + '.';
-                const name = entry.display_name || 'Yogi';
+                const name = entry.yogi_name || 'Yogi';
                 html += '<tr><td class="lb-rank">' + medal + '</td><td>' + name + '</td><td>' + entry.score + '</td><td>' + entry.level + '</td><td>' + entry.monsters_killed + '</td><td>' + entry.fruits_collected + '</td></tr>';
             });
             if (data.top.length === 0) {

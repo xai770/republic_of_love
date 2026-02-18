@@ -27,12 +27,12 @@
             <a href="/api/i18n/set/{{ code }}" class="lang-btn {{ 'active' if code == lang else '' }}">{{ code|upper }}</a>
             {% endfor %}
         </div>
-        <span class="user-name">{{ user.display_name or user.email }}</span>
+        <span class="user-name">{{ user.yogi_name or user.display_name or user.email }}</span>
         <div class="user-avatar">
             {% if user.avatar_url %}
             <img src="{{ user.avatar_url }}" alt="Avatar">
             {% else %}
-            <div class="avatar-placeholder">{{ (user.display_name or user.email)[0]|upper }}</div>
+            <div class="avatar-placeholder">{{ (user.yogi_name or user.display_name or user.email)[0]|upper }}</div>
             {% endif %}
         </div>
     </div>
