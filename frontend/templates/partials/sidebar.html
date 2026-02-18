@@ -36,6 +36,14 @@
             </span>
             <span class="nav-label">Landscape</span>
         </a>
+
+        {# 3c. Job Market #}
+        <a href="/market" class="nav-item {{ 'active' if active_page == 'market' else '' }}" data-tooltip="Job Market">
+            <span class="nav-icon-wrap" style="background: #e0f2f1;">
+                <span class="nav-icon">📊</span>
+            </span>
+            <span class="nav-label">Market</span>
+        </a>
         
         {# 4. My Active Postings (Jobs/Matches) #}
         <a href="/matches" class="nav-item {{ 'active' if active_page == 'matches' else '' }}" data-tooltip="{{ t('nav.jobs') }}">
@@ -68,6 +76,14 @@
                 <span class="nav-icon">👤</span>
             </span>
             <span class="nav-label">{{ t('nav.account') }}</span>
+        </a>
+
+        {# 7b. Finances #}
+        <a href="/finances" class="nav-item {{ 'active' if active_page == 'finances' else '' }}" data-tooltip="Finances">
+            <span class="nav-icon-wrap" style="background: #fff8e1;">
+                <span class="nav-icon">💰</span>
+            </span>
+            <span class="nav-label">Finances</span>
         </a>
 
         {# 8. Arcade — Frustrationsabbau #}

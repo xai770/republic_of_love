@@ -95,32 +95,6 @@ def subscribe_to_push(
         )
     
     with conn.cursor() as cur:
-        # Check if push_subscriptions table exists
-        cur.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'push_subscriptions'
-            ) as exists
-        """)
-        table_exists = cur.fetchone()['exists']
-        
-        if not table_exists:
-            # Create table on first use
-            cur.execute("""
-                CREATE TABLE push_subscriptions (
-                    subscription_id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL REFERENCES users(user_id),
-                    endpoint TEXT NOT NULL,
-                    p256dh TEXT NOT NULL,
-                    auth TEXT NOT NULL,
-                    created_at TIMESTAMPTZ DEFAULT NOW(),
-                    last_used_at TIMESTAMPTZ,
-                    UNIQUE(user_id, endpoint)
-                )
-            """)
-            cur.execute("CREATE INDEX idx_push_user ON push_subscriptions(user_id)")
-            conn.commit()
-        
         # Store or update subscription
         cur.execute("""
             INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)

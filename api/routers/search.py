@@ -6,7 +6,7 @@ Cross-filtering: any panel change → single API call → all panels update.
 """
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 import json
 import threading
@@ -112,8 +112,8 @@ class SearchRequest(BaseModel):
     lon: Optional[float] = None
     radius_km: Optional[int] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "domains": ["43", "81"],
                 "ql": [2, 3],
@@ -122,6 +122,7 @@ class SearchRequest(BaseModel):
                 "radius_km": 50
             }
         }
+    )
 
 
 @router.post("/search/preview")

@@ -7,7 +7,6 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-    console.log('Theme toggled to:', newTheme);
 }
 
 function restoreTheme() {
@@ -15,7 +14,6 @@ function restoreTheme() {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const theme = savedTheme || (prefersDark ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
-    console.log('Theme restored to:', theme);
 }
 
 // Restore theme on DOM ready

@@ -165,8 +165,7 @@ function initMiraTour() {
         },
         
         onHighlightStarted: (element, step, options) => {
-            // Track which step user is on (for analytics later)
-            console.log('Tour step:', options.state.activeIndex);
+            // Tour step tracking (silent)
         }
     });
 
@@ -208,7 +207,6 @@ window.startMiraTour = startMiraTour;
 window.resetMiraTour = function() {
     localStorage.removeItem('mira_tour_completed');
     localStorage.removeItem('mira_tour_completed_at');
-    console.log('Tour reset. Refresh the dashboard to see it again.');
 };
 
 // Auto-start on page load

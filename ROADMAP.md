@@ -1,6 +1,6 @@
 # ROADMAP.md - talent.yoga
 
-*Last updated: February 16, 2026*
+*Last updated: February 18, 2026*
 
 ## The Vision
 
@@ -8,20 +8,20 @@
 
 ---
 
-## Current State (Feb 16, 2026)
+## Current State (Feb 18, 2026)
 
 | Metric | Count |
 |--------|-------|
-| Total postings | 242,444 |
-| Active postings | 232,669 |
-| Berufenet-mapped | 219,942 (91%) |
-| Embeddings | 268,232 |
-| OWL synonym names | 98,516 |
+| Total postings | 271,812 |
+| Active postings | 258,140 |
+| Berufenet-mapped | 239,447 (93%) |
+| Embeddings | 283,349 |
+| OWL synonym names | 116,377 |
 | User profiles | 6 |
 | Profile-posting matches | 28 |
-| API routers | 30 |
-| Test suite | 354 tests (352 green, 2 skip: archived actor) |
-| PostgreSQL cache hit | 99.97% |
+| API routers | 24 |
+| Test suite | 404 tests (all green) |
+| PostgreSQL cache hit | 99.99% |
 
 ### Infrastructure
 - **Stack:** Python 3.10 / FastAPI / PostgreSQL 14 / Ollama (qwen2.5:7b + bge-m3)
@@ -29,17 +29,17 @@
 - **PG tuning:** shared_buffers=8GB, effective_cache_size=24GB (tuned Feb 11)
 - **Pipeline:** Nightly fetch via `scripts/turing_fetch.sh` (cron 23:50 CET)
 - **Logging:** Structured JSON via `core.logging_config`
-- **Services:** Ollama via systemd; FastAPI + Streamlit BI via @reboot cron (systemd units ready in `config/systemd/`)
+- **Services:** Ollama via systemd; FastAPI + Streamlit BI via @reboot cron
 - **Backups:** Daily incremental + weekly full USB backup; nightly PG dump; schema export at 03:05
 
 ### Architecture
 ```
 actors/     17 actors (7 class-based, 10 script-based)
-api/        FastAPI app, 30 routers (mira split into 8-file package)
+api/        FastAPI app, 24 routers (mira split into 8-file package)
 core/       Database, logging, text utils, error handler, circuit breaker
-lib/        Berufenet matching, FAQ detection
+lib/        Berufenet matching, scrapers, FAQ detection
 frontend/   Jinja2 templates + static assets
-tests/      13 test files, 328 tests (pytest)
+tests/      13 test files, 404 tests (pytest)
 config/     Systemd service units, logrotate config
 ```
 
@@ -74,18 +74,31 @@ config/     Systemd service units, logrotate config
 - [ ] Whats-new detection → surface pipeline results
 - [ ] Mira memory — persist conversation context across sessions
 
+### Adele (Conversational Profile Builder)
+- [x] State machine interview (8 phases: intro → summary → complete)
+- [x] LLM extraction at each phase (qwen2.5:7b, structured JSON)
+- [x] Company anonymization (lookup_or_queue → Doug research)
+- [x] Taro name generator (600+ gender-neutral names)
+- [x] Bilingual EN/DE with auto language detection
+- [x] Profile + work history save to DB
+- [x] Always visible in chat list
+- [x] E2E test script
+- [ ] CV upload → Adele confirmation flow (upload, review, approve)
+
 ### Matching
 - [x] Profile-to-posting matching (basic)
 - [x] Match confidence classification
 - [x] Clara match report generation
-- [ ] Match quality feedback loop
+- [x] Match rating endpoint (`PUT /matches/{id}/rate`)
+- [x] Negative keyword filter (suppress low-rated categories)
+- [ ] Match quality feedback loop (ratings → improved matching)
 - [ ] Scale to all profiles
 
 ### Frontend (ongoing)
 - [x] Dark mode (full CSS fix, Feb 13-14)
 - [x] Search results with detail modal + interest feedback
 - [x] Journey tracker (3-column layout)
-- [x] WhatsApp-style messages page (no sidebar)
+- [x] WhatsApp-style messages page (with sidebar restored)
 - [x] Feedback widget (screenshot + annotation)
 - [x] BI dashboard redirect (bi.talent.yoga)
 - [x] Logon/logoff event rendering in messages
@@ -95,6 +108,24 @@ config/     Systemd service units, logrotate config
 ---
 
 ## Completed (Recent)
+
+### February 17–18, 2026 (18 commits)
+- [x] Pipeline crash fix (ts_prefix undefined → demand snapshot)
+- [x] Double logging fix (tee + redirect = duplicate output, TTY detection)
+- [x] Parallel embeddings — 5x speedup (8 workers, ThreadPoolExecutor)
+- [x] Berufenet LLM — 7x speedup (subprocess → HTTP API + 2 workers)
+- [x] Tools cleanup (85 files removed, 26,567 lines deleted, 5 kept)
+- [x] 9-item hit list from user review (all resolved)
+- [x] talent.yoga full audit (29 issues found, 17 fixed)
+- [x] Account.py complete rewrite (asyncpg → psycopg2, all 6 GDPR endpoints)
+- [x] Profile anonymization (Taro names, company aliases, Doug research)
+- [x] Adele conversational profile builder (950 lines, bilingual, E2E tested)
+- [x] Berufenet enrichment pipeline (description + web context, 92% resolve rate)
+- [x] CV import endpoint + match rating 1-10
+- [x] turing_fetch.sh cron logging fix (output went nowhere → always writes to logfile)
+- [x] Lazy playwright import (scraper health check no longer crashes)
+- [x] Messages page nav bar restored
+- [x] E2E onboarding+Adele test script
 
 ### February 12–16, 2026 (89 commits)
 - [x] Pipeline cursor scope bug fix (1,254 errors → 0)
@@ -152,14 +183,31 @@ config/     Systemd service units, logrotate config
 
 ## Next Up
 
-### High Priority
-- [x] **Pipeline alerting** — errors → Signal via signal-cli (lib/signal_notify.py)
-- [x] **Profile builder UI** — auto-create profile on first visit (upsert), form/CV/work-history/preferences
+### 🎯 Milestone: Mysti Test (first real user test)
+
+Mysti (future owner of talent.yoga) will be the first real user.
+The complete flow must work end-to-end before she tests:
+
+```
+Onboard → Profile → Search → Match → Review → Apply
+```
+
+| Step | Status | What's needed |
+|------|--------|---------------|
+| 1. Onboard | ✅ Built | Google auth + Mira tour + yogi name |
+| 2. Profile (Adele) | ✅ Built | Conversational interview, anonymized |
+| 3. Profile (CV upload) | 🔧 Partial | Upload works, no confirm/edit/save step |
+| 4. Search | 🔧 Partial | UI exists, needs refinement |
+| 5. Match | ✅ Built | Clara generates matches nightly |
+| 6. Review | ⬜ Missing | No UI to browse matches + rate them |
+| 7. Apply | ⬜ Missing | No "apply" or "save" action on postings |
+
+### High Priority (feature completeness)
+- [ ] **CV upload → Adele confirm** — upload PDF, Adele shows extracted data, yogi approves/edits
+- [ ] **Match review UI** — browse Clara's matches, see job details, rate 1-10
+- [ ] **Apply/save action** — bookmark postings, "apply" link to external URL
 - [ ] **Match notification** — email/push when new matches appear
 - [ ] **Mira memory** — persist conversation context across sessions
-- [ ] **Skills extraction v2** — actor redesign for 242k posting scale
-- [x] **CSS consolidation** — inline dark-mode styles merged into style.css (landscape, documents)
-- [x] **Search map zoom fix** — feedback #61 resolved (invalidateSize on browser zoom)
 
 ### Medium Priority
 - [ ] Multi-source job fetching (StepStone, LinkedIn scraping)
@@ -168,12 +216,14 @@ config/     Systemd service units, logrotate config
 - [ ] User behavior intelligence (Mira proactive engagement based on click patterns)
 
 ### Technical Debt
+- [ ] Pydantic V2 migration (60 deprecation warnings in tests)
 - [ ] Dedupe postings at download time (check `external_id` — known duplicates exist)
-- [ ] Pydantic V2 migration (suppress deprecation warnings)
+- [ ] async/sync mismatch — FastAPI async def + psycopg2 blocks event loop
+- [ ] Remaining 12 talent.yoga audit issues (medium/low from Feb 17 review)
 - [ ] Test coverage for `core/database.py`, `core/navigator.py`
 - [ ] CI pipeline (GitHub Actions)
-- [ ] Systemd services installation (run `sudo bash config/systemd/install.sh`)
-- [ ] Stale posting cleanup (invalidated postings still count in totals)
+- [ ] Systemd services installation (units exist, not activated)
+- [ ] i18n gaps (landscape, arcade, messages, documents pages)
 
 ### Future
 - [ ] Multi-tenant support
@@ -198,6 +248,12 @@ config/     Systemd service units, logrotate config
 | Jan 2026 | Berufenet as canonical taxonomy | German federal classification = ground truth |
 | Dec 2025 | Queue-based actor architecture | Decoupled workers, crash recovery, idempotent |
 | Dec 2025 | Skills in `posting_skills` table | Relational > JSON column for querying |
+
+| Feb 18, 2026 | Mysti test milestone | Complete onboard→apply flow before first real user test |
+| Feb 18, 2026 | Lazy playwright imports | Scraper health check can run without playwright installed in venv |
+| Feb 17, 2026 | Adele conversational profile builder | Third profile path (alongside form + CV upload), always anonymized |
+| Feb 17, 2026 | Taro name generator + company aliases | Anonymization infrastructure — no real names/companies in profiles |
+| Feb 17, 2026 | HTTP API for Ollama (not subprocess) | 7x berufenet speedup, 5x embedding speedup |
 
 ---
 

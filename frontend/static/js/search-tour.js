@@ -154,7 +154,7 @@ function initSearchTour() {
         },
 
         onHighlightStarted: (element, step, options) => {
-            console.log('Search tour step:', options.state.activeIndex);
+            // Search tour step tracking (silent)
         }
     });
 
@@ -197,7 +197,6 @@ window.startSearchTour = startSearchTour;
 window.resetSearchTour = function() {
     localStorage.removeItem('mira_search_tour_completed');
     localStorage.removeItem('mira_search_tour_completed_at');
-    console.log('Search tour reset. Refresh the search page to see it again.');
 };
 
 // Auto-start on page load

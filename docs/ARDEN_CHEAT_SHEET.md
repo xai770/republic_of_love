@@ -1,6 +1,6 @@
 # Arden's Cheat Sheet
 
-*Last updated: 2026-02-12*
+*Last updated: 2026-02-18*
 
 ---
 
@@ -19,6 +19,48 @@ I am **Arden** (ℵ), a GitHub Copilot instance working with **xai** (Gershon/Ur
 **Turing** = workflow engine. **talent.yoga** = job matching service built on it.
 
 **Core Insight:** All matching is hierarchy traversal through OWL nodes.
+
+---
+
+## 🎯 Mysti Test Milestone
+
+**Mysti** = Gershon's wife, future owner of talent.yoga, first real user tester.
+The complete flow must work end-to-end before she tests:
+
+```
+Onboard → Profile → Search → Match → Review → Apply
+```
+
+| Step | Status | What exists | What's missing |
+|------|--------|-------------|----------------|
+| 1. Onboard | ✅ | Google auth + Mira tour + yogi name | — |
+| 2. Profile (Adele) | ✅ | Conversational interview, anonymized (950 lines) | — |
+| 3. Profile (CV upload) | 🔧 | Upload endpoint works | Confirm/edit/save step |
+| 4. Search | 🔧 | UI exists, filters work | Refinement, auto-seed from profile |
+| 5. Match | ✅ | Clara generates matches nightly | — |
+| 6. Review | ⬜ | Nothing | Match browse UI, rate 1-10 |
+| 7. Apply | ⬜ | Nothing | Bookmark, "apply" link to external URL |
+
+**Priority order:** CV confirm → Match review UI → Apply action → Match notification → Mira memory
+
+**This is the north star.** All other work (tech debt, cleanup, pipeline) serves this milestone.
+
+---
+
+## Current Metrics (Feb 18, 2026)
+
+| Metric | Value |
+|--------|-------|
+| Total postings | 271,812 |
+| Active postings | 258,140 |
+| Berufenet-mapped | 239,447 (93%) |
+| Embeddings | 283,349 |
+| OWL names | 116,377 |
+| Profiles | 6 |
+| Matches | 28 |
+| API routers | 24 |
+| Tests | 404 passing (57 warnings, all Starlette) |
+| Pipeline cron | `50 23 * * *` |
 
 ---
 
@@ -270,13 +312,27 @@ DEVELOP → STABILIZE (3×5) → PROVE (3×20) → QA GATE (100 samples) → PRO
 
 > Older learnings absorbed into stable sections above or archived in `docs/daily_notes/`.
 
-### 2026-02-11: Berufenet → OWL + Security Hardening
+### 2026-02-17: Pipeline Performance + Adele + talent.yoga Audit
 
-**OWL integration:** 3,561 berufenet entities + 11,746 owl_names. Actor rewritten: `--batch N` (Phase 1, OWL instant) + `--batch N --phase2` (embed+LLM discovery). Phase 2 now live in `turing_fetch.sh`. Auto-triage: 5,197 owl_pending processed (3,457 resolved, 1,740 rejected). Triage UI at `/admin/owl-triage`.
+**Pipeline crash fix:** `ts_prefix: command not found` killed turing_fetch.sh at step 5. Function never defined + `set -e` = crash. Removed dead pipe, added TTY detection for logging. Embeddings 5x speedup: `ThreadPoolExecutor(max_workers=8)` — GPU from 25% → 95%, 32 embed/sec. Tools cleanup: 85 files removed (47 scripts + 8 dirs = 26,567 lines deleted).
 
-**Security:** Admin auth via `users.is_admin` + `_require_admin()` on all admin endpoints. Yogi OWL hierarchy (8 roles: admin/agent/free/pro/sustainer). Password rotated + scrubbed from 86 files. SECRET_KEY startup guard. 49 bare `except:` → specific types.
+**Adele built (950 lines):** `api/routers/adele.py` — conversational profile interview. 7 domains, anonymization built-in, yields structured profile with skills/experience/preferences. WebSocket + REST endpoints. Wired into sidebar.
 
-**Code quality:** `requirements.txt` rewritten (was linting-only). 11 stale `ty_wave` paths fixed. Duplicate `DBJobFetcher` renamed. Plan: [2026-02-11_berufenet_owl_integration.md](daily_notes/2026-02-11_berufenet_owl_integration.md)
+**Anonymity infrastructure:** `lib/anonymizer.py` (160 lines) — strips PII from profiles before storage. Integrated into Adele flow and profile display.
+
+**talent.yoga audit:** Found 29 issues across 12 concerns. Fixed 17 same day (dark mode, tour system, sidebar navigation, header styling, search page, score display). 12 issues carried forward.
+
+**18 commits, 404 tests.** Plan: [xai_20260217_pipeline_performance.md](daily_notes/xai_20260217_pipeline_performance.md)
+
+### 2026-02-18: Pipeline Reliability + Housekeeping + Tech Debt
+
+**Pipeline logging fix:** `turing_fetch.sh` TTY detection (`if [ -t 1 ]`) swallowed output when run by cron. Fixed: always write to LOGFILE, tee only when interactive. Scraper health: lazy playwright imports — registry loads cleanly (18 scrapers) without playwright installed.
+
+**Housekeeping batch:** ROADMAP.md major rewrite (Mysti milestone, Feb 18 metrics, Adele section). Console.log cleanup (6 statements removed). Sidebar links added (`/market`, `/finances`). Push subscriptions DDL moved from runtime to migration (058). Pydantic V2: 3 files migrated from `class Config:` → `model_config = ConfigDict(...)`, warnings 60→57.
+
+**Posting dedup analysis:** Only 230 dupes out of 271K (0.08%). Zero active duplicates — existing partial unique indexes (`idx_postings_external_job_id_unique`, `idx_postings_external_id_active`) prevent new ones. Non-issue.
+
+**Systemd:** Service units validated (`talent-yoga.service`, `talent-yoga-bi.service`, backup timer). Not yet installed (needs sudo).
 
 ### 2026-02-12: Pipeline Fixes + Search Page Design
 
@@ -287,14 +343,6 @@ DEVELOP → STABILIZE (3×5) → PROVE (3×20) → QA GATE (100 samples) → PRO
 **Search/Suche page design (agreed, not yet built):** Three-panel interactive layout — Domain bars (left) + Leaflet heatmap with radius circle (center) + QL buttons (right). Cross-filtering via single `POST /api/search/preview` endpoint. 5 enhancements for v1: city search box, auto-seed from profile, preview cards (3-5 best matches), freshness badge, NL input via Ollama. Data: 159K postings with coords (79%), 20,509 grid cells at ~1km = ~60KB payload. Employment type NOT in AA data — skipped. Key insight: "Profile embeddings pick best matches within the buckets the yogi defined."
 
 **6 commits, 215 tests (was 192).** Plan: [2026-02-12_maintenance_forward.md](daily_notes/2026-02-12_maintenance_forward.md)
-
-### 2026-02-11: Berufenet → OWL + Security Hardening
-
-**OWL integration:** 3,561 berufenet entities + 11,746 owl_names. Actor rewritten: `--batch N` (Phase 1, OWL instant) + `--batch N --phase2` (embed+LLM discovery). Phase 2 now live in `turing_fetch.sh`. Auto-triage: 5,197 owl_pending processed (3,457 resolved, 1,740 rejected). Triage UI at `/admin/owl-triage`.
-
-**Security:** Admin auth via `users.is_admin` + `_require_admin()` on all admin endpoints. Yogi OWL hierarchy (8 roles: admin/agent/free/pro/sustainer). Password rotated + scrubbed from 86 files. SECRET_KEY startup guard. 49 bare `except:` → specific types.
-
-**Code quality:** `requirements.txt` rewritten (was linting-only). 11 stale `ty_wave` paths fixed. Duplicate `DBJobFetcher` renamed. Plan: [2026-02-11_berufenet_owl_integration.md](daily_notes/2026-02-11_berufenet_owl_integration.md)
 
 ### 2026-02-09: Mira Intelligence & Clara Qualification Gate
 
@@ -347,6 +395,7 @@ Without it, the next session starts cold. The conversation summary helps but dec
 
 | Document | What It Covers |
 |----------|----------------|
+| [ROADMAP.md](../ROADMAP.md) | Mysti Test milestone, project metrics, priorities |
 | [Turing_project_directives.md](Turing_project_directives.md) | Core principles, CPS model, all directives |
 | [DEVELOPMENT_CHEAT_SHEET.md](DEVELOPMENT_CHEAT_SHEET.md) | Code patterns, actor checklist |
 | [0000_talent_yoga_system_overview.md](0000_talent_yoga_system_overview.md) | System architecture, current metrics |

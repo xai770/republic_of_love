@@ -10,7 +10,7 @@ Documents are valuable artifacts created by TY actors:
 Unlike messages (transient), documents have lasting value.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Literal
 from datetime import datetime
 
@@ -38,8 +38,7 @@ class Document(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentSummary(BaseModel):
