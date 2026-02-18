@@ -29,6 +29,7 @@ logger = get_logger(__name__)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434')
 EXTRACTION_MODEL = "qwen2.5:7b"  # Better at structured extraction
+FALLBACK_MODEL = "gemma3:4b"     # Fallback if primary times out
 TIMEOUT = 90.0  # CV extraction takes longer
 
 # ─────────────────────────────────────────────────────────
@@ -145,6 +146,14 @@ async def extract_and_anonymize(
     if not yogi_name or not yogi_name.strip():
         raise ValueError("yogi_name is required for anonymization")
     
+    # Clean up HTML noise (common in MD exports, table-formatted CVs)
+    cv_text = re.sub(r'<br\s*/?>', '\n', cv_text)           # <br> → newline
+    cv_text = re.sub(r'<[^>]+>', '', cv_text)                # strip remaining HTML tags
+    cv_text = re.sub(r'\|+', ' ', cv_text)                   # pipe-delimited table → spaces
+    cv_text = re.sub(r'[ \t]{2,}', ' ', cv_text)             # collapse horizontal whitespace
+    cv_text = re.sub(r'\n{3,}', '\n\n', cv_text)             # collapse excessive blank lines
+    cv_text = cv_text.strip()
+    
     # Truncate to reasonable size (LLM context budget)
     cv_text = cv_text[:12000]
     
@@ -156,23 +165,30 @@ async def extract_and_anonymize(
     
     logger.info(f"CV anonymization: {len(cv_text)} chars, yogi_name={yogi_name}")
     
-    # Call LLM
-    try:
-        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            response = await client.post(
-                f"{OLLAMA_URL}/api/generate",
-                json={
-                    "model": EXTRACTION_MODEL,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.1, "num_ctx": 8192}
-                }
-            )
-            response.raise_for_status()
-            result = response.json().get("response", "")
-    except Exception as e:
-        logger.error(f"LLM extraction failed: {e}")
-        raise ValueError(f"LLM extraction failed: {e}")
+    # Call LLM with fallback
+    result = None
+    for model in [EXTRACTION_MODEL, FALLBACK_MODEL]:
+        try:
+            async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+                response = await client.post(
+                    f"{OLLAMA_URL}/api/generate",
+                    json={
+                        "model": model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {"temperature": 0.1, "num_ctx": 8192}
+                    }
+                )
+                response.raise_for_status()
+                result = response.json().get("response", "")
+                if result:
+                    break
+        except Exception as e:
+            logger.warning(f"LLM extraction failed with {model}: {e}")
+            continue
+    
+    if not result:
+        raise ValueError("LLM extraction failed with all models")
     
     # Parse JSON from response
     parsed = _extract_json(result)
