@@ -16,6 +16,7 @@ const MIRA_TOUR_STEPS = [
                     <p>Hallo! Ich bin <strong>Mira</strong>, deine persönliche Karrierebegleiterin.</p>
                     <p>Lass mich dir zeigen, wie du talent.yoga nutzen kannst, um deinen Traumjob zu finden!</p>
                     <p class="mira-tour-action">Klick auf <strong>Weiter</strong>, um die Tour zu starten.</p>
+                    <a class="mira-tour-skip" onclick="document.querySelector('.driver-popover-close-btn')?.click()">Tour überspringen — du kannst sie jederzeit über 🎓 Tour in der Seitenleiste starten</a>
                 </div>
             `,
             side: 'center',
@@ -42,18 +43,17 @@ const MIRA_TOUR_STEPS = [
         }
     },
     {
-        element: 'a[href="/bi"]',
+        element: 'a[href="/profile"]',
         popover: {
-            title: '📊 Meine Übersicht',
+            title: '📋 Mein Profil',
             description: `
                 <div class="mira-tour-content">
-                    <p>Hier siehst du den <strong>großen Überblick</strong>:</p>
+                    <p>Hier erstellst du dein <strong>Profil</strong>:</p>
                     <ul>
-                        <li>Wie vollständig ist dein Profil?</li>
-                        <li>Wie viele Jobs passen zu dir?</li>
-                        <li>Deine Aktivitäten auf einen Blick</li>
+                        <li>Lebenslauf hochladen oder manuell eingeben</li>
+                        <li>Adele hilft dir im Interview-Format</li>
+                        <li>Je vollständiger, desto bessere Matches!</li>
                     </ul>
-                    <p class="mira-tour-action">Klick hier, um deine Übersicht zu sehen!</p>
                 </div>
             `,
             side: 'right',
