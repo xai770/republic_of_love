@@ -592,7 +592,7 @@ async def parse_cv(
     conn = Depends(get_db)
 ):
     """
-    Parse uploaded CV (PDF/DOCX) and extract ANONYMIZED career data.
+    Parse uploaded CV (PDF/DOCX/TXT/MD) and extract ANONYMIZED career data.
     
     Privacy-first:
     - File is processed in memory only (never written to disk permanently)
@@ -625,11 +625,11 @@ async def parse_cv(
             doc = Document(io.BytesIO(content))
             text = "\n".join(para.text for para in doc.paragraphs)
             
-        elif filename.endswith('.txt'):
+        elif filename.endswith('.txt') or filename.endswith('.md'):
             text = content.decode('utf-8', errors='ignore')
             
         else:
-            raise HTTPException(status_code=400, detail="Unsupported file type. Use PDF, DOCX, or TXT.")
+            raise HTTPException(status_code=400, detail="Unsupported file type. Use PDF, DOCX, TXT, or MD.")
         
         if not text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from file")
