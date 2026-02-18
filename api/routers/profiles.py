@@ -671,8 +671,14 @@ class CVWorkEntry(BaseModel):
     employer_description: str = "a company"
     role: str = "unknown role"
     duration_years: Optional[float] = None
+    start_year: Optional[int] = None
+    start_month: Optional[int] = None
+    end_year: Optional[int] = None
+    end_month: Optional[int] = None
+    is_current: Optional[bool] = None
     industry: Optional[str] = None
     key_responsibilities: List[str] = []
+    technologies_used: List[str] = []
 
 
 class CVEducationEntry(BaseModel):
@@ -751,17 +757,30 @@ def import_cv(
 
             description = '; '.join(entry.key_responsibilities) if entry.key_responsibilities else None
 
+            # Build start_date / end_date from year+month
+            start_date = None
+            if entry.start_year:
+                start_date = f"{entry.start_year}-{entry.start_month or 1:02d}-01"
+            end_date = None
+            if entry.end_year:
+                end_date = f"{entry.end_year}-{entry.end_month or 1:02d}-01"
+
             cur.execute("""
                 INSERT INTO profile_work_history
                     (profile_id, company_name, job_title, duration_months,
-                     job_description, extraction_status)
-                VALUES (%s, %s, %s, %s, %s, 'imported')
+                     job_description, extraction_status,
+                     start_date, end_date, is_current, technologies_used)
+                VALUES (%s, %s, %s, %s, %s, 'imported', %s, %s, %s, %s)
             """, (
                 profile_id,
                 entry.employer_description,
                 entry.role,
                 duration_months,
-                description
+                description,
+                start_date,
+                end_date,
+                entry.is_current or False,
+                entry.technologies_used or None
             ))
             imported_count += 1
 
@@ -838,7 +857,8 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
         # Work history
         cur.execute("""
             SELECT company_name, job_title, department, start_date, end_date,
-                   is_current, duration_months, job_description, location
+                   is_current, duration_months, job_description, location,
+                   technologies_used
             FROM profile_work_history
             WHERE profile_id = %s
             ORDER BY COALESCE(end_date, '2099-01-01') DESC, start_date DESC
@@ -897,6 +917,11 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
             if job.get('job_description'):
                 lines.append('')
                 lines.append(job['job_description'])
+            if job.get('technologies_used'):
+                techs = job['technologies_used']
+                if isinstance(techs, list) and techs:
+                    lines.append('')
+                    lines.append('`' + '` · `'.join(techs) + '`')
             lines.append('')
 
     # Skills
