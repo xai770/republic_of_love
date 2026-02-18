@@ -170,30 +170,24 @@ function initMiraTour() {
         },
         
         onPopoverRender: (popover, options) => {
-            // Add Abbrechen button to footer on every step
-            const footer = popover.footer;
-            if (footer && !footer.querySelector('.driver-popover-cancel-btn')) {
-                const cancelBtn = document.createElement('button');
-                cancelBtn.textContent = 'Abbrechen';
-                cancelBtn.className = 'driver-popover-cancel-btn';
-                cancelBtn.addEventListener('click', () => {
-                    // Mark as completed and force-remove all Driver.js DOM elements
-                    localStorage.setItem('mira_tour_completed', 'true');
-                    localStorage.setItem('mira_tour_completed_at', new Date().toISOString());
-                    // Remove Driver.js overlay and popover directly from DOM
-                    document.querySelectorAll('.driver-popover, .driver-overlay, .driver-active-element').forEach(el => {
-                        el.classList.remove('driver-active-element');
-                        if (el.classList.contains('driver-popover') || el.classList.contains('driver-overlay')) {
-                            el.remove();
-                        }
-                    });
-                    document.body.classList.remove('driver-active', 'driver-fade', 'driver-no-interaction');
-                    // Clean up driver state
-                    try { driverObj.destroy(); } catch(e) {}
-                });
-                // Insert as first child (before progress text and nav buttons)
-                footer.insertBefore(cancelBtn, footer.firstChild);
-            }
+            // Move the native close button (X) to the footer as "Abbrechen"
+            // Driver.js intercepts all mouse events on custom buttons,
+            // but its OWN close button works natively — so we reuse it.
+            setTimeout(() => {
+                const footer = document.querySelector('.driver-popover-footer');
+                const closeBtn = document.querySelector('.driver-popover-close-btn');
+                if (footer && closeBtn && !closeBtn.dataset.moved) {
+                    closeBtn.textContent = 'Abbrechen';
+                    closeBtn.classList.add('driver-popover-cancel-btn');
+                    closeBtn.dataset.moved = 'true';
+                    footer.insertBefore(closeBtn, footer.firstChild);
+                }
+                // On first step, hide the disabled prev button (Abbrechen replaces it)
+                const prevBtn = document.querySelector('.driver-popover-prev-btn');
+                if (prevBtn && prevBtn.disabled) {
+                    prevBtn.style.display = 'none';
+                }
+            }, 50);
         },
         
         onHighlightStarted: (element, step, options) => {
