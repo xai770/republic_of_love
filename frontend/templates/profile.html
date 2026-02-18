@@ -521,6 +521,14 @@
                 <!-- Form input -->
                 <div class="pb-form-area" id="pb-input-form">
                     <div class="pb-form-section">
+                        <h3>Identität</h3>
+                        <div class="pb-form-row">
+                            <label>Yogi-Name (öffentliches Pseudonym)</label>
+                            <input type="text" id="pf-yogi-name" placeholder="z.B. Phoenix, Lotus, Stardust" maxlength="30">
+                            <small>Dein Anzeigename auf der Plattform — darf nicht dein echter Name sein</small>
+                        </div>
+                    </div>
+                    <div class="pb-form-section">
                         <h3>Basisdaten</h3>
                         <div class="pb-form-row">
                             <label>Aktuelle Position</label>
@@ -714,6 +722,7 @@ async function loadFormDefaults() {
         const res = await fetch('/api/profiles/me');
         if (!res.ok) return;
         const p = await res.json();
+        if (p.display_name) document.getElementById('pf-yogi-name').value = p.display_name;
         if (p.title) document.getElementById('pf-title').value = p.title;
         if (p.location) document.getElementById('pf-location').value = p.location;
         if (p.desired_roles && p.desired_roles.length) document.getElementById('pf-roles').value = p.desired_roles.join(', ');
@@ -857,6 +866,7 @@ async function importCV(data) {
 // ── FORM SAVE ──────────────────────────────────────────────
 
 async function saveFormData() {
+    const yogiName = document.getElementById('pf-yogi-name').value.trim();
     const title = document.getElementById('pf-title').value.trim();
     const location = document.getElementById('pf-location').value.trim();
     const roles = document.getElementById('pf-roles').value.trim();
@@ -866,6 +876,26 @@ async function saveFormData() {
     const seniority = document.getElementById('pf-seniority').value;
 
     const changes = [];
+
+    // Save yogi name (with server-side real-name check)
+    if (yogiName) {
+        try {
+            const res = await fetch('/api/profiles/me/yogi-name', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ yogi_name: yogiName })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                alert(err.detail || 'Yogi-Name konnte nicht gespeichert werden.');
+                return; // Stop — don't save anything else if name is rejected
+            }
+            changes.push('Yogi-Name: ' + yogiName);
+            // Update header display
+            const headerName = document.querySelector('.user-name');
+            if (headerName) headerName.textContent = yogiName;
+        } catch(e) {}
+    }
 
     if (title || location) {
         try {

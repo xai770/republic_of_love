@@ -260,6 +260,98 @@ def update_my_preferences(
         return {"status": "ok", "message": "Preferences updated"}
 
 
+@router.put("/me/yogi-name")
+def update_yogi_name(
+    payload: dict,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Update the user's yogi_name (public alias).
+    Rejects names that match or closely resemble the user's real identity.
+    """
+    import re
+
+    new_name = (payload.get("yogi_name") or "").strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Yogi-Name darf nicht leer sein.")
+    if len(new_name) < 2:
+        raise HTTPException(status_code=400, detail="Yogi-Name muss mindestens 2 Zeichen haben.")
+    if len(new_name) > 30:
+        raise HTTPException(status_code=400, detail="Yogi-Name darf maximal 30 Zeichen haben.")
+
+    # ── Real-name rejection ──────────────────────────────
+    # Collect all identity fragments we need to protect
+    real_parts = set()
+
+    # display_name from Google OAuth (e.g. "Gershon Pollatschek")
+    display_name = user.get("display_name") or ""
+    if display_name:
+        real_parts.add(display_name.lower())
+        for part in display_name.split():
+            if len(part) >= 3:  # skip initials / short particles
+                real_parts.add(part.lower())
+
+    # email prefix (e.g. "gershele" from "gershele@gmail.com")
+    email = user.get("email") or ""
+    if email and "@" in email:
+        prefix = email.split("@")[0].lower()
+        if len(prefix) >= 3:
+            real_parts.add(prefix)
+
+    # profiles.full_name (may also hold real name from CV import)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT full_name FROM profiles WHERE user_id = %s",
+            (user["user_id"],)
+        )
+        row = cur.fetchone()
+        if row and row["full_name"]:
+            pf_name = row["full_name"].strip()
+            if pf_name and pf_name not in ("New Yogi",):
+                real_parts.add(pf_name.lower())
+                for part in pf_name.split():
+                    if len(part) >= 3:
+                        real_parts.add(part.lower())
+
+    # Check: new yogi_name must not match any real identity fragment
+    candidate = new_name.lower()
+    candidate_normalized = re.sub(r"[^a-zäöüß]", "", candidate)
+
+    for rp in real_parts:
+        rp_normalized = re.sub(r"[^a-zäöüß]", "", rp)
+        if not rp_normalized:
+            continue
+        # Exact match
+        if candidate_normalized == rp_normalized:
+            raise HTTPException(
+                status_code=400,
+                detail="Dein Yogi-Name darf nicht dein echter Name sein. Wähle ein Pseudonym!"
+            )
+        # Substring match (e.g. "Gershon123" still contains "gershon")
+        if len(rp_normalized) >= 3 and rp_normalized in candidate_normalized:
+            raise HTTPException(
+                status_code=400,
+                detail="Dein Yogi-Name enthält deinen echten Namen. Wähle ein Pseudonym!"
+            )
+        # Reverse containment (e.g. candidate "Ger" inside real name)
+        if len(candidate_normalized) >= 3 and candidate_normalized in rp_normalized:
+            raise HTTPException(
+                status_code=400,
+                detail="Dein Yogi-Name ist zu ähnlich zu deinem echten Namen. Wähle ein Pseudonym!"
+            )
+
+    # ── Save ─────────────────────────────────────────────
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET yogi_name = %s WHERE user_id = %s",
+            (new_name, user["user_id"])
+        )
+        conn.commit()
+
+    return {"status": "ok", "yogi_name": new_name}
+
+
 @router.get("/{profile_id}", response_model=ProfileResponse)
 def get_profile(profile_id: int, user: dict = Depends(require_user), conn=Depends(get_db)):
     """
