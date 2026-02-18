@@ -2,7 +2,7 @@
 # turing_fetch — Job posting fetch + classify + enrich pipeline
 # Sources: Arbeitsagentur (AA), Deutsche Bank (DB)
 # Safe to run anytime — idempotent, picks up where it left off.
-# Cron: 0 20 * * * /home/xai/Documents/ty_learn/scripts/turing_fetch.sh >> /var/log/ty_fetch.log 2>&1
+# Cron: 50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force
 #
 # Pipeline Flowchart:
 # ```mermaid
@@ -53,13 +53,15 @@ export PYTHONUNBUFFERED=1
 export LOG_FORMAT=human
 
 # ============================================================================
-# LOGGING - Always append to logs/nightly_fetch.log
+# LOGGING - Always append to logs/turing_fetch.log
 # ============================================================================
 LOGFILE="logs/turing_fetch.log"
-# Only tee to logfile if stdout is a terminal (interactive run).
-# When launched with >> logfile 2>&1 (cron/background), tee would double-write.
 if [ -t 1 ]; then
+    # Interactive: show on screen AND write to logfile
     exec > >(tee -a "$LOGFILE") 2>&1
+else
+    # Cron/background: write to logfile only (no terminal to tee to)
+    exec >> "$LOGFILE" 2>&1
 fi
 
 # Timestamp helper
