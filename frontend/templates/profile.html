@@ -1,6 +1,453 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Profile — talent.yoga{% endblock %}
+{% block title %}Profil — talent.yoga{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   PROFILE BUILDER — Split-pane layout
+   ═══════════════════════════════════════════════════════════ */
+
+.profile-builder {
+    display: flex;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+}
+
+/* ── LEFT PANE ─────────────────────────────────────────── */
+.pb-left {
+    width: 50%;
+    min-width: 360px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+}
+
+/* Tab bar */
+.pb-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--card-bg);
+    flex-shrink: 0;
+}
+
+.pb-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 0.5rem;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+}
+
+.pb-tab:hover {
+    color: var(--text);
+    background: var(--bg);
+}
+
+.pb-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.pb-tab-icon { font-size: 1.1rem; }
+
+/* Activity log (always visible, fills available space) */
+.pb-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pb-log-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    text-align: center;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.pb-log-empty-icon { font-size: 3rem; }
+
+/* Log entries */
+.pb-log-entry {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    max-width: 90%;
+    line-height: 1.45;
+    font-size: 0.9rem;
+    word-wrap: break-word;
+}
+
+.pb-log-entry.yogi {
+    align-self: flex-end;
+    background: var(--primary);
+    color: #fff;
+    border-bottom-right-radius: 0.15rem;
+}
+
+.pb-log-entry.adele {
+    align-self: flex-start;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 0.15rem;
+}
+
+.pb-log-entry.adele .adele-label {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+}
+
+.pb-log-entry.system {
+    align-self: center;
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 0.3rem 0;
+    text-align: center;
+    max-width: 100%;
+}
+
+.pb-log-entry.system .sys-icon { margin-right: 0.3rem; }
+
+/* Input area (bottom of left pane) */
+.pb-input-area {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    background: var(--card-bg);
+}
+
+/* Chat input */
+.pb-chat-input {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.pb-chat-input textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.4;
+    max-height: 120px;
+    min-height: 40px;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.pb-chat-input textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.pb-send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+}
+
+.pb-send-btn:hover { opacity: 0.85; }
+.pb-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Upload input */
+.pb-upload-area {
+    padding: 1.5rem;
+    display: none;
+}
+
+.pb-upload-area.active { display: block; }
+
+.pb-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pb-dropzone:hover, .pb-dropzone.drag-over {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.pb-dropzone-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+.pb-dropzone p {
+    margin: 0.25rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.pb-upload-status {
+    display: none;
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-muted);
+}
+
+/* Form input */
+.pb-form-area {
+    padding: 1rem;
+    display: none;
+    overflow-y: auto;
+    max-height: 45vh;
+}
+
+.pb-form-area.active { display: block; }
+
+.pb-form-section { margin-bottom: 1rem; }
+
+.pb-form-section h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.pb-form-row { margin-bottom: 0.75rem; }
+
+.pb-form-row label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.pb-form-row input,
+.pb-form-row select,
+.pb-form-row textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    background: var(--bg);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+.pb-form-row input:focus,
+.pb-form-row select:focus,
+.pb-form-row textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.pb-form-row small {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.pb-form-half {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.pb-form-btn {
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 0.375rem;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.pb-form-btn:hover { opacity: 0.9; }
+
+/* ── RIGHT PANE ────────────────────────────────────────── */
+.pb-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    min-width: 360px;
+}
+
+.pb-right-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.pb-right-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.pb-right-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.pb-completeness {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+}
+
+.pb-download-btn {
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: none;
+    color: var(--text);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.pb-download-btn:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+}
+
+/* Markdown preview */
+.pb-preview {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 2rem;
+}
+
+.pb-preview-content {
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.65;
+    font-size: 0.95rem;
+}
+
+.pb-preview-content h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0.1rem;
+    border-bottom: none;
+}
+
+.pb-preview-content h1 + p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.2rem;
+}
+
+.pb-preview-content h2 {
+    font-size: 1.15rem;
+    margin-top: 1.8rem;
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.pb-preview-content h3 {
+    font-size: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.pb-preview-content h3 + p em {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.pb-preview-content blockquote {
+    border-left: 3px solid var(--primary);
+    margin: 0 0 1rem 0;
+    padding: 0.5rem 1rem;
+    background: rgba(37, 99, 235, 0.04);
+    border-radius: 0 0.375rem 0.375rem 0;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.pb-preview-content ul, .pb-preview-content ol {
+    padding-left: 1.25rem;
+}
+
+.pb-preview-content li { margin-bottom: 0.3rem; }
+
+/* Highlight animation */
+@keyframes pb-highlight {
+    0% { background: rgba(37, 99, 235, 0.15); }
+    100% { background: transparent; }
+}
+
+.pb-highlight { animation: pb-highlight 2s ease-out; }
+
+/* Empty right pane */
+.pb-preview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    text-align: center;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.pb-preview-empty-icon { font-size: 4rem; }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .profile-builder { flex-direction: column; height: auto; }
+    .pb-left, .pb-right { width: 100%; min-width: 0; border-right: none; }
+    .pb-left { border-bottom: 1px solid var(--border); max-height: 60vh; }
+    .pb-right { min-height: 50vh; }
+}
+
+/* ── Dark mode ─────────────────────────────────────────── */
+[data-theme="dark"] .pb-log-entry.adele { background: var(--bg); }
+[data-theme="dark"] .pb-preview-content blockquote { background: rgba(37, 99, 235, 0.08); }
+[data-theme="dark"] .pb-dropzone:hover,
+[data-theme="dark"] .pb-dropzone.drag-over { background: rgba(37, 99, 235, 0.08); }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="app-layout">
@@ -9,499 +456,335 @@
     {% set active_page = 'profile' %}
     {% include "partials/sidebar.html" %}
     
-    <main class="main-content profile-editor">
-    <h1>Your Profile</h1>
-    
-    {% if not profile %}
-    <!-- Method Selection for New Users -->
-    <div class="method-select" id="method-select">
-        <h2>How would you like to start?</h2>
-        <div class="method-cards">
-            <div class="method-card" onclick="selectMethod('form')">
-                <span class="method-icon">📝</span>
-                <h3>Fill Out Form</h3>
-                <p>Enter your work history step by step</p>
-            </div>
-            <div class="method-card" onclick="selectMethod('upload')">
-                <span class="method-icon">📄</span>
-                <h3>Upload CV</h3>
-                <p>Upload your resume (PDF/DOCX)</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Profile Form -->
-    <div class="profile-form {% if not profile %}hidden{% endif %}" id="profile-form">
-        <section class="form-section">
-            <h2>Basic Info</h2>
-            <form id="basic-info-form" onsubmit="saveBasicInfo(event)">
-                <div class="form-row">
-                    <label for="name">Display Name (Yogi Name)</label>
-                    <input type="text" id="name" name="name" value="{{ profile.display_name or '' }}" required>
-                    <small>This is shown to employers — never your real name</small>
-                </div>
-                <div class="form-row">
-                    <label for="title">Current Title</label>
-                    <input type="text" id="title" name="title" value="{{ profile.title or '' }}" placeholder="e.g., Senior Software Engineer">
-                </div>
-                <div class="form-row">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" name="location" value="{{ profile.location or '' }}" placeholder="e.g., Frankfurt, Germany">
-                </div>
-                <button type="submit" class="btn">Save Basic Info</button>
-            </form>
-        </section>
+    <main class="main-content" style="padding:0; max-width:none;">
+    <div class="profile-builder">
         
-        <section class="form-section">
-            <h2>🎯 Job Preferences</h2>
-            <p class="help-text">Tell us what you're looking for — we'll filter matches accordingly.</p>
-            <form id="preferences-form" onsubmit="savePreferences(event)">
-                <div class="form-row">
-                    <label for="target_roles">Target Roles</label>
-                    <input type="text" id="target_roles" name="target_roles" 
-                           value="{{ profile.desired_roles|join(', ') if profile and profile.desired_roles else '' }}"
-                           placeholder="e.g., Software Engineer, Tech Lead, Architect">
-                    <small>Comma-separated list of roles you're interested in</small>
-                </div>
-                <div class="form-row">
-                    <label for="target_locations">Target Locations</label>
-                    <input type="text" id="target_locations" name="target_locations" 
-                           value="{{ profile.desired_locations|join(', ') if profile and profile.desired_locations else '' }}"
-                           placeholder="e.g., Frankfurt, Munich, Remote">
-                    <small>Comma-separated list of locations (or "Remote")</small>
-                </div>
-                <div class="form-row form-row-half">
+        <!-- ═══ LEFT PANE ═══ -->
+        <div class="pb-left">
+            <!-- Tab bar -->
+            <div class="pb-tabs">
+                <button class="pb-tab active" data-tab="chat" onclick="switchTab('chat')">
+                    <span class="pb-tab-icon">🎙️</span> Adele
+                </button>
+                <button class="pb-tab" data-tab="upload" onclick="switchTab('upload')">
+                    <span class="pb-tab-icon">📄</span> Upload
+                </button>
+                <button class="pb-tab" data-tab="form" onclick="switchTab('form')">
+                    <span class="pb-tab-icon">📝</span> Formular
+                </button>
+            </div>
+
+            <!-- Activity log (always visible) -->
+            <div class="pb-log" id="pb-log">
+                <div class="pb-log-empty" id="pb-log-empty">
+                    <div class="pb-log-empty-icon">🎙️</div>
                     <div>
-                        <label for="salary_min">Minimum Salary (€)</label>
-                        <input type="number" id="salary_min" name="salary_min" 
-                               value="{{ profile.expected_salary_min or '' }}"
-                               placeholder="e.g., 70000" step="1000">
-                    </div>
-                    <div>
-                        <label for="salary_max">Maximum Salary (€)</label>
-                        <input type="number" id="salary_max" name="salary_max" 
-                               value="{{ profile.expected_salary_max or '' }}"
-                               placeholder="e.g., 100000" step="1000">
+                        <strong>Willkommen beim Profil-Builder!</strong><br>
+                        Sprich mit Adele, lade deinen Lebenslauf hoch, oder fülle das Formular aus.
                     </div>
                 </div>
-                <div class="form-row">
-                    <label for="min_seniority">Minimum Job Level</label>
-                    <select id="min_seniority" name="min_seniority">
-                        <option value="">Any level</option>
-                        <option value="junior" {% if profile and profile.min_seniority == 'junior' %}selected{% endif %}>Junior / Entry</option>
-                        <option value="mid" {% if profile and profile.min_seniority == 'mid' %}selected{% endif %}>Mid-level</option>
-                        <option value="senior" {% if profile and profile.min_seniority == 'senior' %}selected{% endif %}>Senior</option>
-                        <option value="lead" {% if profile and profile.min_seniority == 'lead' %}selected{% endif %}>Lead / Head</option>
-                    </select>
-                    <small>Don't show me jobs below this level</small>
-                </div>
-                <button type="submit" class="btn">Save Preferences</button>
-            </form>
-        </section>
-        
-        <section class="form-section">
-            <div class="section-header">
-                <h2>Work History</h2>
-                <button class="btn btn-secondary" onclick="showUploadModal()">📄 Import from CV</button>
             </div>
-            
-            <div id="work-history-list">
-                Loading work history...
-            </div>
-            
-            <button class="btn btn-add" onclick="showWorkHistoryModal()">+ Add Work Experience</button>
-        </section>
-        
-        <section class="form-section">
-            <h2>Extracted Skills</h2>
-            <p class="help-text">These skills are automatically extracted from your work history. Edit your work descriptions to improve them.</p>
-            <div id="skills-list">
-                Loading skills...
-            </div>
-            <button class="btn btn-secondary" onclick="reextractSkills()">🔄 Re-extract Skills</button>
-        </section>
-        
-        <section class="form-section notification-settings">
-            <h2>🔔 Benachrichtigungen</h2>
-            <p class="help-text">Erhalte Updates über neue passende Stellen und Antworten von Mira per E-Mail.</p>
-            
-            <div id="notification-consent" class="notification-consent">
-                {% if notification_consent %}
-                <div class="consent-active">
-                    <div class="form-row">
-                        <label for="notification-email">E-Mail für Benachrichtigungen</label>
-                        <div class="email-row">
-                            <input type="email" id="notification-email" value="{{ notification_email or '' }}" placeholder="deine@email.de">
-                            <button class="btn btn-secondary" onclick="updateNotificationEmail()">Speichern</button>
-                        </div>
-                        <small>Eingewilligt am: {{ notification_consent_at.strftime('%d.%m.%Y') if notification_consent_at else 'N/A' }}</small>
-                    </div>
-                    
-                    <div class="form-row notification-prefs">
-                        <label>Was möchtest du erhalten?</label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="pref-job-alerts" {% if notification_preferences.get('job_alerts', True) %}checked{% endif %} onchange="updateNotificationPrefs()">
-                            Neue passende Stellen
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="pref-mira-responses" {% if notification_preferences.get('mira_responses', True) %}checked{% endif %} onchange="updateNotificationPrefs()">
-                            Antworten von Mira
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="pref-journey-updates" {% if notification_preferences.get('journey_updates', False) %}checked{% endif %} onchange="updateNotificationPrefs()">
-                            Updates zu meinen Bewerbungen
-                        </label>
-                    </div>
-                    
-                    <div class="form-row">
-                        <label>Wie oft?</label>
-                        <div class="frequency-options">
-                            <label class="radio-label">
-                                <input type="radio" name="frequency" value="immediate" {% if notification_preferences.get('frequency', 'daily') == 'immediate' %}checked{% endif %} onchange="updateNotificationPrefs()">
-                                Sofort
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="frequency" value="daily" {% if notification_preferences.get('frequency', 'daily') == 'daily' %}checked{% endif %} onchange="updateNotificationPrefs()">
-                                Täglich
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="frequency" value="weekly" {% if notification_preferences.get('frequency', 'daily') == 'weekly' %}checked{% endif %} onchange="updateNotificationPrefs()">
-                                Wöchentlich
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-danger btn-small" onclick="revokeNotificationConsent()">
-                        Alle Benachrichtigungen deaktivieren
+
+            <!-- Input area — changes per tab -->
+            <div class="pb-input-area">
+                <!-- Chat input (default) -->
+                <div class="pb-chat-input" id="pb-input-chat">
+                    <textarea id="pb-chat-text" rows="1" placeholder="Schreib Adele..."
+                              onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendToAdele()}"
+                              oninput="autoResize(this)"></textarea>
+                    <button class="pb-send-btn" onclick="sendToAdele()" id="pb-send-btn" title="Senden">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                        </svg>
                     </button>
                 </div>
-                {% else %}
-                <div class="consent-request">
-                    <p>Möchtest du informiert werden, wenn Mira eine Antwort für dich hat oder neue passende Stellen gefunden werden?</p>
-                    <div class="form-row">
-                        <input type="email" id="consent-email" placeholder="Deine E-Mail-Adresse" class="consent-email-input">
+
+                <!-- Upload input -->
+                <div class="pb-upload-area" id="pb-input-upload">
+                    <div class="pb-dropzone" id="pb-dropzone"
+                         ondrop="handleDrop(event)" ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         onclick="document.getElementById('pb-file-input').click()">
+                        <div class="pb-dropzone-icon">📄</div>
+                        <p><strong>Lebenslauf hierher ziehen</strong></p>
+                        <p>oder klicken zum Auswählen</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted)">PDF, DOCX, TXT</p>
                     </div>
-                    <div class="consent-actions">
-                        <button class="btn" onclick="grantNotificationConsent()">Ja, benachrichtigt mich</button>
+                    <input type="file" id="pb-file-input" accept=".pdf,.docx,.doc,.txt"
+                           onchange="handleFileSelect(event)" hidden>
+                    <div class="pb-upload-status" id="pb-upload-status">
+                        <div class="spinner"></div>
+                        <p>Lebenslauf wird analysiert...</p>
                     </div>
-                    <small class="privacy-note">Du kannst dies jederzeit in den Einstellungen ändern. <a href="/privacy">Datenschutz</a></small>
                 </div>
-                {% endif %}
+
+                <!-- Form input -->
+                <div class="pb-form-area" id="pb-input-form">
+                    <div class="pb-form-section">
+                        <h3>Basisdaten</h3>
+                        <div class="pb-form-row">
+                            <label>Aktuelle Position</label>
+                            <input type="text" id="pf-title" placeholder="z.B. Gesundheits- und Krankenpfleger">
+                        </div>
+                        <div class="pb-form-row">
+                            <label>Standort</label>
+                            <input type="text" id="pf-location" placeholder="z.B. Frankfurt am Main">
+                        </div>
+                    </div>
+                    <div class="pb-form-section">
+                        <h3>Suchpräferenzen</h3>
+                        <div class="pb-form-row">
+                            <label>Wunschrollen</label>
+                            <input type="text" id="pf-roles" placeholder="z.B. Teamleitung, Stationsleitung">
+                            <small>Komma-getrennt</small>
+                        </div>
+                        <div class="pb-form-row">
+                            <label>Wunschorte</label>
+                            <input type="text" id="pf-locations" placeholder="z.B. Frankfurt, München, Remote">
+                            <small>Komma-getrennt</small>
+                        </div>
+                        <div class="pb-form-half">
+                            <div class="pb-form-row">
+                                <label>Gehalt min (€)</label>
+                                <input type="number" id="pf-salary-min" step="1000" placeholder="z.B. 45000">
+                            </div>
+                            <div class="pb-form-row">
+                                <label>Gehalt max (€)</label>
+                                <input type="number" id="pf-salary-max" step="1000" placeholder="z.B. 65000">
+                            </div>
+                        </div>
+                        <div class="pb-form-row">
+                            <label>Mindestlevel</label>
+                            <select id="pf-seniority">
+                                <option value="">Egal</option>
+                                <option value="junior">Junior / Einsteiger</option>
+                                <option value="mid">Mid-level</option>
+                                <option value="senior">Senior</option>
+                                <option value="lead">Lead / Leitung</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="pb-form-btn" onclick="saveFormData()">💾 Speichern</button>
+                </div>
             </div>
-        </section>
+        </div>
+
+        <!-- ═══ RIGHT PANE ═══ -->
+        <div class="pb-right">
+            <div class="pb-right-header">
+                <h2>📋 Profil</h2>
+                <div class="pb-right-actions">
+                    <span class="pb-completeness" id="pb-completeness">0%</span>
+                    <button class="pb-download-btn" onclick="downloadProfile()" title="Als Markdown herunterladen">
+                        ⬇ Download
+                    </button>
+                </div>
+            </div>
+            <div class="pb-preview" id="pb-preview">
+                <div class="pb-preview-content" id="pb-preview-content">
+                    <div class="pb-preview-empty" id="pb-preview-empty">
+                        <div class="pb-preview-empty-icon">📋</div>
+                        <div>
+                            <strong>Dein Profil erscheint hier</strong><br>
+                            Sobald du Daten eingibst, baut sich dein Profil-Dokument live auf.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     </main>
-</div><!-- /.app-layout -->
-
-<!-- Work History Modal -->
-<div class="modal" id="work-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="work-modal-title">Add Work Experience</h2>
-            <button class="close-btn" onclick="closeWorkModal()">&times;</button>
-        </div>
-        <form id="work-history-form">
-            <input type="hidden" id="work-id" name="work_history_id">
-            <div class="form-row">
-                <label for="company">Company *</label>
-                <input type="text" id="company" name="company" required>
-            </div>
-            <div class="form-row">
-                <label for="job-title">Job Title *</label>
-                <input type="text" id="job-title" name="title" required>
-            </div>
-            <div class="form-row form-row-half">
-                <div>
-                    <label for="start-date">Start Date *</label>
-                    <input type="date" id="start-date" name="start_date" required>
-                </div>
-                <div>
-                    <label for="end-date">End Date</label>
-                    <input type="date" id="end-date" name="end_date">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="is-current" onchange="toggleEndDate()"> Current position
-                    </label>
-                </div>
-            </div>
-            <div class="form-row">
-                <label for="job-location">Location</label>
-                <input type="text" id="job-location" name="location" placeholder="e.g., Frankfurt, Germany">
-            </div>
-            <div class="form-row">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" rows="6" placeholder="Describe your responsibilities, achievements, and technologies used. Include numbers for better skill matching!"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeWorkModal()">Cancel</button>
-                <button type="submit" class="btn">Save</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- CV Upload Modal -->
-<div class="modal" id="upload-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Upload Your CV</h2>
-            <button class="close-btn" onclick="closeUploadModal()">&times;</button>
-        </div>
-        <div class="upload-area" id="upload-area" 
-             ondrop="handleDrop(event)" 
-             ondragover="handleDragOver(event)"
-             ondragleave="handleDragLeave(event)">
-            <span class="upload-icon">📄</span>
-            <p>Drop your CV here</p>
-            <p>or</p>
-            <input type="file" id="cv-file" accept=".pdf,.docx,.doc,.txt" onchange="handleFileSelect(event)" hidden>
-            <button class="btn" onclick="document.getElementById('cv-file').click()">Browse Files</button>
-            <p class="help-text">Supported: PDF, DOCX, TXT</p>
-        </div>
-        <div id="upload-progress" class="hidden">
-            <div class="spinner"></div>
-            <p>Parsing your CV...</p>
-        </div>
-        <div id="upload-results" class="hidden">
-            <h3>Anonymized Profile Preview</h3>
-            <p class="help-text">Review the extracted data. Company names and dates have been anonymized.</p>
-            <div id="parsed-summary" style="margin-bottom:1rem;"></div>
-            <div id="parsed-skills" style="margin-bottom:1rem;"></div>
-            <h4>Work History</h4>
-            <div id="parsed-jobs"></div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
-                <button class="btn" onclick="importCVData()">Import to Profile</button>
-            </div>
-        </div>
-        <p class="help-text privacy-note">⚠️ Your CV is processed locally and not stored. We only extract work history.</p>
-    </div>
 </div>
 
 <script>
-// Load data on page load
-document.addEventListener('DOMContentLoaded', () => {
-    loadWorkHistory();
-    loadSkills();
-});
+// ═══════════════════════════════════════════════════════════
+// PROFILE BUILDER — Frontend Logic
+// ═══════════════════════════════════════════════════════════
 
-async function loadWorkHistory() {
-    const container = document.getElementById('work-history-list');
-    try {
-        const response = await fetch('/api/profiles/me/work-history');
-        if (response.status === 404) {
-            container.innerHTML = '<p class="help-text">No work history yet. Add your first job!</p>';
-            return;
-        }
-        if (!response.ok) throw new Error('Failed to load');
-        
-        const jobs = await response.json();
-        if (jobs.length === 0) {
-            container.innerHTML = '<p class="help-text">No work history yet. Add your first job!</p>';
-            return;
-        }
-        
-        container.innerHTML = jobs.map(job => `
-            <div class="work-card">
-                <div class="work-card-header">
-                    <div>
-                        <h4>${job.company || 'Unknown Company'} — ${job.title || 'Unknown Title'}</h4>
-                        <span class="dates">${formatDate(job.start_date)} - ${job.is_current ? 'Present' : formatDate(job.end_date)}</span>
-                    </div>
-                    <div class="work-card-actions">
-                        <button onclick="showWorkHistoryModal(${job.work_history_id})">✏️</button>
-                        <button onclick="deleteWorkHistory(${job.work_history_id})">🗑️</button>
-                    </div>
-                </div>
-                ${job.description ? `<p class="description">${job.description}</p>` : ''}
-            </div>
-        `).join('');
-    } catch (err) {
-        container.innerHTML = '<p class="error">Error loading work history</p>';
-    }
-}
+let currentTab = 'chat';
+let profileMarkdown = '';
 
-async function loadSkills() {
-    const container = document.getElementById('skills-list');
-    try {
-        const response = await fetch('/api/profiles/me/facets');
-        if (!response.ok) throw new Error('Failed to load');
-        
-        const facets = await response.json();
-        if (facets.length === 0) {
-            container.innerHTML = '<p class="help-text">No skills extracted yet. Add work history first.</p>';
-            return;
-        }
-        
-        const skills = [...new Set(facets.map(f => f.skill).filter(Boolean))];
-        container.innerHTML = `
-            <div class="skills-container">
-                ${skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
-            </div>
-            <p class="help-text" style="margin-top:1rem">${skills.length} skills extracted from your work history</p>
-        `;
-    } catch (err) {
-        container.innerHTML = '<p class="help-text">Add work history to see extracted skills.</p>';
-    }
-}
+// ── TAB SWITCHING ──────────────────────────────────────────
 
-function formatDate(dateStr) {
-    if (!dateStr) return '?';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-}
-
-// Method selection
-function selectMethod(method) {
-    document.getElementById('method-select').classList.add('hidden');
-    document.getElementById('profile-form').classList.remove('hidden');
-    if (method === 'upload') {
-        showUploadModal();
-    }
-}
-
-// Basic Info save (creates profile for new users via upsert)
-async function saveBasicInfo(event) {
-    event.preventDefault();
-    const data = {
-        name: document.getElementById('name').value || null,
-        title: document.getElementById('title').value || null,
-        location: document.getElementById('location').value || null
-    };
-    try {
-        const resp = await fetch('/api/profiles/me', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        if (!resp.ok) throw new Error('Save failed');
-        // If this was the first save (new user), reload to get full editor
-        const methodSelect = document.getElementById('method-select');
-        if (methodSelect && !methodSelect.classList.contains('hidden')) {
-            location.reload();
-        } else {
-            alert('Saved!');
-        }
-    } catch (err) {
-        alert('Error saving basic info: ' + err.message);
-    }
-}
-
-// Work History Modal
-let editingWorkId = null;
-
-function showWorkHistoryModal(workId = null) {
-    editingWorkId = workId;
-    const modal = document.getElementById('work-modal');
-    const form = document.getElementById('work-history-form');
-    const title = document.getElementById('work-modal-title');
-    
-    form.reset();
-    
-    if (workId) {
-        title.textContent = 'Edit Work Experience';
-        // Fetch and populate form
-        fetch(`/api/profiles/me/work-history`)
-            .then(r => r.json())
-            .then(jobs => {
-                const job = jobs.find(j => j.work_history_id === workId);
-                if (job) {
-                    document.getElementById('work-id').value = job.work_history_id;
-                    document.getElementById('company').value = job.company || '';
-                    document.getElementById('job-title').value = job.title || '';
-                    document.getElementById('start-date').value = job.start_date || '';
-                    document.getElementById('end-date').value = job.end_date || '';
-                    document.getElementById('is-current').checked = job.is_current;
-                    document.getElementById('job-location').value = job.location || '';
-                    document.getElementById('description').value = job.description || '';
-                    toggleEndDate();
-                }
-            });
-    } else {
-        title.textContent = 'Add Work Experience';
-        document.getElementById('work-id').value = '';
-    }
-    
-    modal.classList.add('show');
-}
-
-function closeWorkModal() {
-    document.getElementById('work-modal').classList.remove('show');
-    editingWorkId = null;
-}
-
-function toggleEndDate() {
-    const isCurrent = document.getElementById('is-current').checked;
-    document.getElementById('end-date').disabled = isCurrent;
-    if (isCurrent) document.getElementById('end-date').value = '';
-}
-
-document.getElementById('work-history-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        company: form.company.value,
-        title: form.title.value,
-        start_date: form.start_date.value,
-        end_date: form.end_date.value || null,
-        location: form.location.value || null,
-        description: form.description.value || null,
-        is_current: document.getElementById('is-current').checked
-    };
-    
-    const workId = document.getElementById('work-id').value;
-    const url = workId 
-        ? `/api/profiles/me/work-history/${workId}`
-        : '/api/profiles/me/work-history';
-    const method = workId ? 'PUT' : 'POST';
-    
-    const response = await fetch(url, {
-        method,
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.pb-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
     });
-    
-    if (response.ok) {
-        closeWorkModal();
-        loadWorkHistory();
+    document.getElementById('pb-input-chat').style.display = tab === 'chat' ? 'flex' : 'none';
+    document.getElementById('pb-input-upload').style.display = tab === 'upload' ? 'block' : 'none';
+    document.getElementById('pb-input-upload').classList.toggle('active', tab === 'upload');
+    document.getElementById('pb-input-form').style.display = tab === 'form' ? 'block' : 'none';
+    document.getElementById('pb-input-form').classList.toggle('active', tab === 'form');
+    if (tab === 'chat') document.getElementById('pb-chat-text').focus();
+}
+
+// ── AUTO-RESIZE TEXTAREA ───────────────────────────────────
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── ACTIVITY LOG ───────────────────────────────────────────
+
+function addLogEntry(type, text, sender) {
+    const log = document.getElementById('pb-log');
+    const empty = document.getElementById('pb-log-empty');
+    if (empty) empty.remove();
+
+    const entry = document.createElement('div');
+    entry.className = 'pb-log-entry ' + type;
+
+    if (type === 'adele') {
+        entry.innerHTML = '<div class="adele-label">Adele</div>' + formatLogText(text);
+    } else if (type === 'system') {
+        const icon = sender === 'cv_upload' ? '📄' : sender === 'form_edit' ? '📝' : sender === 'cv_import' ? '📥' : 'ℹ️';
+        entry.innerHTML = '<span class="sys-icon">' + icon + '</span>' + text;
     } else {
-        alert('Error saving work history');
+        entry.textContent = text;
     }
-});
 
-async function deleteWorkHistory(workId) {
-    if (!confirm('Delete this work experience?')) return;
-    
-    const response = await fetch(`/api/profiles/me/work-history/${workId}`, {method: 'DELETE'});
-    if (response.ok) {
-        loadWorkHistory();
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function formatLogText(text) {
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+}
+
+// ── LOAD EXISTING DATA ─────────────────────────────────────
+
+async function loadActivityLog() {
+    try {
+        const res = await fetch('/api/profiles/me/activity-log');
+        if (!res.ok) return;
+        const entries = await res.json();
+        if (entries.length === 0) return;
+
+        const empty = document.getElementById('pb-log-empty');
+        if (empty) empty.remove();
+
+        entries.forEach(e => {
+            if (e.sender === 'yogi') {
+                addLogEntry('yogi', e.body);
+            } else if (e.sender === 'adele') {
+                addLogEntry('adele', e.body);
+            } else if (e.sender === 'system') {
+                addLogEntry('system', e.body, e.type);
+            }
+        });
+    } catch (err) {
+        console.warn('Failed to load activity log:', err);
     }
 }
 
-// CV Upload
-function showUploadModal() {
-    document.getElementById('upload-modal').classList.add('show');
-    document.getElementById('upload-area').classList.remove('hidden');
-    document.getElementById('upload-progress').classList.add('hidden');
-    document.getElementById('upload-results').classList.add('hidden');
+async function loadProfile() {
+    try {
+        const res = await fetch('/api/profiles/me/markdown');
+        if (!res.ok) return;
+        const data = await res.json();
+        profileMarkdown = data.markdown;
+        renderProfile(data.markdown, data.completeness);
+        loadFormDefaults();
+    } catch (err) {
+        console.warn('Failed to load profile:', err);
+    }
 }
 
-function closeUploadModal() {
-    document.getElementById('upload-modal').classList.remove('show');
+function renderProfile(md, completeness) {
+    const container = document.getElementById('pb-preview-content');
+    const emptyEl = document.getElementById('pb-preview-empty');
+
+    if (!md || md.startsWith('_Noch kein')) {
+        if (emptyEl) emptyEl.style.display = 'flex';
+        return;
+    }
+
+    if (emptyEl) emptyEl.style.display = 'none';
+    container.innerHTML = marked.parse(md);
+    document.getElementById('pb-completeness').textContent = completeness + '%';
+    profileMarkdown = md;
 }
+
+async function loadFormDefaults() {
+    try {
+        const res = await fetch('/api/profiles/me');
+        if (!res.ok) return;
+        const p = await res.json();
+        if (p.title) document.getElementById('pf-title').value = p.title;
+        if (p.location) document.getElementById('pf-location').value = p.location;
+        if (p.desired_roles && p.desired_roles.length) document.getElementById('pf-roles').value = p.desired_roles.join(', ');
+        if (p.desired_locations && p.desired_locations.length) document.getElementById('pf-locations').value = p.desired_locations.join(', ');
+        if (p.expected_salary_min) document.getElementById('pf-salary-min').value = p.expected_salary_min;
+        if (p.expected_salary_max) document.getElementById('pf-salary-max').value = p.expected_salary_max;
+        if (p.min_seniority) document.getElementById('pf-seniority').value = p.min_seniority;
+    } catch(e) {}
+}
+
+// ── ADELE CHAT ─────────────────────────────────────────────
+
+async function sendToAdele() {
+    const input = document.getElementById('pb-chat-text');
+    const text = input.value.trim();
+    if (!text) return;
+
+    addLogEntry('yogi', text);
+    input.value = '';
+    autoResize(input);
+
+    const btn = document.getElementById('pb-send-btn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/adele/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ message: text })
+        });
+        if (!res.ok) throw new Error('Chat failed');
+        const data = await res.json();
+        addLogEntry('adele', data.reply);
+        setTimeout(refreshProfile, 500);
+    } catch (err) {
+        addLogEntry('system', 'Fehler bei der Kommunikation mit Adele.', 'error');
+    } finally {
+        btn.disabled = false;
+        input.focus();
+    }
+}
+
+async function refreshProfile() {
+    try {
+        const res = await fetch('/api/profiles/me/markdown');
+        if (!res.ok) return;
+        const data = await res.json();
+        const oldMd = profileMarkdown;
+        renderProfile(data.markdown, data.completeness);
+        if (oldMd !== data.markdown) {
+            const el = document.getElementById('pb-preview-content');
+            el.classList.add('pb-highlight');
+            setTimeout(() => el.classList.remove('pb-highlight'), 2000);
+        }
+    } catch(e) {}
+}
+
+// ── CV UPLOAD ──────────────────────────────────────────────
 
 function handleDragOver(e) {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
+    document.getElementById('pb-dropzone').classList.add('drag-over');
 }
 
 function handleDragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
+    document.getElementById('pb-dropzone').classList.remove('drag-over');
 }
 
 function handleDrop(e) {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    document.getElementById('pb-dropzone').classList.remove('drag-over');
     const file = e.dataTransfer.files[0];
     if (file) uploadCV(file);
 }
@@ -512,267 +795,139 @@ function handleFileSelect(e) {
 }
 
 async function uploadCV(file) {
-    document.getElementById('upload-area').classList.add('hidden');
-    document.getElementById('upload-progress').classList.remove('hidden');
-    
+    document.getElementById('pb-dropzone').style.display = 'none';
+    document.getElementById('pb-upload-status').style.display = 'block';
+    addLogEntry('system', 'CV hochgeladen: ' + file.name, 'cv_upload');
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     try {
-        const response = await fetch('/api/profiles/me/parse-cv', {
+        const res = await fetch('/api/profiles/me/parse-cv', {
             method: 'POST',
             body: formData
         });
-        
-        if (!response.ok) throw new Error('Upload failed');
-        
-        const jobs = await response.json();
-        showParsedJobs(jobs);
-    } catch (err) {
-        alert('Error parsing CV: ' + err.message);
-        document.getElementById('upload-area').classList.remove('hidden');
-        document.getElementById('upload-progress').classList.add('hidden');
-    }
-}
-
-let parsedCVData = null;
-
-function showParsedJobs(data) {
-    parsedCVData = data;
-    document.getElementById('upload-progress').classList.add('hidden');
-    document.getElementById('upload-results').classList.remove('hidden');
-
-    // Summary
-    const summary = document.getElementById('parsed-summary');
-    const parts = [];
-    if (data.current_title) parts.push(`<strong>${data.current_title}</strong>`);
-    if (data.career_level) parts.push(`Level: ${data.career_level}`);
-    if (data.years_experience) parts.push(`${data.years_experience} years experience`);
-    if (data.profile_summary) parts.push(`<em>${data.profile_summary}</em>`);
-    summary.innerHTML = parts.join(' · ');
-
-    // Skills
-    const skillsEl = document.getElementById('parsed-skills');
-    const allSkills = [
-        ...(data.skills || []),
-        ...(data.languages || []),
-        ...(data.certifications || [])
-    ];
-    if (allSkills.length > 0) {
-        skillsEl.innerHTML = '<h4>Skills & Languages</h4><div class="skills-container">' +
-            allSkills.map(s => `<span class="skill-tag">${s}</span>`).join('') +
-            '</div>';
-    }
-
-    // Work history
-    const container = document.getElementById('parsed-jobs');
-    const history = data.work_history || [];
-    if (history.length === 0) {
-        container.innerHTML = '<p class="help-text">No work history extracted.</p>';
-        return;
-    }
-    container.innerHTML = history.map((job, i) => `
-        <div class="parsed-job">
-            <label>
-                <input type="checkbox" checked data-index="${i}">
-                <strong>${job.employer_description || 'a company'}</strong> — ${job.role || 'unknown role'}
-                <br><small>${job.duration_years ? job.duration_years + ' years' : ''} ${job.industry ? '· ' + job.industry : ''}</small>
-                ${job.key_responsibilities && job.key_responsibilities.length > 0
-                    ? '<br><small>' + job.key_responsibilities.slice(0, 3).join('; ') + '</small>'
-                    : ''}
-            </label>
-        </div>
-    `).join('');
-}
-
-async function importCVData() {
-    if (!parsedCVData) return;
-
-    // Filter work_history to only checked entries
-    const checkboxes = document.querySelectorAll('#parsed-jobs input[type=checkbox]');
-    const selectedWork = Array.from(checkboxes)
-        .filter(cb => cb.checked)
-        .map(cb => parsedCVData.work_history[parseInt(cb.dataset.index)]);
-
-    const payload = {
-        current_title: parsedCVData.current_title || null,
-        career_level: parsedCVData.career_level || null,
-        years_experience: parsedCVData.years_experience || null,
-        skills: parsedCVData.skills || [],
-        languages: parsedCVData.languages || [],
-        certifications: parsedCVData.certifications || [],
-        profile_summary: parsedCVData.profile_summary || null,
-        work_history: selectedWork,
-        education: parsedCVData.education || []
-    };
-
-    try {
-        const resp = await fetch('/api/profiles/me/import-cv', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.detail || 'Import failed');
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Upload fehlgeschlagen');
         }
-        const result = await resp.json();
-        closeUploadModal();
-        alert(result.message || 'Profile imported!');
-        location.reload();
+        const data = await res.json();
+
+        const parts = [];
+        if (data.current_title) parts.push(data.current_title);
+        if (data.work_history && data.work_history.length) parts.push(data.work_history.length + ' Positionen');
+        if (data.skills && data.skills.length) parts.push(data.skills.length + ' Skills');
+        addLogEntry('adele', 'Ich habe aus deinem Lebenslauf extrahiert: ' + parts.join(', ') + '. Importiere jetzt...');
+
+        await importCV(data);
+        addLogEntry('system', 'Lebenslauf-Daten importiert ✓', 'cv_import');
+        await refreshProfile();
+
     } catch (err) {
-        alert('Error importing CV: ' + err.message);
+        addLogEntry('system', 'CV-Fehler: ' + err.message, 'error');
+    } finally {
+        document.getElementById('pb-dropzone').style.display = '';
+        document.getElementById('pb-upload-status').style.display = 'none';
     }
 }
 
-// Skills
-async function reextractSkills() {
-    if (!confirm('Re-extract skills from your work history? This may take a moment.')) return;
-    
-    const response = await fetch('/api/profiles/me/reextract', {method: 'POST'});
-    if (response.ok) {
-        loadSkills();
-        alert('Skills re-extracted!');
-    }
-}
-
-// Job Preferences
-async function savePreferences(event) {
-    event.preventDefault();
-    
-    const targetRolesRaw = document.getElementById('target_roles').value;
-    const targetLocationsRaw = document.getElementById('target_locations').value;
-    const salaryMin = document.getElementById('salary_min').value;
-    const salaryMax = document.getElementById('salary_max').value;
-    const minSeniority = document.getElementById('min_seniority').value;
-    
-    // Parse comma-separated into arrays
-    const targetRoles = targetRolesRaw.split(',').map(s => s.trim()).filter(Boolean);
-    const targetLocations = targetLocationsRaw.split(',').map(s => s.trim()).filter(Boolean);
-    
-    const data = {
-        desired_roles: targetRoles,
-        desired_locations: targetLocations,
-        expected_salary_min: salaryMin ? parseInt(salaryMin) : null,
-        expected_salary_max: salaryMax ? parseInt(salaryMax) : null,
-        min_seniority: minSeniority || null
+async function importCV(data) {
+    const payload = {
+        current_title: data.current_title || null,
+        career_level: data.career_level || null,
+        years_experience: data.years_experience || null,
+        skills: data.skills || [],
+        languages: data.languages || [],
+        certifications: data.certifications || [],
+        profile_summary: data.profile_summary || null,
+        work_history: data.work_history || [],
+        education: data.education || []
     };
-    
-    try {
-        const response = await fetch('/api/profiles/me/preferences', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) throw new Error('Failed to save preferences');
-        
-        alert('Präferenzen gespeichert!');
-    } catch (err) {
-        alert('Fehler: ' + err.message);
+    const res = await fetch('/api/profiles/me/import-cv', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Import fehlgeschlagen');
     }
 }
 
-// Notification Consent (P0.8)
-async function grantNotificationConsent() {
-    const email = document.getElementById('consent-email').value.trim();
-    if (!email) {
-        alert('Bitte gib eine E-Mail-Adresse ein.');
+// ── FORM SAVE ──────────────────────────────────────────────
+
+async function saveFormData() {
+    const title = document.getElementById('pf-title').value.trim();
+    const location = document.getElementById('pf-location').value.trim();
+    const roles = document.getElementById('pf-roles').value.trim();
+    const locations = document.getElementById('pf-locations').value.trim();
+    const salaryMin = document.getElementById('pf-salary-min').value;
+    const salaryMax = document.getElementById('pf-salary-max').value;
+    const seniority = document.getElementById('pf-seniority').value;
+
+    const changes = [];
+
+    if (title || location) {
+        try {
+            await fetch('/api/profiles/me', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title: title || null, location: location || null })
+            });
+            if (title) changes.push('Position: ' + title);
+            if (location) changes.push('Standort: ' + location);
+        } catch(e) {}
+    }
+
+    if (roles || locations || salaryMin || salaryMax || seniority) {
+        const prefs = {};
+        if (roles) prefs.desired_roles = roles.split(',').map(s => s.trim()).filter(Boolean);
+        if (locations) prefs.desired_locations = locations.split(',').map(s => s.trim()).filter(Boolean);
+        if (salaryMin) prefs.expected_salary_min = parseInt(salaryMin);
+        if (salaryMax) prefs.expected_salary_max = parseInt(salaryMax);
+        if (seniority) prefs.min_seniority = seniority;
+
+        try {
+            await fetch('/api/profiles/me/preferences', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(prefs)
+            });
+            if (roles) changes.push('Wunschrollen aktualisiert');
+            if (locations) changes.push('Wunschorte aktualisiert');
+            if (salaryMin || salaryMax) changes.push('Gehaltsvorstellung aktualisiert');
+            if (seniority) changes.push('Mindestlevel: ' + seniority);
+        } catch(e) {}
+    }
+
+    if (changes.length > 0) {
+        addLogEntry('system', changes.join(' · '), 'form_edit');
+        await refreshProfile();
+    }
+}
+
+// ── DOWNLOAD ───────────────────────────────────────────────
+
+function downloadProfile() {
+    if (!profileMarkdown || profileMarkdown.startsWith('_Noch kein')) {
+        alert('Noch kein Profil zum Herunterladen.');
         return;
     }
-    
-    // Basic email validation
-    if (!email.includes('@') || !email.includes('.')) {
-        alert('Bitte gib eine gültige E-Mail-Adresse ein.');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/notifications/consent', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                notification_email: email,
-                grant_consent: true,
-                preferences: {
-                    job_alerts: true,
-                    mira_responses: true,
-                    journey_updates: false,
-                    frequency: 'daily'
-                }
-            })
-        });
-        
-        if (!response.ok) throw new Error('Fehler beim Speichern');
-        
-        // Reload page to show consent-active state
-        location.reload();
-    } catch (err) {
-        alert('Fehler: ' + err.message);
-    }
+    const blob = new Blob([profileMarkdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'profil.md';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
-async function revokeNotificationConsent() {
-    if (!confirm('Möchtest du wirklich alle Benachrichtigungen deaktivieren?')) return;
-    
-    try {
-        const response = await fetch('/api/notifications/consent', {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) throw new Error('Fehler beim Widerrufen');
-        
-        // Reload page to show consent-request state
-        location.reload();
-    } catch (err) {
-        alert('Fehler: ' + err.message);
-    }
-}
+// ── INIT ───────────────────────────────────────────────────
 
-async function updateNotificationEmail() {
-    const email = document.getElementById('notification-email').value.trim();
-    if (!email) {
-        alert('Bitte gib eine E-Mail-Adresse ein.');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/notifications/consent', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ notification_email: email })
-        });
-        
-        if (!response.ok) throw new Error('Fehler beim Speichern');
-        
-        alert('E-Mail-Adresse aktualisiert!');
-    } catch (err) {
-        alert('Fehler: ' + err.message);
-    }
-}
-
-async function updateNotificationPrefs() {
-    const prefs = {
-        job_alerts: document.getElementById('pref-job-alerts').checked,
-        mira_responses: document.getElementById('pref-mira-responses').checked,
-        journey_updates: document.getElementById('pref-journey-updates').checked,
-        frequency: document.querySelector('input[name="frequency"]:checked')?.value || 'daily'
-    };
-    
-    try {
-        const response = await fetch('/api/notifications/consent', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ preferences: prefs })
-        });
-        
-        if (!response.ok) throw new Error('Fehler beim Speichern');
-        
-        // Silent success for preference toggles
-    } catch (err) {
-        alert('Fehler: ' + err.message);
-    }
-}
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadProfile();
+    await loadActivityLog();
+    switchTab('chat');
+});
 </script>
-    <!-- Styles moved to /static/css/style.css -->
 {% endblock %}

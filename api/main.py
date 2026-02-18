@@ -219,7 +219,7 @@ def documents_page(request: Request, conn=Depends(get_db)):
 
 @app.get("/profile")
 def profile_page(request: Request, conn=Depends(get_db)):
-    """Profile editor page."""
+    """Profile builder page (split-pane: Adele chat / CV upload / form + live MD preview)."""
     if not templates:
         return {"error": "Frontend not configured"}
     
@@ -227,35 +227,9 @@ def profile_page(request: Request, conn=Depends(get_db)):
     if not user:
         return RedirectResponse(url="/", status_code=302)
     
-    # Get user's profile if exists
-    profile = None
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT profile_id, full_name as display_name, email,
-                   current_title as title, desired_locations[1] as location,
-                   min_seniority, desired_roles, desired_locations,
-                   expected_salary_min, expected_salary_max
-            FROM profiles
-            WHERE user_id = %s
-        """, (user['user_id'],))
-        row = cur.fetchone()
-        if row:
-            profile = dict(row)
-    
-    # Get notification consent data (P0.8)
-    notification_email = user.get('notification_email')
-    notification_consent_at = user.get('notification_consent_at')
-    notification_preferences = user.get('notification_preferences') or {}
-    notification_consent = notification_consent_at is not None
-    
     return templates.TemplateResponse("profile.html", {
         "request": request, 
         "user": user,
-        "profile": profile,
-        "notification_consent": notification_consent,
-        "notification_email": notification_email,
-        "notification_consent_at": notification_consent_at,
-        "notification_preferences": notification_preferences,
         **get_i18n_context(request)
     })
 

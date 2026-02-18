@@ -52,6 +52,12 @@ class ProfileResponse(BaseModel):
     has_work_history: bool = False
     has_preferences: bool = False
     completeness: int = 0  # 0-100%
+    # Preference fields for form pre-population
+    desired_roles: Optional[List[str]] = None
+    desired_locations: Optional[List[str]] = None
+    expected_salary_min: Optional[int] = None
+    expected_salary_max: Optional[int] = None
+    min_seniority: Optional[str] = None
 
 
 class ProfileUpdate(BaseModel):
@@ -104,7 +110,8 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
         cur.execute("""
             SELECT p.profile_id, u.yogi_name as display_name, p.email,
                    p.current_title as title, p.desired_locations[1] as location,
-                   p.desired_roles, p.desired_locations, p.skill_keywords
+                   p.desired_roles, p.desired_locations, p.skill_keywords,
+                   p.expected_salary_min, p.expected_salary_max, p.min_seniority
             FROM profiles p
             JOIN users u ON p.user_id = u.user_id
             WHERE p.user_id = %s
@@ -161,7 +168,12 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
             skill_count=len(skills),
             has_work_history=has_work_history,
             has_preferences=has_preferences,
-            completeness=completeness
+            completeness=completeness,
+            desired_roles=profile['desired_roles'],
+            desired_locations=profile['desired_locations'],
+            expected_salary_min=profile['expected_salary_min'],
+            expected_salary_max=profile['expected_salary_max'],
+            min_seniority=profile['min_seniority']
         )
 
 
@@ -703,3 +715,178 @@ def get_my_skills(user: dict = Depends(require_user), conn=Depends(get_db)):
 # Note: /me/reextract endpoint removed (2026-02-03)
 # Clara/Diego profile facet extraction pipeline was deprecated.
 # Skills now come from profiles.skill_keywords which is populated during profile import.
+
+
+# ─────────────────────────────────────────────────────────
+# Profile-as-Markdown + Activity Log  (split-pane profile page)
+# ─────────────────────────────────────────────────────────
+
+@router.get("/me/markdown")
+def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """
+    Render the current user's profile as a Markdown document.
+    Used by the split-pane profile builder's right-side preview.
+    """
+    with conn.cursor() as cur:
+        # Profile basics
+        cur.execute("""
+            SELECT p.profile_id, u.yogi_name, p.current_title, p.location,
+                   p.profile_summary, p.skill_keywords, p.years_of_experience,
+                   p.experience_level, p.desired_roles, p.desired_locations,
+                   p.expected_salary_min, p.expected_salary_max, p.min_seniority
+            FROM profiles p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE p.user_id = %s
+        """, (user['user_id'],))
+        profile = cur.fetchone()
+
+        if not profile:
+            return {"markdown": "_Noch kein Profil vorhanden. Sprich mit Adele, lade deinen Lebenslauf hoch, oder fülle das Formular aus._", "completeness": 0}
+
+        # Work history
+        cur.execute("""
+            SELECT company_name, job_title, department, start_date, end_date,
+                   is_current, duration_months, job_description, location
+            FROM profile_work_history
+            WHERE profile_id = %s
+            ORDER BY COALESCE(end_date, '2099-01-01') DESC, start_date DESC
+        """, (profile['profile_id'],))
+        work_history = cur.fetchall()
+
+    # Build markdown
+    lines = []
+
+    # Header
+    name = profile['yogi_name'] or 'Yogi'
+    lines.append(f"# {name}")
+    subtitle_parts = []
+    if profile['current_title']:
+        subtitle_parts.append(profile['current_title'])
+    if profile['location']:
+        subtitle_parts.append(profile['location'])
+    if subtitle_parts:
+        lines.append(' · '.join(subtitle_parts))
+    lines.append('')
+
+    # Summary
+    if profile['profile_summary']:
+        lines.append(f"> {profile['profile_summary']}")
+        lines.append('')
+
+    # Work History
+    if work_history:
+        lines.append('## Berufserfahrung')
+        lines.append('')
+        for job in work_history:
+            title = job['job_title'] or 'Position'
+            company = job['company_name'] or ''
+            loc = f" — {job['location']}" if job.get('location') else ''
+
+            # Date range
+            if job.get('start_date'):
+                start = job['start_date'].strftime('%m/%Y')
+                if job.get('is_current'):
+                    end = 'heute'
+                elif job.get('end_date'):
+                    end = job['end_date'].strftime('%m/%Y')
+                else:
+                    end = '?'
+                date_range = f"{start} – {end}"
+            elif job.get('duration_months'):
+                years = job['duration_months'] / 12
+                date_range = f"~{years:.0f} Jahre" if years >= 1 else f"~{job['duration_months']} Monate"
+            else:
+                date_range = ''
+
+            lines.append(f"### {title}")
+            meta_parts = [p for p in [company, date_range, loc.lstrip(' — ')] if p]
+            if meta_parts:
+                lines.append('*' + ' · '.join(meta_parts) + '*')
+            if job.get('job_description'):
+                lines.append('')
+                lines.append(job['job_description'])
+            lines.append('')
+
+    # Skills
+    skills = []
+    if profile['skill_keywords']:
+        kw = profile['skill_keywords']
+        if isinstance(kw, str):
+            import json
+            kw = json.loads(kw)
+        skills = sorted(set(kw)) if kw else []
+
+    if skills:
+        lines.append('## Skills')
+        lines.append('')
+        lines.append(', '.join(f"**{s}**" for s in skills))
+        lines.append('')
+
+    # Preferences
+    prefs_parts = []
+    if profile.get('desired_roles'):
+        prefs_parts.append(f"**Wunschrollen:** {', '.join(profile['desired_roles'])}")
+    if profile.get('desired_locations'):
+        prefs_parts.append(f"**Wunschorte:** {', '.join(profile['desired_locations'])}")
+    sal_parts = []
+    if profile.get('expected_salary_min'):
+        sal_parts.append(f"{profile['expected_salary_min']:,}€")
+    if profile.get('expected_salary_max'):
+        sal_parts.append(f"{profile['expected_salary_max']:,}€")
+    if sal_parts:
+        prefs_parts.append(f"**Gehaltsvorstellung:** {' – '.join(sal_parts)}")
+    if profile.get('min_seniority'):
+        prefs_parts.append(f"**Mindestlevel:** {profile['min_seniority']}")
+
+    if prefs_parts:
+        lines.append('## Suchpräferenzen')
+        lines.append('')
+        for p in prefs_parts:
+            lines.append(f"- {p}")
+        lines.append('')
+
+    # Completeness calculation (same logic as ProfileResponse)
+    completeness = 0
+    if profile['yogi_name']: completeness += 10
+    if profile['current_title']: completeness += 10
+    if profile['location']: completeness += 10
+    if work_history: completeness += 30
+    if skills: completeness += 20
+    if profile.get('desired_roles') or profile.get('desired_locations'): completeness += 20
+
+    return {"markdown": '\n'.join(lines), "completeness": completeness}
+
+
+@router.get("/me/activity-log")
+def get_activity_log(user: dict = Depends(require_user), conn=Depends(get_db)):
+    """
+    Return the profile-building activity log: Adele chat messages,
+    CV upload events, form edit events. Chronological order.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT message_id, sender_type, message_type, body,
+                   recipient_type, created_at
+            FROM yogi_messages
+            WHERE user_id = %s
+              AND (
+                  recipient_type = 'adele'
+                  OR sender_type = 'adele'
+                  OR (sender_type = 'system' AND message_type IN ('cv_upload', 'form_edit', 'cv_import'))
+              )
+            ORDER BY created_at ASC
+            LIMIT 200
+        """, (user['user_id'],))
+        rows = cur.fetchall()
+
+    return [
+        {
+            "id": r['message_id'],
+            "sender": r['sender_type'],
+            "type": r['message_type'],
+            "body": r['body'],
+            "recipient": r['recipient_type'],
+            "at": r['created_at'].isoformat() if r['created_at'] else None,
+        }
+        for r in rows
+    ]

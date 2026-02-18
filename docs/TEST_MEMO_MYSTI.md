@@ -45,15 +45,15 @@
 
 ### Option A: Manual Form
 
-| # | Action | Expected Result |
-|---|--------|-----------------|
-| 2A.1 | Click **📋 Resume** in the sidebar (or the profile card on the Journey Board) | Profile page loads at `/profile`. Shows two options: **📝 Fill Out Form** and **📄 Upload CV**. |
-| 2A.2 | Click **📝 Fill Out Form** | The manual profile form appears with sections: Basic Info, Job Preferences, Work History, Skills. |
-| 2A.3 | Fill in **Basic Info**: display name, current title (e.g. "Software Engineer"), location (e.g. "Berlin") | Fields accept text input. No validation errors. |
-| 2A.4 | Fill in **Job Preferences**: target roles (e.g. "Backend Developer, Full Stack"), target locations (e.g. "Berlin, Remote"), salary range | Fields accept input. Salary is min/max with currency. |
-| 2A.5 | Add a **Work History** entry: company, title, dates, description | Entry appears in the work history list. Can add multiple entries. |
-| 2A.6 | Check **Skills** section | Skills may auto-extract from work history descriptions. You can also manually add keywords. |
-| 2A.7 | Click **Save** (if a save button exists) | Profile saved. Page refreshes or shows success message. Completeness % should update. |
+| #    | Action                                                                                                                                   | Expected Result                                                                                   |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 2A.1 | Click **📋 Resume** in the sidebar (or the profile card on the Journey Board)                                                            | Profile page loads at `/profile`. Shows two options: **📝 Fill Out Form** and **📄 Upload CV**.   |
+| 2A.2 | Click **📝 Fill Out Form**                                                                                                               | The manual profile form appears with sections: Basic Info, Job Preferences, Work History, Skills. |
+| 2A.3 | Fill in **Basic Info**: display name, current title (e.g. "Software Engineer"), location (e.g. "Berlin")                                 | Fields accept text input. No validation errors.                                                   |
+| 2A.4 | Fill in **Job Preferences**: target roles (e.g. "Backend Developer, Full Stack"), target locations (e.g. "Berlin, Remote"), salary range | Fields accept input. Salary is min/max with currency.                                             |
+| 2A.5 | Add a **Work History** entry: company, title, dates, description                                                                         | Entry appears in the work history list. Can add multiple entries.                                 |
+| 2A.6 | Check **Skills** section                                                                                                                 | Skills may auto-extract from work history descriptions. You can also manually add keywords.       |
+| 2A.7 | Click **Save** (if a save button exists)                                                                                                 | Profile saved. Page refreshes or shows success message. Completeness % should update.             |
 
 ### Option B: CV Upload
 
