@@ -176,11 +176,20 @@ function initMiraTour() {
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = 'Abbrechen';
                 cancelBtn.className = 'driver-popover-cancel-btn';
-                cancelBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Use the native close button which we know works
-                    document.querySelector('.driver-popover-close-btn')?.click();
+                cancelBtn.addEventListener('click', () => {
+                    // Mark as completed and force-remove all Driver.js DOM elements
+                    localStorage.setItem('mira_tour_completed', 'true');
+                    localStorage.setItem('mira_tour_completed_at', new Date().toISOString());
+                    // Remove Driver.js overlay and popover directly from DOM
+                    document.querySelectorAll('.driver-popover, .driver-overlay, .driver-active-element').forEach(el => {
+                        el.classList.remove('driver-active-element');
+                        if (el.classList.contains('driver-popover') || el.classList.contains('driver-overlay')) {
+                            el.remove();
+                        }
+                    });
+                    document.body.classList.remove('driver-active', 'driver-fade', 'driver-no-interaction');
+                    // Clean up driver state
+                    try { driverObj.destroy(); } catch(e) {}
                 });
                 // Insert as first child (before progress text and nav buttons)
                 footer.insertBefore(cancelBtn, footer.firstChild);
