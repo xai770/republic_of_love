@@ -25,7 +25,7 @@ ACTOR_MODULES = [
     "actors.doug__newsletter_C",
     "actors.doug__research_C",
     "actors.y2y__match_detector_C",
-    # "actors.profile_posting_matches__report_C__clara",  # TODO: fix import (tools.skill_embeddings removed in cleanup)
+    "actors.profile_posting_matches__report_C__clara",
 ]
 
 
@@ -92,7 +92,7 @@ SCRIPT_ACTORS = [
     ("actors.doug__newsletter_C", "generate_newsletter"),
     ("actors.doug__research_C", "main"),
     ("actors.y2y__match_detector_C", "main"),
-    # ("actors.profile_posting_matches__report_C__clara", "main"),  # TODO: fix import
+    ("actors.profile_posting_matches__report_C__clara", "main"),
 ]
 
 
