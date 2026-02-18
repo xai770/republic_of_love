@@ -179,10 +179,8 @@ function initMiraTour() {
                 cancelBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    destroying = true;
-                    localStorage.setItem('mira_tour_completed', 'true');
-                    localStorage.setItem('mira_tour_completed_at', new Date().toISOString());
-                    driverObj.destroy();
+                    // Use the native close button which we know works
+                    document.querySelector('.driver-popover-close-btn')?.click();
                 });
                 // Insert as first child (before progress text and nav buttons)
                 footer.insertBefore(cancelBtn, footer.firstChild);
