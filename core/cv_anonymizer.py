@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434')
 EXTRACTION_MODEL = "qwen2.5:7b"  # Better at structured extraction
 FALLBACK_MODEL = "gemma3:4b"     # Fallback if primary times out
-TIMEOUT = 90.0  # CV extraction takes longer
+TIMEOUT = 180.0  # CV extraction can be slow for large documents
 
 # ─────────────────────────────────────────────────────────
 # Company generalization templates
@@ -63,6 +63,13 @@ ANONYMIZE_PROMPT = """You are a career data extractor and anonymizer. Your task 
 PART 1 — EXTRACT all career information from the CV text.
 PART 2 — ANONYMIZE the output by removing all identifying details.
 
+EXTRACTION RULES:
+- Extract EVERY SINGLE role/position listed in the CV. Do NOT summarize or skip any.
+- If the person held 10 roles, return 10 work_history entries. If 15, return 15.
+- For "current_title": use the ROLE TITLE of the most recent position (e.g. "Project Lead Contract Compliance"), NOT the department or company name.
+- Extract specific skills, tools, technologies, and methodologies mentioned (e.g. "ServiceNow", "SAP CLM", "HP Mercury", "LDAP", "CMM").
+- Separate certifications from skills: "SAP Certified Application Associate" is a certification, "SAP S/4HANA" is a skill.
+
 RULES FOR ANONYMIZATION:
 - Replace the person's real name with: "{yogi_name}"
 - Replace ALL company names with generalized descriptions IN EMPLOYER CONTEXT (see examples below)
@@ -85,7 +92,7 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
   "yogi_name": "{yogi_name}",
   "years_experience": <number>,
   "career_level": "<junior|mid|senior|lead|executive>",
-  "current_title": "<most recent role title only, e.g. 'Senior Project Manager' — NO company name here>",
+  "current_title": "<most recent ROLE TITLE, e.g. 'Project Lead Contract Compliance' — NOT a department or company name>",
   "skills": ["skill1", "skill2", ...],
   "languages": ["language1", "language2", ...],
   "certifications": ["cert1", "cert2", ...],
@@ -109,7 +116,10 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
   "profile_summary": "<2-3 sentence professional summary using yogi_name, no company names>"
 }}
 
-CRITICAL: If you are unsure whether something is PII, REMOVE IT. Better to lose data than to leak identity.
+CRITICAL REMINDERS:
+- If you are unsure whether something is PII, REMOVE IT. Better to lose data than to leak identity.
+- Do NOT combine or merge roles. Each position listed in the CV = one work_history entry.
+- Extract ALL roles even if the CV is long.
 
 ---
 CV TEXT:
@@ -150,12 +160,14 @@ async def extract_and_anonymize(
     cv_text = re.sub(r'<br\s*/?>', '\n', cv_text)           # <br> → newline
     cv_text = re.sub(r'<[^>]+>', '', cv_text)                # strip remaining HTML tags
     cv_text = re.sub(r'\|+', ' ', cv_text)                   # pipe-delimited table → spaces
+    cv_text = re.sub(r'#{2,}\s*', '', cv_text)               # strip MD heading markers (## → clean text)
     cv_text = re.sub(r'[ \t]{2,}', ' ', cv_text)             # collapse horizontal whitespace
+    cv_text = re.sub(r'\n[ \t]+\n', '\n', cv_text)           # blank-ish lines → clean break
     cv_text = re.sub(r'\n{3,}', '\n\n', cv_text)             # collapse excessive blank lines
     cv_text = cv_text.strip()
     
     # Truncate to reasonable size (LLM context budget)
-    cv_text = cv_text[:12000]
+    cv_text = cv_text[:16000]
     
     prompt = ANONYMIZE_PROMPT.format(
         yogi_name=yogi_name,
@@ -176,7 +188,7 @@ async def extract_and_anonymize(
                         "model": model,
                         "prompt": prompt,
                         "stream": False,
-                        "options": {"temperature": 0.1, "num_ctx": 8192}
+                        "options": {"temperature": 0.1, "num_ctx": 16384}
                     }
                 )
                 response.raise_for_status()
