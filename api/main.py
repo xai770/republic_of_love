@@ -200,48 +200,6 @@ def search_page(request: Request, conn=Depends(get_db)):
     })
 
 
-@app.get("/landscape")
-def landscape_page_redirect(request: Request, conn=Depends(get_db)):
-    """Opportunity Landscape page — market intelligence."""
-    if not templates:
-        return {"error": "Frontend not configured"}
-
-    user = get_current_user(request, conn)
-    if not user:
-        return RedirectResponse(url="/", status_code=302)
-
-    from api.routers.intelligence import KLDB_DOMAIN_NAMES
-    from psycopg2.extras import RealDictCursor
-
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT DISTINCT domain_code, total_postings
-            FROM demand_snapshot WHERE berufenet_id IS NULL ORDER BY domain_code
-        """)
-        domains_raw = cur.fetchall()
-        cur.execute("SELECT DISTINCT location_state FROM demand_snapshot ORDER BY location_state")
-        states = [r['location_state'] for r in cur.fetchall()]
-
-    domain_map = {}
-    for row in domains_raw:
-        code = row['domain_code']
-        name = KLDB_DOMAIN_NAMES.get(code, f'Unbekannt ({code})')
-        if name not in domain_map:
-            domain_map[name] = {"codes": [], "total": 0}
-        domain_map[name]["codes"].append(code)
-        domain_map[name]["total"] += row['total_postings']
-
-    domains = sorted(domain_map.items(), key=lambda x: x[0])
-
-    return templates.TemplateResponse("landscape.html", {
-        "request": request,
-        "user": user,
-        "domains": domains,
-        "states": states,
-        **get_i18n_context(request)
-    })
-
-
 @app.get("/documents")
 def documents_page(request: Request, conn=Depends(get_db)):
     """Documents page — requires authentication."""
@@ -255,18 +213,6 @@ def documents_page(request: Request, conn=Depends(get_db)):
     return templates.TemplateResponse("documents.html", {
         "request": request,
         "user": user,
-        **get_i18n_context(request)
-    })
-
-
-@app.get("/market")
-def market_page(request: Request):
-    """Job market terrain visualization — public page."""
-    if not templates:
-        return {"error": "Frontend not configured"}
-    
-    return templates.TemplateResponse("market.html", {
-        "request": request,
         **get_i18n_context(request)
     })
 

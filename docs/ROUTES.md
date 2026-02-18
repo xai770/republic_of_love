@@ -11,7 +11,6 @@
 | Profile | [/profile](https://talent.yoga/profile) | Edit skills & preferences |
 | Matches | [/matches](https://talent.yoga/matches) | Browse match details |
 | Messages | [/messages](https://talent.yoga/messages) | Y2Y chat |
-| Market | [/market](https://talent.yoga/market) | Job market browser |
 | Admin Console | [/admin/console](https://talent.yoga/admin/console) | System stats |
 
 ---
@@ -97,7 +96,6 @@
 | PUT | `/profiles/me/work-history/{work_history_id}` | update_work_history | profiles.py |
 | GET | `/profiles/{profile_id}` | get_profile | profiles.py |
 | GET | `/viz/embed/{match_id}` | get_embedded_visualization | visualization.py |
-| GET | `/viz/market/data` | get_market_data | visualization.py |
 | GET | `/viz/match/{match_id}` | get_match_visualization | visualization.py |
 | GET | `/y2y/connections` | list_connections | y2y.py |
 | GET | `/y2y/connections/{connection_id}/chat` | get_chat_history | y2y.py |
@@ -118,7 +116,6 @@
 | impressum.html | 2.1 KB | 2026-01-29 |
 | lobby.html | 13.4 KB | 2026-02-01 |
 | login.html | 1.9 KB | 2026-01-27 |
-| market.html | 18.4 KB | 2026-02-02 |
 | matches.html | 39.5 KB | 2026-02-02 |
 | messages.html | 19.5 KB | 2026-02-02 |
 | privacy.html | 5.1 KB | 2026-01-27 |
