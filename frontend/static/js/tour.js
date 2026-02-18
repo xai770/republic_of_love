@@ -16,7 +16,7 @@ const MIRA_TOUR_STEPS = [
                     <p>Hallo! Ich bin <strong>Mira</strong>, deine persönliche Karrierebegleiterin.</p>
                     <p>Lass mich dir zeigen, wie du talent.yoga nutzen kannst, um deinen Traumjob zu finden!</p>
                     <p class="mira-tour-action">Klick auf <strong>Weiter</strong>, um die Tour zu starten.</p>
-                    <a class="mira-tour-skip" onclick="document.querySelector('.driver-popover-close-btn')?.click()">Tour überspringen — du kannst sie jederzeit über 🎓 Tour in der Seitenleiste starten</a>
+                    <p class="mira-tour-hint">Klick auf <strong>Abbrechen</strong> um die Tour zu überspringen — du kannst sie jederzeit über 🎓 Tour in der Seitenleiste starten.</p>
                 </div>
             `,
             side: 'center',
@@ -162,6 +162,21 @@ function initMiraTour() {
             localStorage.setItem('mira_tour_completed', 'true');
             localStorage.setItem('mira_tour_completed_at', new Date().toISOString());
             driverObj.destroy();
+        },
+        
+        onPopoverRender: (popover, options) => {
+            // Add Abbrechen button to footer on every step
+            const footer = popover.footer;
+            if (footer && !footer.querySelector('.driver-popover-cancel-btn')) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Abbrechen';
+                cancelBtn.className = 'driver-popover-cancel-btn';
+                cancelBtn.addEventListener('click', () => {
+                    driverObj.destroy();
+                });
+                // Insert as first child (before progress text and nav buttons)
+                footer.insertBefore(cancelBtn, footer.firstChild);
+            }
         },
         
         onHighlightStarted: (element, step, options) => {
