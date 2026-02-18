@@ -156,19 +156,42 @@ For remote_preference, use "remote", "hybrid", "onsite", or null."""
     return "{}"
 
 
+def _conversation_prompt(phase: str, message: str, collected: dict, lang: str) -> str:
+    """Build the LLM prompt for generating Adele's conversational reply."""
+    lang_instruction = "Respond in German." if lang == 'de' else "Respond in English."
+
+    if phase == 'intro':
+        return f"""You are Adele, a warm and friendly interview coach at talent.yoga.
+You are meeting a new user for the first time. They just sent you their first message.
+
+User's message: "{message}"
+
+Respond naturally to what they said. Introduce yourself briefly as Adele, their
+interview coach. Explain that you help build their professional profile through
+conversation — no CV upload needed. Mention that company names are automatically
+anonymized for privacy. Then gently ask about their current or most recent job
+title and company.
+
+Keep your response warm, conversational, and SHORT (3-5 sentences max).
+Use one emoji maximum. Do NOT use bullet points or lists.
+{lang_instruction}"""
+
+    return None
+
+
 # ─────────────────────────────────────────────────────────
 # LLM call
 # ─────────────────────────────────────────────────────────
 
-async def _ask_llm(prompt: str) -> Optional[str]:
-    """Call Ollama for extraction."""
+async def _ask_llm(prompt: str, temperature: float = 0.1) -> Optional[str]:
+    """Call Ollama for extraction or conversation."""
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             resp = await client.post(OLLAMA_URL, json={
                 "model": MODEL,
                 "prompt": prompt,
                 "stream": False,
-                "options": {"temperature": 0.1}
+                "options": {"temperature": temperature}
             })
             resp.raise_for_status()
             return resp.json().get("response", "").strip()
@@ -536,11 +559,18 @@ async def adele_chat(message: str, user_id: int, conn,
 
     # ── INTRO phase ──
     if phase == 'intro':
-        # First message triggers intro response + advance to current_role
+        # Use LLM to respond naturally to the user's first message
+        conv_prompt = _conversation_prompt('intro', message, collected, language)
+        llm_reply = await _ask_llm(conv_prompt, temperature=0.7)
+
+        if not llm_reply:
+            # Fallback to canned intro if LLM fails
+            llm_reply = _reply(language, _INTRO_EN, _INTRO_DE)
+
         _update_session(conn, session['session_id'], 'current_role', collected,
                         turn_count=turn)
         return AdeleResponse(
-            reply=_reply(language, _INTRO_EN, _INTRO_DE),
+            reply=llm_reply,
             language=language,
             phase='current_role',
             actions={'adele': 'started'}
