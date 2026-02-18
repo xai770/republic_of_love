@@ -2,7 +2,7 @@
 
 **Session start:** ~05:15 CET (early morning, pipeline monitoring)
 **Session continued:** ~09:00 CET (housekeeping, tech debt, role-based navbar)
-**System time at writing:** Di 18. Feb ~14:00 CET
+**System time at writing:** Di 18. Feb ~14:00 CET (updated ~20:00 CET)
 
 ---
 
@@ -129,7 +129,7 @@ On success, redirects to `/dashboard` where the Mira tour will auto-start again.
 
 ---
 
-## Commits
+## Commits (morning)
 
 | # | Hash | Summary |
 |---|------|---------|
@@ -137,16 +137,80 @@ On success, redirects to `/dashboard` where the Mira tour will auto-start again.
 | 2 | `7385984` | housekeeping: ROADMAP refresh, TY fixes, Pydantic V2, cheat sheet update |
 | 3 | `887dfd4` | feat: dynamic navbar + onboarding reset for testing |
 
+### 11. Tour polish (afternoon session)
+
+- **Abbrechen button:** 8 attempts to add a cancel button to Driver.js tour. v1.3.1 intercepts
+  all mouse events on custom buttons. Solved by repurposing native close button (X) — moved to
+  footer via `onPopoverRender`, restyled as "Abbrechen". Works because Driver.js handles its own
+  close event internally. (`dd8ad65`)
+- **Popover width:** Widened 400→520→600px. Added `min-width: 600px` so element-targeted steps
+  match centered steps. (`fbcb8eb`, `7ea7fbb`)
+- **Other tour fixes:** Brown (#FF6B35)→blue (#2563eb), skip link fixed, dead /bi→/profile step,
+  CSS load order, `disableActiveInteraction` on all steps.
+
+### 12. Remove Market & Landscape pages
+
+They're incorporated into the search page now. Removed:
+- 2 sidebar nav items (🗺️ Landscape, 📊 Market)
+- 2 page routes from `api/main.py` (54 lines)
+- 3 template/CSS files: `landscape.html` (528 lines), `market.html` (380 lines), `market.css` (129 lines)
+- Updated `docs/ROUTES.md`
+
+Kept `intelligence.py` and `visualization.py` API routers (backend infrastructure for search).
+**Total: 1,110 lines deleted.** (`02cd3b2`)
+
+### 13. Feedback triage + cleanup
+
+- Connected to feedback table via psql. 158 records total.
+- Deleted 118 automated test records ("Automated test feedback — please ignore" + "Test with screenshot")
+- Identified 4 real open feedback items from Gershon's testing session.
+
+### 14. Privacy fixes (feedback #157, #158)
+
+**#157 — Real name on arcade leaderboard:**
+- Leaderboard API query changed from `u.display_name` to `COALESCE(u.yogi_name, 'Yogi')`
+- Frontend changed from `entry.display_name` to `entry.yogi_name`
+- Response key: `display_name` → `yogi_name`
+- Assigned `yogi_name = 'Phoenix'` to user_id=1 (was NULL)
+
+**#158 — Reset scope + more privacy:**
+- Greeting endpoint: changed from `u.display_name`/`p.full_name` to `u.yogi_name`
+- Header partial: now shows `yogi_name` first, falls back to `display_name`
+- Fixed wrong localStorage key in reset: `search_tour_completed` → `mira_search_tour_completed`
+
+### 15. Profile description truncation (feedback #142)
+
+Profile page truncated work history descriptions at 200 chars with `substring(0, 200)`.
+Removed the truncation — shows full text now.
+
+### 16. "ich suche" not reaching LLM (feedback #137)
+
+Acknowledged as known limitation. Search intents are intentionally short-circuited to a
+deterministic reply because gemma3:4b hallucinates fake job postings. Needs model upgrade.
+
+---
+
+## Commits
+
+| # | Hash | Summary |
+|---|------|---------|
+| 4 | `dd8ad65` | feat: Abbrechen button for tour (repurposed native close) |
+| 5 | `fbcb8eb` | style: widen tour popover to 600px |
+| 6 | `7ea7fbb` | style: uniform 600px min-width for all tour steps |
+| 7 | `02cd3b2` | remove: Market & Landscape pages (1,110 lines) |
+| 8 | `f1e36e7` | fix: privacy + feedback items #157 #158 #142 #137 |
+
 ---
 
 ## Dropped balls
 
 - **Clara actor broken import:** `actors/profile_posting_matches__report_C__clara.py` imports `tools.skill_embeddings` which was removed in the Feb 17 tools cleanup. Needs fixing — Clara generates matches, so this is critical. TODO added in test file.
 - **Systemd services:** Units validated, NOT installed (needs `sudo bash config/systemd/install.sh`)
-- **localStorage tour flag:** The reset endpoint clears DB state but not `localStorage.mira_tour_completed`. User needs to clear browser storage manually or we need to add a flag-based approach (e.g. check `onboarding_completed_at IS NULL` server-side).
+- ~~**localStorage tour flag:** The reset endpoint clears DB state but not `localStorage.mira_tour_completed`.~~ **FIXED** — reset now clears `mira_tour_completed`, `mira_tour_completed_at`, `mira_search_tour_completed`, `mira_search_tour_completed_at`.
 - **Async/sync mismatch:** 4 files use sync DB in async routes. Deferred — bigger refactor.
 - **i18n gaps:** 4 pages not fully translated. Cosmetic.
 - **Inline styles:** 6 templates use inline styles. Cosmetic.
+- **Adele→profile sync:** Profile page doesn't update live as Adele extracts data. Needs design work.
 
 ---
 
@@ -154,5 +218,7 @@ On success, redirects to `/dashboard` where the Mira tour will auto-start again.
 
 - [x] All fixes tested
 - [x] Tests pass (441 passed, 57 warnings)
-- [x] Committed and pushed (3 commits)
+- [x] Committed and pushed (8 commits total)
 - [x] Directives reviewed
+- [x] Feedback table cleaned (118 test records deleted)
+- [x] All 4 real feedback items addressed
