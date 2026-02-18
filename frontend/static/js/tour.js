@@ -146,6 +146,8 @@ function initMiraTour() {
         return null;
     }
 
+    let destroying = false;
+    
     const driverObj = window.driver.js.driver({
         showProgress: true,
         progressText: '{{current}} von {{total}}',
@@ -159,6 +161,8 @@ function initMiraTour() {
         popoverClass: 'mira-tour-popover',
         
         onDestroyStarted: () => {
+            if (destroying) return;
+            destroying = true;
             // Mark tour as completed
             localStorage.setItem('mira_tour_completed', 'true');
             localStorage.setItem('mira_tour_completed_at', new Date().toISOString());
@@ -172,7 +176,12 @@ function initMiraTour() {
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = 'Abbrechen';
                 cancelBtn.className = 'driver-popover-cancel-btn';
-                cancelBtn.addEventListener('click', () => {
+                cancelBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    destroying = true;
+                    localStorage.setItem('mira_tour_completed', 'true');
+                    localStorage.setItem('mira_tour_completed_at', new Date().toISOString());
                     driverObj.destroy();
                 });
                 // Insert as first child (before progress text and nav buttons)
