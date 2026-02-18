@@ -35,12 +35,12 @@ const MIRA_TOUR_STEPS = [
                         <li>Deine wichtigsten Statistiken</li>
                         <li>Nächste Schritte, die ich für dich empfehle</li>
                     </ul>
-                    <p class="mira-tour-action">Klick auf diesen Button!</p>
                 </div>
             `,
             side: 'right',
             align: 'start'
-        }
+        },
+        disableActiveInteraction: true
     },
     {
         element: 'a[href="/profile"]',
@@ -58,7 +58,8 @@ const MIRA_TOUR_STEPS = [
             `,
             side: 'right',
             align: 'start'
-        }
+        },
+        disableActiveInteraction: true
     },
     {
         element: 'a[href="/matches"]',
@@ -73,12 +74,12 @@ const MIRA_TOUR_STEPS = [
                         <li>⭐ Speichere interessante Jobs</li>
                         <li>📝 Bewirb dich direkt</li>
                     </ul>
-                    <p class="mira-tour-action">Klick hier, um deine Matches zu entdecken!</p>
                 </div>
             `,
             side: 'right',
             align: 'start'
-        }
+        },
+        disableActiveInteraction: true
     },
     {
         element: 'a[href="/messages"]',
@@ -93,12 +94,12 @@ const MIRA_TOUR_STEPS = [
                         <li>📰 Doug — Newsletter & Updates</li>
                         <li>🔮 Arden — Tiefe Einsichten</li>
                     </ul>
-                    <p class="mira-tour-action">Klick hier, um deine Nachrichten zu sehen!</p>
                 </div>
             `,
             side: 'right',
             align: 'start'
-        }
+        },
+        disableActiveInteraction: true
     },
     {
         element: '.mira-fab, #mira-widget .mira-fab',
@@ -107,19 +108,19 @@ const MIRA_TOUR_STEPS = [
             description: `
                 <div class="mira-tour-content">
                     <p>Das bin ich — dein <strong>Chat-Button</strong>!</p>
-                    <p>Klick hier, wenn du Fragen hast. Ich helfe dir gerne bei:</p>
+                    <p>Wenn du Fragen hast, helfe ich dir gerne bei:</p>
                     <ul>
                         <li>Deinem Lebenslauf verbessern</li>
                         <li>Jobs besser verstehen</li>
                         <li>Bewerbungstipps</li>
                         <li>Oder einfach zum Plaudern 😊</li>
                     </ul>
-                    <p class="mira-tour-action">Probier es aus — klick auf den Chat!</p>
                 </div>
             `,
             side: 'left',
             align: 'end'
-        }
+        },
+        disableActiveInteraction: true
     },
     {
         popover: {

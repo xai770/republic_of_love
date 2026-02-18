@@ -4496,7 +4496,7 @@ body {
     background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
+    max-width: 520px;
 }
 
 .driver-popover.mira-tour-popover .driver-popover-title {
@@ -4545,8 +4545,11 @@ body {
 
 /* Navigation buttons */
 .driver-popover.mira-tour-popover .driver-popover-footer {
-    padding: 12px 20px;
+    padding: 14px 20px;
     border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .driver-popover.mira-tour-popover .driver-popover-prev-btn,
@@ -4641,8 +4644,9 @@ body {
 }
 
 [data-theme="dark"] .mira-tour-action {
-    background: linear-gradient(135deg, #3d2a1a 0%, #4a3020 100%);
-    color: #ffcc80;
+    background: linear-gradient(135deg, #1e2a3a 0%, #1a2744 100%);
+    color: #93c5fd;
+    border-left-color: #3b82f6;
 }
 
 [data-theme="dark"] .driver-popover.mira-tour-popover .driver-popover-footer {
