@@ -2,7 +2,10 @@
 
 **Session start:** ~05:15 CET (early morning, pipeline monitoring)
 **Session continued:** ~09:00 CET (housekeeping, tech debt, role-based navbar)
-**System time at writing:** Di 18. Feb ~14:00 CET (updated ~20:00 CET)
+**Session continued:** ~14:00 CET (tour polish, feedback, privacy)
+**Session continued:** ~17:00 CET (profile builder, CV extraction rewrite)
+**Session continued:** ~21:00 CET (Clara root fix, push to origin)
+**System time at writing:** Di 18. Feb ~14:00 CET (updated ~21:05 CET)
 
 ---
 
@@ -200,25 +203,172 @@ deterministic reply because gemma3:4b hallucinates fake job postings. Needs mode
 | 7 | `02cd3b2` | remove: Market & Landscape pages (1,110 lines) |
 | 8 | `f1e36e7` | fix: privacy + feedback items #157 #158 #142 #137 |
 
+### 17. Split-pane profile builder
+
+Complete rewrite of `profile.html` (933 lines). Three-column layout:
+- **Left:** Adele chat + CV upload (PDF/DOCX/MD/TXT) + manual form
+- **Right:** Live markdown preview rendered from `/me/markdown` endpoint
+
+New endpoints:
+- `GET /me/markdown` — renders profile as Markdown (work history, skills, preferences)
+- `GET /me/activity-log` — returns recent profile change events
+- Simplified `/profile` route to a single template render
+
+(`0d4bff8`)
+
+### 18. Height fix + yogi-name editor
+
+- Fixed `calc(100vh - 80px)` (header is 80px, not 56px) — chat input was clipped. (`9702f07`)
+- Added `PUT /me/yogi-name` with real-name rejection (checks `users.display_name`
+  parts against submitted name). Inline edit in profile form. (`8835299`)
+
+### 19. Adele LLM intro (feedback #159)
+
+Replaced canned greeting with `_conversation_prompt()` + LLM call.
+Adele now gives a unique, contextual introduction every time. (`9145c70`)
+
+### 20. Cascading LLM fallback in Adele
+
+Added `FALLBACK_MODEL = "gemma3:4b"` and `_ask_llm_cascade()` to `adele.py`.
+Both intro and `_extract()` now try `qwen2.5:7b` first, fall back to `gemma3:4b`
+on timeout. (`989108a`)
+
+### 21. MD upload support (feedback #160)
+
+Added `.md` to file accept attribute in profile.html and backend handler.
+Users can now upload Markdown CVs alongside PDF/DOCX/TXT. (`406e36e`)
+
+### 22. MD upload fix (feedback #161)
+
+HTML noise from MD exports (`<br>`, stray tags) was confusing the LLM.
+Added preprocessing to strip HTML + cascading LLM fallback in `cv_anonymizer.py`.
+`qwen2.5:7b` timed out on large MDs; `gemma3:4b` succeeded. (`72bb950`)
+
+### 23. CV extraction quality improvement
+
+User reported poor extraction: 2 roles and 17 skills from a 15-role CV.
+Root cause: 12K truncation + 8K context window + weak prompt.
+
+Fixes:
+- Better preprocessing: strip `##` markers, collapse whitespace
+- Improved prompt: extract ALL roles, separate certs from skills, use role title not department
+- Bumped `num_ctx` 8K→16K, timeout 90→180s, truncation 12K→16K chars
+
+Result: 15 roles + 30 skills extracted (was 2 roles + 17 skills). (`3965e98`)
+
+### 24. Two-pass CV extraction architecture
+
+Major rewrite of `core/cv_anonymizer.py` (single-pass → two-pass):
+
+**Pass 1 — Structure:** LLM extracts raw structure from CV text — roles with
+exact dates (year/month), company names, titles, bullet-point responsibilities.
+Small focused prompt, no anonymization. Format-agnostic (PDF, DOCX, MD, TXT).
+
+**Pass 2 — Anonymize + Skills:** Per-role LLM call (4K context, fast) generalizes
+company name and extracts skills/technologies from each role's responsibilities.
+Company registry lookup tried first (no LLM needed if already known).
+
+**Results on 15-role test CV:**
+- 15/15 roles extracted with dates (was 15 roles, no dates)
+- 50 skills (was 30 — per-role extraction catches more)
+- Dates: `start_year`, `start_month`, `end_year`, `end_month`, `is_current`
+- `technologies_used` per role (up to 10 each)
+- 28-year career span auto-calculated from earliest date
+- Career level: `executive` (heuristic from years)
+- Rule-based summary builder (no extra LLM call)
+
+**Import endpoint updated:**
+- `CVWorkEntry` model now includes date + technology fields
+- `import_cv()` INSERT populates `start_date`, `end_date`, `is_current`,
+  `technologies_used` in `profile_work_history` (previously always NULL)
+
+**Markdown renderer updated:**
+- Fetches `technologies_used` from DB
+- Renders per-role tech stack as inline code badges (`tool1` · `tool2`)
+- Date display already worked (was coded but never had data)
+
+(`3893443`)
+
+---
+
+### 25. Clara actor root fix — embedding similarity, work history, cascading LLM
+
+**Problem:** Clara has been broken since the Feb 17 tools cleanup (`tools.skill_embeddings`
+deleted). But even before that, she was producing garbage: `posting.requirements` was always
+an empty list, so `compute_skill_matches()` returned score=0 on everything. The LLM prompt
+got empty `domains`, `track_records`, `seniority` — all fields that were never populated.
+No matches ever generated (0 rows in `profile_posting_matches`).
+
+**Root fix (not just import patch):**
+- Inlined `get_embedding()` (Ollama bge-m3 HTTP call → numpy array) and `get_cached_embedding()`
+  (checks `embeddings` table first, computes + caches on miss). No external tool dependency.
+- `cosine_similarity()` via numpy dot product.
+- `get_profile_data()` now loads work history with dates, technologies, job summaries.
+- `get_posting_data()` now loads `extracted_summary` + `job_description`, builds `match_text`.
+- Replaced dead `compute_skill_matches()` (skill-by-skill matrix on empty requirements) with
+  `compute_similarity()` — whole-document embedding comparison (profile text vs posting text).
+- `build_prompt()` now feeds the LLM: profile summary, work history with technologies,
+  posting's `extracted_summary` (structured markdown), skill keyword overlap.
+- `call_llm()` cascading fallback: `qwen2.5:7b` → `gemma3:4b`.
+- `check_domain_gate()` no longer references deprecated `profile['domains']` — checks
+  profile skills text instead.
+- `_store_gated_result()` DRY helper for gate failures.
+- Re-enabled Clara in `test_actor_smoke.py` (39/39 passing).
+
+**Tested:**
+- Profile 10 ↔ Posting 10620 (AI Engineer) → SKIP, score 0.536, correct no-go reasoning
+- Profile 10 ↔ Posting 19210 (SAP Teamleiter) → SKIP, score 0.649, correctly identified
+  qualification gaps despite partial domain overlap
+
+(`ea6dc48`)
+
+### 26. Push to origin
+
+10 commits pushed (`200752e..ea6dc48`). Everything from the evening session
+is now on GitHub.
+
+---
+
+## Commits (evening session)
+
+| # | Hash | Summary |
+|---|------|---------|
+| 9 | `0d4bff8` | feat: split-pane profile builder |
+| 10 | `9702f07` | fix: profile builder height calc |
+| 11 | `8835299` | feat: yogi-name editor with real-name rejection |
+| 12 | `9145c70` | feat: Adele LLM intro (no more canned greeting) |
+| 13 | `989108a` | feat: cascading LLM fallback in Adele |
+| 14 | `406e36e` | feat: MD upload support (feedback #160) |
+| 15 | `72bb950` | fix: MD upload HTML noise + LLM cascade (feedback #161) |
+| 16 | `3965e98` | fix: CV extraction quality (2→15 roles, 17→30 skills) |
+| 17 | `3893443` | feat: two-pass CV extraction (dates, per-role skills, technologies) |
+| 18 | `ea6dc48` | fix: Clara root fix — embedding similarity, work history, cascading LLM |
+
 ---
 
 ## Dropped balls
 
-- **Clara actor broken import:** `actors/profile_posting_matches__report_C__clara.py` imports `tools.skill_embeddings` which was removed in the Feb 17 tools cleanup. Needs fixing — Clara generates matches, so this is critical. TODO added in test file.
+- ~~**Clara actor broken import:**~~ **FIXED** — root fix in `ea6dc48`. Clara now uses whole-document embedding similarity, feeds work history + technologies into LLM prompt, cascading model fallback.
 - **Systemd services:** Units validated, NOT installed (needs `sudo bash config/systemd/install.sh`)
 - ~~**localStorage tour flag:** The reset endpoint clears DB state but not `localStorage.mira_tour_completed`.~~ **FIXED** — reset now clears `mira_tour_completed`, `mira_tour_completed_at`, `mira_search_tour_completed`, `mira_search_tour_completed_at`.
 - **Async/sync mismatch:** 4 files use sync DB in async routes. Deferred — bigger refactor.
 - **i18n gaps:** 4 pages not fully translated. Cosmetic.
 - **Inline styles:** 6 templates use inline styles. Cosmetic.
 - **Adele→profile sync:** Profile page doesn't update live as Adele extracts data. Needs design work.
+- **E2E browser test:** Upload → parse → import → markdown view with dates + tech badges. Not yet verified in browser.
 
 ---
 
 ## End-of-day checklist
 
 - [x] All fixes tested
-- [x] Tests pass (441 passed, 57 warnings)
-- [x] Committed and pushed (8 commits total)
+- [x] Tests pass (39/39 actor smoke, all green)
+- [x] Committed and pushed (18 commits total, 10 pushed this evening)
 - [x] Directives reviewed
 - [x] Feedback table cleaned (118 test records deleted)
 - [x] All 4 real feedback items addressed
+- [x] Split-pane profile builder live
+- [x] Two-pass CV extraction tested (15 roles, 50 skills, dates on all)
+- [x] Dates now flowing into DB (start_date, end_date, is_current, technologies_used)
+- [x] Clara root-fixed and E2E tested (embedding similarity + LLM analysis working)
+- [x] All commits pushed to origin
