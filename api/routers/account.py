@@ -9,10 +9,12 @@ from typing import Optional
 from datetime import datetime
 import json
 import io
+import logging
 
 from api.deps import get_db, require_user
 
 router = APIRouter(prefix="/account", tags=["account"])
+log = logging.getLogger(__name__)
 
 
 class DisplayNameUpdate(BaseModel):
@@ -253,4 +255,69 @@ def request_account_deletion(
     return {
         "ok": True,
         "message": "Account deletion requested. Your data will be permanently deleted within 30 days."
+    }
+
+
+@router.post("/reset-onboarding")
+def reset_onboarding(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Reset all user data for re-testing the onboarding flow.
+    Admin-only: clears profile, matches, messages, Adele session, and user state.
+    After reset, the user will see the onboarding tour again.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    user_id = user["user_id"]
+    deleted = {}
+
+    with conn.cursor() as cur:
+        # 1. Delete matches (depends on profiles via profile_id)
+        cur.execute("""
+            DELETE FROM profile_posting_matches
+            WHERE profile_id IN (SELECT profile_id FROM profiles WHERE user_id = %s)
+        """, (user_id,))
+        deleted["matches"] = cur.rowcount
+
+        # 2. Delete work history (depends on profiles)
+        cur.execute("""
+            DELETE FROM profile_work_history
+            WHERE profile_id IN (SELECT profile_id FROM profiles WHERE user_id = %s)
+        """, (user_id,))
+        deleted["work_history"] = cur.rowcount
+
+        # 3. Delete profile
+        cur.execute("DELETE FROM profiles WHERE user_id = %s", (user_id,))
+        deleted["profiles"] = cur.rowcount
+
+        # 4. Delete Adele sessions
+        cur.execute("DELETE FROM adele_sessions WHERE user_id = %s", (user_id,))
+        deleted["adele_sessions"] = cur.rowcount
+
+        # 5. Delete all messages (Mira, Adele, system, etc.)
+        cur.execute("DELETE FROM yogi_messages WHERE user_id = %s", (user_id,))
+        deleted["messages"] = cur.rowcount
+
+        # 6. Reset user state (yogi_name, onboarding, notifications)
+        cur.execute("""
+            UPDATE users
+            SET yogi_name = NULL,
+                onboarding_completed_at = NULL,
+                notification_email = NULL,
+                notification_consent_at = NULL
+            WHERE user_id = %s
+        """, (user_id,))
+
+    conn.commit()
+
+    log.info(f"Reset onboarding for user {user_id} ({user.get('display_name')}): {deleted}")
+
+    total = sum(deleted.values())
+    return {
+        "ok": True,
+        "message": f"Onboarding reset complete. Cleared {total} records.",
+        "deleted": deleted
     }

@@ -13,7 +13,6 @@ ACTOR_MODULES = [
     "actors.postings__arbeitsagentur_CU",
     "actors.postings__berufenet_U",
     "actors.postings__deutsche_bank_CU",
-    "actors.postings__row_CU",
     "actors.postings__embedding_U",
     "actors.postings__extracted_summary_U",
     "actors.postings__external_description_U",
@@ -26,7 +25,7 @@ ACTOR_MODULES = [
     "actors.doug__newsletter_C",
     "actors.doug__research_C",
     "actors.y2y__match_detector_C",
-    "actors.profile_posting_matches__report_C__clara",
+    # "actors.profile_posting_matches__report_C__clara",  # TODO: fix import (tools.skill_embeddings removed in cleanup)
 ]
 
 
@@ -88,13 +87,12 @@ SCRIPT_ACTORS = [
     ("actors.postings__arbeitsagentur_CU", "main"),
     ("actors.postings__deutsche_bank_CU", "main"),
     ("actors.postings__berufenet_U", "process_batch"),
-    ("actors.postings__row_CU", "main"),
     ("actors.postings__aa_backfill_U", "main"),
     ("actors.postings__external_description_U", "main"),
     ("actors.doug__newsletter_C", "generate_newsletter"),
     ("actors.doug__research_C", "main"),
     ("actors.y2y__match_detector_C", "main"),
-    ("actors.profile_posting_matches__report_C__clara", "main"),
+    # ("actors.profile_posting_matches__report_C__clara", "main"),  # TODO: fix import
 ]
 
 
