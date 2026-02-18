@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434') + '/api/generate'
 MODEL = "qwen2.5:7b"
+FALLBACK_MODEL = "gemma3:4b"
 TIMEOUT = 25.0
 
 
@@ -183,12 +184,12 @@ Use one emoji maximum. Do NOT use bullet points or lists.
 # LLM call
 # ─────────────────────────────────────────────────────────
 
-async def _ask_llm(prompt: str, temperature: float = 0.1) -> Optional[str]:
+async def _ask_llm(prompt: str, temperature: float = 0.1, model: str = MODEL) -> Optional[str]:
     """Call Ollama for extraction or conversation."""
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             resp = await client.post(OLLAMA_URL, json={
-                "model": MODEL,
+                "model": model,
                 "prompt": prompt,
                 "stream": False,
                 "options": {"temperature": temperature}
@@ -196,8 +197,17 @@ async def _ask_llm(prompt: str, temperature: float = 0.1) -> Optional[str]:
             resp.raise_for_status()
             return resp.json().get("response", "").strip()
     except Exception as e:
-        logger.error(f"Adele LLM call failed: {e}")
+        logger.error(f"Adele LLM call failed ({model}): {e}")
         return None
+
+
+async def _ask_llm_cascade(prompt: str, temperature: float = 0.1) -> Optional[str]:
+    """Try primary model, fall back to secondary model."""
+    result = await _ask_llm(prompt, temperature=temperature, model=MODEL)
+    if result:
+        return result
+    logger.warning(f"Primary model {MODEL} failed, trying fallback {FALLBACK_MODEL}")
+    return await _ask_llm(prompt, temperature=temperature, model=FALLBACK_MODEL)
 
 
 def _parse_json(text: str) -> Optional[dict]:
@@ -561,10 +571,10 @@ async def adele_chat(message: str, user_id: int, conn,
     if phase == 'intro':
         # Use LLM to respond naturally to the user's first message
         conv_prompt = _conversation_prompt('intro', message, collected, language)
-        llm_reply = await _ask_llm(conv_prompt, temperature=0.7)
+        llm_reply = await _ask_llm_cascade(conv_prompt, temperature=0.7)
 
         if not llm_reply:
-            # Fallback to canned intro if LLM fails
+            # Last resort: canned intro (both LLMs failed)
             llm_reply = _reply(language, _INTRO_EN, _INTRO_DE)
 
         _update_session(conn, session['session_id'], 'current_role', collected,
@@ -885,7 +895,7 @@ async def _extract(phase: str, message: str, collected: dict) -> Optional[dict]:
     prompt = _extract_prompt(phase, message, collected)
     if not prompt or prompt == "{}":
         return None
-    raw = await _ask_llm(prompt)
+    raw = await _ask_llm_cascade(prompt)
     return _parse_json(raw)
 
 
