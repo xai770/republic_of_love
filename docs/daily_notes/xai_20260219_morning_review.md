@@ -157,6 +157,7 @@ Service files validated and ready in `config/systemd/`. Needs `sudo bash config/
 | 3 | `cb318a3` | daily note update |
 | 4 | `50f8acc` | profile builder: form with work/education/projects, i18n, full-pane layout |
 | 5 | `34a1a19` | taro: layered yogi name protection (A+B+C+D) |
+| 6 | `1457e81` | daily note: profile builder + taro protection |
 
 ---
 
@@ -192,6 +193,14 @@ Collaborated with Nate (ChatGPT) on design. Built layered protection system:
 
 **Refactored:** Inline 60-line real-name check in `profiles.py` → `core.taro.validate_yogi_name()`.
 
+### 12. systemd install (09:25 CET)
+Ran `sudo bash config/systemd/install.sh`. All three services installed, enabled, and started:
+- `talent-yoga` — FastAPI (port 8000) ✅ active
+- `talent-yoga-bi` — Streamlit BI (port 8501) ✅ active
+- `talent-yoga-backup.timer` — Daily backup at 02:00 ✅ active
+
+Commented out old `@reboot` cron entries (backfill_watchdog + start_bi). Services now survive crashes via systemd auto-restart.
+
 ---
 
 ## End-of-day checklist
@@ -202,5 +211,5 @@ Collaborated with Nate (ChatGPT) on design. Built layered protection system:
 - [x] Daily note updated
 - [x] Profile form overhaul (feedback #166 + #167)
 - [x] Yogi name protection (A+B+C+D via Taro)
-- [ ] systemd install (needs sudo)
+- [x] systemd install (all 3 services active, cron entries removed)
 - [ ] Browser verification of profile page
