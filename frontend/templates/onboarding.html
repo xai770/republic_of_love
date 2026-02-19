@@ -276,23 +276,27 @@
     <p id="dismissed-text">Du kannst dieses Fenster jetzt schließen.</p>
 </div>
 
+<!-- ── TY logo — fixed top-left corner ─────────────── -->
+<div style="position:fixed;top:20px;left:20px;width:52px;height:52px;background:#fff;border-radius:50%;box-shadow:0 2px 12px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;z-index:10;">
+    <img src="/static/images/icons/logo.png" alt="talent.yoga" style="width:34px;height:34px;object-fit:contain;">
+</div>
+
 <!-- ── The wizard ──────────────────────────────────── -->
 <div class="wizard" id="wizard">
     <span class="step-counter" id="step-counter"></span>
 
     <!-- ════════ STEP 1 — Language ════════ -->
     <div class="step active" data-step="1">
-        <div style="position:absolute;top:18px;left:20px;width:44px;height:44px;background:#fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;">
-            <img src="/static/images/icons/logo.png" alt="talent.yoga" style="width:30px;height:30px;object-fit:contain;">
-        </div>
-        <h2 data-i18n="onboarding.lang_title_en">Choose your language</h2>
-        <p data-i18n="onboarding.lang_subtitle_en">talent.yoga is available in German and English.</p>
+        <h2 id="s1-title">Choose your language</h2>
+        <p id="s1-subtitle">talent.yoga is available in German and English.</p>
         <div class="flag-row">
-            <button class="flag-btn" data-lang="de" onclick="selectLanguage('de')">
+            <button class="flag-btn" data-lang="de" onclick="selectLanguage('de')"
+                    onmouseenter="previewLang('de')" onmouseleave="previewLang(null)">
                 🇩🇪
                 <span class="flag-label">Deutsch</span>
             </button>
-            <button class="flag-btn" data-lang="en" onclick="selectLanguage('en')">
+            <button class="flag-btn" data-lang="en" onclick="selectLanguage('en')"
+                    onmouseenter="previewLang('en')" onmouseleave="previewLang(null)">
                 🇬🇧
                 <span class="flag-label">English</span>
             </button>
@@ -640,6 +644,19 @@
     };
 
     // ── Step 1 — Language select ───────────────────
+    const s1Texts = {
+        de: { title: 'Wähle deine Sprache', subtitle: 'talent.yoga ist auf Deutsch und Englisch verfügbar.' },
+        en: { title: 'Choose your language', subtitle: 'talent.yoga is available in German and English.' },
+    };
+
+    window.previewLang = function(lang) {
+        const t = lang ? s1Texts[lang] : s1Texts.en;
+        const h = $('#s1-title');
+        const p = $('#s1-subtitle');
+        if (h) h.textContent = t.title;
+        if (p) p.textContent = t.subtitle;
+    };
+
     window.selectLanguage = function(lang) {
         state.lang = lang;
         $$('.flag-btn').forEach(b => b.classList.toggle('selected', b.dataset.lang === lang));
