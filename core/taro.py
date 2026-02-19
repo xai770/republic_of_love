@@ -1,24 +1,35 @@
 """
-Taro — The yogi name generator.
+Taro — The yogi name generator & guardian.
 
 Taro is the yogi master who helps new yogis choose their identity.
 Names are generated algorithmically from curated word pools — no LLM needed.
 Fast, deterministic, no hallucination risk.
 
+Validation layers (A+B+C+D):
+    A) UX nudge — clear labels (handled in frontend i18n)
+    B) Pattern detection — common names, titles, particles, "looks real" heuristic
+    C) Pseudonym generator — one-click suggestions from curated pools
+    D) Hard-block — email, phone, address patterns
+
+Privacy: We NEVER store real names. Google OAuth display_name is read
+transiently for validation only, then discarded. EU-compliant.
+
 Flow:
-    1. Generate 5 candidate names
+    1. Generate 5+ candidate names
     2. Filter out taken names (case-insensitive)
     3. Present to yogi: pick one or type your own
-    4. Validate: not real name, not reserved, unique
+    4. Validate: format → hard-block → reserved → common-name → real-name → unique
+    5. Return (ok, warning_or_error, severity)
 
 Usage:
-    from core.taro import suggest_names, validate_yogi_name_full
+    from core.taro import suggest_names, validate_yogi_name
 
     # Generate suggestions
-    suggestions = suggest_names(conn, count=5)
+    suggestions = suggest_names(conn, count=6)
 
-    # Validate a chosen name (includes real-name guard)
-    ok, error = validate_yogi_name_full("Storm", real_name="Max Müller", conn=conn)
+    # Validate a chosen name
+    ok, msg, severity = validate_yogi_name("Storm", real_name="Max Müller", conn=conn)
+    # severity: None (ok), "error" (blocked), "warning" (soft, let user confirm)
 """
 import random
 import re
@@ -97,8 +108,61 @@ _BLOCKED_NAMES = {
 }
 
 _YOGI_NAME_PATTERN = re.compile(
-    r'^[a-zA-Z0-9äöüÄÖÜß][a-zA-Z0-9äöüÄÖÜß._\- ]{0,18}[a-zA-Z0-9äöüÄÖÜß]$'
+    r'^[a-zA-Z0-9äöüÄÖÜß][a-zA-Z0-9äöüÄÖÜß._\- ]{0,28}[a-zA-Z0-9äöüÄÖÜß]$'
 )
+
+# ─────────────────────────────────────────────────────────
+# B) Generic real-name detection — no PII stored
+# ─────────────────────────────────────────────────────────
+
+# Common first names (DE top-50 + EN top-50, lowercased)
+_COMMON_FIRST_NAMES = {
+    # German male
+    'peter', 'thomas', 'michael', 'andreas', 'stefan', 'markus', 'christian',
+    'martin', 'jürgen', 'klaus', 'wolfgang', 'hans', 'werner', 'karl',
+    'heinrich', 'matthias', 'frank', 'bernhard', 'rolf', 'dieter',
+    'helmut', 'gerhard', 'manfred', 'günter', 'uwe', 'rainer', 'bernd',
+    'jens', 'alexander', 'tobias', 'florian', 'sebastian', 'daniel',
+    'philipp', 'jan', 'lukas', 'jonas', 'felix', 'leon', 'maximilian',
+    'moritz', 'fritz', 'friedrich', 'otto', 'max', 'paul', 'emil',
+    # German female
+    'maria', 'anna', 'elisabeth', 'margarete', 'monika', 'ursula', 'renate',
+    'christine', 'helga', 'sabine', 'petra', 'brigitte', 'andrea', 'claudia',
+    'susanne', 'birgit', 'heike', 'karin', 'gabriele', 'eva', 'ingrid',
+    'gertrud', 'anja', 'nicole', 'julia', 'katharina', 'sarah', 'laura',
+    'lisa', 'sophie', 'emma', 'hannah', 'mia', 'lena', 'marie', 'johanna',
+    # English common
+    'james', 'john', 'robert', 'david', 'william', 'richard', 'joseph',
+    'charles', 'christopher', 'matthew', 'anthony', 'mark', 'donald',
+    'steven', 'andrew', 'joshua', 'kevin', 'brian', 'george', 'edward',
+    'mary', 'patricia', 'jennifer', 'linda', 'barbara', 'susan', 'jessica',
+    'sarah', 'karen', 'nancy', 'betty', 'margaret', 'sandra', 'ashley',
+    'dorothy', 'kimberly', 'emily', 'donna', 'michelle', 'carol', 'amanda',
+    'melissa', 'deborah', 'stephanie', 'rebecca', 'sharon', 'cynthia',
+    'kathleen', 'amy', 'angela', 'rachel', 'samantha', 'catherine', 'virginia',
+    # Turkish (common in DE)
+    'mehmet', 'mustafa', 'ahmet', 'ali', 'hasan', 'fatma', 'ayse', 'emine',
+    'hatice', 'zeynep', 'elif', 'yusuf', 'ibrahim', 'kemal', 'murat',
+}
+
+# Title prefixes that indicate a real name follows
+_TITLE_PREFIXES = {'dr', 'prof', 'herr', 'frau', 'dipl', 'ing', 'mag'}
+
+# Name particles (nobiliary/family)
+_NAME_PARTICLES = {'von', 'van', 'de', 'di', 'del', 'der', 'den', 'la', 'le',
+                   'al', 'el', 'bin', 'ibn', 'ben', 'zu', 'auf', 'vom'}
+
+# D) Hard-block patterns — email, phone, address
+_EMAIL_PATTERN = re.compile(r'[@]|[a-z0-9_.+-]+@[a-z0-9-]+\.[a-z]{2,}', re.I)
+_PHONE_PATTERN = re.compile(
+    r'(?:\+?\d{1,3}[\s\-]?)?\(?\d{2,5}\)?[\s\-]?\d{3,10}[\s\-]?\d{0,8}'
+)
+_ADDRESS_PATTERN = re.compile(
+    r'(?:str\.|straße|strasse|weg|platz|allee|gasse|ring|damm|ufer)\s*\d',
+    re.I
+)
+# German postal code + city pattern
+_PLZ_PATTERN = re.compile(r'\b\d{5}\s+[A-ZÄÖÜ]', re.U)
 
 
 # ─────────────────────────────────────────────────────────
@@ -180,6 +244,7 @@ def suggest_names(conn=None, count: int = 5) -> List[str]:
 def _extract_name_parts(display_name: str = None, email: str = None) -> set:
     """
     Extract recognizable name parts from Google OAuth data.
+    These are used transiently — NEVER stored.
 
     "Gershon Pollatschek" → {"gershon", "pollatschek"}
     "gershon.pollatschek@gmail.com" → {"gershon", "pollatschek"}
@@ -207,79 +272,172 @@ def _extract_name_parts(display_name: str = None, email: str = None) -> set:
     return parts
 
 
+def _check_hard_block(name: str) -> Optional[str]:
+    """
+    D) Hard-block: email, phone, address patterns.
+    Returns error message or None.
+    """
+    if _EMAIL_PATTERN.search(name):
+        return "contains_email"
+    if _ADDRESS_PATTERN.search(name):
+        return "contains_address"
+    if _PLZ_PATTERN.search(name):
+        return "contains_address"
+    # Phone: only trigger if mostly digits (avoid false positives like "Agent007")
+    digits = sum(1 for c in name if c.isdigit())
+    if digits >= 5 and _PHONE_PATTERN.search(name):
+        return "contains_phone"
+    return None
+
+
+def _check_looks_like_real_name(name: str) -> Optional[str]:
+    """
+    B) Generic real-name heuristics — no PII needed.
+    Returns warning key or None.
+    """
+    words = name.split()
+
+    # Two+ capitalized words → "Max Mustermann" pattern
+    if len(words) >= 2:
+        capitalized = sum(1 for w in words if w[0].isupper() and w[1:].islower()
+                         and len(w) >= 2 and w.lower() not in _NAME_PARTICLES)
+        if capitalized >= 2:
+            # Extra check: are any of them common first names?
+            for w in words:
+                if w.lower() in _COMMON_FIRST_NAMES:
+                    return "looks_like_full_name"
+            # Even without common-name hit, two capitalized words is suspicious
+            return "looks_like_full_name"
+
+    # Contains title prefix: "Dr Müller", "Prof Schmidt"
+    first_word = words[0].rstrip('.').lower() if words else ''
+    if first_word in _TITLE_PREFIXES and len(words) >= 2:
+        return "contains_title"
+
+    # Contains name particle in multi-word: "von Weizsäcker"
+    if len(words) >= 2:
+        for w in words:
+            if w.lower() in _NAME_PARTICLES:
+                return "contains_particle"
+
+    # Single word that's a very common first name
+    if len(words) == 1 and words[0].lower() in _COMMON_FIRST_NAMES:
+        return "common_first_name"
+
+    return None
+
+
+def validate_yogi_name(
+    name: str,
+    real_name: str = None,
+    email: str = None,
+    conn=None,
+    current_user_id: int = None
+) -> Tuple[bool, Optional[str], Optional[str]]:
+    """
+    Full layered validation of a yogi name (A+B+C+D).
+
+    Privacy: real_name and email are used transiently for comparison
+    only — they are NEVER stored, logged, or returned.
+
+    Checks (in order):
+    1. Format (length, characters)
+    2. D) Hard-block (email, phone, address) → error
+    3. Reserved/blocked names → error
+    4. B) Generic "looks like a real name" → warning
+    5. Real-name guard (OAuth comparison) → error
+    6. Uniqueness → error
+
+    Args:
+        name: Proposed yogi name
+        real_name: display_name from Google OAuth (transient, never stored)
+        email: email from Google OAuth (transient, never stored)
+        conn: DB connection for uniqueness check
+        current_user_id: Exclude this user from uniqueness check (for updates)
+
+    Returns:
+        (is_valid, message, severity)
+        severity: None (valid), "error" (hard block), "warning" (soft, user can confirm)
+    """
+    if not name or not name.strip():
+        return False, "Name cannot be empty", "error"
+
+    name = name.strip()
+
+    # 1. Format check
+    if len(name) < 2:
+        return False, "Name must be at least 2 characters", "error"
+    if len(name) > 30:
+        return False, "Name must be 30 characters or fewer", "error"
+    if not _YOGI_NAME_PATTERN.match(name):
+        return False, "Name can only contain letters, numbers, dots, hyphens, and spaces", "error"
+
+    # 2. D) Hard-block — email, phone, address
+    hard_block = _check_hard_block(name)
+    if hard_block:
+        return False, hard_block, "error"
+
+    # 3. Blocked/reserved names
+    if name.lower() in _BLOCKED_NAMES:
+        return False, "reserved", "error"
+
+    # 4. B) Generic "looks like a real name" heuristic
+    looks_real = _check_looks_like_real_name(name)
+    if looks_real:
+        # This is a WARNING, not a hard block — user can override
+        return True, looks_real, "warning"
+
+    # 5. Real-name guard (Google OAuth comparison — transient only)
+    if real_name or email:
+        real_parts = _extract_name_parts(real_name, email)
+        name_lower = name.lower()
+        name_normalized = re.sub(r"[^a-zäöüß]", "", name_lower)
+
+        for rp in real_parts:
+            rp_normalized = re.sub(r"[^a-zäöüß]", "", rp)
+            if not rp_normalized or len(rp_normalized) < 3:
+                continue
+            # Exact match with a real-name fragment
+            if name_normalized == rp_normalized:
+                return False, "matches_real_name", "error"
+            # Real name contained in yogi name
+            if len(rp_normalized) >= 3 and rp_normalized in name_normalized:
+                return False, "contains_real_name", "error"
+            # Yogi name contained in real name (short candidate inside long name)
+            if len(name_normalized) >= 3 and name_normalized in rp_normalized:
+                return False, "subset_of_real_name", "error"
+
+    # 6. Uniqueness check
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                if current_user_id:
+                    cur.execute(
+                        "SELECT 1 FROM users WHERE LOWER(yogi_name) = LOWER(%s) AND user_id != %s LIMIT 1",
+                        (name, current_user_id)
+                    )
+                else:
+                    cur.execute(
+                        "SELECT 1 FROM users WHERE LOWER(yogi_name) = LOWER(%s) LIMIT 1",
+                        (name,)
+                    )
+                if cur.fetchone():
+                    return False, "already_taken", "error"
+        except Exception as e:
+            logger.warning(f"Uniqueness check failed: {e}")
+
+    return True, None, None
+
+
+# Backward compat wrapper
 def validate_yogi_name_full(
     name: str,
     real_name: str = None,
     email: str = None,
     conn=None
 ) -> Tuple[bool, Optional[str]]:
-    """
-    Full validation of a yogi name.
-
-    Checks:
-    1. Format (length, characters)
-    2. Not a reserved/blocked name
-    3. Not the yogi's real name or part of it
-    4. Unique (case-insensitive)
-
-    Args:
-        name: Proposed yogi name
-        real_name: display_name from Google OAuth (if known)
-        email: email from Google OAuth (if known)
-        conn: DB connection for uniqueness check
-
-    Returns:
-        (is_valid, error_message) — error_message is None if valid
-    """
-    if not name or not name.strip():
-        return False, "Name cannot be empty"
-
-    name = name.strip()
-
-    # 1. Format check
-    if len(name) < 2:
-        return False, "Name must be at least 2 characters"
-    if len(name) > 20:
-        return False, "Name must be 20 characters or fewer"
-    if not _YOGI_NAME_PATTERN.match(name):
-        return False, "Name can only contain letters, numbers, dots, hyphens, and spaces"
-
-    # 2. Blocked names
-    if name.lower() in _BLOCKED_NAMES:
-        return False, "That name is reserved"
-
-    # 3. Real-name guard
-    if real_name or email:
-        real_parts = _extract_name_parts(real_name, email)
-        name_lower = name.lower()
-
-        # Exact match with full name
-        if name_lower in real_parts:
-            return False, (
-                "That looks like your real name. "
-                "Your yogi name protects your identity — please pick something different."
-            )
-
-        # Starts with a real-name part (≥4 chars to avoid false positives)
-        for part in real_parts:
-            if len(part) >= 4 and name_lower.startswith(part):
-                return False, (
-                    "That looks like part of your real name. "
-                    "Your yogi name protects your identity — please pick something different."
-                )
-
-    # 4. Uniqueness check
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT 1 FROM users WHERE LOWER(yogi_name) = LOWER(%s) LIMIT 1",
-                    (name,)
-                )
-                if cur.fetchone():
-                    return False, "That name is already taken"
-        except Exception as e:
-            logger.warning(f"Uniqueness check failed: {e}")
-            # Don't block on DB error — let it through, the unique index will catch it
-
+    """Legacy wrapper — returns (ok, error_message)."""
+    ok, msg, severity = validate_yogi_name(name, real_name, email, conn)
+    if severity == "error":
+        return False, msg
     return True, None

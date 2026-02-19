@@ -270,78 +270,82 @@ def update_yogi_name(
 ):
     """
     Update the user's yogi_name (public alias).
-    Rejects names that match or closely resemble the user's real identity.
+
+    Uses Taro's layered validation (A+B+C+D):
+    - Hard-block: email, phone, address → 400
+    - Reserved names → 400
+    - Generic "looks real" heuristic → warning (user can confirm)
+    - Real-name guard (transient OAuth data, never stored) → 400
+    - Uniqueness → 400
+
+    Privacy: real_name from OAuth/profile is read transiently for
+    comparison only. It is NEVER stored, logged, or returned.
     """
-    import re
+    from core.taro import validate_yogi_name
 
     new_name = (payload.get("yogi_name") or "").strip()
+    confirmed = payload.get("confirmed", False)  # user confirmed a warning
+
     if not new_name:
         raise HTTPException(status_code=400, detail="Yogi-Name darf nicht leer sein.")
-    if len(new_name) < 2:
-        raise HTTPException(status_code=400, detail="Yogi-Name muss mindestens 2 Zeichen haben.")
-    if len(new_name) > 30:
-        raise HTTPException(status_code=400, detail="Yogi-Name darf maximal 30 Zeichen haben.")
 
-    # ── Real-name rejection ──────────────────────────────
-    # Collect all identity fragments we need to protect
-    real_parts = set()
-
-    # display_name from Google OAuth (e.g. "Gershon Pollatschek")
+    # ── Gather transient identity fragments (NEVER stored) ────
+    # Google OAuth display_name — read from session, not persisted
     display_name = user.get("display_name") or ""
-    if display_name:
-        real_parts.add(display_name.lower())
-        for part in display_name.split():
-            if len(part) >= 3:  # skip initials / short particles
-                real_parts.add(part.lower())
-
-    # email prefix (e.g. "gershele" from "gershele@gmail.com")
     email = user.get("email") or ""
-    if email and "@" in email:
-        prefix = email.split("@")[0].lower()
-        if len(prefix) >= 3:
-            real_parts.add(prefix)
 
-    # profiles.full_name (may also hold real name from CV import)
+    # profiles.full_name may hold OAuth name from initial import
     with conn.cursor() as cur:
         cur.execute(
             "SELECT full_name FROM profiles WHERE user_id = %s",
             (user["user_id"],)
         )
         row = cur.fetchone()
-        if row and row["full_name"]:
-            pf_name = row["full_name"].strip()
-            if pf_name and pf_name not in ("New Yogi",):
-                real_parts.add(pf_name.lower())
-                for part in pf_name.split():
-                    if len(part) >= 3:
-                        real_parts.add(part.lower())
+        profile_name = ""
+        if row and row["full_name"] and row["full_name"] not in ("New Yogi",):
+            profile_name = row["full_name"]
 
-    # Check: new yogi_name must not match any real identity fragment
-    candidate = new_name.lower()
-    candidate_normalized = re.sub(r"[^a-zäöüß]", "", candidate)
+    # Combine all transient identity data for Taro
+    real_name = display_name or profile_name or None
 
-    for rp in real_parts:
-        rp_normalized = re.sub(r"[^a-zäöüß]", "", rp)
-        if not rp_normalized:
-            continue
-        # Exact match
-        if candidate_normalized == rp_normalized:
-            raise HTTPException(
-                status_code=400,
-                detail="Dein Yogi-Name darf nicht dein echter Name sein. Wähle ein Pseudonym!"
-            )
-        # Substring match (e.g. "Gershon123" still contains "gershon")
-        if len(rp_normalized) >= 3 and rp_normalized in candidate_normalized:
-            raise HTTPException(
-                status_code=400,
-                detail="Dein Yogi-Name enthält deinen echten Namen. Wähle ein Pseudonym!"
-            )
-        # Reverse containment (e.g. candidate "Ger" inside real name)
-        if len(candidate_normalized) >= 3 and candidate_normalized in rp_normalized:
-            raise HTTPException(
-                status_code=400,
-                detail="Dein Yogi-Name ist zu ähnlich zu deinem echten Namen. Wähle ein Pseudonym!"
-            )
+    # ── Validate via Taro ────────────────────────────────
+    ok, msg, severity = validate_yogi_name(
+        new_name,
+        real_name=real_name,
+        email=email,
+        conn=conn,
+        current_user_id=user["user_id"]
+    )
+
+    if severity == "error":
+        # Map Taro keys to user-facing messages
+        error_messages = {
+            "contains_email": "Yogi-Name darf keine E-Mail-Adresse enthalten.",
+            "contains_phone": "Yogi-Name darf keine Telefonnummer enthalten.",
+            "contains_address": "Yogi-Name darf keine Adresse enthalten.",
+            "reserved": "Dieser Name ist reserviert.",
+            "matches_real_name": "Dein Yogi-Name darf nicht dein echter Name sein. Wähle ein Pseudonym!",
+            "contains_real_name": "Dein Yogi-Name enthält deinen echten Namen. Wähle ein Pseudonym!",
+            "subset_of_real_name": "Dein Yogi-Name ist zu ähnlich zu deinem echten Namen. Wähle ein Pseudonym!",
+            "already_taken": "Dieser Yogi-Name ist bereits vergeben.",
+        }
+        detail = error_messages.get(msg, msg)
+        raise HTTPException(status_code=400, detail=detail)
+
+    if severity == "warning" and not confirmed:
+        # Soft warning — return 200 with warning, let user confirm
+        warning_messages = {
+            "looks_like_full_name": "Das sieht wie ein echter Name aus. Möchtest du stattdessen ein Pseudonym wählen?",
+            "contains_title": "Titel wie Dr./Prof. deuten auf einen echten Namen hin. Bist du sicher?",
+            "contains_particle": "Namenspartikel (von, van, de…) deuten auf einen echten Namen hin. Bist du sicher?",
+            "common_first_name": "Das ist ein häufiger Vorname. Wähle lieber ein kreatives Pseudonym!",
+        }
+        return {
+            "status": "warning",
+            "warning": warning_messages.get(msg, msg),
+            "warning_key": msg,
+            "yogi_name": new_name
+        }
 
     # ── Save ─────────────────────────────────────────────
     with conn.cursor() as cur:
@@ -352,6 +356,21 @@ def update_yogi_name(
         conn.commit()
 
     return {"status": "ok", "yogi_name": new_name}
+
+
+@router.get("/me/yogi-name/suggest")
+def suggest_yogi_names(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Generate yogi name suggestions via Taro.
+    Returns 6 fresh, unique, non-taken names.
+    """
+    from core.taro import suggest_names
+
+    names = suggest_names(conn, count=6)
+    return {"suggestions": names}
 
 
 @router.get("/{profile_id}", response_model=ProfileResponse)
