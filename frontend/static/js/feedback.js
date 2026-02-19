@@ -151,6 +151,8 @@
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'F2') {
             e.preventDefault();
+            e.stopPropagation();
+            console.log('[feedback] Ctrl+F2 detected, toggling widget');
             if (overlayEl && overlayEl.classList.contains('active')) {
                 closeFeedback();
             } else {

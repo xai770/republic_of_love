@@ -248,16 +248,57 @@ Updated `tools/turing_restart.sh` from manual `pkill`/`nohup uvicorn` to `system
 
 ---
 
+## Evening session (Arden #2, ~18:20 CET)
+
+Chat crashed mid-session. Restarted with context recovery from cheat sheet + directives + this daily note + arden_log tail.
+
+### 15. Feedback hotkey — F2 saga (ONGOING)
+
+**Goal:** Global keyboard shortcut to open the feedback widget from any page (including popups/modals where the lightbulb button isn't visible).
+
+| Attempt | Hotkey | Result | Root cause |
+|---------|--------|--------|------------|
+| 1 (pre-crash) | F2 | ❌ Not working | `feedback.js` had a stray `}` at line 161 that closed the IIFE prematurely — `openFeedbackWidget`, `closeFeedback`, `submitFeedback` all orphaned. Widget was *completely* broken (lightbulb too). |
+| 2 (pre-crash) | Ctrl+Shift+T | Not tried | Pushback: conflicts with browser "reopen closed tab" |
+| 3 (`488dd5b`) | Ctrl+F2 | ❌ Not working | Fixed the IIFE scope bug (removed stray `}`). Code is now correct. Suspected **browser cache**: `base.html` had `?v=20260215c` — never bumped after the fix. Browser still serving the old broken JS. |
+| 4 (next) | Ctrl+F2 | 🔧 Testing | Bumped cache buster to `?v=20260219b` on both `base.html` and `onboarding.html`. Added `console.log` + `stopPropagation` to handler. Needs service restart + hard refresh to verify. |
+
+**If Ctrl+F2 still doesn't work after cache bust:** likely Linux/GNOME desktop intercepting the key combo. Fallback plan: try `Ctrl+Shift+F` or `Ctrl+.` — or add a floating FAB to all pages.
+
+### 16. Onboarding back buttons
+Steps 2 (Germany) and 3 (Du/Sie) now have `← Zurück` buttons.
+
+### 17. Mira/tour boundary fix
+- **Mira won't mention matches** if user has no profile and no skills (was saying "2 Matches für dich!" before any CV upload).
+- **Mira suppressed during tour** — `triggerMiraGreeting()` defers if `_tourActive` or tour hasn't run yet. Chat panel collapsed at tour start.
+- **Tour is not Mira** — all first-person Mira voice removed from tour copy. Tour introduces Mira in third person ("am Ende lernst du Mira kennen"). On tour completion, Mira chat auto-opens with her real greeting.
+
+### 18. Germany flag map
+Replaced hand-drawn SVG with actual `Germany map with national flag colors.png` (1024x1024). Force-added past `*.png` gitignore rule.
+
+### Evening commits
+
+| # | Hash | Summary |
+|---|------|---------|
+| 9 | `488dd5b` | Ctrl+F2 feedback hotkey, Germany flag-map PNG, IIFE scope fix |
+| 10 | `8689879` | tour/Mira boundary: tour is not Mira, Mira joins after |
+
+---
+
 ## End-of-day checklist
 
 - [x] Pipeline overnight reviewed
 - [x] Tests pass (438 passed, 0 errors)
-- [x] Committed and pushed (8 commits)
+- [x] Committed and pushed (10 commits)
 - [x] Daily note updated
 - [x] Profile form overhaul (feedback #166 + #167)
 - [x] Yogi name protection (A+B+C+D via Taro)
 - [x] systemd install (all 3 services active, cron entries removed)
 - [x] Onboarding wizard (7-step first-login flow)
 - [x] turing_restart.sh updated for systemd
+- [x] Onboarding back buttons (steps 2, 3)
+- [x] Mira/tour boundary (no Mira during tour, opens after)
+- [x] Germany flag-map PNG
+- [ ] Feedback hotkey (Ctrl+F2) — cache buster bumped, needs browser verify
 - [ ] Browser verification of onboarding flow
 - [ ] Browser verification of profile page
