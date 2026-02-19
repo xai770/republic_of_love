@@ -201,15 +201,63 @@ Ran `sudo bash config/systemd/install.sh`. All three services installed, enabled
 
 Commented out old `@reboot` cron entries (backfill_watchdog + start_bi). Services now survive crashes via systemd auto-restart.
 
+### 13. Onboarding wizard (10:37–14:10 CET)
+Redesigned first-login experience. Core principle: **"Getting a yogi name isn't a privilege, it's an obligation. Mira can never be associated with compulsion."** — so Mira's role in name-giving is removed entirely. Name selection happens in a standalone onboarding wizard before the user ever sees the dashboard.
+
+**Template:** `frontend/templates/onboarding.html` — fullscreen frosted-glass card, 7 sequential steps with fade transitions. Self-contained (no base.html, no nav/sidebar). All copy embedded in JS as 3 variants (EN, DE/du, DE/Sie).
+
+| Step | Screen | Details |
+|------|--------|---------|
+| 1 | Language | 🇩🇪/ 🇬🇧 flag buttons, hover reveals label |
+| 2 | Germany notice | Stylized SVG map + info box: "only positions in Germany" |
+| 3 | Du / Sie | Two cards (skipped automatically for EN) |
+| 4 | Privacy | 5-point checklist. Accept → continue. Reject → white "close window" screen |
+| 5 | Name choice | "Let Taro pick" (→ grid) or "I'll type my own" (→ manual) |
+| 6 | Taro grid | Gender selector (neutral/feminine/masculine) → 4×5 grid of 20 names from Taro's gendered pools. "type my own" link |
+| 7 | Manual entry | Live validation via `dry_run` on PUT /me/yogi-name. 3-char minimum, Taro warnings/errors inline |
+
+**Backend:**
+- `api/routers/onboarding.py` — `POST /api/onboarding/complete` saves language, formality, yogi_name, stamps `onboarding_completed_at`
+- `api/routers/auth.py` — OAuth callback + test-login check `onboarding_completed_at IS NULL` → redirect to `/onboarding`
+- `api/main.py` — `GET /onboarding` route (redirects to dashboard if already completed)
+- `api/deps.py` — user dict now includes `yogi_name` + `onboarding_completed_at`
+- `api/routers/profiles.py` — `dry_run` param on PUT /me/yogi-name for validation-only
+- `core/taro.py` — gendered name pools: _FEMININE_SINGLES (40), _MASCULINE_SINGLES (40), _FEMININE_PREFIXES/SUFFIXES (12 each), _MASCULINE_PREFIXES/SUFFIXES (12 each). `suggest_names(gender=...)` parameter
+
+**DB migration:** `migrations/onboarding_wizard_20260219.sql` — `language` (text, default 'de') + `formality` (text, default 'du') on users table. Applied live.
+
+**Privacy compliance:** Real name from OAuth is read transiently for Taro validation, never stored. Privacy screen explicitly states: "We never store your real name."
+
+### 14. Housekeeping: turing_restart.sh → systemd
+Updated `tools/turing_restart.sh` from manual `pkill`/`nohup uvicorn` to `systemctl restart talent-yoga`. Auto-elevates via `exec sudo`.
+
+---
+
+## Commits
+
+| # | Hash | Summary |
+|---|------|---------|
+| 1 | `84415eb` | embedding backlog fix + broken test fix + cheat sheet |
+| 2 | `9ded8f5` | berufenet parallelization + wave_runner removal |
+| 3 | `cb318a3` | daily note update |
+| 4 | `50f8acc` | profile builder: form with work/education/projects, i18n, full-pane layout |
+| 5 | `34a1a19` | taro: layered yogi name protection (A+B+C+D) |
+| 6 | `1457e81` | daily note: profile builder + taro protection |
+| 7 | `8e85d35` | systemd install: 3 services active, cron entries commented |
+| 8 | `513ccad` | onboarding wizard: 7-step frosted-glass first-login flow |
+
 ---
 
 ## End-of-day checklist
 
 - [x] Pipeline overnight reviewed
 - [x] Tests pass (438 passed, 0 errors)
-- [x] Committed and pushed (5 commits)
+- [x] Committed and pushed (8 commits)
 - [x] Daily note updated
 - [x] Profile form overhaul (feedback #166 + #167)
 - [x] Yogi name protection (A+B+C+D via Taro)
 - [x] systemd install (all 3 services active, cron entries removed)
+- [x] Onboarding wizard (7-step first-login flow)
+- [x] turing_restart.sh updated for systemd
+- [ ] Browser verification of onboarding flow
 - [ ] Browser verification of profile page
