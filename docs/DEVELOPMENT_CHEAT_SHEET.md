@@ -238,3 +238,33 @@ UPDATE task_types SET raq_config = '{
     "compare_output_field": "output::text"
 }'::jsonb WHERE task_type_id = ???;
 ```
+
+## Pipeline Change Verification Pattern
+
+**After ANY change to pipeline config (task_types priorities, work_queries, actor logic, daemon changes):**
+
+1. Make the change (SQL update, code edit, etc.)
+2. Run a catch-up `turing_fetch.sh` immediately to verify:
+   ```bash
+   nohup bash scripts/turing_fetch.sh >> logs/turing_fetch.log 2>&1 &
+   ```
+3. Monitor with: `tail -f logs/turing_fetch.log`
+4. Compare before/after metrics (embedding count, description count, etc.)
+
+**Do NOT wait for the nightly cron.** Always run a catch-up to confirm the change works end-to-end.
+
+### Daemon Actor Execution Order
+
+The `turing_daemon` (Step 4) runs actors sequentially by `task_types.priority DESC`.
+Order matters — actors that produce data must run before actors that consume it.
+
+```
+job_description_backfill (60)  →  fetches HTML descriptions from AA/DB
+extracted_summary        (50)  →  LLM-summarizes DB corporate wordiness
+embedding_generator      (30)  →  embeds match_text (needs descriptions + summaries first!)
+owl_pending_auto_triage  (10)  →  LLM picks best berufenet match
+external_partner_scrape   (0)  →  scrapes partner job sites
+domain_gate_classifier    (0)  →  classifies posting domains
+```
+
+To change order: `UPDATE task_types SET priority = <N> WHERE task_type_name = '<name>';`

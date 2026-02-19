@@ -21,7 +21,7 @@ from core.mira_llm import (
     detect_notification_email_response,
 )
 from core.pii_detector import PIIDetector
-from core.cv_anonymizer import _extract_json, _validate_and_normalize, _flatten_to_text
+from core.cv_anonymizer import _extract_json, _flatten_to_text
 
 
 # ─────────────────────────────────────────────────────────
@@ -236,44 +236,9 @@ class TestExtractJson(unittest.TestCase):
         self.assertIsNone(result)
 
 
-class TestValidateAndNormalize(unittest.TestCase):
-    """Test structure normalization of anonymized profiles."""
-    
-    def test_basic_structure(self):
-        data = {
-            'years_experience': 12,
-            'career_level': 'senior',
-            'skills': ['Python', 'PostgreSQL'],
-            'work_history': [
-                {'employer_description': 'a large German bank', 'role': 'Developer', 'duration_years': 4}
-            ]
-        }
-        result = _validate_and_normalize(data, 'xai')
-        self.assertEqual(result['yogi_name'], 'xai')
-        self.assertEqual(result['years_experience'], 12)
-        self.assertEqual(len(result['skills']), 2)
-        self.assertEqual(len(result['work_history']), 1)
-    
-    def test_caps_skills_at_30(self):
-        data = {'skills': [f'skill_{i}' for i in range(50)]}
-        result = _validate_and_normalize(data, 'test')
-        self.assertEqual(len(result['skills']), 30)
-    
-    def test_invalid_career_level_defaults_to_mid(self):
-        data = {'career_level': 'wizard'}
-        result = _validate_and_normalize(data, 'test')
-        self.assertEqual(result['career_level'], 'mid')
-    
-    def test_insane_years_set_to_none(self):
-        data = {'years_experience': 100}
-        result = _validate_and_normalize(data, 'test')
-        self.assertIsNone(result['years_experience'])
-    
-    def test_empty_input(self):
-        result = _validate_and_normalize({}, 'test')
-        self.assertEqual(result['yogi_name'], 'test')
-        self.assertEqual(result['skills'], [])
-        self.assertEqual(result['work_history'], [])
+# TestValidateAndNormalize removed — _validate_and_normalize was inlined into
+# the two-pass extract_and_anonymize pipeline (Feb 18 rewrite). Validation
+# (career_level defaults, skills cap, years range) now happens during extraction.
 
 
 class TestFlattenToText(unittest.TestCase):
