@@ -147,6 +147,19 @@
         });
     }
 
+    /* ── F2 global hotkey to toggle feedback widget ── */
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            if (overlayEl && overlayEl.classList.contains('active')) {
+                closeFeedback();
+            } else {
+                window.openFeedbackWidget();
+            }
+        }
+    });
+    }
+
     /* ── open / close ── */
     window.openFeedbackWidget = function () {
         buildOverlay();
