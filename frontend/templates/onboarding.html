@@ -13,7 +13,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background: linear-gradient(135deg, #4ade80 0%, #c4956a 45%, #7dd3fc 100%);
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
@@ -70,8 +70,8 @@
             font-size: 56px;
             position: relative;
         }
-        .flag-btn:hover { border-color: #7c3aed; transform: translateY(-4px); box-shadow: 0 6px 20px rgba(124,58,237,.18); }
-        .flag-btn.selected { border-color: #7c3aed; background: #ede9fe; }
+        .flag-btn:hover { border-color: #0d9488; transform: translateY(-4px); box-shadow: 0 6px 20px rgba(13,148,136,.18); }
+        .flag-btn.selected { border-color: #0d9488; background: #ccfbf1; }
         .flag-label {
             font-size: 14px; font-weight: 600; color: #4b5563;
             opacity: 0; transition: opacity .2s;
@@ -105,8 +105,8 @@
             cursor: pointer;
             transition: all .2s;
         }
-        .formality-card:hover { border-color: #7c3aed; transform: translateY(-2px); }
-        .formality-card.selected { border-color: #7c3aed; background: #ede9fe; }
+        .formality-card:hover { border-color: #0d9488; transform: translateY(-2px); }
+        .formality-card.selected { border-color: #0d9488; background: #ccfbf1; }
         .formality-card .big { font-size: 28px; font-weight: 700; color: #1e293b; }
         .formality-card .desc { font-size: 13px; color: #64748b; margin-top: 6px; }
 
@@ -140,7 +140,7 @@
             cursor: pointer;
             transition: all .2s;
         }
-        .choice-card:hover { border-color: #7c3aed; transform: translateY(-2px); }
+        .choice-card:hover { border-color: #0d9488; transform: translateY(-2px); }
         .choice-card .icon { font-size: 36px; margin-bottom: 8px; }
         .choice-card .label { font-size: 16px; font-weight: 600; color: #1e293b; }
         .choice-card .hint { font-size: 13px; color: #64748b; margin-top: 6px; }
@@ -156,8 +156,8 @@
             font-size: 14px; font-weight: 500; color: #475569;
             cursor: pointer; transition: all .2s;
         }
-        .gender-btn:hover { border-color: #a78bfa; }
-        .gender-btn.selected { border-color: #7c3aed; background: #ede9fe; color: #5b21b6; }
+        .gender-btn:hover { border-color: #5eead4; }
+        .gender-btn.selected { border-color: #0d9488; background: #ccfbf1; color: #115e59; }
 
         /* ── Taro name grid (step 6) ──────────────────── */
         .name-grid {
@@ -177,8 +177,8 @@
             transition: all .2s;
             word-break: break-word;
         }
-        .name-chip:hover { border-color: #a78bfa; background: #f5f3ff; transform: translateY(-1px); }
-        .name-chip.selected { border-color: #7c3aed; background: #ede9fe; color: #5b21b6; font-weight: 700; }
+        .name-chip:hover { border-color: #5eead4; background: #f0fdfa; transform: translateY(-1px); }
+        .name-chip.selected { border-color: #0d9488; background: #ccfbf1; color: #115e59; font-weight: 700; }
         .grid-footer {
             display: flex; justify-content: center; margin-top: 8px; gap: 12px;
         }
@@ -194,7 +194,7 @@
             outline: none;
             transition: border-color .2s;
         }
-        .manual-input:focus { border-color: #7c3aed; }
+        .manual-input:focus { border-color: #0d9488; }
         .validation-msg {
             font-size: 13px; min-height: 20px;
             padding: 0 4px;
@@ -213,10 +213,10 @@
             display: inline-flex; align-items: center; gap: 6px;
         }
         .btn-primary {
-            background: #7c3aed; color: #fff;
+            background: #0d9488; color: #fff;
         }
-        .btn-primary:hover { background: #6d28d9; }
-        .btn-primary:disabled { background: #c4b5fd; cursor: not-allowed; }
+        .btn-primary:hover { background: #0f766e; }
+        .btn-primary:disabled { background: #99f6e4; cursor: not-allowed; }
         .btn-secondary {
             background: transparent; color: #64748b;
             border: 2px solid #e2e8f0;
@@ -228,7 +228,7 @@
         }
         .btn-danger:hover { background: #fef2f2; }
         .btn-ghost {
-            background: transparent; color: #7c3aed;
+            background: transparent; color: #0d9488;
             border: none; text-decoration: underline;
             padding: 8px 12px;
         }
@@ -240,7 +240,7 @@
 
         /* ── Loading spinner ──────────────────────────── */
         .spinner { display: inline-block; width: 18px; height: 18px;
-            border: 2px solid #c4b5fd; border-top-color: #7c3aed;
+            border: 2px solid #99f6e4; border-top-color: #0d9488;
             border-radius: 50%; animation: spin .6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -282,6 +282,9 @@
 
     <!-- ════════ STEP 1 — Language ════════ -->
     <div class="step active" data-step="1">
+        <div style="position:absolute;top:18px;left:20px;width:44px;height:44px;background:#fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;">
+            <img src="/static/images/icons/logo.png" alt="talent.yoga" style="width:30px;height:30px;object-fit:contain;">
+        </div>
         <h2 data-i18n="onboarding.lang_title_en">Choose your language</h2>
         <p data-i18n="onboarding.lang_subtitle_en">talent.yoga is available in German and English.</p>
         <div class="flag-row">
@@ -303,13 +306,13 @@
             <svg class="germany-svg" viewBox="0 0 100 136" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 2 C30 5, 18 15, 12 30 C8 42, 5 55, 8 68 C10 80, 18 95, 28 108 C35 116, 42 125, 50 134 C58 125, 65 116, 72 108 C82 95, 90 80, 92 68 C95 55, 92 42, 88 30 C82 15, 70 5, 50 2Z"
                       fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                <circle cx="42" cy="38" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Hamburg -->
-                <circle cx="58" cy="48" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Berlin -->
-                <circle cx="38" cy="65" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Cologne -->
-                <circle cx="52" cy="60" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Frankfurt -->
-                <circle cx="65" cy="78" r="4" fill="#7c3aed" opacity=".8"/>  <!-- Munich -->
-                <circle cx="30" cy="55" r="2" fill="#7c3aed" opacity=".4"/>
-                <circle cx="70" cy="55" r="2" fill="#7c3aed" opacity=".4"/>
+                <circle cx="42" cy="38" r="3" fill="#0d9488" opacity=".6"/>  <!-- Hamburg -->
+                <circle cx="58" cy="48" r="3" fill="#0d9488" opacity=".6"/>  <!-- Berlin -->
+                <circle cx="38" cy="65" r="3" fill="#0d9488" opacity=".6"/>  <!-- Cologne -->
+                <circle cx="52" cy="60" r="3" fill="#0d9488" opacity=".6"/>  <!-- Frankfurt -->
+                <circle cx="65" cy="78" r="4" fill="#0d9488" opacity=".8"/>  <!-- Munich -->
+                <circle cx="30" cy="55" r="2" fill="#0d9488" opacity=".4"/>
+                <circle cx="70" cy="55" r="2" fill="#0d9488" opacity=".4"/>
             </svg>
         </div>
         <div class="info-box">
