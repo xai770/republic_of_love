@@ -82,6 +82,7 @@ class WorkHistoryCreate(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     is_current: bool = False
+    entry_type: str = 'work'  # work, education, project
 
 
 class WorkHistoryResponse(BaseModel):
@@ -94,6 +95,7 @@ class WorkHistoryResponse(BaseModel):
     location: Optional[str]
     is_current: bool
     duration_months: Optional[int]
+    entry_type: str = 'work'
 
 
 @router.get("/me", response_model=ProfileResponse)
@@ -411,10 +413,10 @@ def get_my_work_history(user: dict = Depends(require_user), conn=Depends(get_db)
         cur.execute("""
             SELECT work_history_id, company_name as company, job_title as title,
                    start_date, end_date, job_description as description,
-                   location, is_current, duration_months
+                   location, is_current, duration_months, entry_type
             FROM profile_work_history
             WHERE profile_id = %s
-            ORDER BY COALESCE(end_date, CURRENT_DATE) DESC, start_date DESC
+            ORDER BY entry_type, COALESCE(end_date, CURRENT_DATE) DESC, start_date DESC
         """, (profile['profile_id'],))
         
         return [WorkHistoryResponse(**row) for row in cur.fetchall()]
@@ -430,18 +432,19 @@ def add_work_history(
     with conn.cursor() as cur:
         profile_id = _ensure_profile(user, conn)
         
+        entry_type = entry.entry_type if entry.entry_type in ('work', 'education', 'project') else 'work'
         cur.execute("""
             INSERT INTO profile_work_history 
                 (profile_id, company_name, job_title, start_date, end_date, 
-                 job_description, location, is_current, extraction_status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                 job_description, location, is_current, extraction_status, entry_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s)
             RETURNING work_history_id, company_name as company, job_title as title,
                       start_date, end_date, job_description as description,
-                      location, is_current, duration_months
+                      location, is_current, duration_months, entry_type
         """, (
             profile_id, entry.company, entry.title,
             entry.start_date, entry.end_date, entry.description,
-            entry.location, entry.is_current
+            entry.location, entry.is_current, entry_type
         ))
         result = cur.fetchone()
         conn.commit()
@@ -471,19 +474,20 @@ def update_work_history(
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Work history entry not found")
         
+        entry_type = entry.entry_type if entry.entry_type in ('work', 'education', 'project') else 'work'
         cur.execute("""
             UPDATE profile_work_history SET
                 company_name = %s, job_title = %s, start_date = %s, end_date = %s,
                 job_description = %s, location = %s, is_current = %s,
-                extraction_status = 'pending',
+                extraction_status = 'pending', entry_type = %s,
                 updated_at = NOW()
             WHERE work_history_id = %s
             RETURNING work_history_id, company_name as company, job_title as title,
                       start_date, end_date, job_description as description,
-                      location, is_current, duration_months
+                      location, is_current, duration_months, entry_type
         """, (
             entry.company, entry.title, entry.start_date, entry.end_date,
-            entry.description, entry.location, entry.is_current,
+            entry.description, entry.location, entry.is_current, entry_type,
             work_history_id
         ))
         result = cur.fetchone()
@@ -854,16 +858,21 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
         if not profile:
             return {"markdown": "_Noch kein Profil vorhanden. Sprich mit Adele, lade deinen Lebenslauf hoch, oder fülle das Formular aus._", "completeness": 0}
 
-        # Work history
+        # Work history (includes education and projects via entry_type)
         cur.execute("""
             SELECT company_name, job_title, department, start_date, end_date,
                    is_current, duration_months, job_description, location,
-                   technologies_used
+                   technologies_used, entry_type
             FROM profile_work_history
             WHERE profile_id = %s
-            ORDER BY COALESCE(end_date, '2099-01-01') DESC, start_date DESC
+            ORDER BY entry_type, COALESCE(end_date, '2099-01-01') DESC, start_date DESC
         """, (profile['profile_id'],))
-        work_history = cur.fetchall()
+        all_entries = cur.fetchall()
+
+    # Split by entry_type
+    work_history = [e for e in all_entries if e.get('entry_type', 'work') == 'work']
+    education = [e for e in all_entries if e.get('entry_type') == 'education']
+    projects = [e for e in all_entries if e.get('entry_type') == 'project']
 
     # Build markdown
     lines = []
@@ -885,11 +894,9 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
         lines.append(f"> {profile['profile_summary']}")
         lines.append('')
 
-    # Work History
-    if work_history:
-        lines.append('## Berufserfahrung')
-        lines.append('')
-        for job in work_history:
+    # ── Helper: render a list of entries ──
+    def _render_entries(entries, lines):
+        for job in entries:
             title = job['job_title'] or 'Position'
             company = job['company_name'] or ''
             loc = f" — {job['location']}" if job.get('location') else ''
@@ -923,6 +930,24 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
                     lines.append('')
                     lines.append('`' + '` · `'.join(techs) + '`')
             lines.append('')
+
+    # Work History
+    if work_history:
+        lines.append('## Berufserfahrung')
+        lines.append('')
+        _render_entries(work_history, lines)
+
+    # Education
+    if education:
+        lines.append('## Ausbildung')
+        lines.append('')
+        _render_entries(education, lines)
+
+    # Projects
+    if projects:
+        lines.append('## Projekte')
+        lines.append('')
+        _render_entries(projects, lines)
 
     # Skills
     skills = []
@@ -962,14 +987,16 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
             lines.append(f"- {p}")
         lines.append('')
 
-    # Completeness calculation (same logic as ProfileResponse)
+    # Completeness calculation
     completeness = 0
     if profile['yogi_name']: completeness += 10
     if profile['current_title']: completeness += 10
     if profile['location']: completeness += 10
-    if work_history: completeness += 30
+    if work_history: completeness += 20
+    if education: completeness += 10
+    if projects: completeness += 10
     if skills: completeness += 20
-    if profile.get('desired_roles') or profile.get('desired_locations'): completeness += 20
+    if profile.get('desired_roles') or profile.get('desired_locations'): completeness += 10
 
     return {"markdown": '\n'.join(lines), "completeness": completeness}
 

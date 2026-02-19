@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Profil — talent.yoga{% endblock %}
+{% block title %}{{ t('profile.title') }} — talent.yoga{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -224,7 +224,7 @@
     padding: 1rem;
     display: none;
     overflow-y: auto;
-    max-height: 45vh;
+    flex: 1;
 }
 
 .pb-form-area.active { display: block; }
@@ -292,6 +292,73 @@
 }
 
 .pb-form-btn:hover { opacity: 0.9; }
+
+/* Dynamic entry cards */
+.pb-entry-card {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: var(--bg);
+    position: relative;
+}
+
+.pb-entry-card .pb-remove-btn {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+}
+
+.pb-entry-card .pb-remove-btn:hover {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+}
+
+.pb-add-btn {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px dashed var(--border);
+    border-radius: 0.375rem;
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.pb-add-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.pb-entry-card .pb-form-row { margin-bottom: 0.5rem; }
+.pb-entry-card .pb-form-row:last-child { margin-bottom: 0; }
+
+.pb-entry-date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.5rem;
+    align-items: end;
+}
+
+.pb-entry-date-row label { font-size: 0.8rem; }
+
+.pb-current-check {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    padding-bottom: 0.35rem;
+    white-space: nowrap;
+}
 
 /* ── RIGHT PANE ────────────────────────────────────────── */
 .pb-right {
@@ -464,13 +531,13 @@
             <!-- Tab bar -->
             <div class="pb-tabs">
                 <button class="pb-tab active" data-tab="chat" onclick="switchTab('chat')">
-                    <span class="pb-tab-icon">🎙️</span> Adele
+                    <span class="pb-tab-icon">🎙️</span> {{ t('profile.tab_adele') }}
                 </button>
                 <button class="pb-tab" data-tab="upload" onclick="switchTab('upload')">
-                    <span class="pb-tab-icon">📄</span> Upload
+                    <span class="pb-tab-icon">📄</span> {{ t('profile.tab_upload') }}
                 </button>
                 <button class="pb-tab" data-tab="form" onclick="switchTab('form')">
-                    <span class="pb-tab-icon">📝</span> Formular
+                    <span class="pb-tab-icon">📝</span> {{ t('profile.tab_form') }}
                 </button>
             </div>
 
@@ -479,8 +546,8 @@
                 <div class="pb-log-empty" id="pb-log-empty">
                     <div class="pb-log-empty-icon">🎙️</div>
                     <div>
-                        <strong>Willkommen beim Profil-Builder!</strong><br>
-                        Sprich mit Adele, lade deinen Lebenslauf hoch, oder fülle das Formular aus.
+                        <strong>{{ t('profile.builder_welcome') }}</strong><br>
+                        {{ t('profile.builder_intro') }}
                     </div>
                 </div>
             </div>
@@ -489,7 +556,7 @@
             <div class="pb-input-area">
                 <!-- Chat input (default) -->
                 <div class="pb-chat-input" id="pb-input-chat">
-                    <textarea id="pb-chat-text" rows="1" placeholder="Schreib Adele..."
+                    <textarea id="pb-chat-text" rows="1" placeholder="{{ t('profile.chat_placeholder') }}"
                               onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendToAdele()}"
                               oninput="autoResize(this)"></textarea>
                     <button class="pb-send-btn" onclick="sendToAdele()" id="pb-send-btn" title="Senden">
@@ -506,73 +573,99 @@
                          ondragleave="handleDragLeave(event)"
                          onclick="document.getElementById('pb-file-input').click()">
                         <div class="pb-dropzone-icon">📄</div>
-                        <p><strong>Lebenslauf hierher ziehen</strong></p>
-                        <p>oder klicken zum Auswählen</p>
-                        <p style="font-size:0.8rem; color:var(--text-muted)">PDF, DOCX, TXT, MD</p>
+                        <p><strong>{{ t('profile.upload_drag') }}</strong></p>
+                        <p>{{ t('profile.upload_click') }}</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted)">{{ t('profile.upload_formats') }}</p>
                     </div>
                     <input type="file" id="pb-file-input" accept=".pdf,.docx,.doc,.txt,.md"
                            onchange="handleFileSelect(event)" hidden>
                     <div class="pb-upload-status" id="pb-upload-status">
                         <div class="spinner"></div>
-                        <p>Lebenslauf wird analysiert...</p>
+                        <p>{{ t('profile.upload_analyzing') }}</p>
                     </div>
                 </div>
 
                 <!-- Form input -->
                 <div class="pb-form-area" id="pb-input-form">
+                    <!-- Identity -->
                     <div class="pb-form-section">
-                        <h3>Identität</h3>
+                        <h3>{{ t('profile.section_identity') }}</h3>
                         <div class="pb-form-row">
-                            <label>Yogi-Name (öffentliches Pseudonym)</label>
-                            <input type="text" id="pf-yogi-name" placeholder="z.B. Phoenix, Lotus, Stardust" maxlength="30">
-                            <small>Dein Anzeigename auf der Plattform — darf nicht dein echter Name sein</small>
+                            <label>{{ t('profile.yogi_name') }}</label>
+                            <input type="text" id="pf-yogi-name" placeholder="{{ t('profile.yogi_name_placeholder') }}" maxlength="30">
+                            <small>{{ t('profile.yogi_name_hint') }}</small>
                         </div>
                     </div>
+
+                    <!-- Basic info -->
                     <div class="pb-form-section">
-                        <h3>Basisdaten</h3>
+                        <h3>{{ t('profile.section_basics') }}</h3>
                         <div class="pb-form-row">
-                            <label>Aktuelle Position</label>
-                            <input type="text" id="pf-title" placeholder="z.B. Gesundheits- und Krankenpfleger">
+                            <label>{{ t('profile.current_title') }}</label>
+                            <input type="text" id="pf-title" placeholder="{{ t('profile.title_placeholder') }}">
                         </div>
                         <div class="pb-form-row">
-                            <label>Standort</label>
-                            <input type="text" id="pf-location" placeholder="z.B. Frankfurt am Main">
+                            <label>{{ t('profile.location') }}</label>
+                            <input type="text" id="pf-location" placeholder="{{ t('profile.location_placeholder') }}">
                         </div>
                     </div>
+
+                    <!-- Work Experience -->
                     <div class="pb-form-section">
-                        <h3>Suchpräferenzen</h3>
+                        <h3>{{ t('profile.section_work') }}</h3>
+                        <div id="pf-work-entries"></div>
+                        <button class="pb-add-btn" onclick="addEntry('work')">{{ t('profile.add_work') }}</button>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="pb-form-section">
+                        <h3>{{ t('profile.section_education') }}</h3>
+                        <div id="pf-edu-entries"></div>
+                        <button class="pb-add-btn" onclick="addEntry('education')">{{ t('profile.add_education') }}</button>
+                    </div>
+
+                    <!-- Projects -->
+                    <div class="pb-form-section">
+                        <h3>{{ t('profile.section_projects') }}</h3>
+                        <div id="pf-project-entries"></div>
+                        <button class="pb-add-btn" onclick="addEntry('project')">{{ t('profile.add_project') }}</button>
+                    </div>
+
+                    <!-- Search Preferences -->
+                    <div class="pb-form-section">
+                        <h3>{{ t('profile.section_preferences') }}</h3>
                         <div class="pb-form-row">
-                            <label>Wunschrollen</label>
-                            <input type="text" id="pf-roles" placeholder="z.B. Teamleitung, Stationsleitung">
-                            <small>Komma-getrennt</small>
+                            <label>{{ t('profile.desired_roles') }}</label>
+                            <input type="text" id="pf-roles" placeholder="{{ t('profile.roles_placeholder') }}">
+                            <small>{{ t('profile.comma_separated') }}</small>
                         </div>
                         <div class="pb-form-row">
-                            <label>Wunschorte</label>
-                            <input type="text" id="pf-locations" placeholder="z.B. Frankfurt, München, Remote">
-                            <small>Komma-getrennt</small>
+                            <label>{{ t('profile.desired_locations') }}</label>
+                            <input type="text" id="pf-locations" placeholder="{{ t('profile.locations_placeholder') }}">
+                            <small>{{ t('profile.comma_separated') }}</small>
                         </div>
                         <div class="pb-form-half">
                             <div class="pb-form-row">
-                                <label>Gehalt min (€)</label>
-                                <input type="number" id="pf-salary-min" step="1000" placeholder="z.B. 45000">
+                                <label>{{ t('profile.salary_min') }}</label>
+                                <input type="number" id="pf-salary-min" step="1000" placeholder="{{ t('profile.salary_min_placeholder') }}">
                             </div>
                             <div class="pb-form-row">
-                                <label>Gehalt max (€)</label>
-                                <input type="number" id="pf-salary-max" step="1000" placeholder="z.B. 65000">
+                                <label>{{ t('profile.salary_max') }}</label>
+                                <input type="number" id="pf-salary-max" step="1000" placeholder="{{ t('profile.salary_max_placeholder') }}">
                             </div>
                         </div>
                         <div class="pb-form-row">
-                            <label>Mindestlevel</label>
+                            <label>{{ t('profile.seniority_level') }}</label>
                             <select id="pf-seniority">
-                                <option value="">Egal</option>
-                                <option value="junior">Junior / Einsteiger</option>
-                                <option value="mid">Mid-level</option>
-                                <option value="senior">Senior</option>
-                                <option value="lead">Lead / Leitung</option>
+                                <option value="">{{ t('profile.seniority_any') }}</option>
+                                <option value="junior">{{ t('profile.seniority_junior') }}</option>
+                                <option value="mid">{{ t('profile.seniority_mid') }}</option>
+                                <option value="senior">{{ t('profile.seniority_senior') }}</option>
+                                <option value="lead">{{ t('profile.seniority_lead') }}</option>
                             </select>
                         </div>
                     </div>
-                    <button class="pb-form-btn" onclick="saveFormData()">💾 Speichern</button>
+                    <button class="pb-form-btn" onclick="saveFormData()">{{ t('profile.save_all') }}</button>
                 </div>
             </div>
         </div>
@@ -580,11 +673,11 @@
         <!-- ═══ RIGHT PANE ═══ -->
         <div class="pb-right">
             <div class="pb-right-header">
-                <h2>📋 Profil</h2>
+                <h2>{{ t('profile.preview_title') }}</h2>
                 <div class="pb-right-actions">
                     <span class="pb-completeness" id="pb-completeness">0%</span>
-                    <button class="pb-download-btn" onclick="downloadProfile()" title="Als Markdown herunterladen">
-                        ⬇ Download
+                    <button class="pb-download-btn" onclick="downloadProfile()" title="{{ t('profile.download') }}">
+                        {{ t('profile.download') }}
                     </button>
                 </div>
             </div>
@@ -593,8 +686,8 @@
                     <div class="pb-preview-empty" id="pb-preview-empty">
                         <div class="pb-preview-empty-icon">📋</div>
                         <div>
-                            <strong>Dein Profil erscheint hier</strong><br>
-                            Sobald du Daten eingibst, baut sich dein Profil-Dokument live auf.
+                            <strong>{{ t('profile.preview_empty_title') }}</strong><br>
+                            {{ t('profile.preview_empty_desc') }}
                         </div>
                     </div>
                 </div>
@@ -612,6 +705,23 @@
 let currentTab = 'chat';
 let profileMarkdown = '';
 
+// i18n labels (from server-rendered template)
+const I = {
+    company_placeholder: {{ t('profile.company_placeholder') | tojson }},
+    role_placeholder: {{ t('profile.role_placeholder') | tojson }},
+    start_date: {{ t('profile.start_date') | tojson }},
+    end_date: {{ t('profile.end_date') | tojson }},
+    current_position: {{ t('profile.current_position') | tojson }},
+    remove_entry: {{ t('profile.remove_entry') | tojson }},
+    description: {{ t('profile.description') | tojson }},
+    institution_placeholder: {{ t('profile.institution_placeholder') | tojson }},
+    degree_placeholder: {{ t('profile.degree_placeholder') | tojson }},
+    project_name_placeholder: {{ t('profile.project_name_placeholder') | tojson }},
+    project_role_placeholder: {{ t('profile.project_role_placeholder') | tojson }},
+    no_profile_yet: {{ t('profile.no_profile_yet') | tojson }},
+    adele_error: {{ t('profile.adele_error') | tojson }},
+};
+
 // ── TAB SWITCHING ──────────────────────────────────────────
 
 function switchTab(tab) {
@@ -624,6 +734,20 @@ function switchTab(tab) {
     document.getElementById('pb-input-upload').classList.toggle('active', tab === 'upload');
     document.getElementById('pb-input-form').style.display = tab === 'form' ? 'block' : 'none';
     document.getElementById('pb-input-form').classList.toggle('active', tab === 'form');
+
+    // When form tab is active: hide log, let form fill the pane
+    const log = document.getElementById('pb-log');
+    const inputArea = document.querySelector('.pb-input-area');
+    if (tab === 'form') {
+        log.style.display = 'none';
+        inputArea.style.flex = '1';
+        inputArea.style.overflow = 'hidden';
+    } else {
+        log.style.display = 'flex';
+        inputArea.style.flex = '';
+        inputArea.style.overflow = '';
+    }
+
     if (tab === 'chat') document.getElementById('pb-chat-text').focus();
 }
 
@@ -635,6 +759,113 @@ function autoResize(el) {
 }
 
 // ── ACTIVITY LOG ───────────────────────────────────────────
+
+// ── DYNAMIC ENTRY MANAGEMENT ───────────────────────────────
+
+let entryCounter = 0;
+
+function addEntry(type, data) {
+    entryCounter++;
+    const id = 'entry-' + entryCounter;
+    const containerId = type === 'work' ? 'pf-work-entries'
+                      : type === 'education' ? 'pf-edu-entries'
+                      : 'pf-project-entries';
+    const container = document.getElementById(containerId);
+
+    const card = document.createElement('div');
+    card.className = 'pb-entry-card';
+    card.id = id;
+    card.dataset.entryType = type;
+    card.dataset.workHistoryId = (data && data.work_history_id) || '';
+
+    let html = `<button class="pb-remove-btn" onclick="removeEntry('${id}')" title="${I.remove_entry}">✕</button>`;
+
+    if (type === 'work') {
+        html += `
+            <div class="pb-form-row">
+                <input type="text" data-field="company" placeholder="${I.company_placeholder}" value="${esc(data?.company)}">
+            </div>
+            <div class="pb-form-row">
+                <input type="text" data-field="title" placeholder="${I.role_placeholder}" value="${esc(data?.title)}">
+            </div>
+            <div class="pb-entry-date-row">
+                <div><label>${I.start_date}</label><input type="date" data-field="start_date" value="${esc(data?.start_date)}"></div>
+                <div><label>${I.end_date}</label><input type="date" data-field="end_date" value="${esc(data?.end_date)}" ${data?.is_current ? 'disabled' : ''}></div>
+                <label class="pb-current-check"><input type="checkbox" data-field="is_current" ${data?.is_current ? 'checked' : ''} onchange="toggleEndDate(this)"> ${I.current_position}</label>
+            </div>
+            <div class="pb-form-row" style="margin-top:0.5rem">
+                <textarea data-field="description" rows="2" placeholder="${I.description}">${esc(data?.description)}</textarea>
+            </div>`;
+    } else if (type === 'education') {
+        html += `
+            <div class="pb-form-row">
+                <input type="text" data-field="company" placeholder="${I.institution_placeholder}" value="${esc(data?.company)}">
+            </div>
+            <div class="pb-form-row">
+                <input type="text" data-field="title" placeholder="${I.degree_placeholder}" value="${esc(data?.title)}">
+            </div>
+            <div class="pb-entry-date-row">
+                <div><label>${I.start_date}</label><input type="date" data-field="start_date" value="${esc(data?.start_date)}"></div>
+                <div><label>${I.end_date}</label><input type="date" data-field="end_date" value="${esc(data?.end_date)}" ${data?.is_current ? 'disabled' : ''}></div>
+                <label class="pb-current-check"><input type="checkbox" data-field="is_current" ${data?.is_current ? 'checked' : ''} onchange="toggleEndDate(this)"> ${I.current_position}</label>
+            </div>
+            <div class="pb-form-row" style="margin-top:0.5rem">
+                <textarea data-field="description" rows="2" placeholder="${I.description}">${esc(data?.description)}</textarea>
+            </div>`;
+    } else { // project
+        html += `
+            <div class="pb-form-row">
+                <input type="text" data-field="company" placeholder="${I.project_name_placeholder}" value="${esc(data?.company)}">
+            </div>
+            <div class="pb-form-row">
+                <input type="text" data-field="title" placeholder="${I.project_role_placeholder}" value="${esc(data?.title)}">
+            </div>
+            <div class="pb-entry-date-row">
+                <div><label>${I.start_date}</label><input type="date" data-field="start_date" value="${esc(data?.start_date)}"></div>
+                <div><label>${I.end_date}</label><input type="date" data-field="end_date" value="${esc(data?.end_date)}" ${data?.is_current ? 'disabled' : ''}></div>
+                <label class="pb-current-check"><input type="checkbox" data-field="is_current" ${data?.is_current ? 'checked' : ''} onchange="toggleEndDate(this)"> ${I.current_position}</label>
+            </div>
+            <div class="pb-form-row" style="margin-top:0.5rem">
+                <textarea data-field="description" rows="2" placeholder="${I.description}">${esc(data?.description)}</textarea>
+            </div>`;
+    }
+
+    card.innerHTML = html;
+    container.appendChild(card);
+    return card;
+}
+
+function removeEntry(id) {
+    const card = document.getElementById(id);
+    if (card) card.remove();
+}
+
+function toggleEndDate(checkbox) {
+    const card = checkbox.closest('.pb-entry-card');
+    const endInput = card.querySelector('[data-field="end_date"]');
+    if (checkbox.checked) {
+        endInput.value = '';
+        endInput.disabled = true;
+    } else {
+        endInput.disabled = false;
+    }
+}
+
+function esc(val) { return val || ''; }
+
+function getCardData(card) {
+    const get = (f) => { const el = card.querySelector(`[data-field="${f}"]`); return el ? (el.type === 'checkbox' ? el.checked : el.value.trim()) : ''; };
+    return {
+        company: get('company'),
+        title: get('title'),
+        start_date: get('start_date'),
+        end_date: get('end_date'),
+        description: get('description'),
+        is_current: get('is_current'),
+        entry_type: card.dataset.entryType,
+        work_history_id: card.dataset.workHistoryId || null,
+    };
+}
 
 function addLogEntry(type, text, sender) {
     const log = document.getElementById('pb-log');
@@ -731,6 +962,14 @@ async function loadFormDefaults() {
         if (p.expected_salary_max) document.getElementById('pf-salary-max').value = p.expected_salary_max;
         if (p.min_seniority) document.getElementById('pf-seniority').value = p.min_seniority;
     } catch(e) {}
+
+    // Load existing entries (work history, education, projects)
+    try {
+        const res = await fetch('/api/profiles/me/work-history');
+        if (!res.ok) return;
+        const entries = await res.json();
+        entries.forEach(e => addEntry(e.entry_type || 'work', e));
+    } catch(e) {}
 }
 
 // ── ADELE CHAT ─────────────────────────────────────────────
@@ -758,7 +997,7 @@ async function sendToAdele() {
         addLogEntry('adele', data.reply);
         setTimeout(refreshProfile, 500);
     } catch (err) {
-        addLogEntry('system', 'Fehler bei der Kommunikation mit Adele.', 'error');
+        addLogEntry('system', I.adele_error, 'error');
     } finally {
         btn.disabled = false;
         input.focus();
@@ -806,7 +1045,7 @@ function handleFileSelect(e) {
 async function uploadCV(file) {
     document.getElementById('pb-dropzone').style.display = 'none';
     document.getElementById('pb-upload-status').style.display = 'block';
-    addLogEntry('system', 'CV hochgeladen: ' + file.name, 'cv_upload');
+    addLogEntry('system', 'CV: ' + file.name, 'cv_upload');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -829,7 +1068,7 @@ async function uploadCV(file) {
         addLogEntry('adele', 'Ich habe aus deinem Lebenslauf extrahiert: ' + parts.join(', ') + '. Importiere jetzt...');
 
         await importCV(data);
-        addLogEntry('system', 'Lebenslauf-Daten importiert ✓', 'cv_import');
+        addLogEntry('system', '✓ Import OK', 'cv_import');
         await refreshProfile();
 
     } catch (err) {
@@ -887,11 +1126,10 @@ async function saveFormData() {
             });
             if (!res.ok) {
                 const err = await res.json();
-                alert(err.detail || 'Yogi-Name konnte nicht gespeichert werden.');
-                return; // Stop — don't save anything else if name is rejected
+                alert(err.detail || 'Yogi-Name error');
+                return;
             }
             changes.push('Yogi-Name: ' + yogiName);
-            // Update header display
             const headerName = document.querySelector('.user-name');
             if (headerName) headerName.textContent = yogiName;
         } catch(e) {}
@@ -904,8 +1142,8 @@ async function saveFormData() {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ title: title || null, location: location || null })
             });
-            if (title) changes.push('Position: ' + title);
-            if (location) changes.push('Standort: ' + location);
+            if (title) changes.push(title);
+            if (location) changes.push(location);
         } catch(e) {}
     }
 
@@ -923,12 +1161,62 @@ async function saveFormData() {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(prefs)
             });
-            if (roles) changes.push('Wunschrollen aktualisiert');
-            if (locations) changes.push('Wunschorte aktualisiert');
-            if (salaryMin || salaryMax) changes.push('Gehaltsvorstellung aktualisiert');
-            if (seniority) changes.push('Mindestlevel: ' + seniority);
+            changes.push('✓');
         } catch(e) {}
     }
+
+    // Save all entry cards (work, education, project)
+    const allCards = document.querySelectorAll('.pb-entry-card');
+    let savedEntries = 0;
+    let deletedIds = new Set();
+
+    // Get existing IDs from loaded entries
+    const existingIds = new Set();
+    allCards.forEach(card => {
+        const whId = card.dataset.workHistoryId;
+        if (whId) existingIds.add(whId);
+    });
+
+    for (const card of allCards) {
+        const d = getCardData(card);
+        if (!d.company && !d.title) continue; // skip empty cards
+
+        const payload = {
+            company: d.company || '-',
+            title: d.title || '-',
+            start_date: d.start_date || '2020-01-01',
+            end_date: d.is_current ? null : (d.end_date || null),
+            description: d.description || null,
+            location: null,
+            is_current: d.is_current,
+            entry_type: d.entry_type
+        };
+
+        try {
+            if (d.work_history_id) {
+                // Update existing
+                await fetch('/api/profiles/me/work-history/' + d.work_history_id, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                // Create new
+                const res = await fetch('/api/profiles/me/work-history', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    const created = await res.json();
+                    card.dataset.workHistoryId = created.work_history_id;
+                }
+            }
+            savedEntries++;
+        } catch(e) {}
+    }
+
+    if (savedEntries > 0) changes.push(savedEntries + ' entries');
 
     if (changes.length > 0) {
         addLogEntry('system', changes.join(' · '), 'form_edit');
@@ -940,7 +1228,7 @@ async function saveFormData() {
 
 function downloadProfile() {
     if (!profileMarkdown || profileMarkdown.startsWith('_Noch kein')) {
-        alert('Noch kein Profil zum Herunterladen.');
+        alert(I.no_profile_yet);
         return;
     }
     const blob = new Blob([profileMarkdown], { type: 'text/markdown;charset=utf-8' });
