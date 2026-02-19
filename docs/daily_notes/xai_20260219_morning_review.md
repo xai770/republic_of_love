@@ -262,6 +262,7 @@ Chat crashed mid-session. Restarted with context recovery from cheat sheet + dir
 | 2 (pre-crash) | Ctrl+Shift+T | Not tried | Pushback: conflicts with browser "reopen closed tab" |
 | 3 (`488dd5b`) | Ctrl+F2 | ❌ Not working | Fixed the IIFE scope bug (removed stray `}`). Code is now correct. Suspected **browser cache**: `base.html` had `?v=20260215c` — never bumped after the fix. Browser still serving the old broken JS. |
 | 4 (next) | Ctrl+F2 | 🔧 Testing | Bumped cache buster to `?v=20260219b` on both `base.html` and `onboarding.html`. Added `console.log` + `stopPropagation` to handler. Needs service restart + hard refresh to verify. |
+| 5 (`01301a8`) | Ctrl+Shift+F | ✅ | Nate (ChatGPT) diagnosed: Linux desktop likely intercepts Ctrl+F-key combos (workspace switching, accessibility). Ctrl+F2 also poor UX on laptops (Fn key layer). Switched to Ctrl+Shift+F — memorable (F=Feedback), no OS/browser conflicts, easy to reach. Cache buster `?v=20260219c`. |
 
 **If Ctrl+F2 still doesn't work after cache bust:** likely Linux/GNOME desktop intercepting the key combo. Fallback plan: try `Ctrl+Shift+F` or `Ctrl+.` — or add a floating FAB to all pages.
 

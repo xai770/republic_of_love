@@ -147,12 +147,12 @@
         });
     }
 
-    /* ── Ctrl+F2 global hotkey to toggle feedback widget ── */
+    /* ── Ctrl+Shift+F global hotkey to toggle feedback widget ── */
     document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'F2') {
+        if (e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[feedback] Ctrl+F2 detected, toggling widget');
+            console.log('[feedback] Ctrl+Shift+F detected, toggling widget');
             if (overlayEl && overlayEl.classList.contains('active')) {
                 closeFeedback();
             } else {
