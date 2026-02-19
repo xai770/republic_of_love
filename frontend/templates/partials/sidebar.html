@@ -149,8 +149,8 @@ function confirmResetOnboarding() {
                 localStorage.removeItem('mira_tour_completed_at');
                 localStorage.removeItem('mira_search_tour_completed');
                 localStorage.removeItem('mira_search_tour_completed_at');
-                alert('✅ ' + data.message + '\n\nRedirecting to dashboard...');
-                window.location.href = '/dashboard';
+                alert('✅ ' + data.message + '\n\nRedirecting to onboarding...');
+                window.location.href = '/onboarding';
             } else {
                 alert('❌ Reset failed: ' + (data.detail || 'Unknown error'));
             }

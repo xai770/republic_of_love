@@ -301,11 +301,13 @@ def reset_onboarding(
         cur.execute("DELETE FROM yogi_messages WHERE user_id = %s", (user_id,))
         deleted["messages"] = cur.rowcount
 
-        # 6. Reset user state (yogi_name, onboarding, notifications)
+        # 6. Reset user state (yogi_name, onboarding, language, formality, notifications)
         cur.execute("""
             UPDATE users
             SET yogi_name = NULL,
                 onboarding_completed_at = NULL,
+                language = 'de',
+                formality = 'du',
                 notification_email = NULL,
                 notification_consent_at = NULL
             WHERE user_id = %s
