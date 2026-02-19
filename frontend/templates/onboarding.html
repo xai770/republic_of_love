@@ -307,48 +307,39 @@
     <div class="step" data-step="2">
         <h2 id="s2-title"></h2>
         <div class="germany-visual">
-            <svg class="germany-svg" viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg">
-                <!-- Schleswig-Holstein -->
-                <path d="M200 10 L220 8 L240 15 L250 30 L245 50 L235 55 L215 52 L195 58 L180 50 L175 35 L185 20Z" fill="#1a5276" stroke="#fff" stroke-width="1.5"/>
-                <!-- Mecklenburg-Vorpommern -->
-                <path d="M250 30 L280 25 L320 28 L340 40 L335 60 L310 65 L280 62 L255 58 L245 50Z" fill="#76d7c4" stroke="#fff" stroke-width="1.5"/>
-                <!-- Hamburg -->
-                <path d="M195 58 L215 52 L220 60 L215 68 L200 70 L190 65Z" fill="#e74c3c" stroke="#fff" stroke-width="1.5"/>
-                <circle cx="207" cy="62" r="2.5" fill="#fff" opacity=".7"/>
-                <!-- Bremen -->
-                <path d="M160 72 L175 68 L182 78 L175 88 L160 85Z" fill="#e74c3c" stroke="#fff" stroke-width="1.5"/>
-                <!-- Niedersachsen -->
-                <path d="M100 55 L160 50 L175 35 L180 50 L195 58 L190 65 L200 70 L215 68 L220 60 L235 55 L255 58 L260 70 L250 85 L230 100 L210 110 L190 115 L170 120 L145 115 L120 105 L100 95 L85 80 L90 65Z" fill="#f9e79f" stroke="#fff" stroke-width="1.5"/>
-                <!-- Brandenburg -->
-                <path d="M280 62 L310 65 L335 60 L350 75 L345 100 L335 120 L315 130 L290 135 L270 125 L260 110 L255 90 L260 70Z" fill="#f0b27a" stroke="#fff" stroke-width="1.5"/>
-                <!-- Berlin -->
-                <path d="M295 88 L310 85 L315 95 L310 105 L295 105 L290 95Z" fill="#e74c3c" stroke="#fff" stroke-width="1.5"/>
-                <circle cx="303" cy="95" r="3" fill="#fff" opacity=".7"/>
-                <!-- Sachsen-Anhalt -->
-                <path d="M230 100 L260 90 L260 110 L270 125 L265 145 L245 155 L225 150 L215 135 L220 115Z" fill="#a569bd" stroke="#fff" stroke-width="1.5"/>
-                <!-- NRW -->
-                <path d="M85 110 L100 95 L120 105 L145 115 L155 130 L150 155 L135 170 L115 175 L90 165 L70 150 L65 130Z" fill="#e74c3c" stroke="#fff" stroke-width="1.5"/>
-                <!-- Hessen -->
-                <path d="M145 155 L170 150 L190 155 L200 175 L195 200 L180 215 L160 210 L140 200 L130 180Z" fill="#52be80" stroke="#fff" stroke-width="1.5"/>
-                <!-- Thüringen -->
-                <path d="M225 150 L245 155 L260 170 L255 190 L238 200 L215 195 L200 180 L200 165 L210 155Z" fill="#85c1e9" stroke="#fff" stroke-width="1.5"/>
-                <!-- Sachsen -->
-                <path d="M270 125 L290 135 L315 130 L335 140 L340 165 L330 190 L305 200 L280 195 L260 180 L260 170 L265 145Z" fill="#f7dc6f" stroke="#fff" stroke-width="1.5"/>
-                <!-- Rheinland-Pfalz -->
-                <path d="M65 175 L90 165 L115 175 L130 180 L135 200 L125 225 L110 245 L90 250 L70 240 L55 220 L50 195Z" fill="#e74c3c" stroke="#fff" stroke-width="1.5"/>
-                <!-- Saarland -->
-                <path d="M55 245 L70 240 L82 250 L78 268 L62 272 L50 260Z" fill="#f1948a" stroke="#fff" stroke-width="1.5"/>
-                <!-- Baden-Württemberg -->
-                <path d="M90 270 L110 245 L125 225 L140 235 L165 240 L180 260 L185 290 L180 320 L165 345 L140 355 L115 350 L95 335 L80 310 L78 290Z" fill="#f5b041" stroke="#fff" stroke-width="1.5"/>
-                <!-- Bayern -->
-                <path d="M180 260 L200 245 L225 235 L255 240 L285 250 L310 270 L325 300 L330 335 L320 370 L295 400 L260 420 L225 425 L195 410 L175 385 L165 355 L165 345 L180 320 L185 290Z" fill="#ec407a" stroke="#fff" stroke-width="1.5"/>
-                <!-- City dots -->
-                <circle cx="207" cy="62" r="3" fill="#0d9488" opacity=".8"/>  <!-- Hamburg -->
-                <circle cx="303" cy="95" r="3.5" fill="#0d9488" opacity=".9"/>  <!-- Berlin -->
-                <circle cx="100" cy="140" r="3" fill="#0d9488" opacity=".7"/>  <!-- Düsseldorf -->
-                <circle cx="170" cy="195" r="3" fill="#0d9488" opacity=".7"/>  <!-- Frankfurt -->
-                <circle cx="130" cy="310" r="3" fill="#0d9488" opacity=".7"/>  <!-- Stuttgart -->
-                <circle cx="275" cy="370" r="3.5" fill="#0d9488" opacity=".8"/>  <!-- Munich -->
+            <svg class="germany-svg" viewBox="-5 -5 320 400" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="de-flag" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#1a1a1a"/>
+                        <stop offset="33.3%" stop-color="#1a1a1a"/>
+                        <stop offset="33.3%" stop-color="#DD0000"/>
+                        <stop offset="66.6%" stop-color="#DD0000"/>
+                        <stop offset="66.6%" stop-color="#FFCC00"/>
+                        <stop offset="100%" stop-color="#FFCC00"/>
+                    </linearGradient>
+                    <filter id="shadow"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity=".15"/></filter>
+                </defs>
+                <path filter="url(#shadow)" fill="url(#de-flag)" stroke="#94a3b8" stroke-width="1.2" stroke-linejoin="round" d="
+                    M92,10 L106,15 L119,15 L133,25 L140,35 L136,44 L167,54
+                    L191,44 L208,35 L225,39 L242,39 L259,44 L276,59 L283,69
+                    L286,84 L300,104 L296,123 L296,138 L300,158 L310,178
+                    L303,197 L296,207 L286,212 L269,217 L259,227 L238,237
+                    L225,242 L218,252 L225,262 L235,276 L242,286 L249,301
+                    L259,311 L266,326 L269,341 L259,360 L242,375 L235,375
+                    L218,370 L201,370 L187,375 L170,385 L153,380 L140,375
+                    L126,375 L123,365 L102,365 L92,360 L78,360 L65,370
+                    L58,370 L55,360 L55,350 L65,341 L55,331 L41,326
+                    L31,311 L17,291 L10,276 L17,262 L7,247 L3,232
+                    L7,227 L3,212 L0,202 L3,192 L10,178 L17,163
+                    L31,158 L37,143 L27,128 L37,123 L44,114 L41,104
+                    L44,94 L55,84 L72,74 L78,64 L89,59 L92,44
+                    L99,35 L92,25 L92,10 Z
+                "/>
+                <!-- Cities -->
+                <circle cx="140" cy="77" r="4" fill="#fff" stroke="#0d9488" stroke-width="2"/>
+                <circle cx="255" cy="127" r="5" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
+                <circle cx="95" cy="246" r="4" fill="#fff" stroke="#0d9488" stroke-width="2"/>
+                <circle cx="193" cy="344" r="4" fill="#fff" stroke="#0d9488" stroke-width="2"/>
             </svg>
         </div>
         <div class="info-box">
