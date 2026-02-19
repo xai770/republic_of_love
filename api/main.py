@@ -90,6 +90,11 @@ def get_i18n_context(request: Request) -> dict:
     }
 
 
+def needs_onboarding(user: dict) -> bool:
+    """True if the user hasn't completed the onboarding wizard yet."""
+    return user and not user.get("onboarding_completed_at")
+
+
 # --- i18n API Endpoints ---
 
 @app.get("/api/i18n/{lang}")
@@ -186,6 +191,8 @@ def dashboard_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -200,6 +207,8 @@ def bi_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return RedirectResponse(url="https://bi.talent.yoga", status_code=302)
 
@@ -213,6 +222,8 @@ def search_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("search.html", {
         "request": request,
@@ -230,6 +241,8 @@ def documents_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("documents.html", {
         "request": request,
@@ -247,6 +260,8 @@ def profile_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("profile.html", {
         "request": request, 
@@ -264,6 +279,8 @@ def matches_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("matches.html", {
         "request": request,
@@ -281,6 +298,8 @@ def messages_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("messages.html", {
         "request": request,
@@ -298,6 +317,8 @@ def account_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     # Get notification/consent data
     notification_email = user.get('notification_email')
@@ -323,6 +344,8 @@ def report_page(match_id: int, request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     
     return templates.TemplateResponse("report.html", {
         "request": request,
@@ -341,6 +364,8 @@ def posting_page(posting_id: int, request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
 
     return templates.TemplateResponse("posting.html", {
         "request": request,
@@ -393,6 +418,8 @@ def arcade_page(request: Request, conn=Depends(get_db)):
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
+    if needs_onboarding(user):
+        return RedirectResponse(url="/onboarding", status_code=302)
     return templates.TemplateResponse("arcade.html", {
         "request": request,
         "user": user,

@@ -75,6 +75,24 @@ async def get_greeting(
     warm, personal greeting. Falls back to templates if LLM is unavailable.
     """
     with conn.cursor() as cur:
+        # Check if user has completed onboarding first
+        cur.execute("""
+            SELECT onboarding_completed_at FROM users WHERE user_id = %s
+        """, (user['user_id'],))
+        ocheck = cur.fetchone()
+        if not ocheck or not ocheck.get('onboarding_completed_at'):
+            # Not yet onboarded — suppress Mira entirely
+            return GreetingResponse(
+                greeting="",
+                is_new_yogi=True,
+                has_profile=False,
+                has_skills=False,
+                has_matches=0,
+                suggested_actions=[],
+                uses_du=True,
+                suppress_greeting=True,
+            )
+
         # Get user state
         cur.execute("""
             SELECT u.created_at, u.last_login_at, u.yogi_name,
