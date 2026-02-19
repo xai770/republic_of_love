@@ -389,6 +389,44 @@ def suggest_yogi_names(
     return {"suggestions": names}
 
 
+@router.post("/me/yogi-name/suggest-from-keywords")
+def suggest_yogi_names_llm(
+    body: dict,
+    gender: str = 'neutral',
+    language: str = 'de',
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Generate yogi name suggestions using LLM, inspired by user-provided keywords.
+    Args:
+        body.keywords: Space/comma-separated inspiration words
+        gender: 'masculine', 'feminine', or 'neutral'
+        language: 'de' for German, 'en' for English
+    """
+    from core.taro import suggest_names_llm
+
+    keywords = (body.get('keywords') or '').strip()
+    if not keywords or len(keywords) < 2:
+        raise HTTPException(status_code=400, detail="Please provide at least one keyword")
+    if len(keywords) > 200:
+        keywords = keywords[:200]
+
+    if gender not in ('masculine', 'feminine', 'neutral'):
+        gender = 'neutral'
+    if language not in ('de', 'en'):
+        language = 'de'
+
+    names = suggest_names_llm(
+        keywords=keywords,
+        conn=conn,
+        count=8,
+        gender=gender,
+        language=language,
+    )
+    return {"suggestions": names}
+
+
 @router.get("/{profile_id}", response_model=ProfileResponse)
 def get_profile(profile_id: int, user: dict = Depends(require_user), conn=Depends(get_db)):
     """

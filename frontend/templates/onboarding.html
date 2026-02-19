@@ -126,27 +126,7 @@
         .privacy-content li::before { content: "✓"; color: #22c55e; font-weight: 700; flex-shrink: 0; }
         .btn-row-privacy { display: flex; gap: 12px; margin-top: 4px; }
 
-        /* ── Name choice (step 5) ─────────────────────── */
-        .choice-row {
-            display: flex; gap: 20px; justify-content: center;
-            margin-top: 8px;
-        }
-        .choice-card {
-            flex: 1; max-width: 220px;
-            padding: 30px 20px;
-            border-radius: 16px;
-            border: 2px solid #e2e8f0;
-            background: #fff;
-            text-align: center;
-            cursor: pointer;
-            transition: all .2s;
-        }
-        .choice-card:hover { border-color: #0d9488; transform: translateY(-2px); }
-        .choice-card .icon { font-size: 36px; margin-bottom: 8px; }
-        .choice-card .label { font-size: 16px; font-weight: 600; color: #1e293b; }
-        .choice-card .hint { font-size: 13px; color: #64748b; margin-top: 6px; }
-
-        /* ── Gender selector (step 6 top) ─────────────── */
+        /* ── Gender selector (step 5) ─────────────────── */
         .gender-row {
             display: flex; gap: 12px; justify-content: center;
             margin-bottom: 4px;
@@ -350,42 +330,40 @@
         </div>
     </div>
 
-    <!-- ════════ STEP 5 — Name choice ════════ -->
+    <!-- ════════ STEP 5 — Describe your vibe ════════ -->
     <div class="step" data-step="5">
         <h2 id="s5-title"></h2>
         <p id="s5-subtitle"></p>
-        <div class="choice-row">
-            <div class="choice-card" onclick="goTo(6)">
-                <div class="icon">🎲</div>
-                <div class="label" id="s5-taro-label"></div>
-                <div class="hint" id="s5-taro-hint"></div>
-            </div>
-            <div class="choice-card" onclick="goTo(7)">
-                <div class="icon">✏️</div>
-                <div class="label" id="s5-manual-label"></div>
-                <div class="hint" id="s5-manual-hint"></div>
-            </div>
+        <input class="manual-input" id="keyword-input" type="text" placeholder="" maxlength="200"
+               autocomplete="off" style="margin-bottom: 4px;"/>
+        <div class="gender-row" style="margin-top: 8px;">
+            <button class="gender-btn selected" data-gender="neutral" onclick="selectGender('neutral')">
+                <span id="s5-gender-neutral"></span>
+            </button>
+            <button class="gender-btn" data-gender="feminine" onclick="selectGender('feminine')">
+                <span id="s5-gender-feminine"></span>
+            </button>
+            <button class="gender-btn" data-gender="masculine" onclick="selectGender('masculine')">
+                <span id="s5-gender-masculine"></span>
+            </button>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-ghost" onclick="goTo(7)" id="s5-manual-link"></button>
+            <button class="btn btn-primary" id="btn-generate" onclick="generateLLMNames()">
+                <span id="s5-generate-label"></span> →
+            </button>
         </div>
     </div>
 
-    <!-- ════════ STEP 6 — Taro grid ════════ -->
+    <!-- ════════ STEP 6 — Taro results grid ════════ -->
     <div class="step" data-step="6">
         <h2 id="s6-title"></h2>
-        <div class="gender-row">
-            <button class="gender-btn selected" data-gender="neutral" onclick="selectGender('neutral')">
-                <span id="s6-gender-neutral"></span>
-            </button>
-            <button class="gender-btn" data-gender="feminine" onclick="selectGender('feminine')">
-                <span id="s6-gender-feminine"></span>
-            </button>
-            <button class="gender-btn" data-gender="masculine" onclick="selectGender('masculine')">
-                <span id="s6-gender-masculine"></span>
-            </button>
-        </div>
+        <p id="s6-subtitle" style="font-size:13px;color:#64748b;margin-top:-12px;"></p>
         <div class="name-grid" id="name-grid">
-            <!-- Filled by JS -->
+            <!-- Filled by LLM -->
         </div>
         <div class="grid-footer">
+            <button class="btn btn-ghost" onclick="goTo(5)" id="s6-retry-link">🔄</button>
             <button class="btn btn-ghost" onclick="goTo(7)" id="s6-manual-link"></button>
         </div>
         <div class="btn-row">
@@ -437,23 +415,24 @@
             s4_title: "Your privacy matters",
             s4_content: [
                 "We don't have your personal data — and that's by design. Your real name is never stored anywhere in our system.",
-                "You operate behind a yogi name. Employers see your skills and experience, never your identity.",
+                "You operate behind a yogi name. Other yogis only see your yogi name — your real identity stays hidden.",
                 "Since we don't hold personal data, it can't be leaked, hacked, or sold. What doesn't exist can't be compromised.",
                 "All data stays on servers in Germany. EU law (GDPR) applies to everything we do.",
                 "You can download or permanently delete your account at any time — no questions asked.",
             ],
             s4_accept: "I accept",
             s4_reject: "I decline",
-            s5_title: "Choose your yogi name",
-            s5_subtitle: "On talent.yoga, everyone uses a pseudonym — your yogi name. This protects your real identity from employers until you decide to reveal it.",
-            s5_taro_label: "Let Taro pick",
-            s5_taro_hint: "20 creative suggestions to pick from",
-            s5_manual_label: "I'll type my own",
-            s5_manual_hint: "Enter a pseudonym yourself",
+            s5_title: "What inspires you?",
+            s5_subtitle: "Type a few words that describe your vibe — Taro will create yogi names from them.",
+            s5_placeholder: "e.g. forest, calm, tech, moon",
+            s5_generate_label: "Generate",
+            s5_manual_link: "I'd rather type my own →",
+            s5_gender_neutral: "✨ Neutral",
+            s5_gender_feminine: "🌸 Feminine",
+            s5_gender_masculine: "🔷 Masculine",
             s6_title: "Pick a name",
-            s6_gender_neutral: "✨ Neutral",
-            s6_gender_feminine: "🌸 Feminine",
-            s6_gender_masculine: "🔷 Masculine",
+            s6_subtitle: "Taro created these just for you.",
+            s6_retry_link: "🔄 New words",
             s6_manual_link: "I'd rather type my own →",
             s7_title: "Enter your yogi name",
             s7_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
@@ -472,23 +451,24 @@
             s4_title: "Deine Daten gehören dir",
             s4_content: [
                 "Wir haben deine persönlichen Daten gar nicht — und das ist Absicht. Dein echter Name wird nirgendwo in unserem System gespeichert.",
-                "Du bist hinter einem Yogi-Namen unterwegs. Arbeitgeber sehen deine Fähigkeiten, nie deine Identität.",
+                "Du bist hinter einem Yogi-Namen unterwegs. Andere Yogis sehen nur deinen Yogi-Namen — deine echte Identität bleibt verborgen.",
                 "Da wir keine persönlichen Daten besitzen, können sie auch nicht geleakt, gehackt oder verkauft werden. Was nicht existiert, kann nicht kompromittiert werden.",
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Du kannst jederzeit alle Daten herunterladen oder dein Konto dauerhaft löschen — ohne Rückfragen.",
             ],
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
-            s5_title: "Wähle deinen Yogi-Namen",
-            s5_subtitle: "Auf talent.yoga nutzt jeder einen Yogi-Namen — ein Pseudonym. Das schützt deine echte Identität vor Arbeitgebern, bis du dich entscheidest, sie preiszugeben.",
-            s5_taro_label: "Taro schlägt vor",
-            s5_taro_hint: "20 kreative Vorschläge zum Aussuchen",
-            s5_manual_label: "Ich tippe selbst",
-            s5_manual_hint: "Gib selbst ein Pseudonym ein",
+            s5_title: "Was inspiriert dich?",
+            s5_subtitle: "Schreib ein paar Wörter, die deine Stimmung beschreiben — Taro erfindet daraus Yogi-Namen.",
+            s5_placeholder: "z.B. Wald, ruhig, Technik, Mond",
+            s5_generate_label: "Generieren",
+            s5_manual_link: "Ich tippe lieber selber →",
+            s5_gender_neutral: "✨ Neutral",
+            s5_gender_feminine: "🌸 Feminin",
+            s5_gender_masculine: "🔷 Maskulin",
             s6_title: "Wähle einen Namen",
-            s6_gender_neutral: "✨ Neutral",
-            s6_gender_feminine: "🌸 Feminin",
-            s6_gender_masculine: "🔷 Maskulin",
+            s6_subtitle: "Taro hat diese für dich erfunden.",
+            s6_retry_link: "🔄 Neue Wörter",
             s6_manual_link: "Ich tippe lieber selber →",
             s7_title: "Gib deinen Yogi-Namen ein",
             s7_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
@@ -507,23 +487,24 @@
             s4_title: "Ihre Daten gehören Ihnen",
             s4_content: [
                 "Wir haben Ihre persönlichen Daten gar nicht — und das ist Absicht. Ihr echter Name wird nirgendwo in unserem System gespeichert.",
-                "Sie sind hinter einem Yogi-Namen unterwegs. Arbeitgeber sehen Ihre Fähigkeiten, nie Ihre Identität.",
+                "Sie sind hinter einem Yogi-Namen unterwegs. Andere Yogis sehen nur Ihren Yogi-Namen — Ihre echte Identität bleibt verborgen.",
                 "Da wir keine persönlichen Daten besitzen, können sie auch nicht geleakt, gehackt oder verkauft werden. Was nicht existiert, kann nicht kompromittiert werden.",
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Sie können jederzeit alle Daten herunterladen oder Ihr Konto dauerhaft löschen — ohne Rückfragen.",
             ],
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
-            s5_title: "Wählen Sie Ihren Yogi-Namen",
-            s5_subtitle: "Auf talent.yoga nutzt jeder einen Yogi-Namen — ein Pseudonym. Das schützt Ihre echte Identität vor Arbeitgebern, bis Sie sich entscheiden, sie preiszugeben.",
-            s5_taro_label: "Taro schlägt vor",
-            s5_taro_hint: "20 kreative Vorschläge zum Aussuchen",
-            s5_manual_label: "Ich tippe selbst",
-            s5_manual_hint: "Geben Sie selbst ein Pseudonym ein",
+            s5_title: "Was inspiriert Sie?",
+            s5_subtitle: "Schreiben Sie ein paar Wörter, die Ihre Stimmung beschreiben — Taro erfindet daraus Yogi-Namen.",
+            s5_placeholder: "z.B. Wald, ruhig, Technik, Mond",
+            s5_generate_label: "Generieren",
+            s5_manual_link: "Ich tippe lieber selber →",
+            s5_gender_neutral: "✨ Neutral",
+            s5_gender_feminine: "🌸 Feminin",
+            s5_gender_masculine: "🔷 Maskulin",
             s6_title: "Wählen Sie einen Namen",
-            s6_gender_neutral: "✨ Neutral",
-            s6_gender_feminine: "🌸 Feminin",
-            s6_gender_masculine: "🔷 Maskulin",
+            s6_subtitle: "Taro hat diese für Sie erfunden.",
+            s6_retry_link: "🔄 Neue Wörter",
             s6_manual_link: "Ich tippe lieber selber →",
             s7_title: "Geben Sie Ihren Yogi-Namen ein",
             s7_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
@@ -592,20 +573,21 @@
         if ($('#s4-accept')) $('#s4-accept').textContent = t.s4_accept;
         if ($('#s4-reject')) $('#s4-reject').textContent = t.s4_reject;
 
-        // Step 5
-        if ($('#s5-title'))        $('#s5-title').textContent = t.s5_title;
-        if ($('#s5-subtitle'))     $('#s5-subtitle').textContent = t.s5_subtitle;
-        if ($('#s5-taro-label'))   $('#s5-taro-label').textContent = t.s5_taro_label;
-        if ($('#s5-taro-hint'))    $('#s5-taro-hint').textContent = t.s5_taro_hint;
-        if ($('#s5-manual-label')) $('#s5-manual-label').textContent = t.s5_manual_label;
-        if ($('#s5-manual-hint'))  $('#s5-manual-hint').textContent = t.s5_manual_hint;
+        // Step 5 — keyword input
+        if ($('#s5-title'))            $('#s5-title').textContent = t.s5_title;
+        if ($('#s5-subtitle'))         $('#s5-subtitle').textContent = t.s5_subtitle;
+        if ($('#keyword-input'))       $('#keyword-input').placeholder = t.s5_placeholder;
+        if ($('#s5-generate-label'))   $('#s5-generate-label').textContent = t.s5_generate_label;
+        if ($('#s5-manual-link'))      $('#s5-manual-link').textContent = t.s5_manual_link;
+        if ($('#s5-gender-neutral'))   $('#s5-gender-neutral').textContent = t.s5_gender_neutral;
+        if ($('#s5-gender-feminine'))  $('#s5-gender-feminine').textContent = t.s5_gender_feminine;
+        if ($('#s5-gender-masculine')) $('#s5-gender-masculine').textContent = t.s5_gender_masculine;
 
-        // Step 6
-        if ($('#s6-title'))            $('#s6-title').textContent = t.s6_title;
-        if ($('#s6-gender-neutral'))   $('#s6-gender-neutral').textContent = t.s6_gender_neutral;
-        if ($('#s6-gender-feminine'))  $('#s6-gender-feminine').textContent = t.s6_gender_feminine;
-        if ($('#s6-gender-masculine')) $('#s6-gender-masculine').textContent = t.s6_gender_masculine;
-        if ($('#s6-manual-link'))      $('#s6-manual-link').textContent = t.s6_manual_link;
+        // Step 6 — LLM results
+        if ($('#s6-title'))        $('#s6-title').textContent = t.s6_title;
+        if ($('#s6-subtitle'))     $('#s6-subtitle').textContent = t.s6_subtitle;
+        if ($('#s6-retry-link'))   $('#s6-retry-link').textContent = t.s6_retry_link;
+        if ($('#s6-manual-link'))  $('#s6-manual-link').textContent = t.s6_manual_link;
 
         // Step 7
         if ($('#s7-title'))    $('#s7-title').textContent = t.s7_title;
@@ -632,9 +614,6 @@
             state.currentStep = step;
             applyText();
             wizard.classList.remove('fade-out');
-
-            // Auto-load names when entering step 6
-            if (step === 6) loadTaroNames();
         }, 350);
     };
 
@@ -677,23 +656,38 @@
         screen.classList.add('active');
     };
 
-    // ── Step 6 — Gender select & name loading ──────
+    // ── Step 5 — Gender select ────────────────────
     window.selectGender = function(g) {
         state.gender = g;
         $$('.gender-btn').forEach(b => b.classList.toggle('selected', b.dataset.gender === g));
-        state.chosenName = null;
-        $('#btn-confirm-grid').disabled = true;
-        loadTaroNames();
     };
 
-    async function loadTaroNames() {
+    // ── Step 5→6 — Generate LLM names ─────────────
+    window.generateLLMNames = async function() {
+        const keywords = ($('#keyword-input').value || '').trim();
+        if (keywords.length < 2) {
+            $('#keyword-input').focus();
+            return;
+        }
+        // Navigate to step 6 immediately with spinner
+        goTo(6);
         const grid = $('#name-grid');
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;"><div class="spinner"></div></div>';
+        state.chosenName = null;
+        $('#btn-confirm-grid').disabled = true;
         try {
-            const resp = await fetch(`/api/profiles/me/yogi-name/suggest?gender=${state.gender}&count=20&language=${state.lang}`);
+            const resp = await fetch(`/api/profiles/me/yogi-name/suggest-from-keywords?gender=${state.gender}&language=${state.lang}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({keywords}),
+            });
             const data = await resp.json();
             const names = data.suggestions || [];
             grid.innerHTML = '';
+            if (names.length === 0) {
+                grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#94a3b8;">No names generated — try different words.</p>';
+                return;
+            }
             names.forEach(name => {
                 const chip = document.createElement('div');
                 chip.className = 'name-chip';
@@ -702,9 +696,17 @@
                 grid.appendChild(chip);
             });
         } catch (e) {
-            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#dc2626;">Error loading names</p>';
+            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#dc2626;">Error generating names</p>';
         }
-    }
+    };
+
+    // Enter key triggers generate on keyword input
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'keyword-input') {
+            e.preventDefault();
+            generateLLMNames();
+        }
+    });
 
     function pickGridName(name, chip) {
         $$('.name-chip').forEach(c => c.classList.remove('selected'));

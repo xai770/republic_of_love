@@ -403,6 +403,102 @@ def suggest_names(conn=None, count: int = 5, gender: str = 'neutral',
     return _deduplicate(candidates)
 
 
+def suggest_names_llm(
+    keywords: str,
+    conn=None,
+    count: int = 8,
+    gender: str = 'neutral',
+    language: str = 'de',
+) -> List[str]:
+    """
+    Generate yogi name suggestions using a local LLM (Ollama).
+
+    The user provides a few keywords describing their vibe/interests,
+    and the LLM crafts creative pseudonyms inspired by those words.
+
+    Falls back to algorithmic suggest_names() if the LLM fails.
+
+    Args:
+        keywords: User-provided inspiration words (e.g. "Wald, ruhig, Natur")
+        conn: DB connection for uniqueness filtering
+        count: Number of suggestions (default 8)
+        gender: 'masculine', 'feminine', or 'neutral'
+        language: 'de' or 'en'
+    """
+    import requests
+    from config.settings import OLLAMA_GENERATE_URL, LLM_MODEL
+
+    taken = _get_taken_names(conn) if conn else set()
+    taken.update(n.lower() for n in _BLOCKED_NAMES)
+
+    lang_label = "German" if language == 'de' else "English"
+    gender_hint = {
+        'feminine': "The names should have a feminine feel.",
+        'masculine': "The names should have a masculine feel.",
+        'neutral': "The names should feel gender-neutral.",
+    }.get(gender, "")
+
+    prompt = f"""You are Taro, a creative pseudonym generator for a privacy-first job platform.
+
+A new user wants a yogi name (pseudonym). They described their vibe with these words:
+"{keywords}"
+
+Generate exactly {count} creative, unique pseudonym suggestions. Rules:
+- {lang_label} language — names must feel natural in {lang_label}
+- One or two words maximum (e.g. "Sturmfalke", "NordlichtCoder", "WildForest")
+- {gender_hint}
+- Be creative! Combine the user's keywords with nature, mythology, elements, animals, or abstract concepts
+- No real first names (no "Max", "Anna", "Thomas")
+- No offensive or inappropriate names
+- Each name should be 3-25 characters
+
+Return ONLY a JSON array of strings, nothing else. Example:
+["Sturmfalke", "Nordlicht", "WaldEcho"]"""
+
+    try:
+        resp = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={
+                "model": LLM_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.9, "top_p": 0.95}
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        raw = resp.json().get('response', '').strip()
+
+        # Parse JSON array from response
+        import json
+        # Find the JSON array in the response (LLM may wrap in markdown)
+        start = raw.find('[')
+        end = raw.rfind(']')
+        if start >= 0 and end > start:
+            names = json.loads(raw[start:end + 1])
+            if isinstance(names, list):
+                # Filter: must be strings, 3-25 chars, not taken
+                results = []
+                for n in names:
+                    if not isinstance(n, str):
+                        continue
+                    n = n.strip()
+                    if 3 <= len(n) <= 25 and n.lower() not in taken:
+                        results.append(n)
+                        taken.add(n.lower())
+                if results:
+                    logger.info("Taro LLM generated %d names from keywords: %s",
+                                len(results), keywords[:50])
+                    return _deduplicate(results)[:count]
+
+        logger.warning("Taro LLM returned unparseable response, falling back to pools")
+    except Exception as e:
+        logger.warning("Taro LLM failed (%s), falling back to algorithmic pools", e)
+
+    # Fallback to algorithmic generation
+    return suggest_names(conn=conn, count=count, gender=gender, language=language)
+
+
 # ─────────────────────────────────────────────────────────
 # Validation
 # ─────────────────────────────────────────────────────────

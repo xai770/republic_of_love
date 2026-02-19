@@ -283,14 +283,35 @@ Replaced hand-drawn SVG with actual `Germany map with national flag colors.png` 
 |---|------|---------|
 | 9 | `488dd5b` | Ctrl+F2 feedback hotkey, Germany flag-map PNG, IIFE scope fix |
 | 10 | `8689879` | tour/Mira boundary: tour is not Mira, Mira joins after |
+| 11 | `b56665f` | Ctrl+Shift+F hotkey (Linux desktop intercepts F-key combos) |
+| 12 | `2eb233f` | Feedback widget self-injects CSS on standalone pages |
+| 13 | `d590f5a` | turing_restart.sh added to cheat sheets |
+| 14 | `191dd73` | German name pools (~130 words, 11 pools), language param |
+| 15 | `f4b3f6e` | Privacy step widened 560→620px, copy rewritten (no personal data stored) |
+
+### Arden #3 — Evening session (LLM Taro + privacy copy)
+
+**Feedback #216:** "Too static — make it so the user types words and Taro (a real LLM) comes up with names."
+- Added `suggest_names_llm()` in `core/taro.py` — calls Ollama `qwen2.5:7b` with a creative prompt incorporating user keywords, gender, and language. Temperature 0.9, top_p 0.95. Parses JSON array response, filters taken names, falls back to algorithmic `suggest_names()` on failure.
+- Added `POST /me/yogi-name/suggest-from-keywords` API endpoint in `api/routers/profiles.py`.
+- Redesigned onboarding steps 5+6: old "Let Taro pick" two-card choice replaced with keyword text input + gender selector → "Generate" button → LLM results grid. Enter key triggers generation. "🔄 New words" sends user back to step 5 to tweak keywords.
+- Cleaned up stale `.choice-row`/`.choice-card` CSS.
+- i18n: all 3 variants (en, de_du, de_sie) updated with new step 5/6 labels.
+
+**Feedback #215:** Privacy copy said "Arbeitgeber sehen Ihre Fähigkeiten" — should say "Other yogis."
+- EN: "Other yogis only see your yogi name — your real identity stays hidden."
+- DE (du): "Andere Yogis sehen nur deinen Yogi-Namen — deine echte Identität bleibt verborgen."
+- DE (Sie): "Andere Yogis sehen nur Ihren Yogi-Namen — Ihre echte Identität bleibt verborgen."
+
+Tests: 437 pass (56 Starlette deprecation warnings, known).
 
 ---
 
 ## End-of-day checklist
 
 - [x] Pipeline overnight reviewed
-- [x] Tests pass (438 passed, 0 errors)
-- [x] Committed and pushed (10 commits)
+- [x] Tests pass (437 passed, 0 errors)
+- [x] Committed and pushed
 - [x] Daily note updated
 - [x] Profile form overhaul (feedback #166 + #167)
 - [x] Yogi name protection (A+B+C+D via Taro)
@@ -300,6 +321,11 @@ Replaced hand-drawn SVG with actual `Germany map with national flag colors.png` 
 - [x] Onboarding back buttons (steps 2, 3)
 - [x] Mira/tour boundary (no Mira during tour, opens after)
 - [x] Germany flag-map PNG
-- [ ] Feedback hotkey (Ctrl+F2) — cache buster bumped, needs browser verify
-- [ ] Browser verification of onboarding flow
+- [x] Feedback hotkey — Ctrl+Shift+F (Linux-safe, confirmed working)
+- [x] Feedback widget CSS self-injection on standalone pages
+- [x] German name pools + language param
+- [x] Privacy step copy rewritten (we don't HAVE your data)
+- [x] LLM-powered Taro (keyword input → Ollama → creative names)
+- [x] Privacy copy fix (Arbeitgeber → Andere Yogis)
+- [ ] Browser verification of onboarding LLM flow
 - [ ] Browser verification of profile page
