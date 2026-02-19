@@ -690,7 +690,7 @@
         const grid = $('#name-grid');
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;"><div class="spinner"></div></div>';
         try {
-            const resp = await fetch(`/api/profiles/me/yogi-name/suggest?gender=${state.gender}&count=20`);
+            const resp = await fetch(`/api/profiles/me/yogi-name/suggest?gender=${state.gender}&count=20&language=${state.lang}`);
             const data = await resp.json();
             const names = data.suggestions || [];
             grid.innerHTML = '';

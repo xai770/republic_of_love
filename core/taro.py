@@ -84,6 +84,48 @@ _SPIRIT = [
 _ALL_SINGLES = _NATURE + _SKY + _WATER + _EARTH + _SPIRIT
 
 # ─────────────────────────────────────────────────────────
+# German (DE) word pools — same categories, native words
+# ─────────────────────────────────────────────────────────
+
+_DE_NATURE = [
+    'Eiche', 'Birke', 'Linde', 'Ahorn', 'Erle', 'Farn', 'Efeu',
+    'Moos', 'Hasel', 'Dorn', 'Heide', 'Klee', 'Lorbeer', 'Weide',
+    'Espe', 'Salbei', 'Distel', 'Ginster', 'Holunder', 'Mistel',
+    'Falke', 'Fink', 'Lerche', 'Rabe', 'Reiher', 'Kranich',
+    'Drossel', 'Adler', 'Meise', 'Amsel', 'Schwalbe',
+]
+
+_DE_SKY = [
+    'Nova', 'Luna', 'Stern', 'Komet', 'Zenit', 'Aurora',
+    'Lyra', 'Vega', 'Stella', 'Nimbus', 'Nebel', 'Morgenrot',
+    'Abendstern', 'Halo', 'Polaris', 'Sirius', 'Orion',
+    'Sonne', 'Mond', 'Finsternis', 'Lichtung', 'Dämmerung',
+]
+
+_DE_WATER = [
+    'Bach', 'Welle', 'Flut', 'Koralle', 'Schilf', 'Bucht',
+    'Riff', 'Küste', 'Fjord', 'Tau', 'Regen', 'Sturm',
+    'Brandung', 'Strömung', 'Nebel', 'Hafen', 'Lagune',
+    'Quelle', 'Strom', 'Ufer', 'Gischt', 'Fluss', 'See',
+]
+
+_DE_EARTH = [
+    'Feuerstein', 'Onyx', 'Jade', 'Bernstein', 'Quarz', 'Gipfel',
+    'Klippe', 'Stein', 'Basalt', 'Schiefer', 'Kobalt', 'Eisen',
+    'Kupfer', 'Silber', 'Opal', 'Granat', 'Topas', 'Jaspis',
+    'Obsidian', 'Granit', 'Fels', 'Kiesel', 'Kristall',
+]
+
+_DE_SPIRIT = [
+    'Phönix', 'Echo', 'Rune', 'Mythos', 'Mut', 'Wappen',
+    'Anker', 'Kompass', 'Leuchtturm', 'Wanderer', 'Pionier',
+    'Nomade', 'Funke', 'Pfeil', 'Wache', 'Bote', 'Fährte',
+    'Lohe', 'Glanz', 'Klang', 'Hort', 'Zuflucht', 'Ruhe',
+]
+
+_DE_ALL_SINGLES = _DE_NATURE + _DE_SKY + _DE_WATER + _DE_EARTH + _DE_SPIRIT
+
+# ─────────────────────────────────────────────────────────
 # Gendered pools — for onboarding wizard where yogi picks
 # masculine, feminine, or neutral style
 # ─────────────────────────────────────────────────────────
@@ -139,6 +181,64 @@ _SUFFIXES = [
     'Wave', 'Fire', 'Wind', 'Stone', 'Light', 'Star',
     'Wood', 'Field', 'Ridge', 'Lake', 'Run', 'Trail',
     'Song', 'Leaf', 'Frost', 'Gate', 'Path', 'Haven',
+]
+
+# ─────────────────────────────────────────────────────────
+# German gendered & compound pools
+# ─────────────────────────────────────────────────────────
+
+_DE_FEMININE_SINGLES = [
+    'Aurora', 'Luna', 'Stella', 'Lyra', 'Vega', 'Iris', 'Freya',
+    'Dahlie', 'Efeu', 'Jasmin', 'Lavendel', 'Orchidee', 'Perle',
+    'Rosmarin', 'Safran', 'Veilchen', 'Weide', 'Zinnie', 'Koralle',
+    'Marina', 'Opal', 'Bernstein', 'Hasel', 'Lorbeer', 'Blüte',
+    'Farn', 'Nelke', 'Lilie', 'Rose', 'Amsel', 'Schwalbe',
+    'Lerche', 'Meise', 'Taube', 'Heide', 'Distel', 'Mistel',
+    'Quelle', 'Lichtung', 'Morgenröte',
+]
+
+_DE_MASCULINE_SINGLES = [
+    'Falke', 'Adler', 'Sturm', 'Fels', 'Stahl', 'Donner',
+    'Blitz', 'Eisen', 'Granit', 'Basalt', 'Wolf', 'Bär',
+    'Hirsch', 'Rabe', 'Eber', 'Orion', 'Sirius', 'Zenit',
+    'Eiche', 'Dorn', 'Kiesel', 'Obsidian', 'Kobalt', 'Onyx',
+    'Gipfel', 'Klippe', 'Anker', 'Wappen', 'Kompass', 'Pfeil',
+    'Fjord', 'Feuerstein', 'Jaspis', 'Schiefer', 'Quarz',
+    'Forst', 'Flint', 'Lohe', 'Wache', 'Pionier',
+]
+
+_DE_FEMININE_PREFIXES = [
+    'Silber', 'Rosen', 'Mond', 'Stern', 'Schnee', 'Morgen',
+    'Kristall', 'Gold', 'Samt', 'Seiden', 'Licht', 'Perlen',
+]
+
+_DE_FEMININE_SUFFIXES = [
+    'lied', 'blüte', 'licht', 'blatt', 'traum', 'glanz',
+    'tau', 'stern', 'farn', 'herz', 'hauch', 'flügel',
+]
+
+_DE_MASCULINE_PREFIXES = [
+    'Eisen', 'Sturm', 'Feuer', 'Nacht', 'Stahl', 'Donner',
+    'Wild', 'Stein', 'Wald', 'Frost', 'Fels', 'Grau',
+]
+
+_DE_MASCULINE_SUFFIXES = [
+    'wolf', 'bär', 'falke', 'fuchs', 'stein', 'berg',
+    'feuer', 'tor', 'lauf', 'wacht', 'schild', 'hort',
+]
+
+_DE_PREFIXES = [
+    'Blau', 'Rot', 'Gold', 'Silber', 'Eisen', 'Still',
+    'Schnell', 'Hell', 'Wild', 'Treu', 'Klar', 'Tief',
+    'Stern', 'Mond', 'See', 'Sturm', 'Nacht', 'Licht',
+    'Schnee', 'Feuer', 'Wind', 'Wolken', 'Wald', 'Berg',
+]
+
+_DE_SUFFIXES = [
+    'fuchs', 'wolf', 'bär', 'falke', 'hirsch', 'eule',
+    'welle', 'feuer', 'wind', 'stein', 'licht', 'stern',
+    'wald', 'feld', 'berg', 'see', 'lauf', 'pfad',
+    'lied', 'blatt', 'frost', 'tor', 'hafen', 'herz',
 ]
 
 # Names that are explicitly blocked (system names, offensive, etc.)
@@ -249,7 +349,8 @@ def _get_taken_names(conn) -> set:
     return taken
 
 
-def suggest_names(conn=None, count: int = 5, gender: str = 'neutral') -> List[str]:
+def suggest_names(conn=None, count: int = 5, gender: str = 'neutral',
+                  language: str = 'en') -> List[str]:
     """
     Generate `count` unique yogi name suggestions.
 
@@ -260,6 +361,7 @@ def suggest_names(conn=None, count: int = 5, gender: str = 'neutral') -> List[st
         conn: DB connection for uniqueness filtering
         count: Number of suggestions to generate
         gender: 'masculine', 'feminine', or 'neutral' — picks from styled pools
+        language: 'de' for German pools, anything else for English
 
     Returns:
         List of suggested names (may be fewer than count if pool is exhausted)
@@ -267,19 +369,21 @@ def suggest_names(conn=None, count: int = 5, gender: str = 'neutral') -> List[st
     taken = _get_taken_names(conn) if conn else set()
     taken.update(n.lower() for n in _BLOCKED_NAMES)
 
-    # Select pools based on gender preference
+    de = language == 'de'
+
+    # Select pools based on gender preference + language
     if gender == 'feminine':
-        singles = _FEMININE_SINGLES
-        prefixes = _FEMININE_PREFIXES
-        suffixes = _FEMININE_SUFFIXES
+        singles = _DE_FEMININE_SINGLES if de else _FEMININE_SINGLES
+        prefixes = _DE_FEMININE_PREFIXES if de else _FEMININE_PREFIXES
+        suffixes = _DE_FEMININE_SUFFIXES if de else _FEMININE_SUFFIXES
     elif gender == 'masculine':
-        singles = _MASCULINE_SINGLES
-        prefixes = _MASCULINE_PREFIXES
-        suffixes = _MASCULINE_SUFFIXES
+        singles = _DE_MASCULINE_SINGLES if de else _MASCULINE_SINGLES
+        prefixes = _DE_MASCULINE_PREFIXES if de else _MASCULINE_PREFIXES
+        suffixes = _DE_MASCULINE_SUFFIXES if de else _MASCULINE_SUFFIXES
     else:
-        singles = _ALL_SINGLES
-        prefixes = _PREFIXES
-        suffixes = _SUFFIXES
+        singles = _DE_ALL_SINGLES if de else _ALL_SINGLES
+        prefixes = _DE_PREFIXES if de else _PREFIXES
+        suffixes = _DE_SUFFIXES if de else _SUFFIXES
 
     candidates = []
     attempts = 0

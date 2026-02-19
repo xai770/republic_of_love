@@ -858,7 +858,8 @@ async function loadSuggestions() {
     container.innerHTML = '';
 
     try {
-        const res = await fetch('/api/profiles/me/yogi-name/suggest');
+        const lang = document.documentElement.lang || 'de';
+        const res = await fetch(`/api/profiles/me/yogi-name/suggest?language=${lang}`);
         if (!res.ok) throw new Error('Failed');
         const data = await res.json();
         container.innerHTML = data.suggestions.map(name =>

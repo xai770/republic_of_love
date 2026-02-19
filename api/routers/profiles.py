@@ -366,6 +366,7 @@ def update_yogi_name(
 def suggest_yogi_names(
     gender: str = 'neutral',
     count: int = 6,
+    language: str = 'en',
     user: dict = Depends(require_user),
     conn=Depends(get_db)
 ):
@@ -374,14 +375,17 @@ def suggest_yogi_names(
     Args:
         gender: 'masculine', 'feminine', or 'neutral'
         count: Number of suggestions (default 6, max 20)
+        language: 'de' for German names, 'en' for English (default)
     """
     from core.taro import suggest_names
 
     if gender not in ('masculine', 'feminine', 'neutral'):
         gender = 'neutral'
     count = min(max(count, 1), 20)
+    if language not in ('de', 'en'):
+        language = 'en'
 
-    names = suggest_names(conn, count=count, gender=gender)
+    names = suggest_names(conn, count=count, gender=gender, language=language)
     return {"suggestions": names}
 
 
