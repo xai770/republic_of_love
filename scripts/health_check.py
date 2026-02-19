@@ -262,7 +262,7 @@ def check_runner_process() -> Tuple[bool, str]:
                 continue
             # Look for wave-related Python processes
             if 'python' in line.lower():
-                if any(x in line for x in ['run_batch', 'run_workflow', 'WaveRunner', 'wave_runner']):
+                if any(x in line for x in ['turing_daemon', 'turing_fetch', 'run_batch']):
                     parts = line.split()
                     if len(parts) > 1:
                         runners.append(parts[1])  # PID

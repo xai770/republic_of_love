@@ -2,11 +2,8 @@
 Core Infrastructure
 ===================
 
-Wave Runner is the active system.
-Legacy imports removed to prevent import errors.
+Actor-based pipeline via turing_daemon + turing_fetch.
+Wave Runner was removed 2026-02-19 (archived).
 """
-
-# Wave Runner is in core/wave_runner/
-# Import directly from there, not from core/__init__.py
 
 __all__ = []

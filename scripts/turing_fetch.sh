@@ -373,7 +373,8 @@ rm -f "$OUTPUT_FILE"
 
 # Phase 2: Embedding + LLM discovery for unknown titles
 # Adds new OWL synonyms automatically. Tested 2026-02-11: 927/6200 classified (78.5%).
-PHASE2_BATCH=500
+# 2026-02-19: batch 500→2000, LLM_WORKERS 2→4. Cuts Phase 2 from ~160 min to ~40 min.
+PHASE2_BATCH=2000
 OUTPUT_FILE=$(mktemp)
 while true; do
     ts "Berufenet Phase 2 (embed+LLM) batch..."

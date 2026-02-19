@@ -34,7 +34,7 @@ SUMMARY_MODEL = os.getenv('SUMMARY_MODEL', 'qwen2.5-coder:7b')
 # Parallelism
 # ============================================================================
 EMBED_WORKERS = int(os.getenv('EMBED_WORKERS', '8'))
-LLM_WORKERS = int(os.getenv('LLM_WORKERS', '2'))
+LLM_WORKERS = int(os.getenv('LLM_WORKERS', '4'))
 
 # ============================================================================
 # Signal Notifications

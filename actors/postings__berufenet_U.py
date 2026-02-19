@@ -63,35 +63,16 @@ THRESHOLD_LLM_VERIFY = 0.70
 # Phase 1: OWL Lookup (instant, no GPU)
 # =============================================================================
 
-def owl_lookup(cleaned_title: str, cur) -> Optional[dict]:
+def _resolve_owl_rows(rows: list) -> Optional[dict]:
     """
-    Look up a cleaned job title in OWL berufenet names.
+    Resolve OWL lookup rows into a single match using three-tier acceptance.
 
-    Only trusts entries with confidence_source IN ('human', 'import', 'llm_confirmed').
-
-    Three-tier acceptance for ambiguous names (mapping to 2+ owl entities):
-      Tier 1 (owl_unanimous): All candidates share same QL + same KLDB domain → accept any
-      Tier 2 (owl_majority):  Same domain, mixed QL → pick most common QL
-      Tier 3 (reject):        Different domains → fall through to Phase 2
+    Tier 1 (owl_unanimous): All candidates share same QL + same KLDB domain → accept any
+    Tier 2 (owl_majority):  Same domain, mixed QL → pick most common QL
+    Tier 3 (reject):        Different domains → fall through to Phase 2
 
     Returns dict with berufenet metadata + 'confidence' key, or None.
     """
-    cur.execute("""
-        SELECT
-            o.owl_id,
-            o.canonical_name,
-            o.metadata->>'berufenet_id' AS berufenet_id,
-            o.metadata->>'kldb' AS kldb,
-            (o.metadata->>'qualification_level')::int AS qualification_level
-        FROM owl_names n
-        JOIN owl o ON n.owl_id = o.owl_id
-        WHERE o.owl_type = 'berufenet'
-          AND n.language = 'de'
-          AND lower(n.display_name) = lower(%s)
-          AND n.confidence_source IN ('human', 'import', 'llm_confirmed')
-    """, (cleaned_title,))
-    rows = cur.fetchall()
-
     if not rows:
         return None
 
@@ -111,7 +92,6 @@ def owl_lookup(cleaned_title: str, cur) -> Optional[dict]:
         return _build_result(rows[0], 'owl')
 
     # --- Ambiguous: 2+ owl entities ---
-    # Deduplicate by owl_id (multiple owl_names can point to same entity)
     seen = set()
     unique_rows = []
     for r in rows:
@@ -134,13 +114,75 @@ def owl_lookup(cleaned_title: str, cur) -> Optional[dict]:
     from collections import Counter
     ql_counts = Counter(r['qualification_level'] for r in unique_rows if r['qualification_level'] is not None)
     most_common_ql = ql_counts.most_common(1)[0][0]
-    # Pick first row with the most common QL
     for r in unique_rows:
         if r['qualification_level'] == most_common_ql:
             return _build_result(r, 'owl_majority')
 
-    # Fallback (shouldn't reach here)
     return _build_result(unique_rows[0], 'owl_majority')
+
+
+def owl_lookup(cleaned_title: str, cur) -> Optional[dict]:
+    """
+    Look up a single cleaned job title in OWL berufenet names.
+    Kept for backwards compatibility. Prefer owl_lookup_batch() for bulk.
+    """
+    cur.execute("""
+        SELECT
+            o.owl_id,
+            o.canonical_name,
+            o.metadata->>'berufenet_id' AS berufenet_id,
+            o.metadata->>'kldb' AS kldb,
+            (o.metadata->>'qualification_level')::int AS qualification_level
+        FROM owl_names n
+        JOIN owl o ON n.owl_id = o.owl_id
+        WHERE o.owl_type = 'berufenet'
+          AND n.language = 'de'
+          AND lower(n.display_name) = lower(%s)
+          AND n.confidence_source IN ('human', 'import', 'llm_confirmed')
+    """, (cleaned_title,))
+    return _resolve_owl_rows(cur.fetchall())
+
+
+def owl_lookup_batch(cleaned_titles: list[str], cur) -> dict[str, Optional[dict]]:
+    """
+    Batch OWL lookup: resolve many titles in a single SQL round-trip.
+
+    Returns dict mapping cleaned_title → match (or None).
+    ~100x faster than individual owl_lookup() calls for large batches.
+    """
+    if not cleaned_titles:
+        return {}
+
+    # Single query for all titles
+    cur.execute("""
+        SELECT
+            lower(n.display_name) AS lookup_key,
+            o.owl_id,
+            o.canonical_name,
+            o.metadata->>'berufenet_id' AS berufenet_id,
+            o.metadata->>'kldb' AS kldb,
+            (o.metadata->>'qualification_level')::int AS qualification_level
+        FROM owl_names n
+        JOIN owl o ON n.owl_id = o.owl_id
+        WHERE o.owl_type = 'berufenet'
+          AND n.language = 'de'
+          AND lower(n.display_name) = ANY(%s)
+          AND n.confidence_source IN ('human', 'import', 'llm_confirmed')
+    """, ([t.lower() for t in cleaned_titles],))
+    all_rows = cur.fetchall()
+
+    # Group rows by lookup_key
+    from collections import defaultdict
+    by_title = defaultdict(list)
+    for row in all_rows:
+        by_title[row['lookup_key']].append(row)
+
+    # Resolve each title
+    results = {}
+    for title in cleaned_titles:
+        results[title] = _resolve_owl_rows(by_title.get(title.lower(), []))
+
+    return results
 
 
 # =============================================================================
@@ -327,14 +369,22 @@ def process_batch(batch_size: int, phase2: bool = False):
     last_progress_log = start_time
     processed = 0
 
-    # --- Phase 1: OWL lookup (instant, sequential) ---
+    # --- Phase 1: OWL lookup (batch — single SQL round-trip) ---
     phase2_queue = []  # titles that need Phase 2
+
+    # Clean all titles and do a single batch lookup
+    title_to_cleaned = {}
+    for row in titles:
+        title = row['job_title']
+        title_to_cleaned[title] = clean_job_title(title)
+
+    owl_results = owl_lookup_batch(list(title_to_cleaned.values()), cur)
 
     for row in titles:
         title = row['job_title']
-        cleaned = clean_job_title(title)
+        cleaned = title_to_cleaned[title]
 
-        match = owl_lookup(cleaned, cur)
+        match = owl_results.get(cleaned)
 
         if match:
             confidence = match.get('confidence', 'owl')
