@@ -453,20 +453,20 @@ def validate_yogi_name(
     if real_name or email:
         real_parts = _extract_name_parts(real_name, email)
         name_lower = name.lower()
-        name_normalized = re.sub(r"[^a-zäöüß]", "", name_lower)
+        name_normalized = re.sub(r"[^a-z0-9äöüß]", "", name_lower)
 
         for rp in real_parts:
-            rp_normalized = re.sub(r"[^a-zäöüß]", "", rp)
+            rp_normalized = re.sub(r"[^a-z0-9äöüß]", "", rp)
             if not rp_normalized or len(rp_normalized) < 3:
                 continue
             # Exact match with a real-name fragment
             if name_normalized == rp_normalized:
                 return False, "matches_real_name", "error"
-            # Real name contained in yogi name
-            if len(rp_normalized) >= 3 and rp_normalized in name_normalized:
+            # Real name contained in yogi name (require 4+ chars to avoid short-handle false positives)
+            if len(rp_normalized) >= 4 and rp_normalized in name_normalized:
                 return False, "contains_real_name", "error"
             # Yogi name contained in real name (short candidate inside long name)
-            if len(name_normalized) >= 3 and name_normalized in rp_normalized:
+            if len(name_normalized) >= 4 and name_normalized in rp_normalized:
                 return False, "subset_of_real_name", "error"
 
     # 6. Uniqueness check

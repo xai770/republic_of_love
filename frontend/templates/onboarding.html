@@ -277,8 +277,8 @@
 </div>
 
 <!-- ── TY logo — fixed top-left corner ─────────────── -->
-<div style="position:fixed;top:20px;left:20px;width:52px;height:52px;background:#fff;border-radius:50%;box-shadow:0 2px 12px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;z-index:10;">
-    <img src="/static/images/icons/logo.png" alt="talent.yoga" style="width:34px;height:34px;object-fit:contain;">
+<div style="position:fixed;top:20px;left:20px;width:130px;height:86px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;z-index:10;padding:8px;">
+    <img src="/static/images/icons/logo_full.png" alt="talent.yoga" style="width:110px;height:auto;object-fit:contain;">
 </div>
 
 <!-- ── The wizard ──────────────────────────────────── -->
@@ -695,7 +695,7 @@
         const grid = $('#name-grid');
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;"><div class="spinner"></div></div>';
         try {
-            const resp = await fetch(`/api/me/yogi-name/suggest?gender=${state.gender}&count=20`);
+            const resp = await fetch(`/api/profiles/me/yogi-name/suggest?gender=${state.gender}&count=20`);
             const data = await resp.json();
             const names = data.suggestions || [];
             grid.innerHTML = '';
@@ -749,7 +749,7 @@
         clearTimeout(validateTimer);
         validateTimer = setTimeout(async () => {
             try {
-                const resp = await fetch('/api/me/yogi-name', {
+                const resp = await fetch('/api/profiles/me/yogi-name', {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({yogi_name: name, dry_run: true}),
