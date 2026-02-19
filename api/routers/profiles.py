@@ -285,6 +285,7 @@ def update_yogi_name(
 
     new_name = (payload.get("yogi_name") or "").strip()
     confirmed = payload.get("confirmed", False)  # user confirmed a warning
+    dry_run = payload.get("dry_run", False)       # validate only, don't save
 
     if not new_name:
         raise HTTPException(status_code=400, detail="Yogi-Name darf nicht leer sein.")
@@ -348,6 +349,9 @@ def update_yogi_name(
         }
 
     # ── Save ─────────────────────────────────────────────
+    if dry_run:
+        return {"status": "ok", "yogi_name": new_name}
+
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE users SET yogi_name = %s WHERE user_id = %s",
@@ -360,16 +364,24 @@ def update_yogi_name(
 
 @router.get("/me/yogi-name/suggest")
 def suggest_yogi_names(
+    gender: str = 'neutral',
+    count: int = 6,
     user: dict = Depends(require_user),
     conn=Depends(get_db)
 ):
     """
     Generate yogi name suggestions via Taro.
-    Returns 6 fresh, unique, non-taken names.
+    Args:
+        gender: 'masculine', 'feminine', or 'neutral'
+        count: Number of suggestions (default 6, max 20)
     """
     from core.taro import suggest_names
 
-    names = suggest_names(conn, count=6)
+    if gender not in ('masculine', 'feminine', 'neutral'):
+        gender = 'neutral'
+    count = min(max(count, 1), 20)
+
+    names = suggest_names(conn, count=count, gender=gender)
     return {"suggestions": names}
 
 

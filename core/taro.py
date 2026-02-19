@@ -83,6 +83,49 @@ _SPIRIT = [
 # All single-word pools combined (for simple names)
 _ALL_SINGLES = _NATURE + _SKY + _WATER + _EARTH + _SPIRIT
 
+# ─────────────────────────────────────────────────────────
+# Gendered pools — for onboarding wizard where yogi picks
+# masculine, feminine, or neutral style
+# ─────────────────────────────────────────────────────────
+
+_FEMININE_SINGLES = [
+    'Aurora', 'Luna', 'Stella', 'Lyra', 'Vega', 'Iris', 'Aria',
+    'Seraphina', 'Celeste', 'Dahlia', 'Freya', 'Ivy', 'Jasmine',
+    'Lavender', 'Marigold', 'Orchid', 'Pearl', 'Rosemary', 'Saffron',
+    'Violet', 'Willow', 'Zinnia', 'Coral', 'Marina', 'Opal', 'Amber',
+    'Hazel', 'Laurel', 'Bloom', 'Petal', 'Clover', 'Fern', 'Briar',
+    'Misty', 'Solara', 'Astra', 'Neve', 'Ember', 'Holly', 'Sage',
+]
+
+_MASCULINE_SINGLES = [
+    'Atlas', 'Orion', 'Flint', 'Iron', 'Storm', 'Ridge', 'Summit',
+    'Falcon', 'Hawk', 'Raven', 'Slate', 'Basalt', 'Cobalt', 'Onyx',
+    'Jasper', 'Oak', 'Cedar', 'Thorn', 'Valor', 'Shield', 'Helm',
+    'Arrow', 'Beacon', 'Compass', 'Anchor', 'Pioneer', 'Nomad',
+    'Cliff', 'Canyon', 'Peak', 'Glen', 'Dale', 'Heath', 'Crest',
+    'Forge', 'Granite', 'Blaze', 'Quartz', 'Fjord', 'Sirius', 'Zenith',
+]
+
+_FEMININE_PREFIXES = [
+    'Silver', 'Rose', 'Moon', 'Star', 'Snow', 'Dawn', 'Bright',
+    'Crystal', 'Golden', 'Misty', 'Silk', 'Velvet',
+]
+
+_FEMININE_SUFFIXES = [
+    'Song', 'Bloom', 'Light', 'Leaf', 'Haven', 'Dream', 'Grace',
+    'Wing', 'Rain', 'Star', 'Fern', 'Dew',
+]
+
+_MASCULINE_PREFIXES = [
+    'Iron', 'Storm', 'Fire', 'Night', 'Dark', 'Steel', 'Thunder',
+    'Bold', 'Wild', 'Stone', 'Swift', 'Deep',
+]
+
+_MASCULINE_SUFFIXES = [
+    'Wolf', 'Bear', 'Hawk', 'Fox', 'Stone', 'Ridge', 'Fire',
+    'Gate', 'Run', 'Forge', 'Watch', 'Guard',
+]
+
 # Prefixes and suffixes for compound names
 _PREFIXES = [
     'Blue', 'Red', 'Gold', 'Silver', 'Iron', 'Quiet',
@@ -206,18 +249,37 @@ def _get_taken_names(conn) -> set:
     return taken
 
 
-def suggest_names(conn=None, count: int = 5) -> List[str]:
+def suggest_names(conn=None, count: int = 5, gender: str = 'neutral') -> List[str]:
     """
     Generate `count` unique yogi name suggestions.
 
     Mix: ~60% single words, ~40% compounds.
     Filters out taken names if conn is provided.
 
+    Args:
+        conn: DB connection for uniqueness filtering
+        count: Number of suggestions to generate
+        gender: 'masculine', 'feminine', or 'neutral' — picks from styled pools
+
     Returns:
         List of suggested names (may be fewer than count if pool is exhausted)
     """
     taken = _get_taken_names(conn) if conn else set()
     taken.update(n.lower() for n in _BLOCKED_NAMES)
+
+    # Select pools based on gender preference
+    if gender == 'feminine':
+        singles = _FEMININE_SINGLES
+        prefixes = _FEMININE_PREFIXES
+        suffixes = _FEMININE_SUFFIXES
+    elif gender == 'masculine':
+        singles = _MASCULINE_SINGLES
+        prefixes = _MASCULINE_PREFIXES
+        suffixes = _MASCULINE_SUFFIXES
+    else:
+        singles = _ALL_SINGLES
+        prefixes = _PREFIXES
+        suffixes = _SUFFIXES
 
     candidates = []
     attempts = 0
@@ -226,9 +288,9 @@ def suggest_names(conn=None, count: int = 5) -> List[str]:
     while len(candidates) < count and attempts < max_attempts:
         attempts += 1
         if random.random() < 0.6:
-            name = _generate_single()
+            name = random.choice(singles)
         else:
-            name = _generate_compound()
+            name = random.choice(prefixes) + random.choice(suffixes)
 
         if name.lower() not in taken:
             candidates.append(name)

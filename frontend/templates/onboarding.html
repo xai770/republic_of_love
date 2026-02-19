@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome — talent.yoga</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <style>
+        /* ── Reset & base ─────────────────────────────── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        /* ── Frosted-glass card ───────────────────────── */
+        .wizard {
+            width: min(560px, 92vw);
+            min-height: 420px;
+            background: rgba(255,255,255,.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.18);
+            padding: 40px 44px 36px;
+            position: relative;
+            display: flex; flex-direction: column;
+            transition: opacity .35s ease, transform .35s ease;
+        }
+        .wizard.fade-out { opacity: 0; transform: translateY(12px); pointer-events: none; }
+
+        /* ── Step counter ─────────────────────────────── */
+        .step-counter {
+            position: absolute; top: 18px; right: 24px;
+            font-size: 13px; color: #94a3b8; font-weight: 500;
+            letter-spacing: .4px;
+        }
+
+        /* ── Step panels ──────────────────────────────── */
+        .step { display: none; flex-direction: column; gap: 24px; flex: 1; }
+        .step.active { display: flex; }
+
+        .step h2 {
+            font-size: 24px; font-weight: 700; color: #1e293b;
+            line-height: 1.25;
+        }
+        .step p {
+            font-size: 15px; color: #475569; line-height: 1.65;
+        }
+
+        /* ── Flag buttons (step 1) ────────────────────── */
+        .flag-row {
+            display: flex; gap: 32px; justify-content: center;
+            margin-top: 12px;
+        }
+        .flag-btn {
+            width: 130px; height: 130px;
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background: #f8fafc;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; cursor: pointer;
+            transition: all .2s;
+            font-size: 56px;
+            position: relative;
+        }
+        .flag-btn:hover { border-color: #7c3aed; transform: translateY(-4px); box-shadow: 0 6px 20px rgba(124,58,237,.18); }
+        .flag-btn.selected { border-color: #7c3aed; background: #ede9fe; }
+        .flag-label {
+            font-size: 14px; font-weight: 600; color: #4b5563;
+            opacity: 0; transition: opacity .2s;
+        }
+        .flag-btn:hover .flag-label, .flag-btn.selected .flag-label { opacity: 1; }
+
+        /* ── Germany map (step 2) ─────────────────────── */
+        .germany-visual {
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+            margin: 8px 0;
+        }
+        .germany-svg { width: 120px; height: auto; opacity: .7; }
+        .info-box {
+            background: #fef3c7; border-radius: 12px; padding: 16px 20px;
+            border-left: 4px solid #f59e0b;
+        }
+        .info-box p { color: #92400e; font-size: 14px; }
+
+        /* ── Du/Sie cards (step 3) ────────────────────── */
+        .formality-row {
+            display: flex; gap: 20px; justify-content: center;
+            margin-top: 8px;
+        }
+        .formality-card {
+            flex: 1; max-width: 200px;
+            padding: 28px 20px;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            background: #fff;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .formality-card:hover { border-color: #7c3aed; transform: translateY(-2px); }
+        .formality-card.selected { border-color: #7c3aed; background: #ede9fe; }
+        .formality-card .big { font-size: 28px; font-weight: 700; color: #1e293b; }
+        .formality-card .desc { font-size: 13px; color: #64748b; margin-top: 6px; }
+
+        /* ── Privacy (step 4) ─────────────────────────── */
+        .privacy-content {
+            background: #f8fafc; border-radius: 14px; padding: 20px 22px;
+            max-height: 200px; overflow-y: auto;
+            border: 1px solid #e2e8f0;
+        }
+        .privacy-content ul { list-style: none; padding: 0; }
+        .privacy-content li {
+            padding: 6px 0;
+            font-size: 14px; color: #334155;
+            display: flex; align-items: flex-start; gap: 8px;
+        }
+        .privacy-content li::before { content: "✓"; color: #22c55e; font-weight: 700; flex-shrink: 0; }
+        .btn-row-privacy { display: flex; gap: 12px; margin-top: 4px; }
+
+        /* ── Name choice (step 5) ─────────────────────── */
+        .choice-row {
+            display: flex; gap: 20px; justify-content: center;
+            margin-top: 8px;
+        }
+        .choice-card {
+            flex: 1; max-width: 220px;
+            padding: 30px 20px;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            background: #fff;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .choice-card:hover { border-color: #7c3aed; transform: translateY(-2px); }
+        .choice-card .icon { font-size: 36px; margin-bottom: 8px; }
+        .choice-card .label { font-size: 16px; font-weight: 600; color: #1e293b; }
+        .choice-card .hint { font-size: 13px; color: #64748b; margin-top: 6px; }
+
+        /* ── Gender selector (step 6 top) ─────────────── */
+        .gender-row {
+            display: flex; gap: 12px; justify-content: center;
+            margin-bottom: 4px;
+        }
+        .gender-btn {
+            padding: 8px 20px; border-radius: 20px;
+            border: 2px solid #e2e8f0; background: #fff;
+            font-size: 14px; font-weight: 500; color: #475569;
+            cursor: pointer; transition: all .2s;
+        }
+        .gender-btn:hover { border-color: #a78bfa; }
+        .gender-btn.selected { border-color: #7c3aed; background: #ede9fe; color: #5b21b6; }
+
+        /* ── Taro name grid (step 6) ──────────────────── */
+        .name-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .name-chip {
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background: #fff;
+            text-align: center;
+            font-size: 14px; font-weight: 500; color: #334155;
+            cursor: pointer;
+            transition: all .2s;
+            word-break: break-word;
+        }
+        .name-chip:hover { border-color: #a78bfa; background: #f5f3ff; transform: translateY(-1px); }
+        .name-chip.selected { border-color: #7c3aed; background: #ede9fe; color: #5b21b6; font-weight: 700; }
+        .grid-footer {
+            display: flex; justify-content: center; margin-top: 8px; gap: 12px;
+        }
+
+        /* ── Manual entry (step 7) ────────────────────── */
+        .manual-input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s;
+        }
+        .manual-input:focus { border-color: #7c3aed; }
+        .validation-msg {
+            font-size: 13px; min-height: 20px;
+            padding: 0 4px;
+        }
+        .validation-msg.warning { color: #d97706; }
+        .validation-msg.error { color: #dc2626; }
+        .validation-msg.ok { color: #16a34a; }
+
+        /* ── Buttons ──────────────────────────────────── */
+        .btn {
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 15px; font-weight: 600;
+            border: none; cursor: pointer;
+            transition: all .2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary {
+            background: #7c3aed; color: #fff;
+        }
+        .btn-primary:hover { background: #6d28d9; }
+        .btn-primary:disabled { background: #c4b5fd; cursor: not-allowed; }
+        .btn-secondary {
+            background: transparent; color: #64748b;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #94a3b8; color: #334155; }
+        .btn-danger {
+            background: transparent; color: #dc2626;
+            border: 2px solid #fecaca;
+        }
+        .btn-danger:hover { background: #fef2f2; }
+        .btn-ghost {
+            background: transparent; color: #7c3aed;
+            border: none; text-decoration: underline;
+            padding: 8px 12px;
+        }
+        .btn-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: auto; padding-top: 16px;
+        }
+        .btn-row-right { justify-content: flex-end; gap: 12px; }
+
+        /* ── Loading spinner ──────────────────────────── */
+        .spinner { display: inline-block; width: 18px; height: 18px;
+            border: 2px solid #c4b5fd; border-top-color: #7c3aed;
+            border-radius: 50%; animation: spin .6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Dismissed/rejected screen ────────────────── */
+        .dismissed-screen {
+            display: none;
+            position: fixed; inset: 0;
+            background: #fff;
+            z-index: 100;
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 16px;
+        }
+        .dismissed-screen.active { display: flex; }
+        .dismissed-screen p {
+            font-size: 18px; color: #64748b;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* ── Responsive ───────────────────────────────── */
+        @media (max-width: 520px) {
+            .wizard { padding: 28px 24px 24px; }
+            .flag-btn { width: 100px; height: 100px; font-size: 44px; }
+            .name-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Dismissed screen (privacy reject / cancel) ──── -->
+<div class="dismissed-screen" id="dismissed-screen">
+    <p id="dismissed-text">Du kannst dieses Fenster jetzt schließen.</p>
+</div>
+
+<!-- ── The wizard ──────────────────────────────────── -->
+<div class="wizard" id="wizard">
+    <span class="step-counter" id="step-counter"></span>
+
+    <!-- ════════ STEP 1 — Language ════════ -->
+    <div class="step active" data-step="1">
+        <h2 data-i18n="onboarding.lang_title_en">Choose your language</h2>
+        <p data-i18n="onboarding.lang_subtitle_en">talent.yoga is available in German and English.</p>
+        <div class="flag-row">
+            <button class="flag-btn" data-lang="de" onclick="selectLanguage('de')">
+                🇩🇪
+                <span class="flag-label">Deutsch</span>
+            </button>
+            <button class="flag-btn" data-lang="en" onclick="selectLanguage('en')">
+                🇬🇧
+                <span class="flag-label">English</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 2 — Germany notice ════════ -->
+    <div class="step" data-step="2">
+        <h2 id="s2-title"></h2>
+        <div class="germany-visual">
+            <svg class="germany-svg" viewBox="0 0 100 136" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 2 C30 5, 18 15, 12 30 C8 42, 5 55, 8 68 C10 80, 18 95, 28 108 C35 116, 42 125, 50 134 C58 125, 65 116, 72 108 C82 95, 90 80, 92 68 C95 55, 92 42, 88 30 C82 15, 70 5, 50 2Z"
+                      fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                <circle cx="42" cy="38" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Hamburg -->
+                <circle cx="58" cy="48" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Berlin -->
+                <circle cx="38" cy="65" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Cologne -->
+                <circle cx="52" cy="60" r="3" fill="#7c3aed" opacity=".6"/>  <!-- Frankfurt -->
+                <circle cx="65" cy="78" r="4" fill="#7c3aed" opacity=".8"/>  <!-- Munich -->
+                <circle cx="30" cy="55" r="2" fill="#7c3aed" opacity=".4"/>
+                <circle cx="70" cy="55" r="2" fill="#7c3aed" opacity=".4"/>
+            </svg>
+        </div>
+        <div class="info-box">
+            <p id="s2-info"></p>
+        </div>
+        <div class="btn-row btn-row-right">
+            <button class="btn btn-primary" onclick="goTo(nextStepFrom(2))">
+                <span class="next-label"></span> →
+            </button>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 3 — Du / Sie (DE only) ════════ -->
+    <div class="step" data-step="3">
+        <h2 id="s3-title"></h2>
+        <p id="s3-subtitle"></p>
+        <div class="formality-row">
+            <div class="formality-card" onclick="selectFormality('du')">
+                <div class="big">Du</div>
+                <div class="desc" id="s3-du-desc">Lass uns locker und offen reden.</div>
+            </div>
+            <div class="formality-card" onclick="selectFormality('sie')">
+                <div class="big">Sie</div>
+                <div class="desc" id="s3-sie-desc">Wir bleiben beim respektvollen Sie.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 4 — Privacy ════════ -->
+    <div class="step" data-step="4">
+        <h2 id="s4-title"></h2>
+        <div class="privacy-content" id="s4-content"></div>
+        <div class="btn-row-privacy">
+            <button class="btn btn-danger" onclick="rejectPrivacy()" id="s4-reject"></button>
+            <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept" style="margin-left:auto;"></button>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 5 — Name choice ════════ -->
+    <div class="step" data-step="5">
+        <h2 id="s5-title"></h2>
+        <p id="s5-subtitle"></p>
+        <div class="choice-row">
+            <div class="choice-card" onclick="goTo(6)">
+                <div class="icon">🎲</div>
+                <div class="label" id="s5-taro-label"></div>
+                <div class="hint" id="s5-taro-hint"></div>
+            </div>
+            <div class="choice-card" onclick="goTo(7)">
+                <div class="icon">✏️</div>
+                <div class="label" id="s5-manual-label"></div>
+                <div class="hint" id="s5-manual-hint"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 6 — Taro grid ════════ -->
+    <div class="step" data-step="6">
+        <h2 id="s6-title"></h2>
+        <div class="gender-row">
+            <button class="gender-btn selected" data-gender="neutral" onclick="selectGender('neutral')">
+                <span id="s6-gender-neutral"></span>
+            </button>
+            <button class="gender-btn" data-gender="feminine" onclick="selectGender('feminine')">
+                <span id="s6-gender-feminine"></span>
+            </button>
+            <button class="gender-btn" data-gender="masculine" onclick="selectGender('masculine')">
+                <span id="s6-gender-masculine"></span>
+            </button>
+        </div>
+        <div class="name-grid" id="name-grid">
+            <!-- Filled by JS -->
+        </div>
+        <div class="grid-footer">
+            <button class="btn btn-ghost" onclick="goTo(7)" id="s6-manual-link"></button>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goTo(5)">← <span class="back-label"></span></button>
+            <button class="btn btn-primary" id="btn-confirm-grid" disabled onclick="confirmGridName()">
+                <span class="next-label"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 7 — Manual entry ════════ -->
+    <div class="step" data-step="7">
+        <h2 id="s7-title"></h2>
+        <p id="s7-subtitle"></p>
+        <input class="manual-input" id="manual-name" type="text" placeholder="" maxlength="40"
+               oninput="validateManualName()" autocomplete="off"/>
+        <div class="validation-msg" id="validation-msg"></div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goTo(5)">← <span class="back-label"></span></button>
+            <button class="btn btn-primary" id="btn-confirm-manual" disabled onclick="confirmManualName()">
+                <span id="s7-confirm-label"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    // ── State ──────────────────────────────────────
+    const state = {
+        lang: null,         // 'de' | 'en'
+        formality: 'du',    // 'du' | 'sie' (only matters for DE)
+        gender: 'neutral',
+        chosenName: null,
+        currentStep: 1,
+        totalSteps: 7,      // recalculated for EN (skip du/sie)
+    };
+
+    // ── Copy — 3 variants: en, de_du, de_sie ──────
+    const COPY = {
+        en: {
+            step_counter: "Step {a} of {b}",
+            s2_title: "Germany only",
+            s2_info: "talent.yoga currently only lists job openings in Germany. We're working on expanding — but for now, all positions are within the Federal Republic.",
+            s3_title: "",
+            s3_subtitle: "",
+            s4_title: "Your privacy matters",
+            s4_content: [
+                "We never store your real name. Your identity is protected behind a yogi name.",
+                "All data stays on servers in Germany. EU law applies.",
+                "You can download all your data at any time.",
+                "You can delete your account permanently at any time.",
+                "We will never sell or share your personal information.",
+            ],
+            s4_accept: "I accept",
+            s4_reject: "I decline",
+            s5_title: "Choose your yogi name",
+            s5_subtitle: "On talent.yoga, everyone uses a pseudonym — your yogi name. This protects your real identity from employers until you decide to reveal it.",
+            s5_taro_label: "Let Taro pick",
+            s5_taro_hint: "20 creative suggestions to pick from",
+            s5_manual_label: "I'll type my own",
+            s5_manual_hint: "Enter a pseudonym yourself",
+            s6_title: "Pick a name",
+            s6_gender_neutral: "✨ Neutral",
+            s6_gender_feminine: "🌸 Feminine",
+            s6_gender_masculine: "🔷 Masculine",
+            s6_manual_link: "I'd rather type my own →",
+            s7_title: "Enter your yogi name",
+            s7_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
+            s7_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
+            s7_confirm: "Confirm",
+            next: "Next",
+            back: "Back",
+            dismissed: "You can close this window now.",
+        },
+        de_du: {
+            step_counter: "Schritt {a} von {b}",
+            s2_title: "Nur Deutschland",
+            s2_info: "talent.yoga listet aktuell nur Stellenangebote in Deutschland. Wir arbeiten daran, das zu erweitern — aber im Moment sind alle Positionen innerhalb der Bundesrepublik.",
+            s3_title: "Wie wollen wir uns anreden?",
+            s3_subtitle: "Du entscheidest, wie wir miteinander sprechen.",
+            s4_title: "Deine Daten gehören dir",
+            s4_content: [
+                "Wir speichern niemals deinen echten Namen. Deine Identität wird durch einen Yogi-Namen geschützt.",
+                "Alle Daten bleiben auf Servern in Deutschland. EU-Recht gilt.",
+                "Du kannst jederzeit alle deine Daten herunterladen.",
+                "Du kannst dein Konto jederzeit dauerhaft löschen.",
+                "Wir werden deine persönlichen Daten niemals verkaufen oder weitergeben.",
+            ],
+            s4_accept: "Einverstanden",
+            s4_reject: "Ablehnen",
+            s5_title: "Wähle deinen Yogi-Namen",
+            s5_subtitle: "Auf talent.yoga nutzt jeder einen Yogi-Namen — ein Pseudonym. Das schützt deine echte Identität vor Arbeitgebern, bis du dich entscheidest, sie preiszugeben.",
+            s5_taro_label: "Taro schlägt vor",
+            s5_taro_hint: "20 kreative Vorschläge zum Aussuchen",
+            s5_manual_label: "Ich tippe selbst",
+            s5_manual_hint: "Gib selbst ein Pseudonym ein",
+            s6_title: "Wähle einen Namen",
+            s6_gender_neutral: "✨ Neutral",
+            s6_gender_feminine: "🌸 Feminin",
+            s6_gender_masculine: "🔷 Maskulin",
+            s6_manual_link: "Ich tippe lieber selber →",
+            s7_title: "Gib deinen Yogi-Namen ein",
+            s7_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
+            s7_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
+            s7_confirm: "Bestätigen",
+            next: "Weiter",
+            back: "Zurück",
+            dismissed: "Du kannst dieses Fenster jetzt schließen.",
+        },
+        de_sie: {
+            step_counter: "Schritt {a} von {b}",
+            s2_title: "Nur Deutschland",
+            s2_info: "talent.yoga listet aktuell nur Stellenangebote in Deutschland. Wir arbeiten daran, das zu erweitern — aber im Moment sind alle Positionen innerhalb der Bundesrepublik.",
+            s3_title: "Wie möchten Sie angesprochen werden?",
+            s3_subtitle: "Sie entscheiden, wie wir miteinander sprechen.",
+            s4_title: "Ihre Daten gehören Ihnen",
+            s4_content: [
+                "Wir speichern niemals Ihren echten Namen. Ihre Identität wird durch einen Yogi-Namen geschützt.",
+                "Alle Daten bleiben auf Servern in Deutschland. EU-Recht gilt.",
+                "Sie können jederzeit alle Ihre Daten herunterladen.",
+                "Sie können Ihr Konto jederzeit dauerhaft löschen.",
+                "Wir werden Ihre persönlichen Daten niemals verkaufen oder weitergeben.",
+            ],
+            s4_accept: "Einverstanden",
+            s4_reject: "Ablehnen",
+            s5_title: "Wählen Sie Ihren Yogi-Namen",
+            s5_subtitle: "Auf talent.yoga nutzt jeder einen Yogi-Namen — ein Pseudonym. Das schützt Ihre echte Identität vor Arbeitgebern, bis Sie sich entscheiden, sie preiszugeben.",
+            s5_taro_label: "Taro schlägt vor",
+            s5_taro_hint: "20 kreative Vorschläge zum Aussuchen",
+            s5_manual_label: "Ich tippe selbst",
+            s5_manual_hint: "Geben Sie selbst ein Pseudonym ein",
+            s6_title: "Wählen Sie einen Namen",
+            s6_gender_neutral: "✨ Neutral",
+            s6_gender_feminine: "🌸 Feminin",
+            s6_gender_masculine: "🔷 Maskulin",
+            s6_manual_link: "Ich tippe lieber selber →",
+            s7_title: "Geben Sie Ihren Yogi-Namen ein",
+            s7_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
+            s7_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
+            s7_confirm: "Bestätigen",
+            next: "Weiter",
+            back: "Zurück",
+            dismissed: "Sie können dieses Fenster jetzt schließen.",
+        },
+    };
+
+    // ── Helpers ────────────────────────────────────
+    function c() {
+        if (state.lang === 'en') return COPY.en;
+        return state.formality === 'sie' ? COPY.de_sie : COPY.de_du;
+    }
+
+    function $(sel) { return document.querySelector(sel); }
+    function $$(sel) { return document.querySelectorAll(sel); }
+
+    function effectiveSteps() {
+        // EN → skip step 3 (Du/Sie), steps are 1,2,4,5,6,7 → 6 total
+        // DE → all 7
+        return state.lang === 'en' ? 6 : 7;
+    }
+
+    function visibleStepNumber(step) {
+        if (state.lang !== 'en') return step;
+        // EN: 1→1, 2→2, 4→3, 5→4, 6→5, 7→6
+        const map = {1:1, 2:2, 4:3, 5:4, 6:5, 7:6};
+        return map[step] || step;
+    }
+
+    // Which step comes after this one?
+    window.nextStepFrom = function(step) {
+        if (step === 2 && state.lang === 'en') return 4; // skip du/sie
+        return step + 1;
+    };
+
+    // ── Apply copy to UI ───────────────────────────
+    function applyText() {
+        const t = c();
+        // Step counter
+        const vis = visibleStepNumber(state.currentStep);
+        const total = effectiveSteps();
+        if (state.currentStep > 1) {
+            $('#step-counter').textContent = t.step_counter.replace('{a}', vis).replace('{b}', total);
+        } else {
+            $('#step-counter').textContent = '';
+        }
+
+        // Step 2
+        if ($('#s2-title')) $('#s2-title').textContent = t.s2_title;
+        if ($('#s2-info'))  $('#s2-info').textContent = t.s2_info;
+
+        // Step 3
+        if ($('#s3-title'))    $('#s3-title').textContent = t.s3_title || '';
+        if ($('#s3-subtitle')) $('#s3-subtitle').textContent = t.s3_subtitle || '';
+
+        // Step 4
+        if ($('#s4-title')) $('#s4-title').textContent = t.s4_title;
+        if ($('#s4-content')) {
+            const items = t.s4_content || [];
+            $('#s4-content').innerHTML = '<ul>' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+        }
+        if ($('#s4-accept')) $('#s4-accept').textContent = t.s4_accept;
+        if ($('#s4-reject')) $('#s4-reject').textContent = t.s4_reject;
+
+        // Step 5
+        if ($('#s5-title'))        $('#s5-title').textContent = t.s5_title;
+        if ($('#s5-subtitle'))     $('#s5-subtitle').textContent = t.s5_subtitle;
+        if ($('#s5-taro-label'))   $('#s5-taro-label').textContent = t.s5_taro_label;
+        if ($('#s5-taro-hint'))    $('#s5-taro-hint').textContent = t.s5_taro_hint;
+        if ($('#s5-manual-label')) $('#s5-manual-label').textContent = t.s5_manual_label;
+        if ($('#s5-manual-hint'))  $('#s5-manual-hint').textContent = t.s5_manual_hint;
+
+        // Step 6
+        if ($('#s6-title'))            $('#s6-title').textContent = t.s6_title;
+        if ($('#s6-gender-neutral'))   $('#s6-gender-neutral').textContent = t.s6_gender_neutral;
+        if ($('#s6-gender-feminine'))  $('#s6-gender-feminine').textContent = t.s6_gender_feminine;
+        if ($('#s6-gender-masculine')) $('#s6-gender-masculine').textContent = t.s6_gender_masculine;
+        if ($('#s6-manual-link'))      $('#s6-manual-link').textContent = t.s6_manual_link;
+
+        // Step 7
+        if ($('#s7-title'))    $('#s7-title').textContent = t.s7_title;
+        if ($('#s7-subtitle')) $('#s7-subtitle').textContent = t.s7_subtitle;
+        if ($('#manual-name')) $('#manual-name').placeholder = t.s7_placeholder;
+        if ($('#s7-confirm-label')) $('#s7-confirm-label').textContent = t.s7_confirm;
+
+        // Generic labels
+        $$('.next-label').forEach(el => el.textContent = t.next);
+        $$('.back-label').forEach(el => el.textContent = t.back);
+
+        // Dismissed screen
+        if ($('#dismissed-text')) $('#dismissed-text').textContent = t.dismissed;
+    }
+
+    // ── Navigation ─────────────────────────────────
+    window.goTo = function(step) {
+        const wizard = $('#wizard');
+        wizard.classList.add('fade-out');
+        setTimeout(() => {
+            $$('.step').forEach(s => s.classList.remove('active'));
+            const target = document.querySelector(`.step[data-step="${step}"]`);
+            if (target) target.classList.add('active');
+            state.currentStep = step;
+            applyText();
+            wizard.classList.remove('fade-out');
+
+            // Auto-load names when entering step 6
+            if (step === 6) loadTaroNames();
+        }, 350);
+    };
+
+    // ── Step 1 — Language select ───────────────────
+    window.selectLanguage = function(lang) {
+        state.lang = lang;
+        $$('.flag-btn').forEach(b => b.classList.toggle('selected', b.dataset.lang === lang));
+        // If EN, formality is 'du' (informal English)
+        if (lang === 'en') state.formality = 'du';
+        applyText();
+        setTimeout(() => goTo(2), 400);
+    };
+
+    // ── Step 3 — Du / Sie ──────────────────────────
+    window.selectFormality = function(f) {
+        state.formality = f;
+        $$('.formality-card').forEach((card, i) => {
+            card.classList.toggle('selected', (i === 0 && f === 'du') || (i === 1 && f === 'sie'));
+        });
+        applyText();
+        setTimeout(() => goTo(4), 400);
+    };
+
+    // ── Step 4 — Privacy reject ────────────────────
+    window.rejectPrivacy = function() {
+        const screen = $('#dismissed-screen');
+        screen.classList.add('active');
+    };
+
+    // ── Step 6 — Gender select & name loading ──────
+    window.selectGender = function(g) {
+        state.gender = g;
+        $$('.gender-btn').forEach(b => b.classList.toggle('selected', b.dataset.gender === g));
+        state.chosenName = null;
+        $('#btn-confirm-grid').disabled = true;
+        loadTaroNames();
+    };
+
+    async function loadTaroNames() {
+        const grid = $('#name-grid');
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;"><div class="spinner"></div></div>';
+        try {
+            const resp = await fetch(`/api/me/yogi-name/suggest?gender=${state.gender}&count=20`);
+            const data = await resp.json();
+            const names = data.suggestions || [];
+            grid.innerHTML = '';
+            names.forEach(name => {
+                const chip = document.createElement('div');
+                chip.className = 'name-chip';
+                chip.textContent = name;
+                chip.onclick = () => pickGridName(name, chip);
+                grid.appendChild(chip);
+            });
+        } catch (e) {
+            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#dc2626;">Error loading names</p>';
+        }
+    }
+
+    function pickGridName(name, chip) {
+        $$('.name-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state.chosenName = name;
+        $('#btn-confirm-grid').disabled = false;
+    }
+
+    window.confirmGridName = function() {
+        if (!state.chosenName) return;
+        completeOnboarding(state.chosenName);
+    };
+
+    // ── Step 7 — Manual entry ──────────────────────
+    let validateTimer = null;
+    window.validateManualName = function() {
+        const input = $('#manual-name');
+        const msg = $('#validation-msg');
+        const btn = $('#btn-confirm-manual');
+        const name = input.value.trim();
+
+        if (!name) {
+            msg.textContent = '';
+            msg.className = 'validation-msg';
+            btn.disabled = true;
+            return;
+        }
+        if (name.length < 3) {
+            msg.textContent = state.lang === 'de'
+                ? 'Mindestens 3 Zeichen'
+                : 'At least 3 characters';
+            msg.className = 'validation-msg error';
+            btn.disabled = true;
+            return;
+        }
+
+        clearTimeout(validateTimer);
+        validateTimer = setTimeout(async () => {
+            try {
+                const resp = await fetch('/api/me/yogi-name', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({yogi_name: name, dry_run: true}),
+                });
+                const data = await resp.json();
+                if (data.status === 'error') {
+                    msg.textContent = data.error || data.detail || 'Invalid';
+                    msg.className = 'validation-msg error';
+                    btn.disabled = true;
+                } else if (data.status === 'warning') {
+                    msg.textContent = data.warning;
+                    msg.className = 'validation-msg warning';
+                    btn.disabled = false;
+                } else {
+                    msg.textContent = state.lang === 'de' ? '✓ Verfügbar' : '✓ Available';
+                    msg.className = 'validation-msg ok';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                msg.textContent = '';
+                btn.disabled = false;
+            }
+        }, 400);
+    };
+
+    window.confirmManualName = function() {
+        const name = $('#manual-name').value.trim();
+        if (!name || name.length < 3) return;
+        completeOnboarding(name);
+    };
+
+    // ── Complete — save everything ─────────────────
+    async function completeOnboarding(yogiName) {
+        const btn = document.activeElement;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>'; }
+
+        try {
+            const resp = await fetch('/api/onboarding/complete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    language: state.lang,
+                    formality: state.formality,
+                    yogi_name: yogiName,
+                }),
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                // Set language cookie so the app remembers
+                document.cookie = `lang=${state.lang};path=/;max-age=${365*86400};samesite=lax`;
+                window.location.href = '/dashboard';
+            } else {
+                alert(data.error || data.detail || 'Error');
+                if (btn) { btn.disabled = false; btn.innerHTML = c().s7_confirm || 'Confirm'; }
+            }
+        } catch (e) {
+            alert('Network error');
+            if (btn) { btn.disabled = false; btn.innerHTML = c().s7_confirm || 'Confirm'; }
+        }
+    }
+
+    // ── Init ───────────────────────────────────────
+    applyText();
+
+})();
+</script>
+</body>
+</html>

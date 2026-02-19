@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from api.config import FRONTEND_URL, DEBUG
-from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele
+from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding
 from api.deps import get_current_user, get_db
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
@@ -73,6 +73,7 @@ app.include_router(visualization.router)
 app.include_router(admin.router)
 app.include_router(feedback.router, prefix="/api", tags=["feedback"])
 app.include_router(intelligence.router, prefix="/api")
+app.include_router(onboarding.router, prefix="/api")
 # Admin mount: same router exposed at /admin/feedback for admin dashboard & template links
 app.include_router(feedback.router, prefix="/admin", tags=["feedback-admin"], include_in_schema=False)
 
@@ -153,6 +154,26 @@ def login_page(request: Request, conn=Depends(get_db)):
         "request": request,
         "error": error,
         **get_i18n_context(request)
+    })
+
+
+@app.get("/onboarding")
+def onboarding_page(request: Request, conn=Depends(get_db)):
+    """Onboarding wizard — first-login flow for new users."""
+    if not templates:
+        return {"error": "Frontend not configured"}
+
+    user = get_current_user(request, conn)
+    if not user:
+        return RedirectResponse(url="/", status_code=302)
+
+    # Already onboarded → skip to dashboard
+    if user.get("onboarding_completed_at"):
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    return templates.TemplateResponse("onboarding.html", {
+        "request": request,
+        "user": user,
     })
 
 

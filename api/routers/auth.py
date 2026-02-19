@@ -153,6 +153,15 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
     except Exception:
         pass  # non-critical
     
+    # Check if user has completed onboarding
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT onboarding_completed_at FROM users WHERE user_id = %s",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        needs_onboarding = not row or not row.get("onboarding_completed_at")
+
     # Create session token
     session_token = jwt.encode(
         {
@@ -164,8 +173,9 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
         algorithm="HS256",
     )
     
-    # Redirect to dashboard with session cookie
-    response = RedirectResponse(url=f"{FRONTEND_URL}/dashboard")
+    # Redirect to onboarding (first-time) or dashboard (returning)
+    dest = f"{FRONTEND_URL}/onboarding" if needs_onboarding else f"{FRONTEND_URL}/dashboard"
+    response = RedirectResponse(url=dest)
     response.set_cookie(
         key="session",
         value=session_token,
@@ -228,7 +238,7 @@ if DEBUG:
         This allows testing without Google OAuth.
         """
         with conn.cursor() as cur:
-            cur.execute("SELECT user_id, email FROM users WHERE user_id = %s", (user_id,))
+            cur.execute("SELECT user_id, email, onboarding_completed_at FROM users WHERE user_id = %s", (user_id,))
             user = cur.fetchone()
         
         if not user:
@@ -245,7 +255,8 @@ if DEBUG:
             algorithm="HS256",
         )
         
-        response = RedirectResponse(url="/dashboard")
+        dest = "/onboarding" if not user.get("onboarding_completed_at") else "/dashboard"
+        response = RedirectResponse(url=dest)
         response.set_cookie(
             key="session",
             value=token,
