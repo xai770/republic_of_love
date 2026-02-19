@@ -154,6 +154,43 @@ Service files validated and ready in `config/systemd/`. Needs `sudo bash config/
 |---|------|---------|
 | 1 | `84415eb` | embedding backlog fix + broken test fix + cheat sheet |
 | 2 | `9ded8f5` | berufenet parallelization + wave_runner removal |
+| 3 | `cb318a3` | daily note update |
+| 4 | `50f8acc` | profile builder: form with work/education/projects, i18n, full-pane layout |
+| 5 | `34a1a19` | taro: layered yogi name protection (A+B+C+D) |
+
+---
+
+## Afternoon work
+
+### 10. Profile builder overhaul (feedback #166 + #167)
+User submitted feedback requesting: (1) form for projects & studies (not just work), (2) i18n not working, (3) form needs full left pane.
+
+**DB:** Added `entry_type` column to `profile_work_history` (work/education/project) with index.
+
+**API:** `entry_type` in all work-history endpoints (GET/POST/PUT/DELETE). Markdown render refactored with `_render_entries()` helper — now renders 3 sections (Berufserfahrung, Ausbildung, Projekte). Completeness rebalanced (work 20%, education 10%, projects 10%).
+
+**Form:** Dynamic entry cards with add/remove for Work Experience, Education, and Projects. Each card has company/title, date range, current checkbox, description.
+
+**i18n:** ~50 new `profile.*` keys in both `de.json` and `en.json`. All hardcoded German in template replaced with `{{ t('...') }}` calls.
+
+**Layout:** Form tab hides log and fills entire left pane (`flex: 1`, removed 45vh cap).
+
+### 11. Taro yogi name protection (A+B+C+D)
+Collaborated with Nate (ChatGPT) on design. Built layered protection system:
+
+**A) UX nudge:** Label now says "Pseudonym, nicht dein echter Name". Hint explains privacy. Placeholder shows example pseudonyms from Taro's pools.
+
+**B) Pattern detection** (`core/taro.py`): ~150 common first names (DE/EN/TR), title prefixes (Dr/Prof/Herr/Frau), name particles (von/van/de/al/bin), two-capitalized-words heuristic. All soft warnings — user can confirm.
+
+**C) Pseudonym generator:** `GET /api/profiles/me/yogi-name/suggest` returns 6 fresh unique names from Taro's 5 curated word pools (~130 words). Frontend shows clickable suggestion chips via "🎲 Suggest names" button.
+
+**D) Hard-block:** Email (`@`), phone (5+ digits), address (Straße+number, PLZ patterns). Immediate rejection with red error box.
+
+**Real-name guard:** Transient comparison against Google OAuth display_name + email + profile full_name. Names are read in-memory only — **never stored, logged, or returned**. EU-compliant.
+
+**API flow:** `PUT /me/yogi-name` now returns `{status:'warning', warning:...}` for soft detections. Frontend shows yellow box with "Trotzdem verwenden" / "Ändern" buttons. Errors return 400.
+
+**Refactored:** Inline 60-line real-name check in `profiles.py` → `core.taro.validate_yogi_name()`.
 
 ---
 
@@ -161,6 +198,9 @@ Service files validated and ready in `config/systemd/`. Needs `sudo bash config/
 
 - [x] Pipeline overnight reviewed
 - [x] Tests pass (438 passed, 0 errors)
-- [x] Committed and pushed
+- [x] Committed and pushed (5 commits)
 - [x] Daily note updated
+- [x] Profile form overhaul (feedback #166 + #167)
+- [x] Yogi name protection (A+B+C+D via Taro)
 - [ ] systemd install (needs sudo)
+- [ ] Browser verification of profile page
