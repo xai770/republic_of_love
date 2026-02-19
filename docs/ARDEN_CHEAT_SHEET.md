@@ -167,6 +167,9 @@ actors/postings__external_partners_U.py  # detect_scraper_from_url() function
 ## Daily Commands (THESE ACTUALLY WORK)
 
 ```bash
+# Restart talent-yoga service (no sudo needed — script auto-elevates)
+bash tools/turing_restart.sh
+
 # RAQ workflow
 ./tools/turing/turing-raq start requirements_extract --count 20 --runs 3
 ./tools/turing/turing-raq status requirements_extract
@@ -332,7 +335,7 @@ DEVELOP → STABILIZE (3×5) → PROVE (3×20) → QA GATE (100 samples) → PRO
 
 **Posting dedup analysis:** Only 230 dupes out of 271K (0.08%). Zero active duplicates — existing partial unique indexes (`idx_postings_external_job_id_unique`, `idx_postings_external_id_active`) prevent new ones. Non-issue.
 
-**Systemd:** Service units validated (`talent-yoga.service`, `talent-yoga-bi.service`, backup timer). Not yet installed (needs sudo).
+**Systemd:** Services installed and running (`talent-yoga.service`, `talent-yoga-bi.service`, backup timer). Restart via `bash tools/turing_restart.sh` (auto-elevates, no manual sudo needed).
 
 ### 2026-02-12: Pipeline Fixes + Search Page Design
 

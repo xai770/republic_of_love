@@ -253,6 +253,12 @@ sudo -u postgres psql -d turing -t -c "SELECT COUNT(*) FROM events;"
 - **Activate**: `source venv/bin/activate` (do this in EVERY new terminal!)
 - **Check**: `which python` should show `/home/xai/Documents/ty_learn/venv/bin/python`
 
+### Service Management
+```bash
+# Restart talent-yoga (auto-elevates, no manual sudo needed)
+bash tools/turing_restart.sh
+```
+
 ### Terminal Setup Template
 ```bash
 cd /home/xai/Documents/ty_learn
