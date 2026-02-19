@@ -142,21 +142,22 @@
 
         /* ── Taro name grid (step 6) ──────────────────── */
         .name-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
+            justify-content: center;
             margin-top: 8px;
         }
         .name-chip {
-            padding: 12px 8px;
+            padding: 14px 22px;
             border-radius: 12px;
             border: 2px solid #e2e8f0;
             background: #fff;
             text-align: center;
-            font-size: 14px; font-weight: 500; color: #334155;
+            font-size: 15px; font-weight: 500; color: #334155;
             cursor: pointer;
             transition: all .2s;
-            word-break: break-word;
+            white-space: nowrap;
         }
         .name-chip:hover { border-color: #5eead4; background: #f0fdfa; transform: translateY(-1px); }
         .name-chip.selected { border-color: #0d9488; background: #ccfbf1; color: #115e59; font-weight: 700; }
@@ -246,7 +247,7 @@
         @media (max-width: 520px) {
             .wizard { padding: 28px 24px 24px; }
             .flag-btn { width: 100px; height: 100px; font-size: 44px; }
-            .name-grid { grid-template-columns: repeat(3, 1fr); }
+            .name-chip { padding: 12px 16px; font-size: 14px; }
         }
     </style>
 </head>
