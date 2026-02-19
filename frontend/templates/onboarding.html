@@ -84,6 +84,7 @@
             margin: 8px 0;
         }
         .germany-svg { width: 180px; height: auto; }
+        .germany-map-img { width: 220px; height: auto; filter: drop-shadow(2px 3px 6px rgba(0,0,0,0.15)); }
         .info-box {
             background: #fef3c7; border-radius: 12px; padding: 16px 20px;
             border-left: 4px solid #f59e0b;
@@ -307,40 +308,7 @@
     <div class="step" data-step="2">
         <h2 id="s2-title"></h2>
         <div class="germany-visual">
-            <svg class="germany-svg" viewBox="-5 -5 320 400" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="de-flag" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#1a1a1a"/>
-                        <stop offset="33.3%" stop-color="#1a1a1a"/>
-                        <stop offset="33.3%" stop-color="#DD0000"/>
-                        <stop offset="66.6%" stop-color="#DD0000"/>
-                        <stop offset="66.6%" stop-color="#FFCC00"/>
-                        <stop offset="100%" stop-color="#FFCC00"/>
-                    </linearGradient>
-                    <filter id="shadow"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity=".15"/></filter>
-                </defs>
-                <path filter="url(#shadow)" fill="url(#de-flag)" stroke="#94a3b8" stroke-width="1.2" stroke-linejoin="round" d="
-                    M92,10 L106,15 L119,15 L133,25 L140,35 L136,44 L167,54
-                    L191,44 L208,35 L225,39 L242,39 L259,44 L276,59 L283,69
-                    L286,84 L300,104 L296,123 L296,138 L300,158 L310,178
-                    L303,197 L296,207 L286,212 L269,217 L259,227 L238,237
-                    L225,242 L218,252 L225,262 L235,276 L242,286 L249,301
-                    L259,311 L266,326 L269,341 L259,360 L242,375 L235,375
-                    L218,370 L201,370 L187,375 L170,385 L153,380 L140,375
-                    L126,375 L123,365 L102,365 L92,360 L78,360 L65,370
-                    L58,370 L55,360 L55,350 L65,341 L55,331 L41,326
-                    L31,311 L17,291 L10,276 L17,262 L7,247 L3,232
-                    L7,227 L3,212 L0,202 L3,192 L10,178 L17,163
-                    L31,158 L37,143 L27,128 L37,123 L44,114 L41,104
-                    L44,94 L55,84 L72,74 L78,64 L89,59 L92,44
-                    L99,35 L92,25 L92,10 Z
-                "/>
-                <!-- Cities -->
-                <circle cx="140" cy="77" r="4" fill="#fff" stroke="#0d9488" stroke-width="2"/>
-                <circle cx="255" cy="127" r="5" fill="#fff" stroke="#0d9488" stroke-width="2.5"/>
-                <circle cx="95" cy="246" r="4" fill="#fff" stroke="#0d9488" stroke-width="2"/>
-                <circle cx="193" cy="344" r="4" fill="#fff" stroke="#0d9488" stroke-width="2"/>
-            </svg>
+            <img src="/static/images/germany_flag_map.png" alt="Germany" class="germany-map-img">
         </div>
         <div class="info-box">
             <p id="s2-info"></p>
@@ -839,7 +807,7 @@
 
 })();
 </script>
-<!-- Feedback widget (F2 hotkey) -->
+<!-- Feedback widget (Ctrl+F2 hotkey) -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="/static/js/feedback.js?v=20260219"></script>
 </body>

@@ -147,9 +147,9 @@
         });
     }
 
-    /* ── F2 global hotkey to toggle feedback widget ── */
+    /* ── Ctrl+F2 global hotkey to toggle feedback widget ── */
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'F2') {
+        if (e.ctrlKey && e.key === 'F2') {
             e.preventDefault();
             if (overlayEl && overlayEl.classList.contains('active')) {
                 closeFeedback();
@@ -158,7 +158,6 @@
             }
         }
     });
-    }
 
     /* ── open / close ── */
     window.openFeedbackWidget = function () {
