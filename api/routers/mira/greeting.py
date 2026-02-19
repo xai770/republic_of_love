@@ -230,8 +230,11 @@ async def get_greeting(
             state_parts.append("Profil: Vorhanden, braucht noch Skills")
         else:
             state_parts.append("Profil: Noch nicht hochgeladen")
-        if match_count > 0:
+        if match_count > 0 and has_profile and has_skills:
             state_parts.append(f"Neue Matches: {match_count}")
+        elif match_count > 0:
+            # User has matches but no profile — don't mention them yet
+            match_count = 0
         state_block = "\n".join(state_parts)
 
         greeting_prompt = f"""Du bist Mira bei talent.yoga. Schreibe eine KURZE Begrüßung.

@@ -313,7 +313,8 @@
         <div class="info-box">
             <p id="s2-info"></p>
         </div>
-        <div class="btn-row btn-row-right">
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goTo(1)">← <span class="back-label"></span></button>
             <button class="btn btn-primary" onclick="goTo(nextStepFrom(2))">
                 <span class="next-label"></span> →
             </button>
@@ -324,6 +325,9 @@
     <div class="step" data-step="3">
         <h2 id="s3-title"></h2>
         <p id="s3-subtitle"></p>
+        <div style="margin-bottom:0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="goTo(2)" style="padding:0.3rem 0.8rem;font-size:0.85rem;">← <span class="back-label"></span></button>
+        </div>
         <div class="formality-row">
             <div class="formality-card" onclick="selectFormality('du')">
                 <div class="big">Du</div>

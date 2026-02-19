@@ -474,6 +474,14 @@ document.addEventListener('DOMContentLoaded', () => {
 async function triggerMiraGreeting() {
     const widget = document.getElementById('mira-widget');
     const fab = widget.querySelector('.mira-fab');
+
+    // If tour is active or about to start, defer — tour will call us when done
+    if (window._tourActive) return;
+    const tourCompleted = localStorage.getItem('mira_tour_completed');
+    if (!tourCompleted && window.location.pathname.includes('/dashboard')) {
+        // Tour hasn't run yet — it will trigger us after completion
+        return;
+    }
     
     // Mark greeted immediately to prevent duplicate from toggleMiraChat
     miraState.hasGreeted = true;
