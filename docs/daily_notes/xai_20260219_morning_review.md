@@ -112,7 +112,12 @@ New order: descriptions (60) → summaries (50) → embeddings (30). Ran catch-u
 - Phase 2 (embed+LLM): **160 min** — bottleneck, `LLM_WORKERS=2`, ~1 title/sec
 - Phase 3 (auto-triage): 33 min — LLM re-evaluation
 
-**Three levers identified:** (a) `LLM_WORKERS=4` → halve Phase 2, (b) increase Phase 2 batch 500→2000, (c) batch OWL lookup SQL. Combined: 211→~100 min. Not implemented yet.
+**Three levers identified:** (a) `LLM_WORKERS=4` → halve Phase 2, (b) increase Phase 2 batch 500→2000, (c) batch OWL lookup SQL. Combined: 211→~100 min.
+
+**Implemented** (commit `9ded8f5`):
+- `config/settings.py`: LLM_WORKERS default 2→4
+- `scripts/turing_fetch.sh`: PHASE2_BATCH 500→2000
+- `actors/postings__berufenet_U.py`: new `owl_lookup_batch()` (single SQL round-trip via `ANY(%s)` array), extracted `_resolve_owl_rows()`, Phase 1 loop rewritten to pre-clean all titles and call `owl_lookup_batch()` once
 
 ### 4. Extracted summary scope verified
 Work query correctly targets `WHERE source = 'deutsche_bank'` only. 3,318 legacy AA summaries exist (from Feb 13 before scope was narrowed) — harmless, no action needed.
@@ -127,12 +132,28 @@ Added to `docs/DEVELOPMENT_CHEAT_SHEET.md`:
 - "Pipeline Change Verification Pattern" — always run catch-up after config changes
 - "Daemon Actor Execution Order" — current priority table with data dependency chain
 
+### 7. wave_runner removal (commit `9ded8f5`)
+Removed the 67-file ghost ship:
+- `core/wave_runner/` (61 files, 672K) → `archive/dead_wave_runner_20260219/`
+- 7 dead scripts → same archive (wave_runner_daemon, wf3006_runner, old turing_daemon, run_workflow_{3001,3002,3004,1125})
+- `core/queue_worker.py` and `core/workflow_guard.py` — dead, moved to archive
+- Updated `core/__init__.py` and `scripts/health_check.py` to remove wave_runner refs
+- Verified: zero live wave_runner references (grep confirms)
+
+### 8. Pydantic V2 audit
+Already on v2.11.5. Searched for V1 patterns (`class Config:`, `orm_mode`, `@validator`, `.dict()`) — none found. Nothing to do.
+
+### 9. systemd install
+Service files validated and ready in `config/systemd/`. Needs `sudo bash config/systemd/install.sh`. Deferred — requires interactive sudo password.
+
 ---
 
 ## Commits
 
 | # | Hash | Summary |
 |---|------|---------|
+| 1 | `84415eb` | embedding backlog fix + broken test fix + cheat sheet |
+| 2 | `9ded8f5` | berufenet parallelization + wave_runner removal |
 
 ---
 
@@ -140,5 +161,6 @@ Added to `docs/DEVELOPMENT_CHEAT_SHEET.md`:
 
 - [x] Pipeline overnight reviewed
 - [x] Tests pass (438 passed, 0 errors)
-- [ ] Committed and pushed
+- [x] Committed and pushed
 - [x] Daily note updated
+- [ ] systemd install (needs sudo)
