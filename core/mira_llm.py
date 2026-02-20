@@ -1115,18 +1115,18 @@ def _compose_search_reply(actions: dict, language: str, uses_du: bool) -> str:
     if language == 'de':
         if uses_du:
             return (
-                f"Alles klar! Ich setze die Filter auf **{filter_desc_de}**. "
-                f"Die Ergebnisse erscheinen gleich auf der Suchseite — schau mal! 🔍"
+                f"Alles klar — **{filter_desc_de}**! "
+                f"Ich bring dich zur Suche. 🔍"
             )
         else:
             return (
-                f"Sehr gerne! Ich setze die Filter auf **{filter_desc_de}**. "
-                f"Die Ergebnisse erscheinen gleich auf der Suchseite. 🔍"
+                f"Sehr gerne — **{filter_desc_de}**! "
+                f"Ich bringe Sie zur Suche. 🔍"
             )
     else:
         return (
-            f"Got it! I'm setting the filters to **{filter_desc_en}**. "
-            f"The results will appear on the search page — take a look! 🔍"
+            f"On it — **{filter_desc_en}**! "
+            f"Taking you to search. 🔍"
         )
 
 

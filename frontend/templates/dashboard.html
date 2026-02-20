@@ -749,6 +749,20 @@ async function sendMiraMessage() {
             if (miraState.history.length > 20) {
                 miraState.history = miraState.history.slice(-20);
             }
+            
+            // Handle search filter actions — navigate to search page with filters
+            if (data.actions && data.actions.set_filters) {
+                const f = data.actions.set_filters;
+                const params = new URLSearchParams();
+                if (f.domains) params.set('domains', f.domains.join(','));
+                if (f.ql) params.set('ql', f.ql.join(','));
+                if (f.lat != null) params.set('lat', f.lat);
+                if (f.lon != null) params.set('lon', f.lon);
+                if (f.radius_km) params.set('radius_km', f.radius_km);
+                if (f.city) params.set('city', f.city);
+                // Short delay so user sees the reply before navigating
+                setTimeout(() => { window.location.href = '/search?' + params.toString(); }, 1200);
+            }
         } else {
             addMiraMessage('Entschuldigung, da ist etwas schiefgelaufen. Versuch es bitte nochmal.', false);
             // Remove failed message from history
