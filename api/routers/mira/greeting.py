@@ -128,21 +128,21 @@ async def get_greeting(
         # (prevents stale matches from a previous profile/reset surfacing as "new")
         if not has_skills or not has_profile or not profile_created_at:
             match_count = 0
-        elif last_login and last_login > profile_created_at:
-            cur.execute("""
-                SELECT COUNT(*) as cnt FROM profile_posting_matches m
-                JOIN profiles p ON m.profile_id = p.profile_id
-                WHERE p.user_id = %s AND m.computed_at > %s
-            """, (user['user_id'], last_login))
-            match_count = cur.fetchone()['cnt']
         else:
-            # First login after this profile was created — only count matches since profile creation
-            cur.execute("""
-                SELECT COUNT(*) as cnt FROM profile_posting_matches m
-                JOIN profiles p ON m.profile_id = p.profile_id
-                WHERE p.user_id = %s AND m.computed_at > %s
-            """, (user['user_id'], profile_created_at))
-            match_count = cur.fetchone()['cnt']
+            profile_age = datetime.now() - profile_created_at.replace(tzinfo=None)
+            if profile_age.total_seconds() < 7200:
+                # Profile < 2h old — suppress entirely; user is still in onboarding flow
+                match_count = 0
+            else:
+                since = profile_created_at.replace(tzinfo=None)
+                if last_login and last_login.replace(tzinfo=None) > since:
+                    since = last_login.replace(tzinfo=None)
+                cur.execute("""
+                    SELECT COUNT(*) as cnt FROM profile_posting_matches m
+                    JOIN profiles p ON m.profile_id = p.profile_id
+                    WHERE p.user_id = %s AND m.computed_at > %s
+                """, (user['user_id'], since))
+                match_count = cur.fetchone()['cnt']
 
         # --- Check if yogi has ignored Mira 3+ consecutive sessions ---
         suppress_greeting = False

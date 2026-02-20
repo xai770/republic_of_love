@@ -59,28 +59,31 @@ async def get_proactive_messages(
         has_skills = bool(_sk and str(_sk) not in ('[]', '', 'None') and len(str(_sk)) > 2)
         profile_created_at = urow['profile_created_at'] if urow else None
 
-        # Count new matches — only if profile has skills, and only since profile creation
-        # (prevents stale matches from previous profiles surfacing as "new")
+        # Count new matches — only if profile has skills, profile is > 2h old,
+        # and only since max(last_login, profile_created_at)
         if last_login_at and has_skills and profile_created_at:
-            since = max(last_login_at, profile_created_at)
-            cur.execute("""
-                SELECT COUNT(*) as cnt
-                FROM profile_posting_matches m
-                JOIN profiles p ON m.profile_id = p.profile_id
-                WHERE p.user_id = %s AND m.computed_at > %s
-            """, (user['user_id'], since))
-            new_matches = cur.fetchone()['cnt']
+            from datetime import datetime as _dt
+            profile_age = _dt.now() - profile_created_at.replace(tzinfo=None)
+            if profile_age.total_seconds() >= 7200:
+                since = max(last_login_at.replace(tzinfo=None), profile_created_at.replace(tzinfo=None))
+                cur.execute("""
+                    SELECT COUNT(*) as cnt
+                    FROM profile_posting_matches m
+                    JOIN profiles p ON m.profile_id = p.profile_id
+                    WHERE p.user_id = %s AND m.computed_at > %s
+                """, (user['user_id'], since))
+                new_matches = cur.fetchone()['cnt']
 
-            if new_matches > 0:
-                if uses_du:
-                    msg = f"🎯 {new_matches} neue Matches seit deinem letzten Besuch!"
-                else:
-                    msg = f"🎯 {new_matches} neue Matches seit Ihrem letzten Besuch!"
-                messages.append(ProactiveMessage(
-                    message_type="new_matches",
-                    message=msg,
-                    data={"count": new_matches}
-                ))
+                if new_matches > 0:
+                    if uses_du:
+                        msg = f"🎯 {new_matches} neue Matches seit deinem letzten Besuch!"
+                    else:
+                        msg = f"🎯 {new_matches} neue Matches seit Ihrem letzten Besuch!"
+                    messages.append(ProactiveMessage(
+                        message_type="new_matches",
+                        message=msg,
+                        data={"count": new_matches}
+                    ))
 
         # Check favorited jobs still available
         cur.execute("""

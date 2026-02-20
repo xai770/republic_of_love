@@ -584,12 +584,12 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     pass
             
             # ── Match count + top matches ──
-            # Only count matches if the profile has skills AND they were computed
-            # after this profile was created (prevents stale pre-reset matches)
+            # Only count matches if: has skills, profile > 2h old, computed after profile creation
             _sk = context.get('skills')
             _has_skills = bool(_sk and len(_sk) > 0)
             _profile_created_at = profile['profile_created_at'] if profile else None
-            if _has_skills and _profile_created_at:
+            _profile_age = (datetime.now(timezone.utc) - _profile_created_at.replace(tzinfo=timezone.utc)).total_seconds() if _profile_created_at else 0
+            if _has_skills and _profile_created_at and _profile_age >= 7200:
                 cur.execute("""
                     SELECT COUNT(*) as cnt
                     FROM profile_posting_matches m
