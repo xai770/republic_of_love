@@ -367,10 +367,10 @@ body {
     gap: 1.5rem;
     padding: 0.75rem 2rem;
     background: linear-gradient(135deg,
-        rgba(232,245,232,0.15) 0%,
-        rgba(224,244,244,0.15) 40%,
-        rgba(240,237,248,0.15) 70%,
-        rgba(254,249,243,0.15) 100%);
+        rgba(232,245,232,0.075) 0%,
+        rgba(224,244,244,0.075) 40%,
+        rgba(240,237,248,0.075) 70%,
+        rgba(254,249,243,0.075) 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     position: fixed;
@@ -533,7 +533,7 @@ body {
 /* Sidebar - Icon-only, expands on hover */
 .sidebar {
     width: 70px;
-    background: rgba(255, 255, 255, 0.075);
+    background: rgba(255, 255, 255, 0.037);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border-right: 1px solid rgba(0, 0, 0, 0.07);
@@ -748,7 +748,7 @@ body {
 [data-theme="dark"] {
     --bg-primary: #1a202c;
     --bg-secondary: #2d3748;
-    --bg-header: linear-gradient(135deg, rgba(26,32,44,0.15) 0%, rgba(45,55,72,0.15) 100%);
+    --bg-header: linear-gradient(135deg, rgba(26,32,44,0.075) 0%, rgba(45,55,72,0.075) 100%);
     --text-primary: #f7fafc;
     --text-secondary: #a0aec0;
     --border-color: #4a5568;
@@ -782,7 +782,7 @@ body {
 }
 
 [data-theme="dark"] .header-bar {
-    background: linear-gradient(135deg, rgba(26,32,44,0.15) 0%, rgba(45,55,72,0.15) 100%) !important;
+    background: linear-gradient(135deg, rgba(26,32,44,0.075) 0%, rgba(45,55,72,0.075) 100%) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
@@ -876,7 +876,7 @@ body {
     --bg-primary: #f5f7fb;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
-    --bg-header: linear-gradient(135deg, rgba(232,245,232,0.15) 0%, rgba(224,244,244,0.15) 40%, rgba(240,237,248,0.15) 70%, rgba(254,249,243,0.15) 100%);
+    --bg-header: linear-gradient(135deg, rgba(232,245,232,0.075) 0%, rgba(224,244,244,0.075) 40%, rgba(240,237,248,0.075) 70%, rgba(254,249,243,0.075) 100%);
     --text-primary: #2d3748;
     --text-secondary: #4a5568;
     --text-muted: #718096;
@@ -895,7 +895,7 @@ body {
     --bg-primary: #1a202c;
     --bg-secondary: #2d3748;
     --bg-card: #2d3748;
-    --bg-header: linear-gradient(135deg, rgba(26,32,44,0.15) 0%, rgba(45,55,72,0.15) 100%);
+    --bg-header: linear-gradient(135deg, rgba(26,32,44,0.075) 0%, rgba(45,55,72,0.075) 100%);
     --text-primary: #f7fafc;
     --text-secondary: #e2e8f0;
     --text-muted: #a0aec0;
@@ -918,7 +918,7 @@ body {
 /* Apply variables to key elements */
 [data-theme="dark"] .app-layout { background: var(--bg-primary); }
 [data-theme="dark"] .header-bar { background: var(--bg-header); }
-[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.06); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-right: 1px solid rgba(255,255,255,0.06); }
+[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.03); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-right: 1px solid rgba(255,255,255,0.06); }
 [data-theme="dark"] .main-content { background: var(--bg-primary); }
 [data-theme="dark"] .stat-card { background: var(--bg-card); border-color: var(--border-color); }
 [data-theme="dark"] .job-card { background: var(--bg-card); border-color: var(--border-color); }
