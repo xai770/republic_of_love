@@ -272,7 +272,7 @@ Begrüßung (max 120 Zeichen):"""
         greeting = llm_greeting
     elif is_new:
         greeting = random.choice(GREETINGS_NEW_DU)
-    elif match_count > 0:
+    elif match_count > 0 and has_profile and has_skills:
         template = random.choice(GREETINGS_WITH_MATCHES_DU)
         greeting = template.format(n=match_count)
     else:
