@@ -173,7 +173,7 @@
     "cv_uploaded": "CV hochgeladen: {name}",
     "cv_extracted": "Ich habe aus deinem Lebenslauf extrahiert: {parts}. Importiere jetzt...",
     "cv_imported": "Lebenslauf-Daten importiert ✓",
-    "cv_error": "CV-Fehler: {error}",
+    "cv_error": "CV error: {error}",
     "cv_upload_failed": "Upload fehlgeschlagen",
     "cv_positions": "Positionen",
     "cv_skills": "Skills"

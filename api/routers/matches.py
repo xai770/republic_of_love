@@ -121,12 +121,22 @@ def list_my_matches(
     List matches for the current user's profile.
     """
     with conn.cursor() as cur:
-        # First get user's profile
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        # First get user's profile — must have skills for matches to be meaningful
+        cur.execute("""
+            SELECT profile_id, skill_keywords
+            FROM profiles WHERE user_id = %s
+        """, (user['user_id'],))
         profile = cur.fetchone()
-        
+
         if not profile:
             return []  # No profile = no matches
+
+        # Guard: don't surface matches until the profile has skills.
+        # Matches computed before skills were added would look random to the yogi.
+        sk = profile['skill_keywords']
+        has_skills = sk is not None and str(sk) not in ('[]', '', 'None') and len(str(sk)) > 2
+        if not has_skills:
+            return []
         
         query = """
             SELECT m.match_id, m.posting_id, p.job_title as title, 
