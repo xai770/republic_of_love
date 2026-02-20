@@ -8,12 +8,119 @@ from datetime import date
 import json as _json
 import tempfile
 import os
+import hashlib
+import threading
+
+import requests as _requests
 
 from psycopg2.extras import Json
 
-from api.deps import get_db, require_user
+from api.deps import get_db, require_user, _get_pool
+from config.settings import OLLAMA_EMBED_URL as _OLLAMA_EMBED_URL, EMBED_MODEL as _EMBED_MODEL
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Background helper: compute & cache profile embedding after CV import
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_profile_text(profile: dict) -> str:
+    """Replicate the profile text convention used by search.py / Clara."""
+    raw_skills = profile.get('skill_keywords') or []
+    if isinstance(raw_skills, dict):
+        raw_skills = raw_skills.get('keywords', [])
+    skills = [str(s) for s in raw_skills]
+
+    parts = [
+        profile.get('current_title') or '',
+        ' '.join(skills),
+        (profile.get('profile_summary') or '')[:500],
+        profile.get('experience_level') or '',
+    ]
+    return ' | '.join(p for p in parts if p).strip()
+
+
+def _compute_profile_embedding_bg(user_id: int) -> None:
+    """Run in a background thread: build profile text, call Ollama, cache result."""
+    import logging
+    log = logging.getLogger(__name__)
+    conn = None
+    pool = None
+    try:
+        pool = _get_pool()
+        conn = pool.getconn()
+        conn.autocommit = False
+
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT skill_keywords, current_title, profile_summary, experience_level
+                FROM profiles
+                WHERE user_id = %s
+                ORDER BY updated_at DESC NULLS LAST
+                LIMIT 1
+            """, (user_id,))
+            profile = cur.fetchone()
+
+        if not profile:
+            return
+
+        text = _build_profile_text(profile)
+        if not text:
+            return
+
+        text_clean = text.lower().strip()
+        text_hash = hashlib.sha256(text_clean.encode()).hexdigest()[:32]
+
+        # Already cached?
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM embeddings WHERE text_hash = %s", (text_hash,))
+            if cur.fetchone():
+                return
+
+        # Compute via Ollama
+        resp = _requests.post(
+            _OLLAMA_EMBED_URL,
+            json={'model': _EMBED_MODEL, 'prompt': text_clean},
+            timeout=60
+        )
+        if resp.status_code != 200:
+            log.warning("Ollama embedding error %s for user %s", resp.status_code, user_id)
+            return
+
+        embedding = resp.json().get('embedding')
+        if not embedding:
+            return
+
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO embeddings (text_hash, text, embedding, model)
+                VALUES (%s, %s, %s::jsonb, %s)
+                ON CONFLICT (text_hash) DO NOTHING
+            """, (text_hash, text, _json.dumps(embedding), _EMBED_MODEL))
+        conn.commit()
+        log.info("Profile embedding cached for user %s (hash %s)", user_id, text_hash)
+
+    except Exception as exc:
+        log.error("_compute_profile_embedding_bg error for user %s: %s", user_id, exc)
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+    finally:
+        if conn and pool:
+            pool.putconn(conn)
+
+
+def _schedule_profile_embedding(user_id: int) -> None:
+    """Fire-and-forget: compute profile embedding in background thread."""
+    t = threading.Thread(
+        target=_compute_profile_embedding_bg,
+        args=(user_id,),
+        daemon=True
+    )
+    t.start()
 
 
 def _ensure_profile(user: dict, conn) -> int:
@@ -905,6 +1012,9 @@ def import_cv(
             imported_count += 1
 
         conn.commit()
+
+    # Kick off embedding computation in background (Adele's signal)
+    _schedule_profile_embedding(user['user_id'])
 
     return {
         "status": "ok",
