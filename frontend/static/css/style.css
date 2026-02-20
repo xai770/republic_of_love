@@ -582,6 +582,7 @@ body {
     transition: opacity 0.15s ease, visibility 0.15s ease;
     white-space: nowrap;
     font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .sidebar-close {
