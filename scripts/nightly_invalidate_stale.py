@@ -40,7 +40,11 @@ def main():
         # 1. Stale postings: old + not seen recently
         cur.execute("""
             UPDATE postings
-            SET invalidated = TRUE, updated_at = NOW()
+            SET invalidated = TRUE,
+                invalidated_at = NOW(),
+                invalidated_reason = 'Stale: >30d old and >7d unseen',
+                posting_status = 'invalid',
+                updated_at = NOW()
             WHERE invalidated = FALSE
               AND enabled = TRUE
               AND first_seen_at < NOW() - INTERVAL '30 days'
@@ -52,7 +56,11 @@ def main():
         # 2. Failed description fetches: gave up after 2+ attempts
         cur.execute("""
             UPDATE postings
-            SET invalidated = TRUE, updated_at = NOW()
+            SET invalidated = TRUE,
+                invalidated_at = NOW(),
+                invalidated_reason = 'Description fetch failed >=2 times',
+                posting_status = 'invalid',
+                updated_at = NOW()
             WHERE invalidated = FALSE
               AND enabled = TRUE
               AND job_description IS NULL
