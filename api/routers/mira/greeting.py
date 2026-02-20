@@ -246,11 +246,10 @@ STRENGE REGELN:
 - GENAU 1-2 Sätze. NIEMALS mehr. Maximal 120 Zeichen.
 - Duze den Yogi
 - Erwähne den Namen wenn bekannt
-- Wenn neue Matches: nenne die Anzahl
-- Wenn du Themen siehst: ein kurzer Bezug zeigt Erinnerung
 - Kein Emoji, keine Ausrufezeichen-Flut
 - Ende mit EINER kurzen Einladung (nicht mehrere Optionen auflisten!)
 - VERBOTEN: Fragen stapeln, Optionen auflisten, mehr als 2 Sätze
+{f"- Neue Matches vorhanden: erwähne genau {match_count} Matches" if match_count > 0 else "- VERBOTEN: Matches, Jobs oder Ergebnisse erwähnen — es gibt noch keine"}
 
 KONTEXT:
 {state_block}{memory_block}
