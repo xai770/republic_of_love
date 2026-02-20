@@ -345,3 +345,70 @@ notifies the yogi. No minimum threshold UI — Adele drives this silently.
    the search builder, or locked (linked to the saved search object)?
 4. **Profile page redesign:** Once we have multi-row search + profile-as-living-document settled,
    the profile page layout needs a rethink. What sections? What's editable vs. inferred?
+
+---
+
+## Late afternoon session (20 Feb, ~18:00–EOD CET)
+
+### UX polish — sidebar behaviour + dark page visibility
+
+Final polishing pass driven by live UAT screenshots.
+
+#### Sidebar stays open when navigating (sessionStorage pin)
+
+**Problem:** Clicking the nav label expanded the sidebar, navigated to the new page, but the new
+page loaded with the sidebar collapsed — cursor now outside the 70px icon column, hover never
+fired. Clicking the icon worked because the cursor landed back inside on the new page.
+
+**Fix (`77a2485`):** Three-part JS mechanism in `sidebar.html`:
+- On page load: if `sessionStorage.sidebarOpen === '1'` → add `sidebar-pinned` class → sidebar
+  starts expanded
+- On any real nav link click: `sessionStorage.setItem('sidebarOpen', '1')`
+- On `mouseleave` from sidebar: remove class + clear flag → collapses naturally
+
+CSS: `.sidebar.sidebar-pinned` added alongside `.sidebar:hover` for identical expansion.
+CSS version: `20260220q → r`
+
+#### Messages page: no active indicator
+
+**Root cause:** `messages.html` was simply missing `{% set active_page = 'messages' %}` before
+`{% include "partials/sidebar.html" %}`. The nav item condition `active_page == 'messages'`
+evaluated to false because `active_page` was undefined.
+
+**Fix (`8f72fa3`):** One line added to `messages.html`.
+
+#### Arcade sidebar invisible on dark background
+
+**Root cause:** Arcade's main content sets `background: #0a0a1a`. The sidebar uses
+`rgba(255,255,255, 0.18)` — almost invisible white on near-black.
+
+**Fix (`8f72fa3`):** Added `dark-bg-page` class to arcade's `app-layout` div. CSS override for
+`.dark-bg-page .sidebar`: `rgba(26,28,46,0.82)` dark semi-opaque background, light text,
+indigo active still applies.
+
+### End-of-day commit log
+
+| # | Hash | Summary |
+|---|------|---------|
+| 1 | `77a2485` | Sidebar pin open on page nav (sessionStorage) |
+| 2 | `8f72fa3` | Messages active indicator + arcade sidebar dark bg |
+
+### Session totals (all of 20 Feb)
+
+| Category | Count |
+|----------|-------|
+| Commits today | ~18 |
+| Feedback items closed | 3 (#166, #167, #171) + 2 (#244, #186) = 5 |
+| Open feedback remaining | 1 (#137 — may live with it) |
+| CSS version progression | `20260220h` → `20260220s` (12 iterations) |
+
+### EOD state
+
+| Item | Status |
+|------|--------|
+| talent-yoga service | ✅ active |
+| All sidebar nav items | ✅ active indicators working (incl. messages) |
+| Sidebar nav persistence | ✅ pinned via sessionStorage |
+| Arcade page | ✅ sidebar visible on dark bg |
+| Open feedback | 1 item (#137, acknowledged) |
+| Unpushed commits | ~45 ahead of origin/master |
