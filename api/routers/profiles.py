@@ -1,7 +1,7 @@
 """
 Profile endpoints — CRUD for user profiles.
 """
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
@@ -265,6 +265,7 @@ def update_my_preferences(
 @router.put("/me/yogi-name")
 def update_yogi_name(
     payload: dict,
+    request: Request,
     user: dict = Depends(require_user),
     conn=Depends(get_db)
 ):
@@ -282,13 +283,16 @@ def update_yogi_name(
     comparison only. It is NEVER stored, logged, or returned.
     """
     from core.taro import validate_yogi_name
+    from api.i18n import get_language_from_request
 
     new_name = (payload.get("yogi_name") or "").strip()
     confirmed = payload.get("confirmed", False)  # user confirmed a warning
     dry_run = payload.get("dry_run", False)       # validate only, don't save
+    lang = get_language_from_request(request)
 
     if not new_name:
-        raise HTTPException(status_code=400, detail="Yogi-Name darf nicht leer sein.")
+        empty_msg = {"de": "Yogi-Name darf nicht leer sein.", "en": "Yogi name cannot be empty."}
+        raise HTTPException(status_code=400, detail=empty_msg.get(lang, empty_msg["de"]))
 
     # ── Gather transient identity fragments (NEVER stored) ────
     # Google OAuth display_name — read from session, not persisted
@@ -319,31 +323,70 @@ def update_yogi_name(
     )
 
     if severity == "error":
-        # Map Taro keys to user-facing messages
+        # Map Taro keys to user-facing messages (bilingual)
         error_messages = {
-            "contains_email": "Yogi-Name darf keine E-Mail-Adresse enthalten.",
-            "contains_phone": "Yogi-Name darf keine Telefonnummer enthalten.",
-            "contains_address": "Yogi-Name darf keine Adresse enthalten.",
-            "reserved": "Dieser Name ist reserviert.",
-            "matches_real_name": "Dein Yogi-Name darf nicht dein echter Name sein. Wähle ein Pseudonym!",
-            "contains_real_name": "Dein Yogi-Name enthält deinen echten Namen. Wähle ein Pseudonym!",
-            "subset_of_real_name": "Dein Yogi-Name ist zu ähnlich zu deinem echten Namen. Wähle ein Pseudonym!",
-            "already_taken": "Dieser Yogi-Name ist bereits vergeben.",
+            "contains_email": {
+                "de": "Yogi-Name darf keine E-Mail-Adresse enthalten.",
+                "en": "Yogi name must not contain an email address.",
+            },
+            "contains_phone": {
+                "de": "Yogi-Name darf keine Telefonnummer enthalten.",
+                "en": "Yogi name must not contain a phone number.",
+            },
+            "contains_address": {
+                "de": "Yogi-Name darf keine Adresse enthalten.",
+                "en": "Yogi name must not contain an address.",
+            },
+            "reserved": {
+                "de": "Dieser Name ist reserviert.",
+                "en": "This name is reserved.",
+            },
+            "matches_real_name": {
+                "de": "Dein Yogi-Name darf nicht dein echter Name sein. Wähle ein Pseudonym!",
+                "en": "Your yogi name cannot be your real name. Choose a pseudonym!",
+            },
+            "contains_real_name": {
+                "de": "Dein Yogi-Name enthält deinen echten Namen. Wähle ein Pseudonym!",
+                "en": "Your yogi name contains your real name. Choose a pseudonym!",
+            },
+            "subset_of_real_name": {
+                "de": "Dein Yogi-Name ist zu ähnlich zu deinem echten Namen. Wähle ein Pseudonym!",
+                "en": "Your yogi name is too similar to your real name. Choose a pseudonym!",
+            },
+            "already_taken": {
+                "de": "Dieser Yogi-Name ist bereits vergeben.",
+                "en": "This yogi name is already taken.",
+            },
         }
-        detail = error_messages.get(msg, msg)
+        msgs = error_messages.get(msg, {})
+        detail = msgs.get(lang, msgs.get("de", msg))
         raise HTTPException(status_code=400, detail=detail)
 
     if severity == "warning" and not confirmed:
         # Soft warning — return 200 with warning, let user confirm
         warning_messages = {
-            "looks_like_full_name": "Das sieht wie ein echter Name aus. Möchtest du stattdessen ein Pseudonym wählen?",
-            "contains_title": "Titel wie Dr./Prof. deuten auf einen echten Namen hin. Bist du sicher?",
-            "contains_particle": "Namenspartikel (von, van, de…) deuten auf einen echten Namen hin. Bist du sicher?",
-            "common_first_name": "Das ist ein häufiger Vorname. Wähle lieber ein kreatives Pseudonym!",
+            "looks_like_full_name": {
+                "de": "Das sieht wie ein echter Name aus. Möchtest du stattdessen ein Pseudonym wählen?",
+                "en": "That looks like a real name. Would you prefer to choose a pseudonym?",
+            },
+            "contains_title": {
+                "de": "Titel wie Dr./Prof. deuten auf einen echten Namen hin. Bist du sicher?",
+                "en": "Titles like Dr./Prof. suggest a real name. Are you sure?",
+            },
+            "contains_particle": {
+                "de": "Namenspartikel (von, van, de…) deuten auf einen echten Namen hin. Bist du sicher?",
+                "en": "Name particles (von, van, de…) suggest a real name. Are you sure?",
+            },
+            "common_first_name": {
+                "de": "Das ist ein häufiger Vorname. Wähle lieber ein kreatives Pseudonym!",
+                "en": "That's a common first name. Better pick a creative pseudonym!",
+            },
         }
+        msgs = warning_messages.get(msg, {})
+        warning_text = msgs.get(lang, msgs.get("de", msg))
         return {
             "status": "warning",
-            "warning": warning_messages.get(msg, msg),
+            "warning": warning_text,
             "warning_key": msg,
             "yogi_name": new_name
         }

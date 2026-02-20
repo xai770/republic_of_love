@@ -168,7 +168,10 @@
     "cv_uploaded": "CV uploaded: {name}",
     "cv_extracted": "I extracted from your CV: {parts}. Importing now...",
     "cv_imported": "CV data imported ✓",
-    "cv_error": "CV error: {error}"
+    "cv_error": "CV error: {error}",
+    "cv_upload_failed": "Upload failed",
+    "cv_positions": "positions",
+    "cv_skills": "skills"
   },
   "matches": {
     "title": "My Matches",

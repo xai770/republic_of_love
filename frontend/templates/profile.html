@@ -805,6 +805,12 @@ const I = {
     yogi_warning_change: {{ t('profile.yogi_warning_change') | tojson }},
     yogi_name_saved: {{ t('profile.yogi_name_saved') | tojson }},
     yogi_suggestions_loading: {{ t('profile.yogi_suggestions_loading') | tojson }},
+    // CV
+    cv_extracted: {{ t('profile.cv_extracted') | tojson }},
+    cv_error: {{ t('profile.cv_error') | tojson }},
+    cv_upload_failed: {{ t('profile.cv_upload_failed') | tojson }},
+    cv_positions: {{ t('profile.cv_positions') | tojson }},
+    cv_skills: {{ t('profile.cv_skills') | tojson }},
 };
 
 // ── TAB SWITCHING ──────────────────────────────────────────
@@ -1207,22 +1213,22 @@ async function uploadCV(file) {
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.detail || 'Upload fehlgeschlagen');
+            throw new Error(err.detail || I.cv_upload_failed);
         }
         const data = await res.json();
 
         const parts = [];
         if (data.current_title) parts.push(data.current_title);
-        if (data.work_history && data.work_history.length) parts.push(data.work_history.length + ' Positionen');
-        if (data.skills && data.skills.length) parts.push(data.skills.length + ' Skills');
-        addLogEntry('adele', 'Ich habe aus deinem Lebenslauf extrahiert: ' + parts.join(', ') + '. Importiere jetzt...');
+        if (data.work_history && data.work_history.length) parts.push(data.work_history.length + ' ' + I.cv_positions);
+        if (data.skills && data.skills.length) parts.push(data.skills.length + ' ' + I.cv_skills);
+        addLogEntry('adele', I.cv_extracted.replace('{parts}', parts.join(', ')));
 
         await importCV(data);
         addLogEntry('system', '✓ Import OK', 'cv_import');
         await refreshProfile();
 
     } catch (err) {
-        addLogEntry('system', 'CV-Fehler: ' + err.message, 'error');
+        addLogEntry('system', I.cv_error.replace('{error}', err.message), 'error');
     } finally {
         document.getElementById('pb-dropzone').style.display = '';
         document.getElementById('pb-upload-status').style.display = 'none';
