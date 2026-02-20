@@ -637,9 +637,9 @@ body {
 }
 
 .nav-item.active {
-    background: #eef4ff;
-    color: #2d3748;
-    font-weight: 500;
+    background: rgba(90,103,216,0.18);
+    color: #3730a3;
+    font-weight: 700;
 }
 
 .nav-item.active::before {
@@ -648,9 +648,10 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 3px;
-    background: #5a67d8;
+    width: 5px;
+    background: #4f46e5;
     border-radius: 2px;
+    box-shadow: 3px 0 12px rgba(79,70,229,0.6);
 }
 
 /* Icon container with pastel background */
@@ -828,8 +829,8 @@ body {
 }
 
 [data-theme="dark"] .nav-item.active {
-    background: rgba(90,103,216,0.32) !important;
-    color: #a5b4fc !important;
+    background: rgba(99,102,241,0.35) !important;
+    color: #c7d2fe !important;
     font-weight: 700 !important;
 }
 
@@ -839,10 +840,10 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
-    background: #7f9cf5;
+    width: 5px;
+    background: #818cf8;
     border-radius: 2px;
-    box-shadow: 2px 0 8px rgba(127,156,245,0.55);
+    box-shadow: 3px 0 12px rgba(129,140,248,0.7);
 }
 
 [data-theme="dark"] .nav-divider {
@@ -937,7 +938,7 @@ body {
 [data-theme="dark"] .section-title { color: var(--text-primary); }
 [data-theme="dark"] .nav-item { color: var(--text-secondary); }
 [data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-[data-theme="dark"] .nav-item.active { background: rgba(90,103,216,0.32); color: #a5b4fc; font-weight: 700; }
+[data-theme="dark"] .nav-item.active { background: rgba(99,102,241,0.35); color: #c7d2fe; font-weight: 700; }
 [data-theme="dark"] .stat-label { color: var(--text-muted); }
 [data-theme="dark"] .stat-value { color: var(--text-primary); }
 [data-theme="dark"] .job-title { color: var(--text-primary); }
@@ -1156,9 +1157,9 @@ body {
 }
 
 .nav-item.active {
-    background: #eef4ff;
-    color: #2d3748;
-    font-weight: 500;
+    background: rgba(90,103,216,0.18);
+    color: #3730a3;
+    font-weight: 700;
 }
 
 .nav-item.active::before {
@@ -1167,9 +1168,10 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 3px;
-    background: #5a67d8;
+    width: 5px;
+    background: #4f46e5;
     border-radius: 2px;
+    box-shadow: 3px 0 12px rgba(79,70,229,0.6);
 }
 
 /* Icon container with pastel background */
