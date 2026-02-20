@@ -583,13 +583,19 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     pass
             
             # ── Match count + top matches ──
-            cur.execute("""
-                SELECT COUNT(*) as cnt
-                FROM profile_posting_matches m
-                JOIN profiles p ON m.profile_id = p.profile_id
-                WHERE p.user_id = %s
-            """, (user_id,))
-            context['match_count'] = cur.fetchone()['cnt']
+            # Only count matches if the profile actually has skills (same guard as list_my_matches)
+            _sk = context.get('skills')
+            _has_skills = bool(_sk and len(_sk) > 0)
+            if _has_skills:
+                cur.execute("""
+                    SELECT COUNT(*) as cnt
+                    FROM profile_posting_matches m
+                    JOIN profiles p ON m.profile_id = p.profile_id
+                    WHERE p.user_id = %s
+                """, (user_id,))
+                context['match_count'] = cur.fetchone()['cnt']
+            else:
+                context['match_count'] = 0
             
             if context['match_count'] > 0:
                 cur.execute("""
