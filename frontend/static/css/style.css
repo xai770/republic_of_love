@@ -822,10 +822,27 @@ body {
     color: var(--text-secondary) !important;
 }
 
-[data-theme="dark"] .nav-item:hover,
-[data-theme="dark"] .nav-item.active {
-    background: rgba(255, 255, 255, 0.1) !important;
+[data-theme="dark"] .nav-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
     color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .nav-item.active {
+    background: rgba(90,103,216,0.32) !important;
+    color: #a5b4fc !important;
+    font-weight: 700 !important;
+}
+
+[data-theme="dark"] .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #7f9cf5;
+    border-radius: 2px;
+    box-shadow: 2px 0 8px rgba(127,156,245,0.55);
 }
 
 [data-theme="dark"] .nav-divider {
@@ -912,7 +929,7 @@ body {
 /* Apply variables to key elements */
 [data-theme="dark"] .app-layout { background: var(--bg-primary); }
 [data-theme="dark"] .header-bar { background: var(--bg-header); }
-[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.12); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-right: 1px solid rgba(255,255,255,0.06); }
+[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.07); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-right: 1px solid rgba(255,255,255,0.06); }
 [data-theme="dark"] .main-content { background: var(--bg-primary); }
 [data-theme="dark"] .stat-card { background: var(--bg-card); border-color: var(--border-color); }
 [data-theme="dark"] .job-card { background: var(--bg-card); border-color: var(--border-color); }
@@ -920,7 +937,7 @@ body {
 [data-theme="dark"] .section-title { color: var(--text-primary); }
 [data-theme="dark"] .nav-item { color: var(--text-secondary); }
 [data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-[data-theme="dark"] .nav-item.active { background: rgba(90,103,216,0.2); color: var(--text-primary); }
+[data-theme="dark"] .nav-item.active { background: rgba(90,103,216,0.32); color: #a5b4fc; font-weight: 700; }
 [data-theme="dark"] .stat-label { color: var(--text-muted); }
 [data-theme="dark"] .stat-value { color: var(--text-primary); }
 [data-theme="dark"] .job-title { color: var(--text-primary); }
@@ -1185,6 +1202,7 @@ body {
 
 .nav-label {
     font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .nav-divider {
