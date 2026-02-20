@@ -362,10 +362,7 @@ window.SEARCH_TOUR_I18N = {
 
     async function geocodeCity(q) {
         try {
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&countrycodes=de&limit=5&q=${encodeURIComponent(q)}`,
-                { headers: { 'Accept-Language': 'de' } }
-            );
+            const res = await fetch(`/api/geo/search?q=${encodeURIComponent(q)}`);
             const results = await res.json();
             cityDropdown.innerHTML = results.map(r =>
                 `<div class="city-option" data-lat="${r.lat}" data-lon="${r.lon}">${r.display_name.split(',').slice(0,2).join(',')}</div>`

@@ -14,6 +14,7 @@ import logging
 import hashlib
 
 import numpy as np
+import requests as _requests
 
 from api.deps import get_db, require_user
 from lib.posting_verifier import queue_stale_verification, find_stale_posting_ids
@@ -21,6 +22,42 @@ from lib.posting_verifier import queue_stale_verification, find_stale_posting_id
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["search"])
+
+# ─── Nominatim proxy ──────────────────────────────────────────────────────────
+_GEO_CACHE: dict = {}  # simple in-process cache to respect Nominatim's rate limit
+_GEO_HEADERS = {
+    'User-Agent': 'TalentYoga/1.0 (https://talent.yoga; kontakt@talent.yoga)',
+    'Accept-Language': 'de',
+}
+
+@router.get("/geo/search")
+def geo_search(q: str = Query(..., min_length=2, max_length=100)):
+    """
+    Server-side proxy for Nominatim city/address lookup.
+    Caches results in-process; enforces User-Agent for OSM usage policy.
+    """
+    cache_key = q.lower().strip()
+    if cache_key in _GEO_CACHE:
+        return JSONResponse(_GEO_CACHE[cache_key])
+
+    try:
+        resp = _requests.get(
+            'https://nominatim.openstreetmap.org/search',
+            params={'format': 'json', 'countrycodes': 'de', 'limit': 5, 'q': q},
+            headers=_GEO_HEADERS,
+            timeout=8,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as exc:
+        logger.warning("Nominatim proxy error: %s", exc)
+        return JSONResponse([], status_code=200)
+
+    # Cache up to 2000 entries (memory-cheap strings)
+    if len(_GEO_CACHE) > 2000:
+        _GEO_CACHE.clear()
+    _GEO_CACHE[cache_key] = data
+    return JSONResponse(data)
 
 # ============================================================
 # KLDB domain mapping (mirrors tools/populate_domain_gate.py)

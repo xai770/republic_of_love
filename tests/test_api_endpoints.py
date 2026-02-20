@@ -244,7 +244,7 @@ class TestFeedbackEndpoints:
         })
         assert response.status_code == 401
 
-    def test_submit_with_auth(self, client, auth_cookie):
+    def test_submit_with_auth(self, client, auth_cookie, db_conn):
         """Authenticated feedback submission should succeed."""
         response = client.post("/api/feedback", cookies=auth_cookie, json={
             "url": "https://talent.yoga/test",
@@ -256,6 +256,11 @@ class TestFeedbackEndpoints:
             data = response.json()
             assert data.get("ok") is True
             assert "feedback_id" in data
+            # Clean up — delete the test record so it doesn't pollute the DB
+            with db_conn.cursor() as cur:
+                cur.execute("DELETE FROM feedback WHERE feedback_id = %s",
+                            (data["feedback_id"],))
+            db_conn.commit()
 
     def test_admin_feedback_view(self, client, auth_cookie):
         """GET /admin/feedback should return HTML or require admin."""

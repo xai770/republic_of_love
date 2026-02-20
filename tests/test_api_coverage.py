@@ -307,7 +307,7 @@ class TestFeedbackSubmitValidation:
                                json={"description": "no url"})
         assert response.status_code == 422
 
-    def test_submit_with_screenshot(self, client, auth_cookie):
+    def test_submit_with_screenshot(self, client, auth_cookie, db_conn):
         """Submit with optional screenshot field."""
         response = client.post("/api/feedback", cookies=auth_cookie,
                                json={
@@ -317,6 +317,13 @@ class TestFeedbackSubmitValidation:
                                    "screenshot": "data:image/png;base64,iVBOR...",
                                })
         assert response.status_code in (200, 401)
+        # Clean up — delete the test record so it doesn't pollute the DB
+        if response.status_code == 200:
+            fid = response.json().get("feedback_id")
+            if fid:
+                with db_conn.cursor() as cur:
+                    cur.execute("DELETE FROM feedback WHERE feedback_id = %s", (fid,))
+                db_conn.commit()
 
 
 # ===========================================================================

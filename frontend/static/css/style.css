@@ -533,7 +533,10 @@ body {
 /* Sidebar - Icon-only, expands on hover */
 .sidebar {
     width: 70px;
-    background: white;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-right: 1px solid rgba(0, 0, 0, 0.07);
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -817,8 +820,10 @@ body {
 }
 
 [data-theme="dark"] .sidebar {
-    background: var(--bg-secondary) !important;
-    border-color: var(--border-color) !important;
+    background: rgba(26, 27, 38, 0.78) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="dark"] .nav-item {
@@ -915,7 +920,7 @@ body {
 /* Apply variables to key elements */
 [data-theme="dark"] .app-layout { background: var(--bg-primary); }
 [data-theme="dark"] .header-bar { background: var(--bg-header); }
-[data-theme="dark"] .sidebar { background: var(--bg-secondary); border-right: 1px solid var(--border-color); }
+[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-right: 1px solid rgba(255,255,255,0.08); }
 [data-theme="dark"] .main-content { background: var(--bg-primary); }
 [data-theme="dark"] .stat-card { background: var(--bg-card); border-color: var(--border-color); }
 [data-theme="dark"] .job-card { background: var(--bg-card); border-color: var(--border-color); }
