@@ -576,8 +576,6 @@ body {
         visibility: visible;
     }
 }
-
-/* Hide labels by default */
 .nav-label {
     opacity: 0;
     visibility: hidden;
@@ -820,9 +818,9 @@ body {
 }
 
 [data-theme="dark"] .sidebar {
-    background: rgba(26, 27, 38, 0.78) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
+    background: rgba(26, 27, 38, 0.58) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
@@ -920,7 +918,7 @@ body {
 /* Apply variables to key elements */
 [data-theme="dark"] .app-layout { background: var(--bg-primary); }
 [data-theme="dark"] .header-bar { background: var(--bg-header); }
-[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-right: 1px solid rgba(255,255,255,0.08); }
+[data-theme="dark"] .sidebar { background: rgba(26, 27, 38, 0.58); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-right: 1px solid rgba(255,255,255,0.08); }
 [data-theme="dark"] .main-content { background: var(--bg-primary); }
 [data-theme="dark"] .stat-card { background: var(--bg-card); border-color: var(--border-color); }
 [data-theme="dark"] .job-card { background: var(--bg-card); border-color: var(--border-color); }
@@ -1091,34 +1089,6 @@ body {
     justify-content: center;
     font-weight: 600;
     font-size: 1rem;
-}
-
-/* Sidebar - Icon-only, expands on hover */
-.sidebar {
-    width: 70px;
-    background: white;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 80px;
-    left: 0;
-    height: calc(100vh - 80px);
-    z-index: 1000;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    overflow: hidden;
-    transition: width 0.2s ease;
-}
-
-/* Expand sidebar on hover (desktop only) */
-@media (min-width: 769px) {
-    .sidebar:hover {
-        width: 320px !important;  /* Wide enough for 'Meine Stellenangebote' */
-    }
-    
-    .sidebar:hover .nav-label {
-        opacity: 1;
-        visibility: visible;
-    }
 }
 
 /* Hide labels by default */
