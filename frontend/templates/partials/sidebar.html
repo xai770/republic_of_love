@@ -124,6 +124,29 @@
 <!-- Overlay for mobile -->
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
+<script>
+(function() {
+    var sb = document.getElementById('sidebar');
+    if (!sb) return;
+    // Restore pinned-open state from previous navigation
+    if (sessionStorage.getItem('sidebarOpen') === '1') {
+        sb.classList.add('sidebar-pinned');
+    }
+    // Drop pinned state when cursor leaves sidebar
+    sb.addEventListener('mouseleave', function() {
+        sb.classList.remove('sidebar-pinned');
+        sessionStorage.removeItem('sidebarOpen');
+    });
+    // Save state when clicking a real nav link (not javascript:void)
+    sb.querySelectorAll('.nav-item[href]').forEach(function(link) {
+        if (link.getAttribute('href').indexOf('javascript') === 0) return;
+        link.addEventListener('click', function() {
+            sessionStorage.setItem('sidebarOpen', '1');
+        });
+    });
+}());
+</script>
+
 {% if user and user.is_admin %}
 <!-- Reset onboarding confirmation + AJAX -->
 <script>

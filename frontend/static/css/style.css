@@ -565,13 +565,15 @@ body {
     -ms-overflow-style: none;
 }
 
-/* Expand sidebar on hover (desktop only) */
+/* Expand sidebar on hover or when pinned (desktop only) */
 @media (min-width: 769px) {
-    .sidebar:hover {
+    .sidebar:hover,
+    .sidebar.sidebar-pinned {
         width: 320px !important;  /* Wide enough for 'Meine Stellenangebote' */
     }
     
-    .sidebar:hover .nav-label {
+    .sidebar:hover .nav-label,
+    .sidebar.sidebar-pinned .nav-label {
         opacity: 1;
         visibility: visible;
     }
