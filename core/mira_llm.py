@@ -584,18 +584,22 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     pass
             
             # ── Match count + top matches ──
-            # Only count matches if: has skills, profile > 2h old, computed after profile creation
+            # Only count if user has logged in after this profile was created
+            # (first session with a new profile must not surface match count)
             _sk = context.get('skills')
             _has_skills = bool(_sk and len(_sk) > 0)
             _profile_created_at = profile['profile_created_at'] if profile else None
-            _profile_age = (datetime.now(timezone.utc) - _profile_created_at.replace(tzinfo=timezone.utc)).total_seconds() if _profile_created_at else 0
-            if _has_skills and _profile_created_at and _profile_age >= 7200:
+            _last_login = user_row['last_login_at'] if user_row else None
+            _pc = _profile_created_at.replace(tzinfo=timezone.utc) if _profile_created_at else None
+            _ll = _last_login.replace(tzinfo=timezone.utc) if _last_login else None
+            _first_session = (not _ll or not _pc or _ll <= _pc)
+            if _has_skills and _pc and _ll and not _first_session:
                 cur.execute("""
                     SELECT COUNT(*) as cnt
                     FROM profile_posting_matches m
                     JOIN profiles p ON m.profile_id = p.profile_id
                     WHERE p.user_id = %s AND m.computed_at > %s
-                """, (user_id, _profile_created_at))
+                """, (user_id, _ll))
                 context['match_count'] = cur.fetchone()['cnt']
             else:
                 context['match_count'] = 0
@@ -611,7 +615,7 @@ def build_yogi_context(user_id: int, conn) -> dict:
                       AND m.computed_at > %s
                     ORDER BY m.skill_match_score DESC
                     LIMIT 3
-                """, (user_id, _profile_created_at))
+                """, (user_id, _ll))
                 context['recent_matches'] = [
                     {
                         'title': r['job_title'],
