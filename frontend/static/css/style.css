@@ -546,7 +546,7 @@ body {
     z-index: 1000;
     box-shadow: 2px 0 8px rgba(0,0,0,0.05);
     overflow: hidden;
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
 }
