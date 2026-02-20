@@ -65,7 +65,7 @@ All 5 stages green. **No crashes, no errors in log.** 220 min total (down from 2
 - **VPN rotation**: 55 rotations during description backfill at manageable streak levels.
 
 ### What needs attention ⚠️
-1. **Health report says "Errors found: 6"** — but no ERROR lines in the log. These 6 errors may be counting the processing_failures column or the enrichment failures (768 desc + 1 summary = 769 sub-task failures ≠ 6). Needs investigation — the health report error counting may be stale or measuring something different.
+1. **Health report says "Errors found: 6"** — confirmed legitimate. 4 are actor batch-error summaries (total 11 sub-task failures in enrichment/description steps) and 2 are Ollama read timeouts during embedding. All transient and retried next run. Health check logic is correct.
 2. **230 duplicate external_ids** in active postings (e.g. `aa-11858-16036462-STA-S` appears 3×). Health report only flagged 5. The dedup logic or upsert is letting duplicates through. Low priority but should be tracked.
 3. **job_description_backfill: 768 failures (5.5%)** — down from yesterday's 1,167 failures (7%). Improving, but still significant. All are VPN-related 403s from Arbeitsagentur rate limiting.
 4. **Profession similarity: only 563/823 professions have embeddings** (68%). The remaining 260 professions with ≥20 postings lack embeddings — meaning their similarity scores can't be computed. Worth investigating whether these are new professions that haven't been embedded yet.
@@ -145,11 +145,44 @@ All 5 stages green. **No crashes, no errors in log.** 220 min total (down from 2
 
 ---
 
+## Session progress (updated 20 Feb midday)
+
+### Completed today
+
+| # | Commit | Summary | Tickets |
+|---|--------|---------|---------|
+| 1 | `d4a5bf3` | Removed Taro from UI, logo juggle animation, back buttons steps 4+5 | #220, #221 |
+| 2 | `b26df88` | Mira greeting: belt-and-suspenders guard on fallback template | #186 |
+| 3 | `747bc23` | Stale sweep: set posting_status + metadata when invalidating | data quality |
+| 4 | `d51ce90` | Translucent nav bar with backdrop blur | #170 |
+| 5 | `4810748` | Mira search intent navigates to search page with URL params | #137 |
+| 6 | `a4275ce` | CV upload + yogi name errors now bilingual (de+en) | #171 |
+
+### Data fixes applied
+- 102,102 zombie active+invalidated postings → `posting_status = 'invalid'`
+- 1,044 reverse inconsistencies (invalid+not-invalidated) fixed
+- 1,059 missing invalidation metadata backfilled
+- 230 duplicate active external_ids → 0 remaining
+
+### Investigations resolved
+- Health report "6 errors" → confirmed legitimate (2 Ollama timeouts + 4 batch summaries)
+- Mira prematch → original fix correct, added safety guard on fallback
+- Duplicate external_ids → root cause: stale sweep didn't update posting_status, script fixed
+
+### Still pending
+- #166/#167: Profile form was already overhauled Feb 19; yogi name inline edit still open
+- LLM Taro browser test (from onboarding)
+- 260 profession embedding gap
+- Log rotation
+- Daily notes metrics consistency
+
+---
+
 ## Services status
 
 | Service | Status |
 |---------|--------|
 | talent-yoga (FastAPI) | ✅ active |
 | talent-yoga-bi (Streamlit) | ✅ active |
-| Tests | 437 pass (as of last night), 56 Starlette deprecation warnings |
-| Last commit | `2c191b1` — Name chips flexbox wrap |
+| Tests | 437 pass, 56 Starlette deprecation warnings |
+| Last commit | `a4275ce` — CV upload + yogi name i18n |
