@@ -137,6 +137,10 @@ async def get_greeting(
             """, (user['user_id'],))
         match_count = cur.fetchone()['cnt']
 
+        # Guard: stale matches from old profile — don't surface until skills exist
+        if not has_skills:
+            match_count = 0
+
         # --- Check if yogi has ignored Mira 3+ consecutive sessions ---
         suppress_greeting = False
         try:
