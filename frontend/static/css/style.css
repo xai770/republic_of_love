@@ -565,6 +565,25 @@ body {
     -ms-overflow-style: none;
 }
 
+/* Sidebar on pages with dark backgrounds (Arcade etc.) */
+.dark-bg-page .sidebar {
+    background: rgba(26, 28, 46, 0.82) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-right-color: rgba(255, 255, 255, 0.08);
+}
+.dark-bg-page .nav-item {
+    color: #c8cfe8;
+}
+.dark-bg-page .nav-item:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+.dark-bg-page .nav-item.active {
+    background: rgba(99, 102, 241, 0.55) !important;
+    color: #e0e7ff !important;
+}
+
 /* Expand sidebar on hover or when pinned (desktop only) */
 @media (min-width: 769px) {
     .sidebar:hover,
