@@ -11,6 +11,9 @@ from typing import Optional, List
 import json
 import threading
 import logging
+import hashlib
+
+import numpy as np
 
 from api.deps import get_db, require_user
 from lib.posting_verifier import queue_stale_verification, find_stale_posting_ids
@@ -738,3 +741,181 @@ def get_posting_detail(
             "work_hours": row['work_hours'] or '',
             "interested": row['interested'],
         }
+
+
+# ============================================================
+# Stream B — Profile similarity search
+# ============================================================
+
+@router.get("/search/profile")
+def search_profile(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+    limit: int = 20,
+):
+    """
+    Stream B: semantic search based on the yogi's skill profile.
+
+    Fires automatically on the search page when has_skills = true.
+    Two-phase: pull 1000 recent postings → Python cosine similarity
+    against the profile embedding → return top N.
+
+    Returns {available: false, reason: ...} when the profile is not
+    ready (no skills, no cached embedding).
+    """
+    # ── 1. Load profile skills ────────────────────────────────────
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT skill_keywords, current_title, profile_summary, experience_level
+            FROM profiles
+            WHERE user_id = %s AND skill_keywords IS NOT NULL
+            ORDER BY updated_at DESC NULLS LAST
+            LIMIT 1
+        """, (user['user_id'],))
+        profile = cur.fetchone()
+
+    if not profile:
+        return {"available": False, "results": [], "reason": "no_profile"}
+
+    raw_skills = profile['skill_keywords']
+    if isinstance(raw_skills, list):
+        skills = raw_skills
+    elif isinstance(raw_skills, dict):
+        skills = raw_skills.get('keywords', [])
+    else:
+        skills = []
+
+    if not skills:
+        return {"available": False, "results": [], "reason": "no_skills"}
+
+    # ── 2. Build profile text (same convention as Clara) ─────────
+    parts = []
+    if profile['current_title']:
+        parts.append(profile['current_title'])
+    if skills:
+        parts.append(' '.join(str(s) for s in skills))
+    if profile['profile_summary']:
+        parts.append(profile['profile_summary'][:500])
+    if profile['experience_level']:
+        parts.append(profile['experience_level'])
+    profile_text = ' | '.join(filter(None, parts)).strip()
+
+    if not profile_text:
+        return {"available": False, "results": [], "reason": "empty_profile_text"}
+
+    # ── 3. Look up profile embedding (content-addressed cache) ───
+    text_clean = profile_text.lower().strip()
+    profile_hash = hashlib.sha256(text_clean.encode()).hexdigest()[:32]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT embedding FROM embeddings WHERE text_hash = %s",
+            (profile_hash,)
+        )
+        row = cur.fetchone()
+
+    if not row:
+        # Not yet cached — Adele will compute and cache on next profile update
+        return {"available": False, "results": [], "reason": "embedding_pending"}
+
+    profile_emb = np.array(row['embedding'], dtype=np.float32)
+    profile_norm = float(np.linalg.norm(profile_emb))
+    if profile_norm == 0:
+        return {"available": False, "results": [], "reason": "zero_embedding"}
+
+    # ── 4. Candidate postings (1000 most recent with text) ───────
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT
+                p.posting_id,
+                p.job_title,
+                p.location_city,
+                p.location_state,
+                p.external_url,
+                p.extracted_summary,
+                p.first_seen_at,
+                p.source,
+                SUBSTRING(b.kldb FROM 3 FOR 2)                       AS domain_code,
+                CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER)       AS ql_level,
+                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' AS employer_name,
+                b.berufenet_name,
+                COALESCE(
+                    p.extracted_summary,
+                    p.job_description,
+                    p.job_title,
+                    b.berufenet_name
+                ) AS match_text
+            FROM postings p
+            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE p.enabled = true
+              AND p.invalidated = false
+              AND p.berufenet_id IS NOT NULL
+            ORDER BY p.first_seen_at DESC NULLS LAST
+            LIMIT 1000
+        """)
+        candidates = list(cur.fetchall())
+
+    if not candidates:
+        return {"available": True, "results": []}
+
+    # ── 5. Batch-fetch embeddings for candidates ─────────────────
+    candidate_hashes = []
+    for c in candidates:
+        mt = c['match_text'] or ''
+        h = hashlib.sha256(mt.lower().strip().encode()).hexdigest()[:32]
+        candidate_hashes.append(h)
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT text_hash, embedding FROM embeddings WHERE text_hash = ANY(%s)",
+            (candidate_hashes,)
+        )
+        emb_map = {r['text_hash']: r['embedding'] for r in cur.fetchall()}
+
+    # ── 6. Cosine similarity scoring ─────────────────────────────
+    scored = []
+    for c, h in zip(candidates, candidate_hashes):
+        emb_data = emb_map.get(h)
+        if emb_data is None:
+            continue
+        posting_emb = np.array(emb_data, dtype=np.float32)
+        posting_norm = float(np.linalg.norm(posting_emb))
+        if posting_norm == 0:
+            continue
+        score = float(np.dot(profile_emb, posting_emb) / (profile_norm * posting_norm))
+        scored.append((score, c))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    # ── 7. Format response ────────────────────────────────────────
+    seen_ids: set = set()
+    results = []
+    for score, row in scored:
+        if len(results) >= limit:
+            break
+        pid = row['posting_id']
+        if pid in seen_ids:
+            continue
+        seen_ids.add(pid)
+        domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Sonstige')
+        ql_level = row['ql_level']
+        results.append({
+            "posting_id": pid,
+            "job_title": row['job_title'] or row['berufenet_name'] or 'Untitled',
+            "berufenet_name": row['berufenet_name'],
+            "location": row['location_city'] or row['location_state'] or '',
+            "employer": row['employer_name'] or '',
+            "domain": domain_name,
+            "domain_code": row['domain_code'],
+            "domain_color": DOMAIN_COLORS.get(domain_name, '#cccccc'),
+            "ql_level": ql_level,
+            "ql_label": QL_LABELS.get(ql_level, '') if ql_level else '',
+            "external_url": row['external_url'],
+            "summary": row['extracted_summary'] or '',
+            "source": row['source'] or '',
+            "first_seen": row['first_seen_at'].isoformat() if row['first_seen_at'] else None,
+            "score": round(score, 3),
+        })
+
+    return {"available": True, "results": results}
+

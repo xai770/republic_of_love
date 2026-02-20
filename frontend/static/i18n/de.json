@@ -345,7 +345,12 @@
     "interest_saved": "Danke für dein Feedback!",
     "interest_already_yes": "Du hast Interesse bekundet",
     "interest_already_no": "Du hast abgelehnt",
-    "report_issue": "Fehler melden"
+    "report_issue": "Fehler melden",
+    "profile_row_title": "\u2746 Passend zu deinem Profil",
+    "profile_row_tag": "\u2746 passt zu deinem Profil",
+    "profile_row_loading": "Suche Profil-Treffer\u2026",
+    "profile_row_empty": "Noch keine Profil-Treffer.",
+    "profile_row_pending": "Dein Profil-Matching wird vorbereitet\u2026"
   },
   "footer": {
     "impressum": "Impressum",

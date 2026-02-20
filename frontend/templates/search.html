@@ -101,6 +101,14 @@
             </div>
         </div>
 
+        <!-- Stream B: Profile matches -->
+        <div class="search-results-section profile-results-section" id="profile-results-section" style="display:none;">
+            <h2 class="results-section-title">{{ t("search.profile_row_title") }}</h2>
+            <div class="search-results-grid" id="profile-results-grid">
+                <!-- Tiles rendered by JS -->
+            </div>
+        </div>
+
         <!-- Posting detail modal -->
         <div class="posting-modal-overlay" id="posting-modal-overlay">
             <div class="posting-modal">
@@ -251,6 +259,10 @@ window.SEARCH_TOUR_I18N = {
         interest_saved: '{{ t("search.interest_saved") }}',
         interest_already_yes: '{{ t("search.interest_already_yes") }}',
         interest_already_no: '{{ t("search.interest_already_no") }}',
+        profile_row_tag:     '{{ t("search.profile_row_tag") }}',
+        profile_row_loading: '{{ t("search.profile_row_loading") }}',
+        profile_row_empty:   '{{ t("search.profile_row_empty") }}',
+        profile_row_pending: '{{ t("search.profile_row_pending") }}',
     };
     // Translate a domain name from API (German) to current language
     function tDomain(name) { return I18N.domains[name] || name; }
@@ -1086,6 +1098,70 @@ window.SEARCH_TOUR_I18N = {
     });
 
     // ============================================================
+    // STREAM B — PROFILE ROW
+    // ============================================================
+    async function loadProfileRow() {
+        const section = document.getElementById('profile-results-section');
+        const grid = document.getElementById('profile-results-grid');
+        if (!section || !grid) return;
+
+        grid.innerHTML = `<div class="results-loading">${I18N.profile_row_loading}</div>`;
+
+        try {
+            const res = await fetch('/api/search/profile');
+            if (!res.ok) { section.style.display = 'none'; return; }
+            const data = await res.json();
+
+            if (!data.available || !data.results || data.results.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = '';
+            grid.innerHTML = '';
+
+            const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+            data.results.forEach(p => {
+                const tile = document.createElement('div');
+                tile.className = 'result-tile profile-tile';
+                tile.dataset.postingId = p.posting_id;
+
+                const isNew = p.first_seen && (Date.now() - new Date(p.first_seen).getTime()) < 7 * 86400000;
+                const dateStr = p.first_seen ? new Date(p.first_seen).toLocaleDateString(locale) : '';
+
+                tile.innerHTML = `
+                    <div class="tile-header">
+                        <span class="tile-domain-dot" style="background:${p.domain_color};" title="${tDomain(p.domain)}"></span>
+                        <span class="tile-ql-badge">${tQL(p.ql_level)}</span>
+                        ${isNew ? `<span class="tile-new-badge">${I18N.results_new}</span>` : ''}
+                        <span class="profile-match-tag">${I18N.profile_row_tag}</span>
+                    </div>
+                    <h3 class="tile-title">${escHtml(p.job_title)}</h3>
+                    ${p.employer ? `<div class="tile-employer">${escHtml(p.employer)}</div>` : ''}
+                    ${p.location ? `<div class="tile-location">\uD83D\uDCCD ${escHtml(p.location)}</div>` : ''}
+                    ${p.summary ? `<div class="tile-summary">${escHtml(p.summary).substring(0, 150)}${p.summary.length > 150 ? '\u2026' : ''}</div>` : ''}
+                    <div class="tile-footer">
+                        <span class="tile-date">${dateStr}</span>
+                        <button class="tile-details-btn">${I18N.results_view_details}</button>
+                    </div>
+                `;
+                grid.appendChild(tile);
+            });
+
+            // Wire up detail view
+            grid.addEventListener('click', function(e) {
+                const btn = e.target.closest('.tile-details-btn');
+                const tile = e.target.closest('.result-tile');
+                if (btn && tile) openPostingDetail(parseInt(tile.dataset.postingId));
+            });
+
+        } catch(e) {
+            console.warn('Profile row load failed:', e);
+            section.style.display = 'none';
+        }
+    }
+
+    // ============================================================
     // POSTING DETAIL MODAL
     // ============================================================
     async function openPostingDetail(postingId) {
@@ -1582,6 +1658,8 @@ window.SEARCH_TOUR_I18N = {
         }
         
         doSearch();
+        // Stream B — profile row (fires once on load, independent of filter state)
+        loadProfileRow();
         // Fix Leaflet tile rendering — force recalculation after layout resolves
         // The grid now has explicit height (calc(100vh-220px)) so this should work reliably
         setTimeout(() => { map.invalidateSize(); map.setView(map.getCenter()); }, 200);

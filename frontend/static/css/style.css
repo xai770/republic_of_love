@@ -5400,6 +5400,24 @@ body {
     border-radius: 999px;
 }
 
+/* Stream B — profile match tag */
+.profile-match-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: #ebf4ff;
+    color: #2b6cb0;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.profile-results-section {
+    margin-top: 2rem;
+    border-top: 2px solid var(--border-color, #e2e8f0);
+    padding-top: 1rem;
+}
+
 .tile-interest-icon {
     font-size: 0.85rem;
     margin-left: auto;
@@ -6004,6 +6022,11 @@ body {
 [data-theme="dark"] .tile-new-badge {
     background: #276749;
     color: #c6f6d5;
+}
+
+[data-theme="dark"] .profile-match-tag {
+    background: #2a4a72;
+    color: #90cdf4;
 }
 
 [data-theme="dark"] .tile-title {
