@@ -366,7 +366,13 @@ body {
     align-items: center;
     gap: 1.5rem;
     padding: 0.75rem 2rem;
-    background: linear-gradient(135deg, #e8f5e8 0%, #e0f4f4 40%, #f0edf8 70%, #fef9f3 100%);
+    background: linear-gradient(135deg,
+        rgba(232,245,232,0.72) 0%,
+        rgba(224,244,244,0.72) 40%,
+        rgba(240,237,248,0.72) 70%,
+        rgba(254,249,243,0.72) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     position: fixed;
     top: 0;
     left: 0;
@@ -741,7 +747,7 @@ body {
 [data-theme="dark"] {
     --bg-primary: #1a202c;
     --bg-secondary: #2d3748;
-    --bg-header: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    --bg-header: linear-gradient(135deg, rgba(26,32,44,0.78) 0%, rgba(45,55,72,0.78) 100%);
     --text-primary: #f7fafc;
     --text-secondary: #a0aec0;
     --border-color: #4a5568;
@@ -775,7 +781,9 @@ body {
 }
 
 [data-theme="dark"] .header-bar {
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
+    background: linear-gradient(135deg, rgba(26,32,44,0.78) 0%, rgba(45,55,72,0.78) 100%) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 [data-theme="dark"] .header-search {
@@ -865,7 +873,7 @@ body {
     --bg-primary: #f5f7fb;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
-    --bg-header: linear-gradient(135deg, #e8f5e8 0%, #e0f4f4 40%, #f0edf8 70%, #fef9f3 100%);
+    --bg-header: linear-gradient(135deg, rgba(232,245,232,0.72) 0%, rgba(224,244,244,0.72) 40%, rgba(240,237,248,0.72) 70%, rgba(254,249,243,0.72) 100%);
     --text-primary: #2d3748;
     --text-secondary: #4a5568;
     --text-muted: #718096;
@@ -884,7 +892,7 @@ body {
     --bg-primary: #1a202c;
     --bg-secondary: #2d3748;
     --bg-card: #2d3748;
-    --bg-header: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    --bg-header: linear-gradient(135deg, rgba(26,32,44,0.78) 0%, rgba(45,55,72,0.78) 100%);
     --text-primary: #f7fafc;
     --text-secondary: #e2e8f0;
     --text-muted: #a0aec0;
@@ -934,21 +942,7 @@ body {
     background: #f5f7fb;
 }
 
-/* Header Bar - Brighter like mockup */
-.header-bar {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 0.75rem 2rem;
-    background: linear-gradient(135deg, #e8f5e8 0%, #e0f4f4 40%, #f0edf8 70%, #fef9f3 100%);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1001;
-    height: 80px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
+/* Header Bar - Inherit from first definition, avoid duplication */
 
 .header-left {
     display: flex;
