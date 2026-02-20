@@ -636,11 +636,22 @@ body {
     color: #2d3748;
 }
 
+@keyframes navBarArrive {
+    from { transform: scaleY(0); opacity: 0; }
+    to   { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes navActiveIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
 .nav-item.active {
     background: rgba(90,103,216,0.35);
     color: #3730a3;
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(79,70,229,0.18), inset 0 0 0 1px rgba(79,70,229,0.2);
+    animation: navActiveIn 0.25s ease-out both;
 }
 
 .nav-item.active::before {
@@ -653,6 +664,8 @@ body {
     background: #4f46e5;
     border-radius: 2px;
     box-shadow: 3px 0 12px rgba(79,70,229,0.6);
+    transform-origin: bottom;
+    animation: navBarArrive 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.08s both;
 }
 
 /* Icon container with pastel background */
@@ -846,6 +859,8 @@ body {
     background: #818cf8;
     border-radius: 2px;
     box-shadow: 3px 0 12px rgba(129,140,248,0.7);
+    transform-origin: bottom;
+    animation: navBarArrive 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.08s both;
 }
 
 [data-theme="dark"] .nav-divider {
@@ -1163,6 +1178,7 @@ body {
     color: #3730a3;
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(79,70,229,0.18), inset 0 0 0 1px rgba(79,70,229,0.2);
+    animation: navActiveIn 0.25s ease-out both;
 }
 
 .nav-item.active::before {
@@ -1175,6 +1191,8 @@ body {
     background: #4f46e5;
     border-radius: 2px;
     box-shadow: 3px 0 12px rgba(79,70,229,0.6);
+    transform-origin: bottom;
+    animation: navBarArrive 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.08s both;
 }
 
 /* Icon container with pastel background */
