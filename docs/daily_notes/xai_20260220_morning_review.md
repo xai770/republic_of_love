@@ -186,3 +186,90 @@ All 5 stages green. **No crashes, no errors in log.** 220 min total (down from 2
 | talent-yoga-bi (Streamlit) | ✅ active |
 | Tests | 437 pass, 56 Starlette deprecation warnings |
 | Last commit | `a4275ce` — CV upload + yogi name i18n |
+
+---
+
+## Architecture brainstorm — 08:42 session
+
+### "My Matches" is not a recommendation feed
+It is a **job application pipeline tracker**. Postings enter it through yogi actions on the search page.
+See `docs/daily_notes/ty_postings_yogi_status.graphml` for the full state machine.
+
+Posting status flow:
+- Search grid → click details → **viewed**
+- Search grid → click external link → **interested**
+- Anywhere → mark favorite → **favorites**
+- Open cover letter → "Do you intend to apply?" → **apply** / **need_decision** / **no-go**
+- Open no-go rationale → "Are you no longer interested?" → same three states
+
+Clara's role: generate the cover letter ("I am especially qualified because of...") and the
+no-go rationale when a yogi engages with a posting. Profile embeddings make these documents
+personal. This requires a profile but does NOT require batch match generation.
+
+### Multi-row search (next big UX feature)
+
+Each row in the search builder is an independent query. All results are merged (union / OR)
+into a single grid. Rows can be:
+
+| Row type | Description | Status |
+|----------|-------------|--------|
+| Filter row | Domain(s) + QL + city/radius | Exists today |
+| Profile row | Embedding similarity to yogi's full profile | **To build** |
+| Saved search row | A named filter combo from a previous session | Partially (saved searches exist) |
+
+**Within a row:** filters are AND'd (domain AND QL AND city).
+**Between rows:** always OR (union). AND between rows = intersection, almost never useful, skip.
+
+**Source tags:** Each result card shows which row surfaced it — e.g. `✦ passt zu deinem Profil`
+or `▸ deine Suche: Berlin / Bildung`. Trivial to implement: tag each result with its source
+row at query time. No LLM call, no extra cost.
+
+### Profile embedding search — technical cost
+
+Profile embedding already exists in DB. Search = `ORDER BY embedding <=> profile_embedding LIMIT 20`.
+Same pgvector lookup as posting search. Very cheap. Only new requirement: ensure profile_embedding
+is refreshed when profile changes (currently has a TODO at profiles.py:568).
+
+### Profile is a living document, not a form
+
+Profile = everything we know about the yogi:
+- Work history + skills (from CV / Adele)
+- Domain and location preferences (inferred from saved searches + click behaviour)
+- Anti-preferences (postings marked no-go, with rationale text)
+- Saved searches (explicitly named criteria sets, part of the profile)
+- Feedback typed into Mira ("I don't like companies over 500 people")
+
+Profile is never "done" — it grows with every interaction. Every saved search, every no-go,
+every Mira conversation fragment can enrich the embedding.
+
+**Quereinsteiger use case (career changers):** Stream A (explicit filter) shows what the yogi
+*thinks* they want. Stream B (profile similarity) shows what talent.yoga thinks they *could* get.
+A kindergarten teacher sees "Learning Experience Designer at edtech startup" in Stream B because
+their embedding lands near it, even though they typed "Lehrer" in the search.
+
+### Profile page vs Settings page
+
+**Profile** = who the yogi IS and what they want (work history, skills, preferences, anti-preferences, saved searches).
+**Settings** = how they use the app (language, notification email, privacy choices).
+
+Currently fuzzy — the two are mixed on the profile page. Should be separated.
+Settings page is mostly already there (language toggle in header, notification email in Mira onboarding).
+Profile page should absorb saved searches and explicit preferences.
+
+### Profile row auto-activation threshold
+
+The profile row appears automatically if `has_skills = true` (at least one skill keyword).
+If profile is empty, the row is greyed out with "complete your profile to unlock this."
+A single skill keyword is enough for a meaningful similarity search.
+
+### Open questions for next session
+
+1. **Rating UI:** "a few sliders with a smiley that changes from happy to crying" — need to design
+   the rating widget for the My Matches pipeline. What dimensions? (match quality? job appeal? salary?)
+   The graphml shows ratings feed back into the profile. How exactly?
+2. **Cover letter trigger:** Does clicking "I intend to apply" immediately start generating the
+   cover letter, or is it on-demand from the My Matches page?
+3. **Saved searches as profile rows:** When a saved search is added as a row, is it editable in
+   the search builder, or locked (linked to the saved search object)?
+4. **Profile page redesign:** Once we have multi-row search + profile-as-living-document settled,
+   the profile page layout needs a rethink. What sections? What's editable vs. inferred?
