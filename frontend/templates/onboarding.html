@@ -140,7 +140,7 @@
         .gender-btn:hover { border-color: #5eead4; }
         .gender-btn.selected { border-color: #0d9488; background: #ccfbf1; color: #115e59; }
 
-        /* ── Taro name grid (step 6) ──────────────────── */
+        /* ── Name grid (step 6) ─────────────────────── */
         .name-grid {
             display: flex;
             flex-wrap: wrap;
@@ -220,12 +220,60 @@
         }
         .btn-row-right { justify-content: flex-end; gap: 12px; }
 
-        /* ── Loading spinner ──────────────────────────── */
+        /* ── Loading spinner (buttons) ─────────────────── */
         .spinner { display: inline-block; width: 18px; height: 18px;
             border: 2px solid #99f6e4; border-top-color: #0d9488;
             border-radius: 50%; animation: spin .6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Logo juggle animation (LLM wait) ────────── */
+        .generating-stage {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 32px 0 16px;
+        }
+        .logo-orbit {
+            position: relative;
+            width: 120px; height: 120px;
+        }
+        .logo-orbit img {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: auto;
+            animation: logo-breathe 2s ease-in-out infinite;
+        }
+        .orbit-symbol {
+            position: absolute;
+            font-size: 20px;
+            top: 50%; left: 50%;
+            animation: orbit-spin 3s linear infinite;
+        }
+        .orbit-symbol:nth-child(2) { animation-delay: 0s; }
+        .orbit-symbol:nth-child(3) { animation-delay: -0.6s; }
+        .orbit-symbol:nth-child(4) { animation-delay: -1.2s; }
+        .orbit-symbol:nth-child(5) { animation-delay: -1.8s; }
+        .orbit-symbol:nth-child(6) { animation-delay: -2.4s; }
+        @keyframes orbit-spin {
+            0%   { transform: translate(-50%,-50%) rotate(0deg)   translateX(52px) rotate(0deg);   opacity: 0.6; }
+            50%  { opacity: 1; }
+            100% { transform: translate(-50%,-50%) rotate(360deg) translateX(52px) rotate(-360deg); opacity: 0.6; }
+        }
+        @keyframes logo-breathe {
+            0%, 100% { transform: translate(-50%,-50%) scale(1); }
+            50%      { transform: translate(-50%,-50%) scale(1.08); }
+        }
+        .generating-text {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #64748b;
+            animation: text-pulse 2s ease-in-out infinite;
+        }
+        @keyframes text-pulse {
+            0%, 100% { opacity: 0.5; }
+            50%      { opacity: 1; }
+        }
 
         /* ── Dismissed/rejected screen ────────────────── */
         .dismissed-screen {
@@ -325,9 +373,12 @@
     <div class="step" data-step="4">
         <h2 id="s4-title"></h2>
         <div class="privacy-content" id="s4-content"></div>
-        <div class="btn-row-privacy">
-            <button class="btn btn-danger" onclick="rejectPrivacy()" id="s4-reject"></button>
-            <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept" style="margin-left:auto;"></button>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goTo(prevStepFrom(4))">← <span class="back-label"></span></button>
+            <div style="display:flex;gap:12px;margin-left:auto;">
+                <button class="btn btn-danger" onclick="rejectPrivacy()" id="s4-reject"></button>
+                <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept"></button>
+            </div>
         </div>
     </div>
 
@@ -349,14 +400,17 @@
             </button>
         </div>
         <div class="btn-row">
-            <button class="btn btn-ghost" onclick="goTo(7)" id="s5-manual-link"></button>
-            <button class="btn btn-primary" id="btn-generate" onclick="generateLLMNames()">
-                <span id="s5-generate-label"></span> →
-            </button>
+            <button class="btn btn-secondary" onclick="goTo(4)">← <span class="back-label"></span></button>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <button class="btn btn-ghost" onclick="goTo(7)" id="s5-manual-link"></button>
+                <button class="btn btn-primary" id="btn-generate" onclick="generateLLMNames()">
+                    <span id="s5-generate-label"></span> →
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- ════════ STEP 6 — Taro results grid ════════ -->
+    <!-- ════════ STEP 6 — Name results grid ════════ -->
     <div class="step" data-step="6">
         <h2 id="s6-title"></h2>
         <p id="s6-subtitle" style="font-size:13px;color:#64748b;margin-top:-12px;"></p>
@@ -424,7 +478,7 @@
             s4_accept: "I accept",
             s4_reject: "I decline",
             s5_title: "What inspires you?",
-            s5_subtitle: "Type a few words that describe your vibe — Taro will create yogi names from them.",
+            s5_subtitle: "Type a few words that describe your vibe — we'll create yogi names from them.",
             s5_placeholder: "e.g. forest, calm, tech, moon",
             s5_generate_label: "Generate",
             s5_manual_link: "I'd rather type my own →",
@@ -432,7 +486,8 @@
             s5_gender_feminine: "🌸 Feminine",
             s5_gender_masculine: "🔷 Masculine",
             s6_title: "Pick a name",
-            s6_subtitle: "Taro created these just for you.",
+            s6_subtitle: "Created just for you.",
+            s6_generating: "Creating your names…",
             s6_retry_link: "🔄 New words",
             s6_manual_link: "I'd rather type my own →",
             s7_title: "Enter your yogi name",
@@ -460,7 +515,7 @@
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
             s5_title: "Was inspiriert dich?",
-            s5_subtitle: "Schreib ein paar Wörter, die deine Stimmung beschreiben — Taro erfindet daraus Yogi-Namen.",
+            s5_subtitle: "Schreib ein paar Wörter, die deine Stimmung beschreiben — wir erfinden daraus Yogi-Namen.",
             s5_placeholder: "z.B. Wald, ruhig, Technik, Mond",
             s5_generate_label: "Generieren",
             s5_manual_link: "Ich tippe lieber selber →",
@@ -468,7 +523,8 @@
             s5_gender_feminine: "🌸 Feminin",
             s5_gender_masculine: "🔷 Maskulin",
             s6_title: "Wähle einen Namen",
-            s6_subtitle: "Taro hat diese für dich erfunden.",
+            s6_subtitle: "Extra für dich erfunden.",
+            s6_generating: "Deine Namen entstehen…",
             s6_retry_link: "🔄 Neue Wörter",
             s6_manual_link: "Ich tippe lieber selber →",
             s7_title: "Gib deinen Yogi-Namen ein",
@@ -496,7 +552,7 @@
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
             s5_title: "Was inspiriert Sie?",
-            s5_subtitle: "Schreiben Sie ein paar Wörter, die Ihre Stimmung beschreiben — Taro erfindet daraus Yogi-Namen.",
+            s5_subtitle: "Schreiben Sie ein paar Wörter, die Ihre Stimmung beschreiben — wir erfinden daraus Yogi-Namen.",
             s5_placeholder: "z.B. Wald, ruhig, Technik, Mond",
             s5_generate_label: "Generieren",
             s5_manual_link: "Ich tippe lieber selber →",
@@ -504,7 +560,8 @@
             s5_gender_feminine: "🌸 Feminin",
             s5_gender_masculine: "🔷 Maskulin",
             s6_title: "Wählen Sie einen Namen",
-            s6_subtitle: "Taro hat diese für Sie erfunden.",
+            s6_subtitle: "Extra für Sie erfunden.",
+            s6_generating: "Ihre Namen entstehen…",
             s6_retry_link: "🔄 Neue Wörter",
             s6_manual_link: "Ich tippe lieber selber →",
             s7_title: "Geben Sie Ihren Yogi-Namen ein",
@@ -543,6 +600,12 @@
     window.nextStepFrom = function(step) {
         if (step === 2 && state.lang === 'en') return 4; // skip du/sie
         return step + 1;
+    };
+
+    // Which step comes before this one?
+    window.prevStepFrom = function(step) {
+        if (step === 4 && state.lang === 'en') return 2; // skip du/sie
+        return step - 1;
     };
 
     // ── Apply copy to UI ───────────────────────────
@@ -664,16 +727,32 @@
     };
 
     // ── Step 5→6 — Generate LLM names ─────────────
+    function generatingHTML() {
+        const t = c();
+        const msg = t.s6_generating || 'Creating your names…';
+        return `<div class="generating-stage">
+            <div class="logo-orbit">
+                <img src="/static/images/icons/logo.png" alt="talent.yoga">
+                <span class="orbit-symbol">✦</span>
+                <span class="orbit-symbol">◈</span>
+                <span class="orbit-symbol">✧</span>
+                <span class="orbit-symbol">⬡</span>
+                <span class="orbit-symbol">❋</span>
+            </div>
+            <div class="generating-text">${msg}</div>
+        </div>`;
+    }
+
     window.generateLLMNames = async function() {
         const keywords = ($('#keyword-input').value || '').trim();
         if (keywords.length < 2) {
             $('#keyword-input').focus();
             return;
         }
-        // Navigate to step 6 immediately with spinner
+        // Navigate to step 6 immediately with animation
         goTo(6);
         const grid = $('#name-grid');
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;"><div class="spinner"></div></div>';
+        grid.innerHTML = generatingHTML();
         state.chosenName = null;
         $('#btn-confirm-grid').disabled = true;
         try {
