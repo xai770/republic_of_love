@@ -545,7 +545,8 @@ def build_yogi_context(user_id: int, conn) -> dict:
                 SELECT full_name, current_title, desired_roles, desired_locations,
                        experience_level, years_of_experience,
                        expected_salary_min, expected_salary_max,
-                       location, profile_summary, skill_keywords
+                       location, profile_summary, skill_keywords,
+                       created_at AS profile_created_at
                 FROM profiles
                 WHERE user_id = %s
                 LIMIT 1
@@ -583,16 +584,18 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     pass
             
             # ── Match count + top matches ──
-            # Only count matches if the profile actually has skills (same guard as list_my_matches)
+            # Only count matches if the profile has skills AND they were computed
+            # after this profile was created (prevents stale pre-reset matches)
             _sk = context.get('skills')
             _has_skills = bool(_sk and len(_sk) > 0)
-            if _has_skills:
+            _profile_created_at = profile['profile_created_at'] if profile else None
+            if _has_skills and _profile_created_at:
                 cur.execute("""
                     SELECT COUNT(*) as cnt
                     FROM profile_posting_matches m
                     JOIN profiles p ON m.profile_id = p.profile_id
-                    WHERE p.user_id = %s
-                """, (user_id,))
+                    WHERE p.user_id = %s AND m.computed_at > %s
+                """, (user_id, _profile_created_at))
                 context['match_count'] = cur.fetchone()['cnt']
             else:
                 context['match_count'] = 0
@@ -605,9 +608,10 @@ def build_yogi_context(user_id: int, conn) -> dict:
                     JOIN postings po ON m.posting_id = po.posting_id
                     WHERE pr.user_id = %s
                       AND m.skill_match_score > 0.10
+                      AND m.computed_at > %s
                     ORDER BY m.skill_match_score DESC
                     LIMIT 3
-                """, (user_id,))
+                """, (user_id, _profile_created_at))
                 context['recent_matches'] = [
                     {
                         'title': r['job_title'],

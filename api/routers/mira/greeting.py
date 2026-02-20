@@ -97,7 +97,8 @@ async def get_greeting(
         cur.execute("""
             SELECT u.created_at, u.last_login_at, u.yogi_name,
                    p.profile_id, p.skill_keywords,
-                   p.experience_level, p.location
+                   p.experience_level, p.location,
+                   p.created_at AS profile_created_at
             FROM users u
             LEFT JOIN profiles p ON u.user_id = p.user_id
             WHERE u.user_id = %s
@@ -121,25 +122,27 @@ async def get_greeting(
         has_skills = (skill_keywords is not None and
                      skill_keywords != '[]' and
                      len(skill_keywords) > 2)
+        profile_created_at = row['profile_created_at']
 
-        # Count matches
-        if last_login:
+        # Count matches — only those computed after the current profile was created
+        # (prevents stale matches from a previous profile/reset surfacing as "new")
+        if not has_skills or not has_profile or not profile_created_at:
+            match_count = 0
+        elif last_login and last_login > profile_created_at:
             cur.execute("""
                 SELECT COUNT(*) as cnt FROM profile_posting_matches m
                 JOIN profiles p ON m.profile_id = p.profile_id
                 WHERE p.user_id = %s AND m.computed_at > %s
             """, (user['user_id'], last_login))
+            match_count = cur.fetchone()['cnt']
         else:
+            # First login after this profile was created — only count matches since profile creation
             cur.execute("""
                 SELECT COUNT(*) as cnt FROM profile_posting_matches m
                 JOIN profiles p ON m.profile_id = p.profile_id
-                WHERE p.user_id = %s
-            """, (user['user_id'],))
-        match_count = cur.fetchone()['cnt']
-
-        # Guard: stale matches from old profile — don't surface until skills exist
-        if not has_skills:
-            match_count = 0
+                WHERE p.user_id = %s AND m.computed_at > %s
+            """, (user['user_id'], profile_created_at))
+            match_count = cur.fetchone()['cnt']
 
         # --- Check if yogi has ignored Mira 3+ consecutive sessions ---
         suppress_greeting = False

@@ -48,7 +48,7 @@ async def get_proactive_messages(
     with conn.cursor() as cur:
         # Get last login + skills guard
         cur.execute("""
-            SELECT u.last_login_at, p.skill_keywords
+            SELECT u.last_login_at, p.skill_keywords, p.created_at AS profile_created_at
             FROM users u
             LEFT JOIN profiles p ON u.user_id = p.user_id
             WHERE u.user_id = %s
@@ -57,15 +57,18 @@ async def get_proactive_messages(
         last_login_at = urow['last_login_at'] if urow else None
         _sk = urow['skill_keywords'] if urow else None
         has_skills = bool(_sk and str(_sk) not in ('[]', '', 'None') and len(str(_sk)) > 2)
+        profile_created_at = urow['profile_created_at'] if urow else None
 
-        # Count new matches since last login (only if profile has skills)
-        if last_login_at and has_skills:
+        # Count new matches — only if profile has skills, and only since profile creation
+        # (prevents stale matches from previous profiles surfacing as "new")
+        if last_login_at and has_skills and profile_created_at:
+            since = max(last_login_at, profile_created_at)
             cur.execute("""
                 SELECT COUNT(*) as cnt
                 FROM profile_posting_matches m
                 JOIN profiles p ON m.profile_id = p.profile_id
                 WHERE p.user_id = %s AND m.computed_at > %s
-            """, (user['user_id'], last_login_at))
+            """, (user['user_id'], since))
             new_matches = cur.fetchone()['cnt']
 
             if new_matches > 0:
