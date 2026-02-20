@@ -92,7 +92,7 @@ class OverviewRequest(BaseModel):
 # API: Regional demand comparison
 # ============================================================
 @router.post("/intelligence/regional")
-async def regional_demand(
+def regional_demand(
     req: RegionalRequest,
     user: dict = Depends(require_user),
     conn=Depends(get_db),
@@ -174,7 +174,7 @@ async def regional_demand(
 # API: Related professions with demand
 # ============================================================
 @router.post("/intelligence/related")
-async def related_professions(
+def related_professions(
     req: RelatedRequest,
     user: dict = Depends(require_user),
     conn=Depends(get_db),
@@ -250,7 +250,7 @@ async def related_professions(
 # API: 14-day activity chart
 # ============================================================
 @router.post("/intelligence/activity")
-async def activity_chart(
+def activity_chart(
     req: ActivityRequest,
     user: dict = Depends(require_user),
     conn=Depends(get_db),
@@ -305,7 +305,7 @@ async def activity_chart(
 # API: Combined overview
 # ============================================================
 @router.post("/intelligence/overview")
-async def intelligence_overview(
+def intelligence_overview(
     req: OverviewRequest,
     user: dict = Depends(require_user),
     conn=Depends(get_db),

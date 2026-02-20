@@ -89,7 +89,7 @@ class MarkReadRequest(BaseModel):
 # ============================================================
 
 @router.get("/", response_model=MessageList)
-async def list_messages(
+def list_messages(
     sender_type: Optional[SenderType] = None,
     posting_id: Optional[int] = None,
     unread_only: bool = False,
@@ -180,7 +180,7 @@ async def list_messages(
 
 
 @router.get("/unread-counts", response_model=UnreadCounts)
-async def get_unread_counts(
+def get_unread_counts(
     user: dict = Depends(require_user),
     conn = Depends(get_db)
 ):
@@ -208,7 +208,7 @@ async def get_unread_counts(
 
 
 @router.get("/{message_id}", response_model=Message)
-async def get_message(
+def get_message(
     message_id: int,
     mark_read: bool = True,
     user: dict = Depends(require_user),
@@ -254,7 +254,7 @@ async def get_message(
 
 
 @router.post("/mark-read")
-async def mark_messages_read(
+def mark_messages_read(
     request: MarkReadRequest,
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -277,7 +277,7 @@ async def mark_messages_read(
 
 
 @router.post("/mark-all-read")
-async def mark_all_read(
+def mark_all_read(
     sender_type: Optional[SenderType] = None,
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -309,7 +309,7 @@ async def mark_all_read(
 
 
 @router.post("/send")
-async def send_message(
+def send_message(
     request: SendMessageRequest,
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -384,7 +384,7 @@ async def send_message(
 
 
 @router.delete("/{message_id}")
-async def delete_message(
+def delete_message(
     message_id: int,
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -414,7 +414,7 @@ async def delete_message(
 # ============================================================
 
 @router.get("/posting/{posting_id}")
-async def get_messages_for_posting(
+def get_messages_for_posting(
     posting_id: int,
     user: dict = Depends(require_user),
     conn = Depends(get_db)

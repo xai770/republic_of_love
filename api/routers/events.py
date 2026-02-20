@@ -53,7 +53,7 @@ def _sanitize_json(data: dict) -> str:
 
 
 @router.post("/track", status_code=204)
-async def track_event(
+def track_event(
     request: TrackEventRequest,
     user: dict = Depends(require_user),
     conn=Depends(get_db)

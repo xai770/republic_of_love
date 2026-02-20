@@ -64,7 +64,7 @@ class CreateDocumentRequest(BaseModel):
 # ============================================================
 
 @router.get("/")
-async def list_documents(
+def list_documents(
     doc_type: Optional[str] = Query(None, description="Filter by document type"),
     created_by: Optional[str] = Query(None, description="Filter by creator (doug, mira, etc)"),
     limit: int = Query(50, le=200),
@@ -123,7 +123,7 @@ async def list_documents(
 
 
 @router.get("/types")
-async def get_document_types(
+def get_document_types(
     user: dict = Depends(require_user),
     conn = Depends(get_db)
 ):
@@ -140,7 +140,7 @@ async def get_document_types(
 
 
 @router.get("/{document_id}")
-async def get_document(
+def get_document(
     document_id: int,
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -160,7 +160,7 @@ async def get_document(
 
 
 @router.post("/")
-async def create_document(
+def create_document(
     request: CreateDocumentRequest,
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -193,7 +193,7 @@ async def create_document(
 
 
 @router.delete("/{document_id}")
-async def delete_document(
+def delete_document(
     document_id: int,
     user: dict = Depends(require_user),
     conn = Depends(get_db)

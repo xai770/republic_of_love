@@ -3,21 +3,46 @@ FastAPI Dependencies — database connection, current user, etc.
 """
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import pool as pg_pool
 from fastapi import Depends, HTTPException, status, Request
 from typing import Optional
 import jwt
 from datetime import datetime
+import atexit
 
 from api.config import DATABASE_URL, SECRET_KEY
 
+# ── Connection pool ────────────────────────────────────────────────────────────
+# Reuse connections instead of opening a new socket per request.
+# min=2 keeps two warm connections idle; max=20 handles burst traffic.
+_pool: pg_pool.ThreadedConnectionPool | None = None
+
+
+def _get_pool() -> pg_pool.ThreadedConnectionPool:
+    global _pool
+    if _pool is None:
+        _pool = pg_pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=20,
+            dsn=DATABASE_URL,
+            cursor_factory=RealDictCursor,
+        )
+        # Return all connections on clean shutdown
+        atexit.register(_pool.closeall)
+    return _pool
+
 
 def get_db():
-    """Database connection dependency."""
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    """Database connection dependency — returns a pooled connection."""
+    pool = _get_pool()
+    conn = pool.getconn()
     try:
         yield conn
+    except Exception:
+        conn.rollback()
+        raise
     finally:
-        conn.close()
+        pool.putconn(conn)
 
 
 def get_current_user(request: Request, conn=Depends(get_db)) -> Optional[dict]:
