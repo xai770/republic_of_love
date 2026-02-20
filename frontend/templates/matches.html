@@ -11,31 +11,31 @@
     
     <main class="main-content match-dashboard">
     <header class="dashboard-header">
-        <h1>Your Matches</h1>
-        <p class="subtitle">Jobs matched to your profile</p>
+        <h1>{{ t("matches.page_title") }}</h1>
+        <p class="subtitle">{{ t("matches.page_subtitle") }}</p>
     </header>
     
     <!-- Filters -->
     <div class="filters">
         <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">All</button>
-            <button class="filter-tab" data-filter="APPLY">✅ Recommended</button>
-            <button class="filter-tab" data-filter="SKIP">⚠️ Skipped</button>
-            <button class="filter-tab" data-filter="favorites">❤️ Favorites</button>
-            <button class="filter-tab" data-filter="interested">✋ Interested</button>
-            <button class="filter-tab" data-filter="unread">🔵 Unread</button>
+            <button class="filter-tab active" data-filter="all">{{ t("matches.filter_all") }}</button>
+            <button class="filter-tab" data-filter="APPLY">{{ t("matches.filter_recommended") }}</button>
+            <button class="filter-tab" data-filter="SKIP">{{ t("matches.filter_skipped") }}</button>
+            <button class="filter-tab" data-filter="favorites">{{ t("matches.filter_favorites") }}</button>
+            <button class="filter-tab" data-filter="interested">{{ t("matches.filter_interested") }}</button>
+            <button class="filter-tab" data-filter="unread">{{ t("matches.filter_unread") }}</button>
         </div>
         <div class="filter-controls">
             <select id="score-filter" onchange="applyFilters()">
-                <option value="">Any score</option>
+                <option value="">{{ t("matches.score_any") }}</option>
                 <option value="90">90%+</option>
                 <option value="80">80%+</option>
                 <option value="70">70%+</option>
             </select>
             <select id="sort-by" onchange="applyFilters()">
-                <option value="recommendation">Sort: Recommended first</option>
-                <option value="score">Sort: Score</option>
-                <option value="date">Sort: Newest</option>
+                <option value="recommendation">{{ t("matches.sort_recommended") }}</option>
+                <option value="score">{{ t("matches.sort_score") }}</option>
+                <option value="date">{{ t("matches.sort_newest") }}</option>
             </select>
         </div>
     </div>
@@ -48,14 +48,14 @@
     <!-- Empty State -->
     <div class="empty-state hidden" id="empty-state">
         <span class="empty-icon"><img src="/static/images/icons/target.png" alt="🎯"></span>
-        <h2>No matches yet</h2>
+        <h2>{{ t("matches.empty_title") }}</h2>
         <p>Complete your <a href="/profile">profile</a> to start seeing job matches.</p>
     </div>
     
     <!-- Loading -->
     <div class="loading-state" id="loading-state">
         <div class="spinner"></div>
-        <p>Loading matches...</p>
+        <p>{{ t("matches.loading") }}</p>
     </div>
     </main>
 </div><!-- /.app-layout -->
@@ -64,7 +64,7 @@
 <div class="modal-overlay hidden" id="report-modal">
     <div class="modal modal-large">
         <div class="modal-header">
-            <h2 id="report-title">Match Report</h2>
+            <h2 id="report-title">{{ t("matches.report_modal_title") }}</h2>
             <button class="modal-close" onclick="closeReportModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -73,13 +73,57 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
-            <a href="#" target="_blank" class="btn" id="view-job-btn">View Original Job</a>
+            <button class="btn btn-secondary" onclick="closeReportModal()">{{ t("matches.close") }}</button>
+            <a href="#" target="_blank" class="btn" id="view-job-btn">{{ t("matches.view_original_job") }}</a>
         </div>
     </div>
 </div>
     <!-- Styles moved to /static/css/style.css -->
 <script>
+// ── i18n ──────────────────────────────────────────
+const I18N = {
+    company_unknown:      '{{ t("matches.company_unknown") }}',
+    match_score_suffix:   '{{ t("matches.match_score_suffix") }}',
+    fav_remove:           '{{ t("matches.fav_remove") }}',
+    fav_add:              '{{ t("matches.fav_add") }}',
+    badge_apply:          '{{ t("matches.badge_apply") }}',
+    badge_review:         '{{ t("matches.badge_review") }}',
+    view_report:          '{{ t("matches.view_report") }}',
+    btn_interested:       '{{ t("matches.btn_interested") }}',
+    btn_interest:         '{{ t("matches.btn_interest") }}',
+    research_pending:     '{{ t("matches.research_pending") }}',
+    research_view_doug:   '{{ t("matches.research_view_doug") }}',
+    research_view:        '{{ t("matches.research_view") }}',
+    research_ask:         '{{ t("matches.research_ask") }}',
+    feedback_agree:       '{{ t("matches.feedback_agree") }}',
+    feedback_disagree:    '{{ t("matches.feedback_disagree") }}',
+    status_applied:       '{{ t("matches.status_applied") }}',
+    status_interviewing:  '{{ t("matches.status_interviewing") }}',
+    status_offered:       '{{ t("matches.status_offered") }}',
+    status_rejected:      '{{ t("matches.status_rejected") }}',
+    status_withdrawn:     '{{ t("matches.status_withdrawn") }}',
+    outcome_placeholder:  '{{ t("matches.outcome_placeholder") }}',
+    outcome_hired:        '{{ t("matches.outcome_hired") }}',
+    outcome_not_selected: '{{ t("matches.outcome_not_selected") }}',
+    outcome_ghosted:      '{{ t("matches.outcome_ghosted") }}',
+    outcome_withdrew:     '{{ t("matches.outcome_withdrew") }}',
+    btn_applied:          '{{ t("matches.btn_applied") }}',
+    rate_label:           '{{ t("matches.rate_label") }}',
+    report_loading:       '{{ t("matches.report_loading") }}',
+    no_results_filtered:  '{{ t("matches.no_results_filtered") }}',
+    load_error:           '{{ t("matches.load_error") }}',
+    notifications_empty:  '{{ t("matches.notifications_empty") }}',
+    doug_toast:           '{{ t("matches.doug_toast") }}',
+    research_error_toast: '{{ t("matches.research_error_toast") }}',
+    time_just_now:        '{{ t("matches.time_just_now") }}',
+    time_m_ago:           '{{ t("matches.time_m_ago") }}',
+    time_h_ago:           '{{ t("matches.time_h_ago") }}',
+    time_d_ago:           '{{ t("matches.time_d_ago") }}',
+    failed_update:        '{{ t("matches.failed_update") }}',
+    failed_rate:          '{{ t("matches.failed_rate") }}',
+};
+// ─────────────────────────────────────────────────
+
 // State
 let allMatches = [];
 let currentFilter = 'all';
@@ -154,7 +198,7 @@ async function loadMatches() {
     } catch (err) {
         console.error('Error loading matches:', err);
         document.getElementById('loading-state').innerHTML = 
-            '<p style="color: var(--error)">Failed to load matches. Please refresh.</p>';
+            `<p style="color: var(--error)">${I18N.load_error}</p>`;
     }
 }
 
@@ -198,7 +242,7 @@ function renderMatches(matches) {
     const grid = document.getElementById('match-grid');
     
     if (matches.length === 0) {
-        grid.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:2rem;">No matches found with current filters.</p>';
+        grid.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:2rem;">${I18N.no_results_filtered}</p>`;
         return;
     }
     
@@ -245,20 +289,20 @@ function renderMatchCard(m) {
             </div>
             <div class="match-info">
                 <h3 class="match-title">${escapeHtml(m.title)}</h3>
-                <div class="match-company">${escapeHtml(m.company || 'Company not specified')}</div>
+                <div class="match-company">${escapeHtml(m.company || I18N.company_unknown)}</div>
                 <div class="match-meta">
-                    <span class="match-score ${scoreClass}">${score}% match</span>
+                    <span class="match-score ${scoreClass}">${score}${I18N.match_score_suffix}</span>
                     ${m.location ? `<span>📍 ${escapeHtml(m.location)}</span>` : ''}
                     ${matchedDate ? `<span>📅 ${matchedDate}</span>` : ''}
                 </div>
             </div>
             <div class="match-actions">
-                <a href="/report/${m.match_id}" class="action-btn primary" onclick="markAsRead(${m.posting_id})">View Report</a>
+                <a href="/report/${m.match_id}" class="action-btn primary" onclick="markAsRead(${m.posting_id})">${I18N.view_report}</a>
                 
                 <!-- Interested Button -->
                 <button class="interested-btn ${isInterested ? 'active' : ''}" 
                         onclick="toggleInterested(${m.posting_id})">
-                    ${isInterested ? '✅ Interested' : '✋ I\'m Interested'}
+                    ${isInterested ? I18N.btn_interested : I18N.btn_interest}
                 </button>
                 
                 <!-- Research Button (Doug) -->
@@ -280,23 +324,23 @@ function renderMatchCard(m) {
                 <div class="application-tracker" id="app-tracker-${m.match_id}">
                     ${isApplied ? `
                         <select class="status-select" onchange="updateAppStatus(${m.match_id}, this.value)">
-                            <option value="applied" ${m.application_status === 'applied' ? 'selected' : ''}>✓ Applied</option>
-                            <option value="interviewing" ${m.application_status === 'interviewing' ? 'selected' : ''}>📞 Interviewing</option>
-                            <option value="offered" ${m.application_status === 'offered' ? 'selected' : ''}>🎉 Offered!</option>
-                            <option value="rejected" ${m.application_status === 'rejected' ? 'selected' : ''}>❌ Rejected</option>
-                            <option value="withdrawn" ${m.application_status === 'withdrawn' ? 'selected' : ''}>↩️ Withdrawn</option>
+                            <option value="applied" ${m.application_status === 'applied' ? 'selected' : ''}>${I18N.status_applied}</option>
+                            <option value="interviewing" ${m.application_status === 'interviewing' ? 'selected' : ''}>${I18N.status_interviewing}</option>
+                            <option value="offered" ${m.application_status === 'offered' ? 'selected' : ''}>${I18N.status_offered}</option>
+                            <option value="rejected" ${m.application_status === 'rejected' ? 'selected' : ''}>${I18N.status_rejected}</option>
+                            <option value="withdrawn" ${m.application_status === 'withdrawn' ? 'selected' : ''}>${I18N.status_withdrawn}</option>
                         </select>
                         ${m.application_status === 'offered' || m.application_status === 'rejected' ? `
                             <select class="outcome-select" onchange="updateAppOutcome(${m.match_id}, this.value)">
-                                <option value="">Outcome...</option>
-                                <option value="hired" ${m.application_outcome === 'hired' ? 'selected' : ''}>🎉 Hired!</option>
-                                <option value="rejected" ${m.application_outcome === 'rejected' ? 'selected' : ''}>Not selected</option>
-                                <option value="ghosted" ${m.application_outcome === 'ghosted' ? 'selected' : ''}>👻 Ghosted</option>
-                                <option value="withdrew" ${m.application_outcome === 'withdrew' ? 'selected' : ''}>Withdrew</option>
+                                <option value="">${I18N.outcome_placeholder}</option>
+                                <option value="hired" ${m.application_outcome === 'hired' ? 'selected' : ''}>${I18N.outcome_hired}</option>
+                                <option value="rejected" ${m.application_outcome === 'rejected' ? 'selected' : ''}>${I18N.outcome_not_selected}</option>
+                                <option value="ghosted" ${m.application_outcome === 'ghosted' ? 'selected' : ''}>${I18N.outcome_ghosted}</option>
+                                <option value="withdrew" ${m.application_outcome === 'withdrew' ? 'selected' : ''}>${I18N.outcome_withdrew}</option>
                             </select>
                         ` : ''}
                     ` : `
-                        <button class="action-btn" onclick="markApplied(${m.match_id})">I Applied</button>
+                        <button class="action-btn" onclick="markApplied(${m.match_id})">${I18N.btn_applied}</button>
                     `}
                 </div>
                 
@@ -310,7 +354,7 @@ function renderMatchCard(m) {
                 
                 <!-- Star Rating (collapsible) -->
                 <details class="star-details">
-                    <summary>Rate (1-5)</summary>
+                    <summary>${I18N.rate_label}</summary>
                     <div class="rating-row">
                         ${[1,2,3,4,5].map(i => 
                             `<span class="rating-star ${hasStars && i <= m.user_rating ? 'active' : ''}" 
@@ -422,27 +466,27 @@ function renderResearchButton(m) {
     // Already researching
     if (state === 'researching') {
         return `<button class="research-btn pending" disabled>
-            🔍 Doug is researching...
+            ${I18N.research_pending}
         </button>`;
     }
     
     // Research complete (informed)
     if (state === 'informed') {
         return `<button class="research-btn done" onclick="viewResearchReport(${m.posting_id})">
-            📋 View Doug's Report
+            ${I18N.research_view_doug}
         </button>`;
     }
     
     // Further along in journey (coaching, applied, etc.)
     if (['coaching', 'applied', 'outcome_pending', 'hired', 'rejected', 'ghosted'].includes(state)) {
         return `<button class="research-btn done" onclick="viewResearchReport(${m.posting_id})">
-            📋 View Research
+            ${I18N.research_view}
         </button>`;
     }
     
     // Not yet researched - show request button
     return `<button class="research-btn" onclick="requestResearch(${m.posting_id})">
-        🔍 Ask Doug to Research
+        ${I18N.research_ask}
     </button>`;
 }
 
@@ -463,13 +507,13 @@ async function requestResearch(postingId) {
             applyFilters();
             
             // Show toast/notification
-            showToast("🔍 Doug is on it! You'll get a message when ready.");
+            showToast(I18N.doug_toast);
         } else if (data.status === 'already_processed') {
             showToast(`ℹ️ ${data.message}`);
         }
     } catch (err) {
         console.error('Failed to request research:', err);
-        showToast('❌ Failed to request research');
+        showToast(I18N.research_error_toast);
     }
 }
 
@@ -500,7 +544,7 @@ async function viewReport(matchId) {
     const content = document.getElementById('report-content');
     const title = document.getElementById('report-title');
     
-    content.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading report...</p></div>';
+    content.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>${I18N.report_loading}</p></div>`;
     modal.classList.remove('hidden');
     
     try {
@@ -540,7 +584,7 @@ async function markApplied(matchId) {
         }
         applyFilters();
     } catch (err) {
-        alert('Failed to update: ' + err.message);
+        showToast(I18N.failed_update + err.message);
     }
 }
 
@@ -559,7 +603,7 @@ async function updateAppStatus(matchId, status) {
         }
         applyFilters();
     } catch (err) {
-        alert('Failed to update: ' + err.message);
+        showToast(I18N.failed_update + err.message);
     }
 }
 
@@ -578,7 +622,7 @@ async function updateAppOutcome(matchId, outcome) {
         }
         applyFilters();
     } catch (err) {
-        alert('Failed to update: ' + err.message);
+        showToast(I18N.failed_update + err.message);
     }
 }
 
@@ -596,7 +640,7 @@ async function thumbsRate(matchId, thumbs) {
         }
         applyFilters();
     } catch (err) {
-        alert('Failed to rate: ' + err.message);
+        showToast(I18N.failed_rate + err.message);
     }
 }
 
@@ -614,7 +658,7 @@ async function rateMatch(matchId, rating) {
         }
         applyFilters();
     } catch (err) {
-        alert('Failed to rate: ' + err.message);
+        showToast(I18N.failed_rate + err.message);
     }
 }
 
@@ -690,7 +734,7 @@ function renderNotifications(notifications) {
     if (!list) return;
     
     if (notifications.length === 0) {
-        list.innerHTML = '<li class="notification-empty">No notifications</li>';
+        list.innerHTML = `<li class="notification-empty">${I18N.notifications_empty}</li>`;
         return;
     }
     
@@ -732,10 +776,10 @@ function timeAgo(dateStr) {
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
     
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    if (diff < 60) return I18N.time_just_now;
+    if (diff < 3600) return Math.floor(diff / 60) + I18N.time_m_ago;
+    if (diff < 86400) return Math.floor(diff / 3600) + I18N.time_h_ago;
+    if (diff < 604800) return Math.floor(diff / 86400) + I18N.time_d_ago;
     return date.toLocaleDateString();
 }
 

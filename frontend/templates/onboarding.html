@@ -490,6 +490,8 @@
             s6_generating: "Creating your names…",
             s6_retry_link: "🔄 New words",
             s6_manual_link: "I'd rather type my own →",
+            s6_no_names: "No names generated — try different words.",
+            s6_error_names: "Error generating names",
             s7_title: "Enter your yogi name",
             s7_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
             s7_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
@@ -527,6 +529,8 @@
             s6_generating: "Deine Namen entstehen…",
             s6_retry_link: "🔄 Neue Wörter",
             s6_manual_link: "Ich tippe lieber selber →",
+            s6_no_names: "Keine Namen erzeugt — versuch andere Wörter.",
+            s6_error_names: "Fehler beim Generieren der Namen",
             s7_title: "Gib deinen Yogi-Namen ein",
             s7_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
             s7_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
@@ -564,6 +568,8 @@
             s6_generating: "Ihre Namen entstehen…",
             s6_retry_link: "🔄 Neue Wörter",
             s6_manual_link: "Ich tippe lieber selber →",
+            s6_no_names: "Keine Namen erzeugt — versuchen Sie andere Wörter.",
+            s6_error_names: "Fehler beim Generieren der Namen",
             s7_title: "Geben Sie Ihren Yogi-Namen ein",
             s7_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
             s7_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
@@ -765,7 +771,7 @@
             const names = data.suggestions || [];
             grid.innerHTML = '';
             if (names.length === 0) {
-                grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#94a3b8;">No names generated — try different words.</p>';
+                grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#94a3b8;">${c().s6_no_names}</p>`;
                 return;
             }
             names.forEach(name => {
@@ -776,7 +782,7 @@
                 grid.appendChild(chip);
             });
         } catch (e) {
-            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#dc2626;">Error generating names</p>';
+            grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#dc2626;">${c().s6_error_names}</p>`;
         }
     };
 

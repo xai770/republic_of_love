@@ -256,11 +256,14 @@ Currently fuzzy — the two are mixed on the profile page. Should be separated.
 Settings page is mostly already there (language toggle in header, notification email in Mira onboarding).
 Profile page should absorb saved searches and explicit preferences.
 
-### Profile row auto-activation threshold
+### Profile row auto-activation — confirmed (09:07)
 
-The profile row appears automatically if `has_skills = true` (at least one skill keyword).
-If profile is empty, the row is greyed out with "complete your profile to unlock this."
-A single skill keyword is enough for a meaningful similarity search.
+**Fires automatically:** Yes. If `has_skills = true`, the profile row is included in every search
+without the yogi needing to add it. It just appears. If the profile is empty, the row is greyed out.
+
+**"Enough signal" = Adele's call:** The system does not ask the yogi to rate their own profile
+completeness. Adele (the profile extraction actor) decides when there is enough signal and
+notifies the yogi. No minimum threshold UI — Adele drives this silently.
 
 ### Open questions for next session
 
