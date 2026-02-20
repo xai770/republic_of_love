@@ -178,7 +178,76 @@ All 5 stages green. **No crashes, no errors in log.** 220 min total (down from 2
 
 ---
 
-## Services status
+## Afternoon session (20 Feb, ~14:00–18:00 CET)
+
+### Work done
+
+#### Sidebar / navbar frosted glass (#233)
+Long tuning session — user UAT'd live, drove opacity and blur down iteratively:
+
+| Round | Commit | Navbar opacity | Sidebar opacity | Blur |
+|-------|--------|---------------|-----------------|------|
+| 1 | `13e595a` | 0.72 | 0.35 | 18px |
+| 2 | `d726060` | 0.72 | 0.35 | 18px | (cache bust only) |
+| 3 | `eb0ccdc` | 0.35 | 0.28 | 18px |
+| 4 | `6894f87` | 0.30 | 0.15/0.12 | 18px |
+| 5 | `c476b0e` | 0.15 | 0.075/0.06 | 18px |
+| 6 | `39e4c46` | 0.075 | 0.037/0.03 | 18px |
+| 7 | `f72445e` | 0.075 | 0.037/0.03 | 9px |
+| 8 | `669d082` | 0.075 | 0.037/0.03 | 2px sidebar |
+| **Final** | `669d082` | **0.075** | **0.037/0.03** | **navbar 3px, sidebar 2px** |
+
+User confirmed "looks great". Feedback #233 closed.
+
+#### Mira fake match greeting on fresh onboard (#244, #186)
+This took 7 commits to nail. Root cause was layered:
+
+1. `f38f249` — `list_my_matches` returns `[]` when no skills (matches page guard)
+2. `674b6cb` — `mira_llm.py` match count bypassed skills guard
+3. `493bf56` — `greeting.py` had different guard (profile+no-skills case missed)
+4. `4eb76e1` — Zeroed at SQL fetch point in greeting + proactive
+5. `8c8fd9f` — Added `profile.created_at` filter to kill stale pre-reset matches
+6. `4092575` — 2h age guard (wrong approach — failed when profile aged out)
+7. `3e3c102` — `last_login <= profile_created_at` = first-session guard (correct logic)
+8. **`cc64c11`** — **Actual fix**: LLM was hallucinating matches from nothing. Added explicit `VERBOTEN: Matches erwähnen` to prompt when `match_count = 0`.
+
+**Lesson:** All the DB guards were correct. The LLM was inventing matches that weren't in the context. The fix was a negative constraint in the prompt, not data logic.
+
+Feedback #244 and #186 closed.
+
+#### Other fixes this session
+- `f38f249`: `de.json` CV-Fehler → CV error, onboarding s5 now explains yogi name privacy (fixes #243)
+- Feedback #233 (frosted glass) and #243 (onboarding context) both closed
+
+### Session commit log (afternoon)
+
+| # | Hash | Summary |
+|---|------|---------|
+| 1 | `eb0ccdc` | Sidebar more transparent (0.35/0.28) |
+| 2 | `f38f249` | Matches guard + CV-Fehler + onboarding s5 context |
+| 3 | `6894f87` | Navbar + sidebar opacity down to 0.30/0.15/0.12 |
+| 4 | `c476b0e` | Halve opacity → navbar 0.15, sidebar 0.075/0.06 |
+| 5 | `39e4c46` | Halve again → navbar 0.075, sidebar 0.037/0.03 |
+| 6 | `f72445e` | Halve blur → navbar 3px, sidebar 4px |
+| 7 | `669d082` | Sidebar blur 2px — hardly-there glass |
+| 8 | `674b6cb` | Mira match count respects skills guard |
+| 9 | `493bf56` | Greeting match count fix (profile+no-skills case) |
+| 10 | `4eb76e1` | Zero match_count at source (greeting + proactive) |
+| 11 | `8c8fd9f` | Filter matches by profile.created_at |
+| 12 | `4092575` | Suppress match count for profiles < 2h old |
+| 13 | `3e3c102` | last_login ≤ profile_created_at = first-session guard |
+| 14 | `cc64c11` | VERBOTEN in greeting prompt when match_count=0 — actual fix |
+
+### Remaining open items
+
+| # | Summary | Status |
+|---|---------|--------|
+| 171 item 2 | Inline yogi name dialog on profile page (no redirect to Mira) | 🔧 next |
+| 166/167 | Profile form: projects/studies types + i18n + full-width layout | 🔧 queued |
+| 137 | Mira "ich suche" intent passthrough | ✅ fixed earlier today (`4810748`) |
+
+---
+
 
 | Service | Status |
 |---------|--------|

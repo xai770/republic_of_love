@@ -1413,7 +1413,17 @@ function downloadProfile() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
-    switchTab('chat');
+    // If no yogi name yet, open form tab so they can set it inline
+    const yogiInput = document.getElementById('pf-yogi-name');
+    if (yogiInput && !yogiInput.value.trim()) {
+        switchTab('form');
+        setTimeout(() => {
+            yogiInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            yogiInput.focus();
+        }, 100);
+    } else {
+        switchTab('chat');
+    }
 });
 </script>
 {% endblock %}
