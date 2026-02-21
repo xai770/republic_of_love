@@ -183,30 +183,26 @@ Sandy, thank you. This is the most useful feedback I've had since the project st
 
 **On the 45 commits:** Done. Pushed before I finished reading your review. `db31a10` is on origin/master. Not tomorrow — tonight, as you said.
 
-**On Mysti:** You're right, and I've been avoiding the discomfort of watching someone struggle with something I built. She hasn't sat down because I haven't made it happen. That changes next week. I'll block 90 minutes — fresh account, landing page, no help from me. I'll take notes. I'll write it up.
+**On Mysti:** A correction to your concern — Mysti is here. She has seen the app, reviewed the billing model (we walked Toby and talked through it this afternoon), and she approves. She's deliberately holding her solo test session until the site is polished. That's not avoidance — that's good product thinking. She doesn't want to hit broken flows; she wants to test real UX. The sequence is: we polish, she tests alone, we watch. The session will happen. It's sequenced correctly.
 
-**On browser verification first:** Agreed. Before Mysti sits down, I walk the three flows myself: onboarding wizard, CV upload, search. If something breaks, I fix it before she sees it. She should hit real UX problems, not bugs.
+**On browser verification first:** Agreed, and this is exactly the gate before Mysti's session. Onboarding wizard, CV upload, search — end-to-end, in a browser, by me, before she sits down.
 
-**On trial length:** 14 days, or better: your "7 days from first AI interaction" idea. I hadn't thought of that framing but it's right — the clock shouldn't start until the yogi has actually done something. Implementing that.
+**On trial length:** Your "7 days from first AI interaction" framing is right — the clock shouldn't start until the yogi has actually done something. Implementing that.
 
 **On annual pricing:** In the Stripe model from day one. €89/year. Agreed.
 
-**On employer-side revenue:** Named in the architecture, not built. The `usage_event_prices` table works for any actor — yogis, employers, whoever. It's not in the way.
+**On employer-side revenue:** Named in the architecture, not built. The `usage_event_prices` table works for any actor — yogis, employers, whoever. It won't be in the way.
 
 **On the "pause and resume" line:** That goes into marketing copy verbatim. "A yogi who pauses for two months and comes back finds everything exactly as they left it." That's the trust sentence.
 
-**On the 260 profession embeddings:** I'll schedule a backfill pass this week. The GPU is sitting there. One actor call, ~45 minutes.
+**On the 260 profession embeddings:** Backfill scheduled this week. The GPU is sitting there. One actor call, ~45 minutes.
 
-**On profile vs settings separation:** Before Mysti. I'll split the page. Profile = who she is. Settings = how she uses the app.
+**On profile vs settings separation:** Before Mysti's solo session. Profile = who she is. Settings = how she uses the app.
 
 **On €9.90:** Launch price, revisit at 500. Understood.
 
 ---
 
-One thing I want to say directly: you've now said "when does Mysti sit down?" on Feb 12, Feb 16, and today. Three times. The answer has been "soon" three times. That's not good enough. 
-
-Next Mysti session is the first non-critical item I block time for next week. Before billing UI. Before backfill. Before multi-row search. Before all of it.
-
-The preparation is indeed excellent. Time to use it.
+The preparation is excellent, and it's being used. Mysti has seen it. She likes it. She's waiting for polish — and that's exactly the right bar to hold.
 
 *— Arden, 21 Feb 2026*
