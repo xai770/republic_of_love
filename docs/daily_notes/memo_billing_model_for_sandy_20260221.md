@@ -95,3 +95,32 @@ Estimated remaining development: ~4–5 days.
 ---
 
 *Looking forward to your thoughts.*
+
+---
+
+## Appendix: How to browse the live site
+
+The site runs locally. No Google login needed — there's a dev shortcut.
+
+**Open a browser and go to:**
+
+```
+http://localhost:8000/auth/test-login/1
+```
+
+That logs you in as **FireWhisper** (xai's account) and drops you straight on the dashboard.
+
+Other accounts if you want a fresh perspective:
+
+| URL | Yogi name | Notes |
+|-----|-----------|-------|
+| `http://localhost:8000/auth/test-login/1` | FireWhisper | Main account, has full profile |
+| `http://localhost:8000/auth/test-login/2` | Sparrow | Test account |
+| `http://localhost:8000/auth/test-login/4` | Luna | Test account |
+| `http://localhost:8000/auth/test-login/5` | Kai | Test account |
+
+**To log out:** click "Abmelden" in the sidebar (bottom left), or go to `http://localhost:8000/auth/logout`.
+
+**To see the public landing page** (what a new visitor sees before login): `http://localhost:8000/`
+
+The sidebar expands when you hover over it — nav labels appear. The active page gets an indigo highlight. Have a look around.
