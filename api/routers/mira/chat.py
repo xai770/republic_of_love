@@ -115,6 +115,14 @@ async def chat(
     except Exception as e:
         logger.warning(f"Failed to persist chat messages: {e}")
 
+    # --- USAGE: Log billable event ---
+    try:
+        from lib.usage_tracker import log_event
+        log_event(conn, user['user_id'], 'mira_message',
+                  context={'message_len': len(message), 'fallback': response.fallback})
+    except Exception as e:
+        logger.warning(f"Usage tracking failed: {e}")
+
     logger.info(f"Mira LLM response: lang={response.language}, fallback={response.fallback}, db_history={len(db_history)}, session_history={len(request.history) if request.history else 0}")
 
     return ChatResponse(

@@ -323,3 +323,16 @@ def reset_onboarding(
         "message": f"Onboarding reset complete. Cleared {total} records.",
         "deleted": deleted
     }
+
+
+@router.get("/usage-balance")
+def get_usage_balance(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Return the current user's usage balance and trial status.
+    Used by the account page and the header usage meter.
+    """
+    from lib.usage_tracker import get_balance
+    return get_balance(conn, user['user_id'])
