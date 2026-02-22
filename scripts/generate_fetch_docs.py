@@ -299,6 +299,7 @@ def generate_docs():
         ("Pipeline Steps", "pipeline-steps"),
         ("Actor Configuration (DB)", "actor-configuration-db"),
         ("Key Views & Functions", "key-views--functions"),
+        ("Troubleshooting", "troubleshooting"),
     ]
     # Add actor deep dives
     for name in ACTOR_FILES:
@@ -750,6 +751,169 @@ def generate_docs():
 
         sections.append("---\n\n")
 
+    # ── Troubleshooting / Runbook ─────────────────────────────
+    sections.append(textwrap.dedent("""\
+        ## Troubleshooting
+
+        Common failure modes and fixes, derived from production incidents.
+
+        ### Pipeline won't start (lock file)
+
+        ```
+        ⚠️  Already running (PID 12345) - exiting
+        ```
+
+        **Cause:** Previous run crashed without cleanup, or a run is genuinely still going.
+
+        **Fix:**
+        ```bash
+        # Check if process is real
+        ps aux | grep turing_fetch
+        # If stale:
+        rm -f /tmp/turing_fetch.lock
+        ```
+
+        ### Step 4 stalls / 403 errors (description backfill)
+
+        ```
+        CONSECUTIVE 403s: 3 — rotating VPN...
+        ```
+
+        **Cause:** Arbeitsagentur rate-limited the current IP.
+
+        **Fix:** Automatic — VPN rotates via `scripts/vpn.sh` (ProtonVPN). If all IPs exhausted:
+        ```bash
+        # Check VPN status
+        protonvpn-cli status
+        # Force reconnect to a different server
+        sudo protonvpn-cli disconnect && sudo protonvpn-cli connect --cc DE
+        ```
+        Actor stops after `MAX_RATE_LIMIT_RETRIES = 10` rotations. Resume on next run.
+
+        ### Certification fails (embeddings dirty)
+
+        ```
+        ⚠️  DIRTY need=42 corrupt=0
+        ```
+
+        **Cause:** Description backfill (step 4) changed `match_text` after the embedding actor ran.
+        The post-step embedding sweep should catch this, but if the sweep was interrupted:
+
+        **Fix:**
+        ```bash
+        # Manual embedding sweep
+        python3 actors/postings__embedding_U.py --batch 50000
+        # Re-certify
+        python3 scripts/pipeline_report.py
+        ```
+
+        ### Certification fails (corrupted hashes)
+
+        ```
+        ⚠️  DIRTY need=0 corrupt=156
+        ```
+
+        **Cause:** Python `.strip()` vs SQL `btrim()` unicode normalization drift created
+        embeddings whose stored `text` doesn't match the `text_hash`. Fixed in commit `660c9e6`
+        but legacy rows may resurface if old code paths are reintroduced.
+
+        **Fix:**
+        ```sql
+        -- Find and repair corrupted hashes
+        UPDATE embeddings
+        SET text_hash = LEFT(ENCODE(SHA256(
+            CONVERT_TO(normalize_text_python(text), 'UTF8')
+        ), 'hex'), 32)
+        WHERE text_hash != LEFT(ENCODE(SHA256(
+            CONVERT_TO(text, 'UTF8')
+        ), 'hex'), 32);
+
+        -- Delete duplicates (keep newest)
+        DELETE FROM embeddings a
+        USING embeddings b
+        WHERE a.text_hash = b.text_hash
+          AND a.created_at < b.created_at;
+        ```
+
+        ### Berufenet Phase 2 slow (>2 hours)
+
+        **Cause:** GPU saturated or Ollama unresponsive.
+
+        **Fix:**
+        ```bash
+        # Check Ollama
+        curl -s http://localhost:11434/api/tags | python3 -m json.tool
+        # Restart if needed
+        systemctl restart ollama
+        # Check GPU
+        nvidia-smi
+        ```
+        Phase 2 batch size is 2000. Reduce to 500 if OOM.
+
+        ### OWL lookup returns 0 hits (vocabulary stale)
+
+        **Cause:** New job titles not yet in `owl_names`. Phase 2 auto-adds synonyms,
+        so this self-heals over successive runs.
+
+        **Check:**
+        ```sql
+        SELECT COUNT(*) FROM owl_names
+        WHERE confidence_source IN ('human','import','llm_confirmed');
+        -- Should be >100K and growing
+        ```
+
+        ### Pipeline notification not received
+
+        **Cause:** ntfy.sh down, or Signal not configured.
+
+        **Check:**
+        ```bash
+        # Test ntfy
+        curl -d "test" https://ntfy.sh/ty-pipeline
+        # Test Signal
+        python3 -c "from lib.signal_notify import send_alert; send_alert('test')"
+        ```
+
+        ### Demand snapshot empty / profession similarity zero rows
+
+        **Cause:** Berufenet classification coverage too low (< 20 postings per profession).
+
+        **Check:**
+        ```sql
+        SELECT COUNT(DISTINCT berufenet_id)
+        FROM postings
+        WHERE berufenet_id IS NOT NULL AND NOT invalidated;
+        -- Should be >2000
+        ```
+
+        ### Quick diagnostic commands
+
+        ```bash
+        # Full status without running pipeline
+        ./scripts/turing_fetch.sh status
+
+        # Process-level debug (PIDs, file descriptors, connections)
+        ./scripts/turing_fetch.sh debug
+
+        # Tail latest backfill log
+        ./scripts/turing_fetch.sh tail
+
+        # Pipeline report (data quality check)
+        python3 scripts/pipeline_report.py
+
+        # Check specific actor's pending work
+        python3 -c "
+        from core.database import get_connection
+        with get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute('SELECT COUNT(*) as cnt FROM postings_for_matching p WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(p.match_text), \"UTF8\")), \"hex\"), 32))')
+            print(f'Pending embeddings: {cur.fetchone()[\"cnt\"]}')
+        "
+        ```
+
+        ---
+    """))
+
     # ── Footer ────────────────────────────────────────────────
     sections.append(textwrap.dedent(f"""\
         ## Regeneration
@@ -780,6 +944,21 @@ def generate_docs():
 # ║  MAIN                                                            ║
 # ╚════════════════════════════════════════════════════════════════════╝
 
+def _strip_volatile(text):
+    """Remove sections that change every run (stats, timestamps) for --check comparison."""
+    # Strip timestamps
+    text = re.sub(r"\*\*Generated:\*\* .*", "", text)
+    text = re.sub(r"_Generated .* by generate_fetch_docs.py_", "", text)
+    # Strip entire Quick Stats table (DB counts change every pipeline run)
+    text = re.sub(
+        r"## Quick Stats \(at generation time\).*?(?=\n## )",
+        "",
+        text,
+        flags=re.DOTALL,
+    )
+    return text
+
+
 def main():
     check_mode = "--check" in sys.argv
 
@@ -788,15 +967,12 @@ def main():
     doc = generate_docs()
 
     if check_mode:
-        # Compare with existing file
+        # Compare with existing file (structural only — ignore stats + timestamps)
         if os.path.exists(OUTPUT_PATH):
             with open(OUTPUT_PATH) as f:
                 existing = f.read()
-            # Strip generation timestamps for comparison
-            strip_ts = lambda s: re.sub(r"\*\*Generated:\*\* .*", "", s)
-            strip_ts2 = lambda s: re.sub(r"_Generated .* by generate_fetch_docs.py_", "", s)
-            clean_existing = strip_ts2(strip_ts(existing))
-            clean_new = strip_ts2(strip_ts(doc))
+            clean_existing = _strip_volatile(existing)
+            clean_new = _strip_volatile(doc)
             if clean_existing.strip() == clean_new.strip():
                 print("✅ Docs are up to date")
                 sys.exit(0)

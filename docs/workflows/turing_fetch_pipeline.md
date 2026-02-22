@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/generate_fetch_docs.py` — do not edit by hand.
 > Regenerated on every git commit via `.git/hooks/post-commit`.
 
-**Generated:** 2026-02-22 08:58:55
+**Generated:** 2026-02-22 09:04:12
 **Script:** `scripts/turing_fetch.sh` (608 lines)
 **Schedule:** `50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force`
 **Log:** `logs/turing_fetch.log`
@@ -33,21 +33,22 @@
 3. [Pipeline Steps](#pipeline-steps)
 4. [Actor Configuration (DB)](#actor-configuration-db)
 5. [Key Views & Functions](#key-views--functions)
-6. [AA Fetch](#aa-fetch)
-7. [DB Fetch](#db-fetch)
-8. [Berufenet Classification](#berufenet-classification)
-9. [Geo State Resolution](#geo-state-resolution)
-10. [Embedding Generation](#embedding-generation)
-11. [Description Backfill](#description-backfill)
-12. [External Partners](#external-partners)
-13. [Extracted Summary](#extracted-summary)
-14. [Turing Daemon](#turing-daemon)
-15. [Description Retry](#description-retry)
-16. [Auto-Triage](#auto-triage)
-17. [Domain Gate](#domain-gate)
-18. [Pipeline Report](#pipeline-report)
-19. [Demand Snapshot](#demand-snapshot)
-20. [Profession Similarity](#profession-similarity)
+6. [Troubleshooting](#troubleshooting)
+7. [AA Fetch](#aa-fetch)
+8. [DB Fetch](#db-fetch)
+9. [Berufenet Classification](#berufenet-classification)
+10. [Geo State Resolution](#geo-state-resolution)
+11. [Embedding Generation](#embedding-generation)
+12. [Description Backfill](#description-backfill)
+13. [External Partners](#external-partners)
+14. [Extracted Summary](#extracted-summary)
+15. [Turing Daemon](#turing-daemon)
+16. [Description Retry](#description-retry)
+17. [Auto-Triage](#auto-triage)
+18. [Domain Gate](#domain-gate)
+19. [Pipeline Report](#pipeline-report)
+20. [Demand Snapshot](#demand-snapshot)
+21. [Profession Similarity](#profession-similarity)
 
 ---
 ## Pipeline Overview
@@ -1404,6 +1405,165 @@ INSERT INTO profession_similarity
 
 ---
 
+## Troubleshooting
+
+Common failure modes and fixes, derived from production incidents.
+
+### Pipeline won't start (lock file)
+
+```
+⚠️  Already running (PID 12345) - exiting
+```
+
+**Cause:** Previous run crashed without cleanup, or a run is genuinely still going.
+
+**Fix:**
+```bash
+# Check if process is real
+ps aux | grep turing_fetch
+# If stale:
+rm -f /tmp/turing_fetch.lock
+```
+
+### Step 4 stalls / 403 errors (description backfill)
+
+```
+CONSECUTIVE 403s: 3 — rotating VPN...
+```
+
+**Cause:** Arbeitsagentur rate-limited the current IP.
+
+**Fix:** Automatic — VPN rotates via `scripts/vpn.sh` (ProtonVPN). If all IPs exhausted:
+```bash
+# Check VPN status
+protonvpn-cli status
+# Force reconnect to a different server
+sudo protonvpn-cli disconnect && sudo protonvpn-cli connect --cc DE
+```
+Actor stops after `MAX_RATE_LIMIT_RETRIES = 10` rotations. Resume on next run.
+
+### Certification fails (embeddings dirty)
+
+```
+⚠️  DIRTY need=42 corrupt=0
+```
+
+**Cause:** Description backfill (step 4) changed `match_text` after the embedding actor ran.
+The post-step embedding sweep should catch this, but if the sweep was interrupted:
+
+**Fix:**
+```bash
+# Manual embedding sweep
+python3 actors/postings__embedding_U.py --batch 50000
+# Re-certify
+python3 scripts/pipeline_report.py
+```
+
+### Certification fails (corrupted hashes)
+
+```
+⚠️  DIRTY need=0 corrupt=156
+```
+
+**Cause:** Python `.strip()` vs SQL `btrim()` unicode normalization drift created
+embeddings whose stored `text` doesn't match the `text_hash`. Fixed in commit `660c9e6`
+but legacy rows may resurface if old code paths are reintroduced.
+
+**Fix:**
+```sql
+-- Find and repair corrupted hashes
+UPDATE embeddings
+SET text_hash = LEFT(ENCODE(SHA256(
+    CONVERT_TO(normalize_text_python(text), 'UTF8')
+), 'hex'), 32)
+WHERE text_hash != LEFT(ENCODE(SHA256(
+    CONVERT_TO(text, 'UTF8')
+), 'hex'), 32);
+
+-- Delete duplicates (keep newest)
+DELETE FROM embeddings a
+USING embeddings b
+WHERE a.text_hash = b.text_hash
+  AND a.created_at < b.created_at;
+```
+
+### Berufenet Phase 2 slow (>2 hours)
+
+**Cause:** GPU saturated or Ollama unresponsive.
+
+**Fix:**
+```bash
+# Check Ollama
+curl -s http://localhost:11434/api/tags | python3 -m json.tool
+# Restart if needed
+systemctl restart ollama
+# Check GPU
+nvidia-smi
+```
+Phase 2 batch size is 2000. Reduce to 500 if OOM.
+
+### OWL lookup returns 0 hits (vocabulary stale)
+
+**Cause:** New job titles not yet in `owl_names`. Phase 2 auto-adds synonyms,
+so this self-heals over successive runs.
+
+**Check:**
+```sql
+SELECT COUNT(*) FROM owl_names
+WHERE confidence_source IN ('human','import','llm_confirmed');
+-- Should be >100K and growing
+```
+
+### Pipeline notification not received
+
+**Cause:** ntfy.sh down, or Signal not configured.
+
+**Check:**
+```bash
+# Test ntfy
+curl -d "test" https://ntfy.sh/ty-pipeline
+# Test Signal
+python3 -c "from lib.signal_notify import send_alert; send_alert('test')"
+```
+
+### Demand snapshot empty / profession similarity zero rows
+
+**Cause:** Berufenet classification coverage too low (< 20 postings per profession).
+
+**Check:**
+```sql
+SELECT COUNT(DISTINCT berufenet_id)
+FROM postings
+WHERE berufenet_id IS NOT NULL AND NOT invalidated;
+-- Should be >2000
+```
+
+### Quick diagnostic commands
+
+```bash
+# Full status without running pipeline
+./scripts/turing_fetch.sh status
+
+# Process-level debug (PIDs, file descriptors, connections)
+./scripts/turing_fetch.sh debug
+
+# Tail latest backfill log
+./scripts/turing_fetch.sh tail
+
+# Pipeline report (data quality check)
+python3 scripts/pipeline_report.py
+
+# Check specific actor's pending work
+python3 -c "
+from core.database import get_connection
+with get_connection() as conn:
+    cur = conn.cursor()
+    cur.execute('SELECT COUNT(*) as cnt FROM postings_for_matching p WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(p.match_text), "UTF8")), "hex"), 32))')
+    print(f'Pending embeddings: {cur.fetchone()["cnt"]}')
+"
+```
+
+---
 ## Regeneration
 
 This document is auto-generated by `scripts/generate_fetch_docs.py`.
@@ -1422,4 +1582,4 @@ Auto-triggered on every `git commit` via `.git/hooks/post-commit`.
 
 ---
 
-_Generated 2026-02-22 08:58:55 by generate_fetch_docs.py_
+_Generated 2026-02-22 09:04:12 by generate_fetch_docs.py_
