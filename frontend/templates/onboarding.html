@@ -751,10 +751,6 @@
 
     window.generateLLMNames = async function() {
         const keywords = ($('#keyword-input').value || '').trim();
-        if (keywords.length < 2) {
-            $('#keyword-input').focus();
-            return;
-        }
         // Navigate to step 6 immediately with animation
         goTo(6);
         const grid = $('#name-grid');

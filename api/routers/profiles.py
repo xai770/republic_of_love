@@ -557,8 +557,9 @@ def suggest_yogi_names_llm(
     from core.taro import suggest_names_llm
 
     keywords = (body.get('keywords') or '').strip()
-    if not keywords or len(keywords) < 2:
-        raise HTTPException(status_code=400, detail="Please provide at least one keyword")
+    if not keywords:
+        # No keywords — ask LLM to freestyle, or fall back to algorithmic pool
+        keywords = 'creative, unique, interesting'
     if len(keywords) > 200:
         keywords = keywords[:200]
 
