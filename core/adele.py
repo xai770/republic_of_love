@@ -79,7 +79,13 @@ Return ONLY valid JSON:
     "responsibilities": ["key responsibilities mentioned"] 
 }}
 
-If something is not mentioned, use null. Extract EXACTLY what they said, don't invent."""
+IMPORTANT RULES:
+- Expand common abbreviations in job titles: SW=Software, SME=Subject Matter Expert,
+  Mgmt=Management, Eng=Engineering, Dev=Developer, Arch=Architect, Ops=Operations,
+  PM=Project Manager, BA=Business Analyst, UX=UX Designer, QA=QA Engineer
+- For self-employment, freelance, or founding a startup: set current_title to
+  'Freelancer' (or the relevant role) and company_name to null
+- If something is not mentioned, use null. Do not invent fields."""
 
     elif phase == 'work_history':
         return f"""Extract work history information from the yogi's message about a previous job.
@@ -95,6 +101,15 @@ Return ONLY valid JSON:
     "responsibilities": ["key responsibilities mentioned"],
     "wants_more": true
 }}
+
+IMPORTANT RULES:
+- Expand common abbreviations in job titles: SW=Software, SME=Subject Matter Expert,
+  Mgmt=Management, Eng=Engineering, Dev=Developer, Arch=Architect, PM=Project Manager
+- If the yogi describes self-employment, freelancing, running their own business,
+  building a startup, or independent projects (no employer), set:
+  role = descriptive title (e.g. 'Freelance Developer', 'Gründer', 'Self-employed Consultant')
+  company_name = null (they have no employer)
+- If something is not mentioned, use null. Do NOT invent a company name.
 
 Set "wants_more" to false if the yogi says they have no more previous jobs,
 says "that's all", "no more", "nothing before that", or similar.
@@ -346,6 +361,58 @@ def _reply(lang: str, en: str, de: str) -> str:
     return de if lang == 'de' else en
 
 
+def _nominative_to_dative_de(phrase: str) -> str:
+    """Convert a German nominative 'ein(e) [adj*] noun' phrase to dative form.
+
+    Used when the phrase follows a preposition like 'bei' which governs dative.
+    Examples:
+        "eine große deutsche Bank"  → "einer großen deutschen Bank"
+        "ein mittelständisches Autohaus" → "einem mittelständischen Autohaus"
+        "ein führendes Unternehmen" → "einem führenden Unternehmen"
+    Only alters phrases that start with 'ein'/'eine'. Others returned unchanged.
+    """
+    # Swap indefinite article
+    result, swapped = re.subn(r'^eine\b', 'einer', phrase)
+    if not swapped:
+        result, swapped = re.subn(r'^ein\b', 'einem', phrase)
+    if not swapped:
+        return phrase  # doesn't start with ein/eine — return as-is
+
+    # Convert adjective endings to dative weak inflection (-en for all genders)
+    # Only process words between the article (index 0) and the last word (the noun)
+    words = result.split(' ')
+    for i in range(1, len(words) - 1):
+        w = words[i]
+        if w.endswith('es') or w.endswith('er'):
+            words[i] = w[:-2] + 'en'
+        elif (w.endswith('e')
+              and not w.endswith('ie')
+              and not w.endswith('ee')
+              and not w.endswith('ue')):
+            words[i] = w[:-1] + 'en'
+    return ' '.join(words)
+
+
+def _detect_redirect(message: str) -> bool:
+    """Detect if the user is asking a question or offering to elaborate rather than
+    providing the requested structured information (title/company)."""
+    msg = message.strip()
+    # Ends with a question mark
+    if msg.endswith('?'):
+        return True
+    # Common redirect phrases in German and English
+    redirect_patterns = re.compile(
+        r'\b(?:'
+        r'warte?\s*mal|soll\s*ich|kann\s*ich|darf\s*ich|'
+        r'lass\s*mich|let\s*me|should\s*i|can\s*i|'
+        r'wollte?\s*(?:nur|gerne?)|ich\s*meine|gemeint|'
+        r'eigentlich|genauer\s*gesagt|erzähl(?:en)?\s*dir'
+        r')\b',
+        re.IGNORECASE
+    )
+    return bool(redirect_patterns.search(msg))
+
+
 # ─────────────────────────────────────────────────────────
 # Profile save
 # ─────────────────────────────────────────────────────────
@@ -443,8 +510,8 @@ def save_profile(user_id: int, collected: dict, conn):
                 VALUES (%s, %s, %s, %s, %s, 'adele_interview')
             """, (
                 profile_id,
-                entry.get('employer_description', 'a company'),
-                entry.get('role', 'unknown role'),
+                entry.get('employer_description') or 'a company',
+                entry.get('role') or 'unknown role',
                 duration_months,
                 desc or None,
             ))
@@ -611,37 +678,60 @@ async def adele_chat(message: str, user_id: int, conn,
                             work_history_count=wh_count, turn_count=turn)
 
             # Say what we got + ask about responsibilities if thin
-            emp = entry.get('employer_description', '')
+            emp_raw = entry.get('employer_description')
+            emp_de = _nominative_to_dative_de(emp_raw) if emp_raw else None
+            emp_en = emp_raw or 'your company'
+            emp_de = emp_de or 'deinem Unternehmen'
+            role_label = entry.get('role')
             dur = entry.get('duration_years')
             dur_str = f" ({dur} {'years' if language == 'en' else 'Jahre'})" if dur else ""
 
-            if entry.get('key_responsibilities'):
+            if role_label and entry.get('key_responsibilities'):
                 # Good enough — move to previous jobs
                 return AdeleResponse(
                     reply=_reply(language,
-                        f"Got it — **{entry.get('role', 'your role')}** at {emp}{dur_str}.\n\n"
+                        f"Got it — **{role_label}** at {emp_en}{dur_str}.\n\n"
                         f"What was your previous role before that? "
                         f"If this was your first job, just say so.",
-                        f"Verstanden — **{entry.get('role', 'deine Rolle')}** bei {emp}{dur_str}.\n\n"
+                        f"Verstanden — **{role_label}** bei {emp_de}{dur_str}.\n\n"
                         f"Was war deine vorherige Position davor? "
                         f"Wenn das dein erster Job war, sag einfach Bescheid."),
                     language=language,
                     phase='work_history',
                     collected=collected,
                 )
-            else:
+            elif role_label:
                 return AdeleResponse(
                     reply=_reply(language,
-                        f"Got it — **{entry.get('role', 'your role')}** at {emp}{dur_str}.\n\n"
+                        f"Got it — **{role_label}** at {emp_en}{dur_str}.\n\n"
                         f"What are your main responsibilities there? What do you actually do day-to-day?",
-                        f"Verstanden — **{entry.get('role', 'deine Rolle')}** bei {emp}{dur_str}.\n\n"
+                        f"Verstanden — **{role_label}** bei {emp_de}{dur_str}.\n\n"
                         f"Was sind deine Hauptaufgaben dort? Was machst du so im Tagesgeschäft?"),
                     language=language,
                     phase='current_role',  # stay here for responsibilities
                     collected=collected,
                 )
+            else:
+                # Got a company but no title — ask for the title specifically
+                return AdeleResponse(
+                    reply=_reply(language,
+                        f"I see you're at {emp_en} — what's your job title there?",
+                        f"Ich sehe, du bist bei {emp_de} — wie lautet dein Jobtitel dort?"),
+                    language=language,
+                    phase='current_role',
+                    collected=collected,
+                )
         else:
-            # Couldn't extract — ask more specifically
+            # Couldn't extract — check if user is asking a question or offering to elaborate
+            if _detect_redirect(message):
+                return AdeleResponse(
+                    reply=_reply(language,
+                        "Of course! Please go ahead — tell me more.",
+                        "Natürlich! Nur zu — erzähl mir gerne mehr."),
+                    language=language,
+                    phase='current_role',
+                )
+            # Otherwise ask more specifically
             return AdeleResponse(
                 reply=_reply(language,
                     "Could you tell me your current or most recent job title and company?",
@@ -690,12 +780,41 @@ async def adele_chat(message: str, user_id: int, conn,
             _update_session(conn, session['session_id'], 'work_history', collected,
                             work_history_count=wh_count, turn_count=turn)
 
-            emp = entry.get('employer_description', '')
+            emp_raw = entry.get('employer_description')
+            emp_de = _nominative_to_dative_de(emp_raw) if emp_raw else None
+            emp_en = emp_raw or 'a company'
+            emp_de = emp_de or 'einem Unternehmen'
+            role_label = entry.get('role')
+
+            if not role_label:
+                # Got a company but no title — ask for clarification before noting
+                return AdeleResponse(
+                    reply=_reply(language,
+                        f"I see you were at {emp_en} — what was your job title there?",
+                        f"Du warst bei {emp_de} — wie war dein Jobtitel dort?"),
+                    language=language,
+                    phase='work_history',
+                    collected=collected,
+                )
+
+            # Self-employed / no company case
+            if not emp_raw:
+                return AdeleResponse(
+                    reply=_reply(language,
+                        f"**{role_label}** — noted.\n\n"
+                        f"And before that? Any earlier roles, or was that the start?",
+                        f"**{role_label}** — notiert.\n\n"
+                        f"Und davor? Gab es noch frühere Positionen, oder war das der Anfang?"),
+                    language=language,
+                    phase='work_history',
+                    collected=collected,
+                )
+
             return AdeleResponse(
                 reply=_reply(language,
-                    f"**{entry.get('role', 'that role')}** at {emp} — noted.\n\n"
+                    f"**{role_label}** at {emp_en} — noted.\n\n"
                     f"And before that? Any earlier roles, or was that the start?",
-                    f"**{entry.get('role', 'diese Rolle')}** bei {emp} — notiert.\n\n"
+                    f"**{role_label}** bei {emp_de} — notiert.\n\n"
                     f"Und davor? Gab es noch frühere Positionen, oder war das der Anfang?"),
                 language=language,
                 phase='work_history',
@@ -712,6 +831,15 @@ async def adele_chat(message: str, user_id: int, conn,
                 _update_session(conn, session['session_id'], 'work_history', collected,
                                 turn_count=turn)
 
+        # If user is asking a question or offering to elaborate, respond conversationally
+        if _detect_redirect(message):
+            return AdeleResponse(
+                reply=_reply(language,
+                    "Of course! Go ahead — tell me about it.",
+                    "Natürlich! Erzähl mir gerne davon."),
+                language=language,
+                phase='work_history',
+            )
         return AdeleResponse(
             reply=_reply(language,
                 "Could you tell me the job title and company for your previous role?",
@@ -908,7 +1036,7 @@ def _build_work_entry(role: str, company_name: str, duration_hint: str,
                       conn, lang: str) -> dict:
     """Build a work history entry, anonymizing the company name."""
     entry = {
-        'role': role or 'unknown role',
+        'role': role or None,  # None = not yet known; never display 'unknown role'
         'key_responsibilities': responsibilities or [],
     }
 
@@ -917,7 +1045,7 @@ def _build_work_entry(role: str, company_name: str, duration_hint: str,
         desc = lookup_or_queue(conn, company_name, lang=lang)
         entry['employer_description'] = desc
     else:
-        entry['employer_description'] = _reply(lang, 'a company', 'ein Unternehmen')
+        entry['employer_description'] = None  # self-employed / no employer
 
     # Duration
     duration = _parse_duration(duration_hint)
