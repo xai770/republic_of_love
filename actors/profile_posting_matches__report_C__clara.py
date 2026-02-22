@@ -605,6 +605,23 @@ def process_match(conn, profile_id: int, posting_id: int) -> Dict:
     match_id = cur.fetchone()['match_id']
     conn.commit()
 
+    # --- USAGE: Log billable event for match report (and cover letter if generated) ---
+    try:
+        cur2 = conn.cursor()
+        cur2.execute("SELECT user_id FROM profiles WHERE profile_id = %s", (profile_id,))
+        p_row = cur2.fetchone()
+        if p_row:
+            from lib.usage_tracker import log_event
+            has_cover = bool(llm_result.get('cover_letter'))
+            log_event(conn, p_row['user_id'], 'match_report',
+                      context={'match_id': match_id, 'posting_id': posting_id,
+                               'recommendation': llm_result.get('recommendation')})
+            if has_cover:
+                log_event(conn, p_row['user_id'], 'cover_letter',
+                          context={'match_id': match_id, 'posting_id': posting_id})
+    except Exception as e:
+        logger.warning("Usage tracking failed for match %s: %s", match_id, e)
+
     return {
         'success': True,
         'match_id': match_id,

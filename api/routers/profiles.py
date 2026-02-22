@@ -881,7 +881,15 @@ async def parse_cv(
         # Explicitly discard raw text
         del text
         del content
-        
+
+        # --- USAGE: Log billable CV extraction event ---
+        try:
+            from lib.usage_tracker import log_event
+            log_event(conn, user['user_id'], 'cv_extraction',
+                      context={'filename': file.filename, 'text_len': len(result.get('raw_text', '') or '')})
+        except Exception as e:
+            log.warning(f"Usage tracking failed for cv_extraction: {e}")
+
         return result
         
     except HTTPException:
@@ -1015,6 +1023,15 @@ def import_cv(
 
     # Kick off embedding computation in background (Adele's signal)
     _schedule_profile_embedding(user['user_id'])
+
+    # --- USAGE: Log billable profile embed event ---
+    try:
+        from lib.usage_tracker import log_event
+        log_event(conn, user['user_id'], 'profile_embed',
+                  context={'profile_id': profile_id, 'skills_count': len(all_keywords),
+                           'work_entries': imported_count})
+    except Exception as e:
+        log.warning(f"Usage tracking failed for profile_embed: {e}")
 
     return {
         "status": "ok",
