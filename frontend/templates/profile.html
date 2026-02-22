@@ -1162,16 +1162,14 @@ function _fireIntroAnim() {
 }
 
 function runIntroAnimation() {
-    if (sessionStorage.getItem('pb_intro_seen')) return;
-    sessionStorage.setItem('pb_intro_seen', '1');
-    // Schedule: fire after 5 s of inactivity, or at most 12 s from load
+    let _introFired = false;   // page-local flag only — resets on every load
     let _introTimer = null;
     const _resetIntroTimer = () => {
         clearTimeout(_introTimer);
-        if (sessionStorage.getItem('pb_intro_fired')) return;
+        if (_introFired) return;
         _introTimer = setTimeout(() => {
-            if (sessionStorage.getItem('pb_intro_fired')) return;
-            sessionStorage.setItem('pb_intro_fired', '1');
+            if (_introFired) return;
+            _introFired = true;
             ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
                 document.removeEventListener(ev, _resetIntroTimer));
             _fireIntroAnim();
@@ -1179,7 +1177,7 @@ function runIntroAnimation() {
     };
     ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
         document.addEventListener(ev, _resetIntroTimer, { passive: true }));
-    _resetIntroTimer(); // start 5 s countdown immediately on load
+    _resetIntroTimer(); // start the 5 s countdown right away
 }
 
 // ── MIRA WIDGET ──────────────────────────────────────────
