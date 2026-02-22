@@ -609,28 +609,35 @@
         </div>
     </div>
 
-    <!-- ════════ STEP 9 — Profile kickstart ════════ -->
+    <!-- ════════ STEP 9 — CV upload ════════ -->
     <div class="step" data-step="9">
         <h2 id="s9-title"></h2>
         <p id="s9-subtitle"></p>
-        <div class="kickstart-row">
-            <div class="kickstart-card" onclick="window.location.href='/profile'">
-                <div class="ks-icon">�</div>
-                <div class="ks-label" id="s9-cv-label"></div>
-                <div class="ks-desc" id="s9-cv-desc"></div>
+
+        <!-- Why upload bullets -->
+        <div class="privacy-content" id="s9-why"></div>
+
+        <!-- Upload zone -->
+        <div id="ob-upload-wrap" style="margin-top:8px;">
+            <div class="ob-upload-zone" id="ob-upload-zone"
+                 onclick="document.getElementById('ob-file-input').click()"
+                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="this.classList.remove('drag-over');_obHandleDrop(event)">
+                <div class="ob-uz-icon">&#128196;</div>
+                <div class="ob-uz-label" id="s9-cv-label"></div>
+                <div class="ob-uz-hint" id="s9-cv-hint"></div>
             </div>
-            <div class="kickstart-card" onclick="window.location.href='/dashboard'">
-                <div class="ks-icon">🔍</div>
-                <div class="ks-label" id="s9-chat-label"></div>
-                <div class="ks-desc" id="s9-chat-desc"></div>
-            </div>
+            <input type="file" id="ob-file-input" accept=".pdf,.docx,.doc,.txt,.md"
+                   hidden onchange="_obHandleFile(this.files[0])">
+            <div id="ob-upload-msg" style="display:none;margin-top:8px;text-align:center;font-size:14px;color:#4CAF50;"></div>
         </div>
-        <div class="btn-row" style="justify-content:center;">
-            <button class="btn btn-ghost" id="s9-skip" onclick="window.location.href='/dashboard'"></button>
+
+        <!-- Skip link only -->
+        <div style="text-align:center;margin-top:16px;">
+            <a href="/dashboard" id="s9-skip" style="font-size:13px;color:#64748b;text-decoration:underline;cursor:pointer;"></a>
         </div>
     </div>
-</div>
-
 <script>
 (function() {
     "use strict";

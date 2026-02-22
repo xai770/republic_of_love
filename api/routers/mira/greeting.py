@@ -96,6 +96,7 @@ async def get_greeting(
         # Get user state
         cur.execute("""
             SELECT u.created_at, u.last_login_at, u.yogi_name,
+                   u.onboarding_completed_at,
                    p.profile_id, p.skill_keywords,
                    p.experience_level, p.location,
                    p.created_at AS profile_created_at
@@ -114,8 +115,12 @@ async def get_greeting(
         yogi_name = row['yogi_name'] or ''
         first_name = yogi_name.split()[0] if yogi_name else ''
 
+        onboarding_completed_at = row.get('onboarding_completed_at')
+        _ob_ts = onboarding_completed_at.replace(tzinfo=None) if onboarding_completed_at else None
+        freshly_onboarded = _ob_ts and (datetime.now() - _ob_ts) < timedelta(hours=1)
         is_new = (last_login is None or
-                  (datetime.now() - created_at) < timedelta(hours=1))
+                  (datetime.now() - created_at) < timedelta(hours=1) or
+                  freshly_onboarded)
 
         has_profile = row['profile_id'] is not None
         skill_keywords = row['skill_keywords']
@@ -223,7 +228,9 @@ async def get_greeting(
         state_parts = []
         if first_name:
             state_parts.append(f"Name: {first_name}")
-        if is_new:
+        if is_new and freshly_onboarded:
+            state_parts.append("Status: Gerade Onboarding abgeschlossen — allererstes Mal auf der Plattform")
+        elif is_new:
             state_parts.append("Status: Ganz neu bei talent.yoga")
         else:
             state_parts.append("Status: Kehrt zurück")
