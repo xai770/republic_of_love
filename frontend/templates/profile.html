@@ -2045,15 +2045,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadActivityLog();
     _initMira();
     runIntroAnimation();  // schedules 5 s inactivity trigger
-    // If no yogi name yet, open form modal so they can set it
-    const yogiInput = document.getElementById('pf-yogi-name');
-    if (yogiInput && !yogiInput.value.trim()) {
-        openModal('form');
-        setTimeout(() => {
-            yogiInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            yogiInput.focus();
-        }, 150);
-    }
 });
 </script>
 {% endblock %}
