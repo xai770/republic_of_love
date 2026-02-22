@@ -33,16 +33,40 @@ def _get_pool() -> pg_pool.ThreadedConnectionPool:
 
 
 def get_db():
-    """Database connection dependency — returns a pooled connection."""
+    """Database connection dependency — returns a pooled connection.
+
+    Handles SSL/TCP connection drops that occur during long-running requests
+    (e.g. the ~2-minute CV extraction LLM call).  Both conn.rollback() and
+    pool.putconn() / conn.reset() can throw psycopg2.OperationalError when the
+    connection has been silently closed by PostgreSQL; we catch those failures
+    here so they never propagate up through the ASGI stack and corrupt the HTTP
+    response that was already computed by the route handler.
+    """
     pool = _get_pool()
     conn = pool.getconn()
     try:
         yield conn
     except Exception:
-        conn.rollback()
+        # Roll back any open transaction, but don't let a dead connection
+        # (OperationalError: SSL connection closed unexpectedly) mask the
+        # original exception that the route handler raised.
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         raise
     finally:
-        pool.putconn(conn)
+        # Return connection to pool.  pool.putconn() calls conn.reset() which
+        # executes a ROLLBACK on the wire; if the SSL link dropped while the
+        # route handler was busy this throws OperationalError.  Fall back to
+        # forcibly closing the connection so the pool can issue a fresh one.
+        try:
+            pool.putconn(conn)
+        except Exception:
+            try:
+                pool.putconn(conn, close=True)
+            except Exception:
+                pass
 
 
 def get_current_user(request: Request, conn=Depends(get_db)) -> Optional[dict]:
