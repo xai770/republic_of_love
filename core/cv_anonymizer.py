@@ -31,8 +31,8 @@ from core.pii_detector import PIIDetector
 logger = get_logger(__name__)
 
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434')
-EXTRACTION_MODEL = "qwen2.5:7b"
-FALLBACK_MODEL = "gemma3:4b"
+EXTRACTION_MODEL = "gemma3:4b"
+FALLBACK_MODEL = "qwen2.5:7b"
 TIMEOUT = 120.0        # per-call timeout — chunks are small so 120 s is generous
 CALL_HARD_TIMEOUT = 240.0  # asyncio.wait_for wall-clock limit per LLM call
 CHUNK_SIZE = 3500     # chars per CV chunk for Pass 1
