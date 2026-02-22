@@ -184,7 +184,7 @@
 
 /* Upload input */
 .pb-upload-area {
-    padding: 1.5rem;
+    padding: 0.75rem;
     display: none;
 }
 
@@ -193,7 +193,7 @@
 .pb-dropzone {
     border: 2px dashed var(--border);
     border-radius: 0.75rem;
-    padding: 2rem;
+    padding: 1rem;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
@@ -221,13 +221,54 @@
 
 /* Form input */
 .pb-form-area {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     display: none;
     overflow-y: auto;
-    flex: 1;
+    max-height: 45vh;
 }
 
 .pb-form-area.active { display: block; }
+
+/* Maximize overlay for form — starts below the 80px fixed header so close btn is visible */
+.pb-form-area.pb-expanded {
+    position: fixed;
+    top: 88px;
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 1002;
+    max-height: none;
+    background: var(--bg);
+    border-radius: 1rem;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+    overflow-y: auto;
+    padding: 1.5rem 2rem;
+    display: block !important;
+}
+
+/* Form toolbar with maximize button */
+.pb-form-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.25rem;
+}
+
+.pb-form-expand-btn {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    line-height: 1.4;
+}
+
+.pb-form-expand-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
 
 .pb-form-section { margin-bottom: 1rem; }
 
@@ -583,6 +624,26 @@
     .pb-right { min-height: 50vh; }
 }
 
+/* ── Top-panel mode (form/upload tabs) ─────────────────── */
+/* When upload or form tab is active, show that pane in the upper half
+   and keep Adele's activity log in the lower half. */
+.pb-left.top-panel .pb-input-area {
+    flex: 0 0 50%;
+    max-height: 50%;
+    overflow-y: auto;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+}
+.pb-left.top-panel .pb-log {
+    order: 1;   /* push log below input-area in flex order */
+    flex: 1;
+}
+.pb-left.top-panel .pb-form-area.active,
+.pb-left.top-panel .pb-upload-area.active {
+    max-height: none;
+    height: 100%;
+}
+
 /* ── Dark mode ─────────────────────────────────────────── */
 [data-theme="dark"] .pb-log-entry.adele { background: var(--bg); }
 [data-theme="dark"] .pb-preview-content blockquote { background: rgba(37, 99, 235, 0.08); }
@@ -662,6 +723,10 @@
 
                 <!-- Form input -->
                 <div class="pb-form-area" id="pb-input-form">
+                    <div class="pb-form-toolbar">
+                        <button class="pb-form-expand-btn" id="form-expand-btn"
+                                onclick="toggleFormExpand()">&#x26F6; Expand</button>
+                    </div>
                     <!-- Identity -->
                     <div class="pb-form-section">
                         <h3>{{ t('profile.section_identity') }}</h3>
@@ -826,20 +891,27 @@ function switchTab(tab) {
     document.getElementById('pb-input-form').style.display = tab === 'form' ? 'block' : 'none';
     document.getElementById('pb-input-form').classList.toggle('active', tab === 'form');
 
-    // When form tab is active: hide log, let form fill the pane
-    const log = document.getElementById('pb-log');
-    const inputArea = document.querySelector('.pb-input-area');
-    if (tab === 'form') {
-        log.style.display = 'none';
-        inputArea.style.flex = '1';
-        inputArea.style.overflow = 'hidden';
-    } else {
-        log.style.display = 'flex';
-        inputArea.style.flex = '';
-        inputArea.style.overflow = '';
-    }
+    // Form/upload tabs: show content in upper half, Adele log in lower half
+    const leftPane = document.querySelector('.pb-left');
+    leftPane.classList.toggle('top-panel', tab === 'upload' || tab === 'form');
 
     if (tab === 'chat') document.getElementById('pb-chat-text').focus();
+
+    // Collapse form expand overlay when switching away
+    if (tab !== 'form') {
+        const form = document.getElementById('pb-input-form');
+        const btn = document.getElementById('form-expand-btn');
+        if (form) form.classList.remove('pb-expanded');
+        if (btn) btn.innerHTML = '&#x26F6; Expand';
+    }
+}
+
+// ── FORM EXPAND TOGGLE ────────────────────────────────────
+function toggleFormExpand() {
+    const form = document.getElementById('pb-input-form');
+    const btn = document.getElementById('form-expand-btn');
+    const isExpanded = form.classList.toggle('pb-expanded');
+    btn.innerHTML = isExpanded ? '&#x2715; Close' : '&#x26F6; Expand';
 }
 
 // ── AUTO-RESIZE TEXTAREA ───────────────────────────────────
