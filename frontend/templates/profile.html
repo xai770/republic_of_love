@@ -627,27 +627,36 @@
 /* ── Tool icon buttons in right-pane header ────────────── */
 .pb-tool-btn {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.2rem;
-    padding: 0.35rem 0.65rem;
-    border-radius: 0.5rem;
+    gap: 0.55rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 0.55rem;
     border: 1px solid var(--border);
     background: transparent;
     cursor: pointer;
-    font-size: 0.95rem;
     transition: all 0.15s;
     color: var(--text-muted);
     flex-shrink: 0;
     line-height: 1;
+    min-width: 116px;          /* both buttons same width */
+}
+.pb-tool-btn svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
 }
 .pb-tool-btn .pb-tool-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     line-height: 1;
+    white-space: nowrap;
 }
+/* Bigger Mira emoji override for profile page */
+#mira-fab-btn { font-size: 2rem; }
+#mira-fab-icon { font-size: 2rem; line-height: 1; }
 .pb-tool-btn:hover {
     border-color: var(--primary);
     background: rgba(37,99,235,0.06);
@@ -679,49 +688,52 @@
     color: var(--primary);
 }
 
-/* ── Intro tooltip (dismissable) ────────────────────────── */
+/* ── Intro tooltip (dismissable, centred) ──────────────── */
 .pb-intro-tip {
     display: none;
     position: fixed;
-    top: 96px;
-    right: 1.75rem;
-    z-index: 1200;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1300;
     background: var(--card-bg);
-    border: 1px solid var(--primary);
-    border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-    max-width: 280px;
-    animation: pb-modal-in 0.2s ease-out;
+    border: 2px solid var(--primary);
+    border-radius: 1rem;
+    padding: 1.6rem 2rem;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.28);
+    max-width: 480px;
+    width: calc(100vw - 3rem);
+    animation: pb-modal-in 0.25s ease-out;
     pointer-events: auto;
 }
 .pb-intro-tip.visible { display: block; }
-.pb-intro-tip::before {
-    content: '';
-    position: absolute;
-    top: -7px;
-    right: 2.5rem;
-    width: 12px;
-    height: 12px;
-    background: var(--card-bg);
-    border-left: 1px solid var(--primary);
-    border-top: 1px solid var(--primary);
-    transform: rotate(45deg);
+.pb-intro-tip h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+    color: var(--primary);
 }
 .pb-intro-tip ul {
-    margin: 0.4rem 0 0;
-    padding-left: 1.1rem;
-    font-size: 0.85rem;
+    margin: 0 0 0.6rem;
+    padding-left: 1.2rem;
+    font-size: 0.9rem;
     color: var(--text);
-    line-height: 1.55;
+    line-height: 1.65;
 }
+.pb-intro-tip li { margin-bottom: 0.5rem; }
 .pb-intro-tip strong { color: var(--primary); }
-.pb-intro-tip-dismiss {
-    font-size: 0.75rem;
+.pb-intro-tip p.pb-tip-sub {
+    margin: 0.5rem 0 0;
+    font-size: 0.83rem;
     color: var(--text-muted);
-    margin-top: 0.6rem;
+    line-height: 1.5;
+}
+.pb-intro-tip-dismiss {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.9rem;
     display: block;
-    text-align: right;
+    text-align: center;
+    opacity: 0.8;
 }
 
 /* ── Modal backdrop ─────────────────────────────────────── */
@@ -864,16 +876,18 @@
             <div class="pb-right-header">
                 <h2>📋 {{ t('profile.preview_title') }}</h2>
                 <div class="pb-right-actions">
-                    <button class="pb-tool-btn" id="btn-view-upload" onclick="openModal('upload')" title="{{ t('profile.tab_upload') }}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="pb-tool-btn" id="btn-view-upload" onclick="openModal('upload')"
+                        title="Upload your CV or résumé — we'll read it and instantly fill in all your profile fields, skills, work history and education for you.">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 16 12 12 8 16"></polyline>
                             <line x1="12" y1="12" x2="12" y2="21"></line>
                             <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
                         </svg>
                         <span class="pb-tool-label">{{ t('profile.tab_upload') or 'Upload' }}</span>
                     </button>
-                    <button class="pb-tool-btn" id="btn-view-form" onclick="openModal('form')" title="{{ t('profile.tab_form') }}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="pb-tool-btn" id="btn-view-form" onclick="openModal('form')"
+                        title="Open the profile editor — manually fill in or update your name, title, skills, work experience, education and languages at your own pace.">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
@@ -904,12 +918,24 @@
 
     <!-- Intro tip (shown once on first visit, click anywhere dismisses) -->
     <div class="pb-intro-tip" id="pb-intro-tip">
-        <strong>&#x1F4A1; {{ t('profile.intro_tip_title') or 'Two quick tools' }}</strong>
+        <h3>&#x1F4A1; Two quick ways to build your profile</h3>
         <ul>
-            <li><strong>&#x2191; {{ t('profile.tab_upload') }}</strong> &mdash; {{ t('profile.intro_tip_upload') or 'Upload your CV and we\'ll fill your profile automatically' }}</li>
-            <li><strong>&#x270F;&#xFE0F; {{ t('profile.tab_form') }}</strong> &mdash; {{ t('profile.intro_tip_form') or 'Edit your profile details manually' }}</li>
+            <li>
+                <strong>&#x2601;&#xFE0F; Upload CV</strong> &mdash;
+                Have a résumé or CV handy? Upload it and we automatically extract your work history,
+                skills, education and languages — your profile fills itself in seconds.
+            </li>
+            <li>
+                <strong>&#x270F;&#xFE0F; Edit Form</strong> &mdash;
+                Prefer to type it yourself? Open the form to add or refine your name, job title,
+                skills, past roles and any other details at your own pace.
+            </li>
         </ul>
-        <span class="pb-intro-tip-dismiss">{{ t('profile.intro_tip_dismiss') or 'Click anywhere to close' }}</span>
+        <p class="pb-tip-sub">
+            You can switch between both tools at any time — they work together.
+            Once your profile looks good, download it or ask Adele (left panel) to help you tailor it.
+        </p>
+        <span class="pb-intro-tip-dismiss">Click anywhere &nbsp;·&nbsp; Press Esc &nbsp;·&nbsp; or tap here to close</span>
     </div>
 
     <!-- ═══ UPLOAD MODAL ═══ -->
@@ -1101,22 +1127,14 @@ const I = {
 
 // ── INTRO ANIMATION ──────────────────────────────────────
 
-function runIntroAnimation() {
-    if (sessionStorage.getItem('pb_intro_seen')) return;
-    sessionStorage.setItem('pb_intro_seen', '1');
-    const btns = [
-        document.getElementById('btn-view-upload'),
-        document.getElementById('btn-view-form')
-    ];
-    // Stagger wiggle+pulse on the two tool buttons
-    btns.forEach((btn, i) => {
-        if (!btn) return;
-        setTimeout(() => {
-            btn.classList.add('pb-intro-anim');
-            btn.addEventListener('animationend', () => btn.classList.remove('pb-intro-anim'), { once: true });
-        }, i * 350);
-    });
-    // Show tip after animations complete
+function _fireIntroAnim() {
+    // 1. Upload button wiggles first
+    const upload = document.getElementById('btn-view-upload');
+    if (upload) {
+        upload.classList.add('pb-intro-anim');
+        upload.addEventListener('animationend', () => upload.classList.remove('pb-intro-anim'), { once: true });
+    }
+    // 2. Tip pops open centre-screen shortly after
     setTimeout(() => {
         const tip = document.getElementById('pb-intro-tip');
         if (tip) {
@@ -1126,12 +1144,42 @@ function runIntroAnimation() {
                 document.removeEventListener('click', dismiss);
                 document.removeEventListener('keydown', dismiss);
             };
+            const escDismiss = (e) => { if (e.key === 'Escape') dismiss(); };
             setTimeout(() => {
                 document.addEventListener('click', dismiss);
-                document.addEventListener('keydown', dismiss);
-            }, 400);
+                document.addEventListener('keydown', escDismiss);
+            }, 350);
         }
-    }, 1000);
+    }, 600);
+    // 3. Form button wiggles after tip is visible
+    const form = document.getElementById('btn-view-form');
+    if (form) {
+        setTimeout(() => {
+            form.classList.add('pb-intro-anim');
+            form.addEventListener('animationend', () => form.classList.remove('pb-intro-anim'), { once: true });
+        }, 1100);
+    }
+}
+
+function runIntroAnimation() {
+    if (sessionStorage.getItem('pb_intro_seen')) return;
+    sessionStorage.setItem('pb_intro_seen', '1');
+    // Schedule: fire after 5 s of inactivity, or at most 12 s from load
+    let _introTimer = null;
+    const _resetIntroTimer = () => {
+        clearTimeout(_introTimer);
+        if (sessionStorage.getItem('pb_intro_fired')) return;
+        _introTimer = setTimeout(() => {
+            if (sessionStorage.getItem('pb_intro_fired')) return;
+            sessionStorage.setItem('pb_intro_fired', '1');
+            ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
+                document.removeEventListener(ev, _resetIntroTimer));
+            _fireIntroAnim();
+        }, 5000);
+    };
+    ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
+        document.addEventListener(ev, _resetIntroTimer, { passive: true }));
+    _resetIntroTimer(); // start 5 s countdown immediately on load
 }
 
 // ── MIRA WIDGET ──────────────────────────────────────────
@@ -1856,8 +1904,8 @@ function downloadProfile() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
-    runIntroAnimation();
     _initMira();
+    runIntroAnimation();  // schedules 5 s inactivity trigger
     // If no yogi name yet, open form modal so they can set it
     const yogiInput = document.getElementById('pf-yogi-name');
     if (yogiInput && !yogiInput.value.trim()) {
