@@ -298,10 +298,24 @@
             .name-chip { padding: 12px 16px; font-size: 14px; }
         }
 
-        /* ── T&C checkbox (step 4) ────────────────────── */
+        /* ── T&C read-buttons + checkbox (step 4) ─────────── */
+        .tc-read-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 16px; border-radius: 10px;
+            border: 1.5px solid #e2e8f0; background: #f8fafc;
+            cursor: pointer; transition: all .2s;
+            font-size: 14px; color: #0d9488; font-weight: 600;
+            text-decoration: none;
+        }
+        .tc-read-row:hover { border-color: #0d9488; background: #f0fdfa; }
+        .tc-read-row.read {
+            border-color: #4caf50; background: #f0fdf4; color: #166534;
+        }
+        .tc-read-row.read .tc-read-status { color: #4caf50; }
+        .tc-read-status { font-size: 16px; flex-shrink: 0; }
         .tc-row {
             display: flex; align-items: flex-start; gap: 10px;
-            margin-top: 8px; padding: 12px 14px;
+            margin-top: 4px; padding: 12px 14px;
             background: #f0fdf4; border-radius: 10px;
             border: 1px solid #bbf7d0;
         }
@@ -309,16 +323,9 @@
             width: 18px; height: 18px; margin-top: 2px;
             accent-color: #0d9488; flex-shrink: 0;
         }
-        .tc-row input[type="checkbox"]:disabled {
-            opacity: 0.4; cursor: not-allowed;
-        }
-        .tc-row:has(input:disabled) label {
-            opacity: 0.55; cursor: default;
-        }
-        .tc-row label {
-            font-size: 14px; color: #334155; cursor: pointer; line-height: 1.5;
-        }
-        .tc-row a { color: #0d9488; text-decoration: underline; }
+        .tc-row input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
+        .tc-row:has(input:disabled) label { opacity: 0.55; cursor: default; }
+        .tc-row label { font-size: 14px; color: #334155; cursor: pointer; line-height: 1.5; }
 
         /* ── Billing info (step 5) ────────────────────── */
         .billing-cards {
@@ -499,11 +506,25 @@
     <div class="step" data-step="4">
         <h2 id="s4-title"></h2>
         <div class="privacy-content" id="s4-content"></div>
-        <div class="tc-row">
+
+        <!-- Read buttons -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <div class="tc-read-row" id="btn-read-terms" onclick="showLegal('terms')" role="button" tabindex="0">
+                <span class="tc-read-status" id="icon-terms">📄</span>
+                <span id="s4-terms-btn"></span>
+            </div>
+            <div class="tc-read-row" id="btn-read-privacy" onclick="showLegal('privacy')" role="button" tabindex="0">
+                <span class="tc-read-status" id="icon-privacy">🔒</span>
+                <span id="s4-privacy-btn"></span>
+            </div>
+        </div>
+
+        <!-- Checkbox -->
+        <div class="tc-row" style="margin-top:8px;">
             <input type="checkbox" id="tc-checkbox" onchange="toggleTerms()" disabled>
             <label for="tc-checkbox" id="s4-tc-label"></label>
-            <span class="validation-msg" id="tc-hint" style="display:block;margin-top:4px;"></span>
         </div>
+
         <div class="btn-row">
             <button class="btn btn-secondary" onclick="goTo(prevStepFrom(4))">← <span class="back-label"></span></button>
             <div style="display:flex;gap:12px;margin-left:auto;">
@@ -643,7 +664,11 @@
                 "All data stays on servers in Germany. EU law (GDPR) applies to everything we do.",
                 "You can download or permanently delete your account at any time — no questions asked.",
             ],
-            s4_tc_label: 'I have read and accept the <button class="tc-link" onclick="showLegal(\'terms\')" type="button">Terms &amp; Conditions</button> and <button class="tc-link" onclick="showLegal(\'privacy\')" type="button">Privacy Policy</button>.',
+            s4_terms_btn: 'Terms & Conditions',
+            s4_privacy_btn: 'Privacy Policy',
+            s4_tc_label: 'I have read and accept both documents',
+            s4_terms_read: 'Terms & Conditions – read ✓',
+            s4_privacy_read: 'Privacy Policy – read ✓',
             s4_accept: "I accept",
             s4_reject: "I decline",
             s5_title: "How billing works",
@@ -699,7 +724,11 @@
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Du kannst jederzeit alle Daten herunterladen oder dein Konto dauerhaft löschen — ohne Rückfragen.",
             ],
-            s4_tc_label: 'Ich habe die <button class="tc-link" onclick="showLegal(\'terms\')" type="button">AGB</button> und die <button class="tc-link" onclick="showLegal(\'privacy\')" type="button">Datenschutzerklärung</button> gelesen und akzeptiere sie.',
+            s4_terms_btn: 'AGB',
+            s4_privacy_btn: 'Datenschutzerklärung',
+            s4_tc_label: 'Ich habe beide Dokumente gelesen und akzeptiere sie',
+            s4_terms_read: 'AGB – gelesen ✓',
+            s4_privacy_read: 'Datenschutzerklärung – gelesen ✓',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
             s5_title: "So funktioniert die Abrechnung",
@@ -755,7 +784,11 @@
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Sie können jederzeit alle Daten herunterladen oder Ihr Konto dauerhaft löschen — ohne Rückfragen.",
             ],
-            s4_tc_label: 'Ich habe die <button class="tc-link" onclick="showLegal(\'terms\')" type="button">AGB</button> und die <button class="tc-link" onclick="showLegal(\'privacy\')" type="button">Datenschutzerklärung</button> gelesen und akzeptiere sie.',
+            s4_terms_btn: 'AGB',
+            s4_privacy_btn: 'Datenschutzerklärung',
+            s4_tc_label: 'Ich habe beide Dokumente gelesen und akzeptiere sie',
+            s4_terms_read: 'AGB – gelesen ✓',
+            s4_privacy_read: 'Datenschutzerklärung – gelesen ✓',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
             s5_title: "So funktioniert die Abrechnung",
@@ -858,7 +891,9 @@
             const items = t.s4_content || [];
             $('#s4-content').innerHTML = '<ul>' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
         }
-        if ($('#s4-tc-label')) $('#s4-tc-label').innerHTML = t.s4_tc_label;
+        if ($('#s4-terms-btn'))  $('#s4-terms-btn').textContent  = t.s4_terms_btn || 'Terms & Conditions';
+        if ($('#s4-privacy-btn')) $('#s4-privacy-btn').textContent = t.s4_privacy_btn || 'Privacy Policy';
+        if ($('#s4-tc-label'))   $('#s4-tc-label').textContent   = t.s4_tc_label;
         if ($('#s4-accept')) $('#s4-accept').textContent = t.s4_accept;
         if ($('#s4-reject')) $('#s4-reject').textContent = t.s4_reject;
         updateCheckboxState();
@@ -1028,11 +1063,28 @@
         const lang = state.lang === 'en' ? 'en' : 'de';
         const doc = LEGAL[type] && LEGAL[type][lang];
         if (!doc) return;
-        if (type === 'terms')  state.viewedTerms = true;
+        if (type === 'terms')   state.viewedTerms   = true;
         if (type === 'privacy') state.viewedPrivacy = true;
         $('#legal-overlay-title').textContent = doc.title;
         $('#legal-overlay-body').innerHTML = doc.body;
         $('#legal-overlay').classList.add('active');
+        // Mark button as read immediately
+        const t = c();
+        if (type === 'terms') {
+            const row = $('#btn-read-terms');
+            const lbl = $('#s4-terms-btn');
+            const ico = $('#icon-terms');
+            if (row) row.classList.add('read');
+            if (lbl) lbl.textContent = t.s4_terms_read   || 'Terms & Conditions – read ✓';
+            if (ico) ico.textContent = '✓';
+        } else {
+            const row = $('#btn-read-privacy');
+            const lbl = $('#s4-privacy-btn');
+            const ico = $('#icon-privacy');
+            if (row) row.classList.add('read');
+            if (lbl) lbl.textContent = t.s4_privacy_read || 'Privacy Policy – read ✓';
+            if (ico) ico.textContent = '✓';
+        }
     };
 
     window.closeLegal = function() {
