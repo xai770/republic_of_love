@@ -699,13 +699,16 @@
             s8_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
             s8_confirm: "Confirm",
             s9_title: "One last thing — upload your CV!",
-            s9_subtitle: "Drop your CV here and we\'ll build your profile in the background while you explore.",
-            s9_cv_label: "Drop your CV here",
-            s9_cv_hint: "PDF, DOCX or TXT · We\'ll notify you when it\'s done",
-            s9_cv_uploading: "✓ Got it! Analyzing in the background\u2026",
-            s9_chat_label: "Skip — browse jobs first",
-            s9_chat_desc: "You can upload your CV from your profile later",
-            s9_skip: "Skip for now →",
+            s9_subtitle: "We'll find jobs tailored to your career while you explore.",
+            s9_why: [
+                "Tailored job matches based on your actual skills and experience — not just keywords.",
+                "Your CV is fully anonymised before any matching: your name, address, email and company names are all removed.",
+                "Only your career history, skills and qualifications are used. Employers never see your CV directly.",
+            ],
+            s9_cv_label: "Drop your CV here or click to browse",
+            s9_cv_hint: "PDF, DOCX or TXT · Analysis runs in the background — you'll see a notification when done",
+            s9_cv_uploading: "\u2713 Got it! Analyzing in the background\u2026",
+            s9_skip: "Skip for now — I'll do this later →",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -759,13 +762,16 @@
             s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
             s8_confirm: "Bestätigen",
             s9_title: "Noch eine Sache — lad deinen Lebenslauf hoch!",
-            s9_subtitle: "Wirf deinen Lebenslauf rein und wir bauen dein Profil im Hintergrund auf, während du die Plattform entdeckst.",
-            s9_cv_label: "Lebenslauf hier ablegen",
-            s9_cv_hint: "PDF, DOCX oder TXT · Wir melden uns, wenn er fertig ist",
-            s9_cv_uploading: "✓ Erhalten! Analyse läuft im Hintergrund\u2026",
-            s9_chat_label: "Überspringen — erst Jobs ansehen",
-            s9_chat_desc: "Du kannst deinen Lebenslauf später über dein Profil hochladen",
-            s9_skip: "Jetzt überspringen →",
+            s9_subtitle: "Wir suchen für dich passende Jobs, während du die Plattform entdeckst.",
+            s9_why: [
+                "Jobvorschläge, die wirklich zu deiner Erfahrung und deinen Fähigkeiten passen — nicht nur zu Schlagwörtern.",
+                "Dein Lebenslauf wird vollständig anonymisiert: Name, Adresse, E-Mail und Firmennamen werden entfernt.",
+                "Nur dein Werdegang, deine Skills und Qualifikationen werden verwendet. Arbeitgeber sehen deinen Lebenslauf nie direkt.",
+            ],
+            s9_cv_label: "Lebenslauf hier ablegen oder klicken",
+            s9_cv_hint: "PDF, DOCX oder TXT · Analyse läuft im Hintergrund — du bekommst eine Benachrichtigung",
+            s9_cv_uploading: "\u2713 Erhalten! Analyse l\xe4uft im Hintergrund\u2026",
+            s9_skip: "Jetzt überspringen — ich mache das später →",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -819,13 +825,16 @@
             s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
             s8_confirm: "Bestätigen",
             s9_title: "Noch eine Sache — laden Sie Ihren Lebenslauf hoch!",
-            s9_subtitle: "Legen Sie Ihren Lebenslauf ab und wir erstellen Ihr Profil im Hintergrund, während Sie die Plattform erkunden.",
-            s9_cv_label: "Lebenslauf hier ablegen",
-            s9_cv_hint: "PDF, DOCX oder TXT · Wir informieren Sie, wenn er fertig ist",
-            s9_cv_uploading: "✓ Erhalten! Analyse läuft im Hintergrund\u2026",
-            s9_chat_label: "Überspringen — erst Jobs ansehen",
-            s9_chat_desc: "Sie können Ihren Lebenslauf später über Ihr Profil hochladen",
-            s9_skip: "Jetzt überspringen →",
+            s9_subtitle: "Wir suchen für Sie passende Jobs, während Sie die Plattform erkunden.",
+            s9_why: [
+                "Jobvorschläge, die wirklich zu Ihrer Erfahrung und Ihren Fähigkeiten passen — nicht nur zu Schlagwörtern.",
+                "Ihr Lebenslauf wird vollständig anonymisiert: Name, Adresse, E-Mail und Firmennamen werden entfernt.",
+                "Nur Ihr Werdegang, Ihre Skills und Qualifikationen werden verwendet. Arbeitgeber sehen Ihren Lebenslauf nie direkt.",
+            ],
+            s9_cv_label: "Lebenslauf hier ablegen oder klicken",
+            s9_cv_hint: "PDF, DOCX oder TXT · Analyse läuft im Hintergrund — Sie erhalten eine Benachrichtigung",
+            s9_cv_uploading: "\u2713 Erhalten! Analyse l\xe4uft im Hintergrund\u2026",
+            s9_skip: "Jetzt überspringen — ich mache das später →",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -931,13 +940,17 @@
         if ($('#s8-confirm-label')) $('#s8-confirm-label').textContent = t.s8_confirm;
 
         // Step 9 — Kickstart
-        if ($('#s9-title'))      $('#s9-title').textContent = t.s9_title;
-        if ($('#s9-subtitle'))   $('#s9-subtitle').textContent = t.s9_subtitle;
-        if ($('#s9-cv-label'))   $('#s9-cv-label').textContent = t.s9_cv_label;
-        if ($('#s9-cv-hint'))    $('#s9-cv-hint').textContent = t.s9_cv_hint || '';
-        if ($('#s9-chat-label')) $('#s9-chat-label').textContent = t.s9_chat_label;
-        if ($('#s9-chat-desc'))  $('#s9-chat-desc').textContent = t.s9_chat_desc;
-        if ($('#s9-skip'))       $('#s9-skip').textContent = t.s9_skip;
+        if ($('#s9-title'))      $('#s9-title').textContent      = t.s9_title;
+        if ($('#s9-subtitle'))   $('#s9-subtitle').textContent   = t.s9_subtitle;
+        if ($('#s9-why')) {
+            const why = t.s9_why || [];
+            $('#s9-why').innerHTML = why.length
+                ? '<ul>' + why.map(i => '<li>' + i + '</li>').join('') + '</ul>'
+                : '';
+        }
+        if ($('#s9-cv-label'))   $('#s9-cv-label').textContent   = t.s9_cv_label;
+        if ($('#s9-cv-hint'))    $('#s9-cv-hint').textContent    = t.s9_cv_hint || '';
+        if ($('#s9-skip'))       $('#s9-skip').textContent       = t.s9_skip;
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
