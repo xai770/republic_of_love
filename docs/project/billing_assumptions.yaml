@@ -1,0 +1,170 @@
+# Yogi Bill — Cost Assumptions
+#
+# This file contains every tunable number used to compute a yogi's monthly bill.
+# Edit the values here, then regenerate bills. No code changes needed.
+#
+# Format: YAML-style for readability. Parsed by scripts/generate_yogi_bill.py.
+# All monetary values in EUR cents (integer). All rates monthly unless noted.
+#
+# Last reviewed: 2026-02-22
+# Reviewed by: [pending review — Sandy, Nate, xai]
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION A — Direct AI Usage (per-event, variable)           ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# These prices are also stored in DB table `usage_event_prices`.
+# This file is the REVIEW copy; the DB is the RUNTIME copy.
+# After review, sync to DB via: scripts/sync_billing_assumptions.py
+
+ai_event_prices:
+  mira_message:        2     # €0.02 — one chat exchange (user msg + LLM response)
+  cv_extraction:       50    # €0.50 — Adele CV parse + profile build
+  cover_letter:        30    # €0.30 — Clara cover letter for a specific posting
+  match_report:        20    # €0.20 — Clara match quality report
+  profile_embed:       5     # €0.05 — re-embedding after profile edit
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION B — Hardware & Infrastructure (fixed monthly)       ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# Actual costs. Amortized monthly where applicable.
+
+hardware:
+  gpu_server:                               # Intel NUC + GPU (owned)
+    purchase_price_cents:      250000       # €2,500
+    amortization_months:       36           # 3-year straight-line
+    monthly_cents:             6944         # €69.44/month (auto-calculated: 250000/36)
+
+  electricity:
+    monthly_cents:             3000         # €30/month — server runs 24/7, ~150W avg
+
+  backup_storage:
+    monthly_cents:             500          # €5/month — automated DB backups
+
+  second_gpu_node:                          # Planned — not yet active
+    purchase_price_cents:      300000       # €3,000
+    amortization_months:       36
+    monthly_cents:             0            # Set to 8333 when purchased
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION C — Services & Subscriptions (fixed monthly)        ║
+# ╠═══════════════════════════════════════════════════════════════╣
+
+services:
+  domain_ssl:
+    monthly_cents:             300          # €3/month — talent.yoga domain + SSL
+
+  email_transactional:
+    monthly_cents:             0            # €0 — not yet active (Mailgun planned)
+
+  vpn:
+    monthly_cents:             1000         # €10/month — ProtonVPN for scraping
+
+  monitoring:
+    monthly_cents:             0            # €0 — self-hosted (ntfy, pipeline_health)
+
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  SECTION D — Compute Cost Per AI Event (actual cost-to-serve)║
+# ╠══════════════════════════════════════════════════════════════╣
+# What each AI action actually costs us in compute (electricity +
+# GPU amortization + time). These are NOT the prices we charge —
+# they're the cost basis for margin analysis on the bill.
+#
+# Methodology:
+#   GPU amortization: €69.44/month ÷ 720 hours = €0.096/GPU-hour
+#   Electricity: €30/month ÷ 720 hours = €0.042/GPU-hour
+#   Combined: €0.138/GPU-hour = €0.0023/GPU-minute
+#
+# Estimated GPU time per event (measured from Ollama inference logs):
+
+compute_cost_per_event:
+  mira_message:        0.3   # €0.003 — ~1.3 sec inference (qwen2.5:7b)
+  cv_extraction:       5.0   # €0.050 — ~22 sec (multi-pass extraction)
+  cover_letter:        3.0   # €0.030 — ~13 sec (context + generation)
+  match_report:        2.0   # €0.020 — ~9 sec (profile vs posting analysis)
+  profile_embed:       0.2   # €0.002 — ~0.8 sec (bge-m3 embedding)
+  embedding_batch:     0.05  # €0.0005 — per-posting embedding (pipeline, not billed)
+  berufenet_classify:  0.1   # €0.001 — per-title classification (pipeline, not billed)
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION E — Founder Investment (for debt share allocation)  ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# Source of truth: DB table `founder_debt`. This is the review copy.
+
+founder_debt:
+  gershon:
+    hours_worked:              7332
+    hourly_rate_cents:         10000        # €100/h — senior architect market rate (DE)
+    total_cents:               73320000     # €733,200
+  mysti:
+    hours_worked:              780
+    hourly_rate_cents:         8000         # €80/h — UX consultant market rate (DE)
+    total_cents:               6240000      # €62,400
+  total_cents:                 79560000     # €795,600
+  interest_rate_annual:        0.0          # 0% — founders chose not to charge interest
+  hardware_investment_cents:   250000       # €2,500 — GPU server (separate from time)
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION F — Revenue Allocation Waterfall                    ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# After operating costs are covered, remaining revenue is split:
+
+allocation:
+  reserve_pct:                 10           # 10% → emergency fund
+  reserve_cap_cents:           1000000      # €10,000 cap
+  founder_repayment_pct:       70           # 70% → repay founder debt
+  development_pct:             20           # 20% → new features, infrastructure
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION G — Subscription Tiers                              ║
+# ╠═══════════════════════════════════════════════════════════════╣
+
+tiers:
+  trial:
+    duration_days:             14           # Sandy recommended extending from 7 to 14
+    budget_cents:              500          # €5.00 trial budget
+    trigger:                   first_ai_use # Clock starts at first AI interaction, not signup
+    daily_mira_limit:          null         # Unlimited during trial (within budget)
+    cover_letters:             null         # Unlimited during trial (within budget)
+
+  free:                                     # After trial expires, if not subscribed
+    daily_mira_limit:          3            # 3 Mira messages/day (Nate's Layer B)
+    daily_profile_refresh:     1            # 1 profile re-embed/day
+    cover_letters:             0            # Blocked
+    match_reports:             0            # Blocked
+    cv_extraction:             0            # Blocked
+
+  full:                                     # Active subscriber
+    monthly_cents:             990          # €9.90/month
+    annual_cents:              8900         # €89/year (Sandy: 25% discount)
+    daily_mira_limit:          null         # Unlimited
+    cover_letters:             null         # Unlimited
+    match_reports:             null         # Unlimited
+    cv_extraction:             null         # Unlimited
+
+# Sustainer tier deferred — add here when ready
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  SECTION H — Pipeline Costs (not billed to yogis)           ║
+# ╠═══════════════════════════════════════════════════════════════╣
+# These are real costs the platform bears to maintain the posting
+# database. Shown on the bill as "platform operations" but never
+# charged to individual yogis.
+
+pipeline:
+  monthly_gpu_hours_estimated: 45           # ~1.5h/day for nightly pipeline
+  monthly_api_calls:           50000        # AA + DB API fetches
+  monthly_embeddings:          5000         # New/refreshed posting embeddings
+  cost_per_pipeline_run_cents: 50           # ~€0.50/night estimated (electricity + GPU wear)
+  monthly_pipeline_cents:      1500         # ~€15/month total pipeline compute
+
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║  NOTES                                                       ║
+# ╠═══════════════════════════════════════════════════════════════╣
+#
+# - All prices exclude VAT (Kleinunternehmer §19 UStG applies initially)
+# - Compute costs are estimates based on NUC power draw (150W avg, €0.32/kWh)
+# - GPU amortization assumes 3-year useful life with zero residual value
+# - Founder hourly rates are market benchmarks, not aspirational
+# - Pipeline costs are shared across all yogis (part of operating costs)
+# - The bill will show both "what it costs us" and "what you pay"
+#   so yogis see the real economics, not just a price tag
