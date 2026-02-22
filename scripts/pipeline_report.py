@@ -40,12 +40,13 @@ QUERY = """
 WITH embedded AS (
     -- postings whose CURRENT match_text has a fresh embedding
     -- match on text_hash (indexed) not text — same hash as embedding actor:
-    -- sha256(text.lower().strip())[:32]
+    -- Python: sha256(normalize_text_python(text).encode()).hexdigest()[:32]
+    -- normalize_text_python strips unicode whitespace; LOWER(TRIM()) does not.
     SELECT pfm.posting_id
     FROM postings_for_matching pfm
     WHERE EXISTS (
         SELECT 1 FROM embeddings e
-        WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(LOWER(TRIM(pfm.match_text)), 'UTF8')), 'hex'), 32)
+        WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(pfm.match_text), 'UTF8')), 'hex'), 32)
     )
 )
 SELECT
@@ -75,7 +76,7 @@ WITH embedded AS (
     FROM postings_for_matching pfm
     WHERE EXISTS (
         SELECT 1 FROM embeddings e
-        WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(LOWER(TRIM(pfm.match_text)), 'UTF8')), 'hex'), 32)
+        WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(pfm.match_text), 'UTF8')), 'hex'), 32)
     )
 )
 SELECT
