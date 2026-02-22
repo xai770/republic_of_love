@@ -76,23 +76,35 @@ def get_embedding(text: str, model: str = MODEL) -> Optional[List[float]]:
 
 
 def save_embedding(conn, text: str, embedding: List[float], model: str):
-    """Save embedding to database (content-addressed)."""
-    # Strip and lowercase text to match hash computation and work_query
-    text = text.strip().lower()
-    text_hash = compute_text_hash(text)
+    """Save embedding to database (content-addressed).
+    
+    Uses normalize_text_python() server-side so text, text_hash, and the
+    work_query all agree on the exact same normalization (unicode-aware strip
+    + lowercase).  This eliminates the Python .strip() vs SQL btrim drift
+    that corrupted ~20K hashes historically.
+    """
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO embeddings (text_hash, text, embedding, model)
-        VALUES (%s, %s, %s, %s)
-        ON CONFLICT (text_hash) DO NOTHING
-    """, (text_hash, text, json.dumps(embedding), model))
+        VALUES (
+            LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(%s), 'UTF8')), 'hex'), 32),
+            normalize_text_python(%s),
+            %s,
+            %s
+        )
+        ON CONFLICT (text_hash) DO UPDATE SET
+            text       = EXCLUDED.text,
+            embedding  = EXCLUDED.embedding,
+            model      = EXCLUDED.model,
+            created_at = NOW()
+    """, (text, text, json.dumps(embedding), model))
 
 
 def get_postings_needing_embeddings(conn, limit: int) -> List[Dict[str, Any]]:
     """
-    Find postings whose match_text doesn't have an embedding yet.
-    Uses the postings_for_matching view (same source as domain_gate).
-    Content-addressed: we check if the exact text exists in embeddings.
+    Find postings whose match_text doesn't have a current embedding.
+    Uses text_hash (indexed) for fast lookup.  Catches both missing
+    embeddings AND stale ones (match_text changed after embedding).
     """
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
@@ -100,7 +112,9 @@ def get_postings_needing_embeddings(conn, limit: int) -> List[Dict[str, Any]]:
         FROM postings_for_matching p
         WHERE NOT EXISTS (
             SELECT 1 FROM embeddings e
-            WHERE e.text = p.match_text
+            WHERE e.text_hash = LEFT(ENCODE(SHA256(
+                CONVERT_TO(normalize_text_python(p.match_text), 'UTF8')
+            ), 'hex'), 32)
         )
         ORDER BY p.posting_id
         LIMIT %s

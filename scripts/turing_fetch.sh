@@ -184,7 +184,7 @@ with get_connection() as conn:
     cur.execute('SELECT COUNT(*) as cnt FROM postings_for_matching')
     eligible = cur.fetchone()['cnt']
     
-    cur.execute('''SELECT COUNT(*) as cnt FROM postings_for_matching p WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.text = normalize_text_python(p.match_text))''')
+    cur.execute('''SELECT COUNT(*) as cnt FROM postings_for_matching p WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(p.match_text), 'UTF8')), 'hex'), 32))''')
     pending_embed = cur.fetchone()['cnt']
     
     print(f'   Total postings:       {total:,}')
@@ -517,13 +517,15 @@ with get_connection() as conn:
     cur.execute('SELECT COUNT(*) as cnt FROM embeddings')
     embeds = cur.fetchone()['cnt']
     
-    # Count unembedded - use postings_for_matching view (same as embedding actor)
-    # Embedding actor uses: normalize_text_python() for text normalization
+    # Count unembedded - use text_hash (indexed) with normalize_text_python
+    # This catches both missing AND stale embeddings
     cur.execute('''
         SELECT COUNT(*) as cnt FROM postings_for_matching p 
         WHERE NOT EXISTS (
             SELECT 1 FROM embeddings e 
-            WHERE e.text = normalize_text_python(p.match_text)
+            WHERE e.text_hash = LEFT(ENCODE(SHA256(
+                CONVERT_TO(normalize_text_python(p.match_text), 'UTF8')
+            ), 'hex'), 32)
         )
     ''')
     pending = cur.fetchone()['cnt']
@@ -536,6 +538,43 @@ with get_connection() as conn:
     print(f'  Embeddings:       {embeds:,}')
     print(f'  Pending embed:    {pending:,}')
 "
+
+# ── Embedding Sweep: catch stale embeddings from this run ─────
+# Description backfill (step 4) may have updated match_text for existing
+# postings. The embedding actor already ran in step 4 but only saw the new
+# postings. This second pass catches any stale embeddings created when
+# match_text changed after the previous embedding.
+ts "[post] Embedding sweep (catch stale)..."
+python3 actors/postings__embedding_U.py --batch 50000
+
+# ── Data Certification ────────────────────────────────────────
+ts "[post] Certifying data quality..."
+python3 scripts/pipeline_report.py
+
+CERT_RESULT=$(python3 -c "
+import psycopg2
+conn = psycopg2.connect(host='localhost', dbname='turing', user='base_admin', password='A40ytN2UEGc_tDliTLtMF-WyKOV_VslrULoLxmUZl38')
+cur = conn.cursor()
+cur.execute('''SELECT COUNT(*) FROM postings_for_matching p
+    WHERE NOT EXISTS (SELECT 1 FROM embeddings e
+    WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(normalize_text_python(p.match_text), \'UTF8\')), \'hex\'), 32))''')
+need = cur.fetchone()[0]
+cur.execute('''SELECT COUNT(*) FROM embeddings
+    WHERE text_hash != LEFT(ENCODE(SHA256(CONVERT_TO(text, \'UTF8\')), \'hex\'), 32)''')
+corrupt = cur.fetchone()[0]
+conn.close()
+if need == 0 and corrupt == 0:
+    print('CLEAN')
+else:
+    print(f'DIRTY need={need} corrupt={corrupt}')
+")
+
+if [ "$CERT_RESULT" = "CLEAN" ]; then
+    ts "✅ CERTIFIED CLEAN — all embeddable postings have current embeddings"
+else
+    ts "⚠️  $CERT_RESULT"
+    notify "Pipeline Data Issue" "$CERT_RESULT" "high" "warning"
+fi
 
 # ── Market Intelligence: Demand Snapshot ──────────────────────
 ts "Computing demand snapshot..."

@@ -106,7 +106,13 @@ SELECT
           AND p.posting_status NOT IN ('invalid')
           AND p.extracted_summary IS NOT NULL
     )                                                                        AS active_has_summary,
-    (SELECT COUNT(*) FROM embeddings)                                        AS total_embeddings_table
+    (SELECT COUNT(*) FROM embeddings)                                        AS total_embeddings_table,
+    -- Embeddable = in postings_for_matching (has sufficient text)
+    (SELECT COUNT(*) FROM postings_for_matching)                             AS embeddable,
+    -- Mismatched hashes (data integrity check)
+    (SELECT COUNT(*) FROM embeddings
+     WHERE text_hash != LEFT(ENCODE(SHA256(CONVERT_TO(text, 'UTF8')), 'hex'), 32)
+    )                                                                        AS corrupted_hashes
 FROM postings p
 LEFT JOIN embedded emb ON emb.posting_id = p.posting_id
 """
@@ -181,6 +187,10 @@ def run(as_json=False):
     # Percentage breakdown for the totals row
     t = total_row
     emb_table = t.get('total_embeddings_table', '?')
+    embeddable = t.get('embeddable', 0)
+    corrupted = t.get('corrupted_hashes', 0)
+    need_desc = t['active'] - embeddable
+    need_embed = embeddable - t['has_embedding']
     print()
     print('  Coverage (of all fetched):')
     print(f'    Active          {pct(t["active"],        t["total"])}  ({t["active"]:,} / {t["total"]:,})')
@@ -190,20 +200,37 @@ def run(as_json=False):
     print('  Coverage (of active postings only):')
     print(f'    Has description   {pct(t["active_has_desc"],    t["active"])}  ({t["active_has_desc"]:,} / {t["active"]:,})')
     print(f'    Has summary       {pct(t["active_has_summary"], t["active"])}  ({t["active_has_summary"]:,} / {t["active"]:,})')
-    print(f'    Embedding current {pct(t["has_embedding"],      t["active"])}  ({t["has_embedding"]:,} / {t["active"]:,})')
-    emb_need_rerun = t["active"] - t["has_embedding"]
-    orphaned = emb_table - t["has_embedding"]
+    print(f'    Embeddable        {pct(embeddable,              t["active"])}  ({embeddable:,} / {t["active"]:,})')
+    print(f'    Embedded          {pct(t["has_embedding"],    embeddable)}  ({t["has_embedding"]:,} / {embeddable:,})')
     print()
-    print(f'  embeddings table total rows : {emb_table:,}')
-    print(f'  current (match_text matched): {t["has_embedding"]:,}')
-    print(f'  active postings to re-embed : {emb_need_rerun:,}')
+    print(f'  Embedding detail:')
+    print(f'    embeddings table rows:   {emb_table:,}')
+    print(f'    active + embeddable:     {embeddable:,}')
+    print(f'    active + embedded:       {t["has_embedding"]:,}')
+    print(f'    need embedding:          {need_embed:,}')
+    print(f'    need description first:  {need_desc:,}  (active but no/short job_description)')
+    if corrupted:
+        print(f'    corrupted hashes:        {corrupted:,}  ⚠️')
     print()
-    print('  Source-specific pipeline rules (why stale embeddings happen):')
-    print('    arbeitsagentur : embed job_description directly — no LLM summary')
-    print('                     stale when: description backfill updates job_description')
-    print('    deutsche_bank  : LLM extracts summary → embed extracted_summary')
-    print('                     stale when: extracted_summary written after embedding')
-    print('    Fix: always run the embedding actor LAST, after all text-modifying stages.')
+
+    # ── Certification ──
+    # "Clean" means: every posting that CAN be embedded IS embedded, and
+    # data integrity holds.  Missing descriptions are structural (external
+    # partners, AA API gaps) — noted but don't block certification.
+    issues = []
+    if need_embed > 0:
+        issues.append(f'{need_embed:,} embeddable postings lack embeddings')
+    if corrupted > 0:
+        issues.append(f'{corrupted:,} embeddings have corrupted text_hash')
+
+    if not issues:
+        print('  ✅ CERTIFIED CLEAN — all embeddable postings have current embeddings')
+    else:
+        print('  ⚠️  NOT CLEAN:')
+        for issue in issues:
+            print(f'    - {issue}')
+    if need_desc > 0:
+        print(f'  ℹ️  {need_desc:,} active postings await job descriptions (not blocking)')
     print()
 
 
