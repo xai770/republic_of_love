@@ -346,6 +346,40 @@
         .kickstart-card .ks-icon { font-size: 36px; margin-bottom: 8px; }
         .kickstart-card .ks-label { font-size: 15px; font-weight: 600; color: #1e293b; }
         .kickstart-card .ks-desc { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+        /* ── Legal overlay (step 4 inline T&C / PP) ──── */
+        .legal-overlay {
+            display: none; position: absolute; inset: 0;
+            background: rgba(255,255,255,.97);
+            backdrop-filter: blur(6px);
+            border-radius: 24px;
+            z-index: 20;
+            flex-direction: column;
+            padding: 32px 36px 28px;
+        }
+        .legal-overlay.active { display: flex; }
+        .legal-overlay h3 {
+            font-size: 18px; font-weight: 700; color: #1e293b;
+            margin-bottom: 12px;
+        }
+        .legal-overlay .legal-body {
+            flex: 1; overflow-y: auto;
+            font-size: 13px; color: #334155; line-height: 1.7;
+            padding-right: 8px;
+        }
+        .legal-overlay .legal-body h4 {
+            font-size: 14px; font-weight: 700; color: #0f172a;
+            margin: 14px 0 6px;
+        }
+        .legal-overlay .legal-body p { margin-bottom: 8px; }
+        .legal-overlay .legal-close {
+            margin-top: 12px; align-self: flex-end;
+        }
+        .tc-link {
+            color: #0d9488; text-decoration: underline; cursor: pointer;
+            background: none; border: none; font: inherit; padding: 0;
+        }
+        .tc-link:hover { color: #0f766e; }
     </style>
 </head>
 <body>
@@ -432,6 +466,12 @@
                 <button class="btn btn-danger" onclick="rejectPrivacy()" id="s4-reject"></button>
                 <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept" disabled></button>
             </div>
+        </div>
+        <!-- Inline legal overlay -->
+        <div class="legal-overlay" id="legal-overlay">
+            <h3 id="legal-overlay-title"></h3>
+            <div class="legal-body" id="legal-overlay-body"></div>
+            <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
         </div>
     </div>
 
@@ -563,7 +603,7 @@
                 "All data stays on servers in Germany. EU law (GDPR) applies to everything we do.",
                 "You can download or permanently delete your account at any time — no questions asked.",
             ],
-            s4_tc_label: 'I have read and accept the <a href="/legal/terms" target="_blank">Terms &amp; Conditions</a> and <a href="/legal/privacy" target="_blank">Privacy Policy</a>.',
+            s4_tc_label: 'I have read and accept the <button class="tc-link" onclick="showLegal(\'terms\')" type="button">Terms &amp; Conditions</button> and <button class="tc-link" onclick="showLegal(\'privacy\')" type="button">Privacy Policy</button>.',
             s4_accept: "I accept",
             s4_reject: "I decline",
             s5_title: "How billing works",
@@ -618,7 +658,7 @@
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Du kannst jederzeit alle Daten herunterladen oder dein Konto dauerhaft löschen — ohne Rückfragen.",
             ],
-            s4_tc_label: 'Ich habe die <a href="/legal/terms" target="_blank">AGB</a> und die <a href="/legal/privacy" target="_blank">Datenschutzerklärung</a> gelesen und akzeptiere sie.',
+            s4_tc_label: 'Ich habe die <button class="tc-link" onclick="showLegal(\'terms\')" type="button">AGB</button> und die <button class="tc-link" onclick="showLegal(\'privacy\')" type="button">Datenschutzerklärung</button> gelesen und akzeptiere sie.',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
             s5_title: "So funktioniert die Abrechnung",
@@ -673,7 +713,7 @@
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Sie können jederzeit alle Daten herunterladen oder Ihr Konto dauerhaft löschen — ohne Rückfragen.",
             ],
-            s4_tc_label: 'Ich habe die <a href="/legal/terms" target="_blank">AGB</a> und die <a href="/legal/privacy" target="_blank">Datenschutzerklärung</a> gelesen und akzeptiere sie.',
+            s4_tc_label: 'Ich habe die <button class="tc-link" onclick="showLegal(\'terms\')" type="button">AGB</button> und die <button class="tc-link" onclick="showLegal(\'privacy\')" type="button">Datenschutzerklärung</button> gelesen und akzeptiere sie.',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
             s5_title: "So funktioniert die Abrechnung",
@@ -886,6 +926,71 @@
     window.rejectPrivacy = function() {
         const screen = $('#dismissed-screen');
         screen.classList.add('active');
+    };
+
+    // ── Step 4 — Inline legal text overlay ─────────
+    const LEGAL = {
+        terms: {
+            en: {
+                title: 'Terms & Conditions',
+                body: '<h4>1. Service description</h4><p>talent.yoga is an AI-assisted job-matching platform operated by Turing Tango UG (haftungsbeschränkt), Berlin, Germany. The service processes publicly available job postings and matches them against anonymised user profiles.</p>'
+                    + '<h4>2. Account & yogi name</h4><p>You access the platform through a pseudonymous "yogi name". You agree not to use your real name, offensive language, or names that impersonate other people.</p>'
+                    + '<h4>3. Trial & billing</h4><p>New accounts receive a 14-day free trial with €5 of AI credit. After the trial, a subscription is required to continue using AI features. Browsing and account management remain free. Charges are based on actual AI usage.</p>'
+                    + '<h4>4. Data & privacy</h4><p>We do not store your real name. All data is hosted on servers in Germany and processed in accordance with the GDPR. See our Privacy Policy for full details.</p>'
+                    + '<h4>5. Content & intellectual property</h4><p>Job postings are sourced from public data. AI-generated content (names, cover letters, match reports) is created for your personal use. You may not resell generated content.</p>'
+                    + '<h4>6. Account termination</h4><p>You may delete your account at any time. We may suspend accounts that violate these terms. Unused trial credit is non-refundable.</p>'
+                    + '<h4>7. Limitation of liability</h4><p>talent.yoga provides AI-assisted suggestions only. We are not a recruitment agency and make no guarantee of employment outcomes. Liability is limited to the amount paid in the preceding 12 months.</p>'
+                    + '<h4>8. Governing law</h4><p>These terms are governed by the laws of the Federal Republic of Germany. Place of jurisdiction is Berlin.</p>'
+            },
+            de: {
+                title: 'Allgemeine Geschäftsbedingungen',
+                body: '<h4>1. Leistungsbeschreibung</h4><p>talent.yoga ist eine KI-gestützte Jobmatching-Plattform, betrieben von der Turing Tango UG (haftungsbeschränkt), Berlin. Der Dienst verarbeitet öffentlich zugängliche Stellenangebote und gleicht sie mit anonymisierten Nutzerprofilen ab.</p>'
+                    + '<h4>2. Konto & Yogi-Name</h4><p>Der Zugang erfolgt über einen pseudonymen „Yogi-Namen". Es ist nicht gestattet, den echten Namen, beleidigende Begriffe oder Namen anderer Personen zu verwenden.</p>'
+                    + '<h4>3. Probezeitraum & Abrechnung</h4><p>Neue Konten erhalten eine 14-tägige kostenlose Testphase mit €5 KI-Guthaben. Nach der Testphase ist ein Abonnement erforderlich, um KI-Funktionen weiter zu nutzen. Das Durchstöbern und die Kontoverwaltung bleiben kostenlos. Abgerechnet wird nach tatsächlichem KI-Verbrauch.</p>'
+                    + '<h4>4. Daten & Datenschutz</h4><p>Wir speichern keinen echten Namen. Alle Daten werden auf Servern in Deutschland gehostet und gemäß der DSGVO verarbeitet. Einzelheiten finden Sie in unserer Datenschutzerklärung.</p>'
+                    + '<h4>5. Inhalte & geistiges Eigentum</h4><p>Stellenanzeigen stammen aus öffentlichen Quellen. KI-generierte Inhalte (Namen, Anschreiben, Match-Berichte) sind für den persönlichen Gebrauch bestimmt. Ein Weiterverkauf ist nicht gestattet.</p>'
+                    + '<h4>6. Kontoauflösung</h4><p>Das Konto kann jederzeit gelöscht werden. Wir können Konten bei Verstoß gegen diese Bedingungen sperren. Ungenutztes Testguthaben wird nicht erstattet.</p>'
+                    + '<h4>7. Haftungsbeschränkung</h4><p>talent.yoga bietet ausschließlich KI-gestützte Vorschläge. Wir sind keine Personalvermittlung und garantieren keine Vermittlungserfolge. Die Haftung ist auf den in den letzten 12 Monaten gezahlten Betrag begrenzt.</p>'
+                    + '<h4>8. Anwendbares Recht</h4><p>Diese Bedingungen unterliegen dem Recht der Bundesrepublik Deutschland. Gerichtsstand ist Berlin.</p>'
+            }
+        },
+        privacy: {
+            en: {
+                title: 'Privacy Policy',
+                body: '<h4>Data controller</h4><p>Turing Tango UG (haftungsbeschränkt), Berlin, Germany.</p>'
+                    + '<h4>What we collect</h4><p>Email address (for login), language preference, yogi name, uploaded CVs, chat messages with Mira, and usage data. We do <strong>not</strong> collect or store your real name.</p>'
+                    + '<h4>How we use it</h4><p>To provide and improve the service, generate personalised job matches, and process billing. We never sell your data to third parties.</p>'
+                    + '<h4>Where data is stored</h4><p>All data is stored on servers located in Germany, operated under strict EU data protection standards (GDPR).</p>'
+                    + '<h4>AI processing</h4><p>Your profile and messages are processed by local AI models hosted on our infrastructure. No data is sent to external AI providers.</p>'
+                    + '<h4>Your rights</h4><p>You have the right to access, rectify, or delete your data at any time. You can export your data or permanently delete your account from the settings page. To exercise your rights, contact us at privacy@talent.yoga.</p>'
+                    + '<h4>Cookies</h4><p>We use a minimal session cookie for authentication and a language preference cookie. No third-party tracking cookies are used.</p>'
+                    + '<h4>Data retention</h4><p>Account data is retained while your account is active. Upon deletion, all data is permanently removed within 30 days.</p>'
+            },
+            de: {
+                title: 'Datenschutzerklärung',
+                body: '<h4>Verantwortliche Stelle</h4><p>Turing Tango UG (haftungsbeschränkt), Berlin.</p>'
+                    + '<h4>Was wir erheben</h4><p>E-Mail-Adresse (für die Anmeldung), Spracheinstellung, Yogi-Name, hochgeladene Lebensläufe, Chat-Nachrichten mit Mira sowie Nutzungsdaten. Wir erheben und speichern <strong>keinen</strong> echten Namen.</p>'
+                    + '<h4>Verwendungszweck</h4><p>Zur Bereitstellung und Verbesserung des Dienstes, zur Erstellung personalisierter Job-Matches und zur Abrechnung. Daten werden niemals an Dritte verkauft.</p>'
+                    + '<h4>Speicherort</h4><p>Alle Daten werden auf Servern in Deutschland gespeichert, die strengen EU-Datenschutzstandards (DSGVO) unterliegen.</p>'
+                    + '<h4>KI-Verarbeitung</h4><p>Profile und Nachrichten werden von lokalen KI-Modellen auf unserer eigenen Infrastruktur verarbeitet. Es werden keine Daten an externe KI-Anbieter übermittelt.</p>'
+                    + '<h4>Ihre Rechte</h4><p>Sie haben jederzeit das Recht auf Auskunft, Berichtigung und Löschung Ihrer Daten. Über die Einstellungen können Sie Ihre Daten exportieren oder Ihr Konto dauerhaft löschen. Kontakt: privacy@talent.yoga.</p>'
+                    + '<h4>Cookies</h4><p>Wir verwenden ein minimales Session-Cookie zur Authentifizierung und ein Cookie für die Spracheinstellung. Es werden keine Tracking-Cookies von Drittanbietern eingesetzt.</p>'
+                    + '<h4>Datenspeicherung</h4><p>Kontodaten werden aufbewahrt, solange das Konto aktiv ist. Nach Löschung werden alle Daten innerhalb von 30 Tagen endgültig entfernt.</p>'
+            }
+        }
+    };
+
+    window.showLegal = function(type) {
+        const lang = state.lang === 'en' ? 'en' : 'de';
+        const doc = LEGAL[type] && LEGAL[type][lang];
+        if (!doc) return;
+        $('#legal-overlay-title').textContent = doc.title;
+        $('#legal-overlay-body').innerHTML = doc.body;
+        $('#legal-overlay').classList.add('active');
+    };
+
+    window.closeLegal = function() {
+        $('#legal-overlay').classList.remove('active');
     };
 
     // ── Step 6 — Gender select ────────────────────
