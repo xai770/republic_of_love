@@ -30,6 +30,26 @@
 - Daemon had `batch_size=100, scale_limit=3` → bumped to `batch_size=5000, scale_limit=20`
 - Full pipeline test: all 5 steps green, 1,117 new AA postings, 777 embeddings, only 2 pending
 
+### Billing Methodology + Cost Assumptions (commit 6af5d02)
+- Created `docs/project/billing_assumptions.yaml` — all tunable cost numbers in one reviewable file
+  - 8 sections: AI event prices, hardware amortization (€2500 GPU / 36mo), electricity, services, compute cost per event, founder debt, allocation waterfall, subscription tiers, pipeline costs
+- Created `docs/project/billing_methodology.md` — how a per-yogi bill works
+  - Bill mockup (German/English), data flow diagram, SQL queries per section
+  - Every tier gets a bill (trial, free, full) — transparency instrument, not invoice
+  - Section A: Direct AI usage, B: Cost to serve, C: Contribution allocation, D: Community context
+  - Open questions for Sandy/Nate review
+- References `docs/project/pricing_and_ledger.md` (Sage, Jan 27) for philosophy
+
+### Transaction Drill-Down (commit f31421b)
+- `GET /api/account/transactions?month=YYYY-MM` — paginated event list with German labels
+  - e.g. "Mira: Wie finde ich einen Job?", "Anschreiben: Deutsche Bank AG — Data Engineer"
+- `GET /api/account/transactions/{event_id}` — full drill-down into any charge
+  - Shows the chat messages, cover letter text, match analysis, or CV session summary
+- Context JSONB schema: each `usage_events` row stores linkable IDs (message_id, match_id, session_id)
+- Mira chat handler now captures `message_id` via `INSERT ... RETURNING`
+- Migration 060: GIN index on `usage_events.context` for efficient JSONB lookups
+- Updated methodology doc with full API contract + examples
+
 ## Broke
 - Nothing broken. All prior data repaired.
 
@@ -37,11 +57,14 @@
 - Dashboard redesign (Sandy's weakest-page critique) — not started
 - Landing page pricing inconsistency — not addressed
 - Profile right pane empty state — not addressed
-- Billing UI implementation — not started
+- Billing UI (meter, paywall screen, Stripe checkout) — not started
 - Mysti polish / demo — waiting on this before next Sandy call
+- Instrument remaining endpoints (CV, cover letter, match report, profile embed) — `log_event()` one-liners needed
 
 ## Next Session
 - Dashboard redesign should be priority #1 (Sandy's feedback)
-- Consider adding `--check` mode to generate_fetch_docs.py for CI validation
+- Instrument CV/cover letter/match report/profile embed with `log_event()` calls
+- Sandy/Nate review `billing_assumptions.yaml` — adjust numbers until they fit
+- Build bill generation script (`scripts/generate_yogi_bill.py`)
 - Review Berufenet Phase 2 performance after batch_size=2000 change
 - Look at external_partner scraper coverage (how many [EXTERNAL_PARTNER] remain?)
