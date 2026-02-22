@@ -353,6 +353,36 @@
         .kickstart-card .ks-label { font-size: 15px; font-weight: 600; color: #1e293b; }
         .kickstart-card .ks-desc { font-size: 13px; color: #64748b; margin-top: 4px; }
 
+        /* ── CV upload zone (step 9) ────────────────────── */
+        .ob-upload-zone {
+            border: 2px dashed #0d9488;
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+            background: #f0fdfa;
+        }
+        .ob-upload-zone:hover, .ob-upload-zone.drag-over {
+            background: #ccfbf1;
+            border-color: #0f766e;
+        }
+        .ob-upload-zone .ob-uz-icon { font-size: 32px; margin-bottom: 6px; }
+        .ob-upload-zone .ob-uz-label {
+            font-size: 15px; font-weight: 600; color: #0d9488;
+        }
+        .ob-upload-zone .ob-uz-hint {
+            font-size: 12px; color: #64748b; margin-top: 4px;
+        }
+        .ob-upload-status {
+            padding: 18px; text-align: center;
+            font-size: 14px; color: #334155;
+        }
+        .ob-upload-ok {
+            font-size: 14px; color: #0d9488; font-weight: 600;
+            padding: 12px 0 4px;
+        }
+
         /* ── Legal overlay (step 4 inline T&C / PP) ──── */
         .legal-overlay {
             display: none; position: absolute; inset: 0;
@@ -564,12 +594,12 @@
         <p id="s9-subtitle"></p>
         <div class="kickstart-row">
             <div class="kickstart-card" onclick="window.location.href='/profile'">
-                <div class="ks-icon">📄</div>
+                <div class="ks-icon">�</div>
                 <div class="ks-label" id="s9-cv-label"></div>
                 <div class="ks-desc" id="s9-cv-desc"></div>
             </div>
-            <div class="kickstart-card" onclick="window.location.href='/search'">
-                <div class="ks-icon">💬</div>
+            <div class="kickstart-card" onclick="window.location.href='/dashboard'">
+                <div class="ks-icon">🔍</div>
                 <div class="ks-label" id="s9-chat-label"></div>
                 <div class="ks-desc" id="s9-chat-desc"></div>
             </div>
@@ -643,13 +673,14 @@
             s8_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
             s8_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
             s8_confirm: "Confirm",
-            s9_title: "You're all set!",
-            s9_subtitle: "Here are two great ways to hit the ground running.",
-            s9_cv_label: "Upload your CV",
-            s9_cv_desc: "We'll extract your skills and match you to jobs",
-            s9_chat_label: "Chat with Mira",
-            s9_chat_desc: "Get personalized guidance from our AI assistant",
-            s9_skip: "I'll explore on my own →",
+            s9_title: "One last thing — upload your CV!",
+            s9_subtitle: "Drop your CV here and we\'ll build your profile in the background while you explore.",
+            s9_cv_label: "Drop your CV here",
+            s9_cv_hint: "PDF, DOCX or TXT · We\'ll notify you when it\'s done",
+            s9_cv_uploading: "✓ Got it! Analyzing in the background\u2026",
+            s9_chat_label: "Skip — browse jobs first",
+            s9_chat_desc: "You can upload your CV from your profile later",
+            s9_skip: "Skip for now →",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -698,13 +729,14 @@
             s8_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
             s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
             s8_confirm: "Bestätigen",
-            s9_title: "Alles klar!",
-            s9_subtitle: "Hier sind zwei tolle Wege, um direkt loszulegen.",
-            s9_cv_label: "Lebenslauf hochladen",
-            s9_cv_desc: "Wir extrahieren deine Fähigkeiten und finden passende Stellen",
-            s9_chat_label: "Mit Mira chatten",
-            s9_chat_desc: "Lass dir persönlich von unserer KI-Assistentin helfen",
-            s9_skip: "Ich schaue mich erstmal um →",
+            s9_title: "Noch eine Sache — lad deinen Lebenslauf hoch!",
+            s9_subtitle: "Wirf deinen Lebenslauf rein und wir bauen dein Profil im Hintergrund auf, während du die Plattform entdeckst.",
+            s9_cv_label: "Lebenslauf hier ablegen",
+            s9_cv_hint: "PDF, DOCX oder TXT · Wir melden uns, wenn er fertig ist",
+            s9_cv_uploading: "✓ Erhalten! Analyse läuft im Hintergrund\u2026",
+            s9_chat_label: "Überspringen — erst Jobs ansehen",
+            s9_chat_desc: "Du kannst deinen Lebenslauf später über dein Profil hochladen",
+            s9_skip: "Jetzt überspringen →",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -753,13 +785,14 @@
             s8_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
             s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
             s8_confirm: "Bestätigen",
-            s9_title: "Alles bereit!",
-            s9_subtitle: "Hier sind zwei hervorragende Wege, um direkt loszulegen.",
-            s9_cv_label: "Lebenslauf hochladen",
-            s9_cv_desc: "Wir extrahieren Ihre Fähigkeiten und finden passende Stellen",
-            s9_chat_label: "Mit Mira chatten",
-            s9_chat_desc: "Lassen Sie sich persönlich von unserer KI-Assistentin beraten",
-            s9_skip: "Ich schaue mich erstmal um →",
+            s9_title: "Noch eine Sache — laden Sie Ihren Lebenslauf hoch!",
+            s9_subtitle: "Legen Sie Ihren Lebenslauf ab und wir erstellen Ihr Profil im Hintergrund, während Sie die Plattform erkunden.",
+            s9_cv_label: "Lebenslauf hier ablegen",
+            s9_cv_hint: "PDF, DOCX oder TXT · Wir informieren Sie, wenn er fertig ist",
+            s9_cv_uploading: "✓ Erhalten! Analyse läuft im Hintergrund\u2026",
+            s9_chat_label: "Überspringen — erst Jobs ansehen",
+            s9_chat_desc: "Sie können Ihren Lebenslauf später über Ihr Profil hochladen",
+            s9_skip: "Jetzt überspringen →",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -866,7 +899,7 @@
         if ($('#s9-title'))      $('#s9-title').textContent = t.s9_title;
         if ($('#s9-subtitle'))   $('#s9-subtitle').textContent = t.s9_subtitle;
         if ($('#s9-cv-label'))   $('#s9-cv-label').textContent = t.s9_cv_label;
-        if ($('#s9-cv-desc'))    $('#s9-cv-desc').textContent = t.s9_cv_desc;
+        if ($('#s9-cv-hint'))    $('#s9-cv-hint').textContent = t.s9_cv_hint || '';
         if ($('#s9-chat-label')) $('#s9-chat-label').textContent = t.s9_chat_label;
         if ($('#s9-chat-desc'))  $('#s9-chat-desc').textContent = t.s9_chat_desc;
         if ($('#s9-skip'))       $('#s9-skip').textContent = t.s9_skip;
@@ -1194,6 +1227,45 @@
             if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
         }
     }
+
+    // ── CV upload (step 9) ──────────────────────────
+    window._obHandleDrop = function(e) {
+        e.preventDefault();
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) _obHandleFile(f);
+    };
+    window._obHandleFile = async function(file) {
+        if (!file) return;
+        const zone = document.getElementById('ob-upload-zone');
+        const msg  = document.getElementById('ob-upload-msg');
+        const t    = c();
+        // hide zone, show spinner message
+        zone.style.display = 'none';
+        msg.style.display  = '';
+        msg.className      = 'ob-upload-status';
+        msg.innerHTML      = '<div class="spinner"></div>';
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch('/api/profiles/me/parse-cv', { method: 'POST', body: fd });
+            if (!res.ok) throw new Error((await res.json().catch(()=>({}))).detail || 'Upload failed');
+            const { job_id } = await res.json();
+            // Save for profile.html to pick up
+            localStorage.setItem('cv_pending_job', JSON.stringify({
+                job_id, filename: file.name, start_ms: Date.now()
+            }));
+            msg.className   = 'ob-upload-ok';
+            msg.textContent = t.s9_cv_uploading || '✓ Analyzing in the background…';
+            // Redirect to dashboard after a short pause
+            setTimeout(() => { window.location.href = '/dashboard'; }, 1800);
+        } catch(err) {
+            // Restore zone so they can retry
+            zone.style.display = '';
+            msg.style.display  = 'none';
+            const hint = document.getElementById('s9-cv-hint');
+            if (hint) { hint.textContent = '⚠ ' + err.message; hint.style.color = '#e57373'; }
+        }
+    };
 
     // ── Init ───────────────────────────────────────
     applyText();
