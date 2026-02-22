@@ -214,9 +214,93 @@
 
 .pb-upload-status {
     display: none;
-    text-align: center;
-    padding: 1rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.5rem 1rem;
+}
+
+/* Logo orbit — same animation as onboarding */
+.cv-orbit {
+    position: relative;
+    width: 110px; height: 110px;
+    flex-shrink: 0;
+}
+.cv-orbit img {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 54px; height: auto;
+    animation: cv-breathe 2s ease-in-out infinite;
+}
+.cv-orbit-sym {
+    position: absolute;
+    font-size: 18px;
+    top: 50%; left: 50%;
+    animation: cv-orbit 3s linear infinite;
+}
+.cv-orbit-sym:nth-child(2){animation-delay:0s;}
+.cv-orbit-sym:nth-child(3){animation-delay:-0.6s;}
+.cv-orbit-sym:nth-child(4){animation-delay:-1.2s;}
+.cv-orbit-sym:nth-child(5){animation-delay:-1.8s;}
+.cv-orbit-sym:nth-child(6){animation-delay:-2.4s;}
+@keyframes cv-orbit {
+    0%   { transform:translate(-50%,-50%) rotate(0deg)   translateX(48px) rotate(0deg);   opacity:.55;}
+    50%  { opacity:1; }
+    100% { transform:translate(-50%,-50%) rotate(360deg) translateX(48px) rotate(-360deg); opacity:.55;}
+}
+@keyframes cv-breathe {
+    0%,100% { transform:translate(-50%,-50%) scale(1); }
+    50%     { transform:translate(-50%,-50%) scale(1.09); }
+}
+
+/* Mini progress log */
+.pb-cv-log {
+    width: 100%;
+    max-height: 160px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    line-height: 1.55;
     color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.8rem;
+    background: var(--bg);
+    scroll-behavior: smooth;
+}
+.pb-cv-log .cv-log-step {
+    padding: 0.12rem 0;
+    border-bottom: none;
+    opacity: 0;
+    animation: cv-log-in 0.25s ease forwards;
+}
+.pb-cv-log .cv-log-step.ok  { color: #22c55e; }
+.pb-cv-log .cv-log-step.err { color: #ef4444; }
+@keyframes cv-log-in {
+    from { opacity:0; transform:translateY(4px); }
+    to   { opacity:1; transform:none; }
+}
+
+/* Done state */
+.pb-upload-done {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text);
+}
+.pb-upload-done .cv-done-icon { font-size: 2.4rem; }
+.pb-upload-done .cv-done-title { font-weight: 700; font-size: 1rem; color: var(--primary); }
+.pb-upload-done .cv-done-sub   { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+.pb-upload-done .cv-done-again {
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+    background: none; border: none; padding: 0;
 }
 
 /* Form input */
@@ -947,6 +1031,7 @@
             </div>
             <div class="pb-modal-body">
                 <div class="pb-upload-area active" id="pb-input-upload">
+                    <!-- Drop target -->
                     <div class="pb-dropzone" id="pb-dropzone"
                          ondrop="handleDrop(event)" ondragover="handleDragOver(event)"
                          ondragleave="handleDragLeave(event)"
@@ -958,9 +1043,26 @@
                     </div>
                     <input type="file" id="pb-file-input" accept=".pdf,.docx,.doc,.txt,.md"
                            onchange="handleFileSelect(event)" hidden>
+
+                    <!-- Processing spinner + mini-log -->
                     <div class="pb-upload-status" id="pb-upload-status">
-                        <div class="spinner"></div>
-                        <p>{{ t('profile.upload_analyzing') }}</p>
+                        <div class="cv-orbit">
+                            <img src="/static/images/icons/logo.png" alt="talent.yoga">
+                            <span class="cv-orbit-sym">✦</span>
+                            <span class="cv-orbit-sym">◈</span>
+                            <span class="cv-orbit-sym">✧</span>
+                            <span class="cv-orbit-sym">⬡</span>
+                            <span class="cv-orbit-sym">❋</span>
+                        </div>
+                        <div class="pb-cv-log" id="pb-cv-log"></div>
+                    </div>
+
+                    <!-- Done state -->
+                    <div class="pb-upload-done" id="pb-upload-done">
+                        <div class="cv-done-icon">✅</div>
+                        <div class="cv-done-title" id="cv-done-title">CV imported</div>
+                        <div class="cv-done-sub" id="cv-done-sub"></div>
+                        <button class="cv-done-again" onclick="resetUploadArea()">Upload a different file</button>
                     </div>
                 </div>
             </div>
@@ -1676,10 +1778,43 @@ function handleFileSelect(e) {
     if (file) uploadCV(file);
 }
 
+function _cvLog(msg, cls) {
+    const log = document.getElementById('pb-cv-log');
+    if (!log) return;
+    const line = document.createElement('div');
+    line.className = 'cv-log-step' + (cls ? ' ' + cls : '');
+    line.textContent = msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+}
+
+function resetUploadArea() {
+    document.getElementById('pb-upload-done').style.display = 'none';
+    document.getElementById('pb-upload-status').style.display = 'none';
+    document.getElementById('pb-cv-log').innerHTML = '';
+    const fi = document.getElementById('pb-file-input');
+    if (fi) fi.value = '';
+    document.getElementById('pb-dropzone').style.display = '';
+}
+
 async function uploadCV(file) {
+    // Hide dropzone, show orbit spinner + log
     document.getElementById('pb-dropzone').style.display = 'none';
-    document.getElementById('pb-upload-status').style.display = 'block';
+    document.getElementById('pb-upload-done').style.display = 'none';
+    document.getElementById('pb-cv-log').innerHTML = '';
+    document.getElementById('pb-upload-status').style.display = 'flex';
     addLogEntry('system', 'CV: ' + file.name, 'cv_upload');
+
+    // Timed progress messages so the yogi sees life
+    const steps = [
+        [0,    '📂 Reading "' + file.name + '"…'],
+        [1200, '🔍 Parsing document structure…'],
+        [2800, '🧠 Extracting work history & roles…'],
+        [4800, '⚡ Identifying skills & languages…'],
+        [7000, '📊 Building your profile snapshot…'],
+    ];
+    const stepTimers = steps.map(([delay, msg]) =>
+        setTimeout(() => _cvLog(msg), delay));
 
     const formData = new FormData();
     formData.append('file', file);
@@ -1694,16 +1829,22 @@ async function uploadCV(file) {
             throw new Error(err.detail || I.cv_upload_failed);
         }
         const data = await res.json();
+        stepTimers.forEach(clearTimeout);
 
         const parts = [];
         if (data.current_title) parts.push(data.current_title);
         if (data.work_history && data.work_history.length) parts.push(data.work_history.length + ' ' + I.cv_positions);
         if (data.skills && data.skills.length) parts.push(data.skills.length + ' ' + I.cv_skills);
+        const summary = parts.join(' · ');
+
+        _cvLog('✅ Extracted: ' + (summary || 'profile data'), 'ok');
         addLogEntry('adele', I.cv_extracted.replace('{parts}', parts.join(', ')));
 
         await importCV(data);
+        _cvLog('💾 Profile saved', 'ok');
         addLogEntry('system', '✓ Import OK', 'cv_import');
-        // Cost transparency hint
+
+        // Cost hint
         if (window.CostHints) {
             const lang = '{{ user.language }}' === 'en' ? 'en' : 'de';
             const hint = CostHints.create('cv_extraction', lang);
@@ -1716,11 +1857,20 @@ async function uploadCV(file) {
         }
         await refreshProfile();
 
-    } catch (err) {
-        addLogEntry('system', I.cv_error.replace('{error}', err.message), 'error');
-    } finally {
-        document.getElementById('pb-dropzone').style.display = '';
+        // Show done state
         document.getElementById('pb-upload-status').style.display = 'none';
+        const doneEl = document.getElementById('pb-upload-done');
+        document.getElementById('cv-done-title').textContent = '"' + file.name + '" imported';
+        document.getElementById('cv-done-sub').textContent =
+            summary ? 'Found: ' + summary : 'Your profile has been updated.';
+        doneEl.style.display = 'flex';
+
+    } catch (err) {
+        stepTimers.forEach(clearTimeout);
+        _cvLog('❌ ' + err.message, 'err');
+        addLogEntry('system', I.cv_error.replace('{error}', err.message), 'error');
+        // Let them retry
+        setTimeout(resetUploadArea, 3000);
     }
 }
 
