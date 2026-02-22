@@ -42,8 +42,8 @@ def _job_progress(job_id: str, msg: str):
             _cv_jobs[job_id]['progress'].append(msg)
 
 
-# Hard wall-clock budget for the entire CV extraction job (12 min)
-_CV_JOB_TOTAL_TIMEOUT = 720
+# Hard wall-clock budget for the entire CV extraction job (20 min)
+_CV_JOB_TOTAL_TIMEOUT = 1200
 
 async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: int,
                               original_filename: str):

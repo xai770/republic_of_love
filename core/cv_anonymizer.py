@@ -34,7 +34,7 @@ OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434')
 EXTRACTION_MODEL = "qwen2.5:7b"
 FALLBACK_MODEL = "gemma3:4b"
 TIMEOUT = 120.0        # per-call timeout — chunks are small so 120 s is generous
-CALL_HARD_TIMEOUT = 150.0  # asyncio.wait_for wall-clock limit per LLM call
+CALL_HARD_TIMEOUT = 240.0  # asyncio.wait_for wall-clock limit per LLM call
 CHUNK_SIZE = 3500     # chars per CV chunk for Pass 1
 PASS2_CONCURRENCY = 5 # max simultaneous Pass-2 LLM calls
 
