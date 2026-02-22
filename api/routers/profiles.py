@@ -55,11 +55,25 @@ async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: in
         conn = pool.getconn()
         _job_progress(job_id, f'🔍 Analysing structure…')
         from core.cv_anonymizer import extract_and_anonymize
+
+        def _on_partial(data: dict):
+            """Sync callback — invoked from inside extract_and_anonymize for each chunk/role."""
+            kind = data.get('type', '')
+            if kind == 'pass1_chunk':
+                chunk, total, found = data['chunk'], data['total_chunks'], data['roles_found']
+                _job_progress(job_id, f'🔍 Pass 1: {chunk}/{total} chunks — {found} roles so far…')
+            elif kind == 'pass2_role':
+                done, total = data['completed'], data['total']
+                partial_wh = data.get('partial_work_history', [])
+                _job_progress(job_id, f'🔒 Anonymizing: {done}/{total} roles…')
+                _job_update(job_id, partial_result={'work_history': partial_wh})
+
         result = await _asyncio.wait_for(
             extract_and_anonymize(
                 cv_text=text,
                 yogi_name=yogi_name,
-                conn=conn
+                conn=conn,
+                on_partial=_on_partial,
             ),
             timeout=_CV_JOB_TOTAL_TIMEOUT
         )
@@ -75,8 +89,17 @@ async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: in
         _job_update(job_id, status='done', result=result)
     except _asyncio.TimeoutError:
         logger.error(f'CV extraction job {job_id} timed out after {_CV_JOB_TOTAL_TIMEOUT}s')
-        _job_update(job_id, status='failed',
-                    error='CV analysis took too long — please try again with a shorter CV')
+        with _cv_jobs_lock:
+            partial = _cv_jobs.get(job_id, {}).get('partial_result')
+        if partial and partial.get('work_history'):
+            n = len(partial['work_history'])
+            logger.warning(f'CV job {job_id}: saving partial result ({n} roles)')
+            _job_progress(job_id, f'⚠ Timeout — partial import: {n} roles saved')
+            _job_update(job_id, status='partial', result=partial,
+                        error=f'Analysis timed out — {n} roles extracted so far')
+        else:
+            _job_update(job_id, status='failed',
+                        error='CV analysis took too long — please try again with a shorter CV')
     except Exception as e:
         logger.error(f'CV extraction job {job_id} failed: {e}')
         _job_update(job_id, status='failed', error=str(e))
@@ -939,6 +962,7 @@ async def parse_cv(
                 'status': 'running',
                 'progress': [f'📂 "{file.filename}" read ({len(text):,} chars)'],
                 'result': None,
+                'partial_result': None,
                 'error': None,
             }
 

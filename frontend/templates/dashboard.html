@@ -891,6 +891,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem(_CV_JOB_KEY);
                 _bar('\u2705 CV imported! Refreshing\u2026', '', 'done');
                 setTimeout(() => window.location.reload(), 2500);
+            } else if (job.status === 'partial') {
+                clearInterval(_timer);
+                localStorage.removeItem(_CV_JOB_KEY);
+                const n = (job.result && job.result.work_history ? job.result.work_history.length : '?');
+                _bar('\u26a0 Partial import: ' + n + ' roles saved. Refreshing\u2026', '', 'done');
+                setTimeout(() => window.location.reload(), 3000);
             } else if (job.status === 'failed') {
                 clearInterval(_timer);
                 localStorage.removeItem(_CV_JOB_KEY);

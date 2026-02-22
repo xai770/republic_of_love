@@ -21,7 +21,7 @@ import datetime
 import json
 import os
 import re
-from typing import Optional, List
+from typing import Callable, Optional, List
 
 import httpx
 
@@ -296,7 +296,8 @@ async def extract_and_anonymize(
     cv_text: str,
     yogi_name: str,
     real_name: Optional[str] = None,
-    conn=None
+    conn=None,
+    on_partial: Optional[Callable[[dict], None]] = None,
 ) -> dict:
     """
     Two-pass CV extraction and anonymization.
@@ -351,6 +352,13 @@ async def extract_and_anonymize(
 
         logger.info(f"Pass 1 chunk {chunk_idx+1}/{len(chunks)}: "
                     f"+{len(chunk_roles)} roles (total so far: {len(all_roles)})")
+        if on_partial:
+            on_partial({
+                'type': 'pass1_chunk',
+                'chunk': chunk_idx + 1,
+                'total_chunks': len(chunks),
+                'roles_found': len(all_roles),
+            })
 
     if not all_roles:
         raise ValueError("Pass 1 (structure extraction) failed with all models")
@@ -467,10 +475,27 @@ async def extract_and_anonymize(
 
     # Semaphore limits concurrent Ollama calls so the GPU isn't overwhelmed
     sem = asyncio.Semaphore(PASS2_CONCURRENCY)
+    # Track per-role results as they complete for partial-save support
+    _pass2_completed: dict = {}  # index → anonymized role dict
 
     async def _process_with_sem(i: int, role: dict):
         async with sem:
-            return await _process_role(i, role)
+            idx, anon = await _process_role(i, role)
+            if anon is not None:
+                _pass2_completed[idx] = anon
+                if on_partial:
+                    # Build partial work history (sorted by index) for caller to persist
+                    partial_wh = [
+                        {k: v for k, v in _pass2_completed[j].items() if k != '_skills'}
+                        for j in sorted(_pass2_completed)
+                    ]
+                    on_partial({
+                        'type': 'pass2_role',
+                        'completed': len(_pass2_completed),
+                        'total': len(roles[:20]),
+                        'partial_work_history': partial_wh,
+                    })
+            return idx, anon
 
     tasks = [_process_with_sem(i, role) for i, role in enumerate(roles[:20])]
     results_raw = await asyncio.gather(*tasks)
