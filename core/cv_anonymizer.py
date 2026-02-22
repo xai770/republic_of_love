@@ -34,6 +34,7 @@ OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434')
 EXTRACTION_MODEL = "qwen2.5:7b"
 FALLBACK_MODEL = "gemma3:4b"
 TIMEOUT = 120.0        # per-call timeout — chunks are small so 120 s is generous
+CALL_HARD_TIMEOUT = 150.0  # asyncio.wait_for wall-clock limit per LLM call
 CHUNK_SIZE = 3500     # chars per CV chunk for Pass 1
 PASS2_CONCURRENCY = 5 # max simultaneous Pass-2 LLM calls
 
@@ -150,24 +151,35 @@ JSON:"""
 
 async def _call_llm(prompt: str, temperature: float = 0.1,
                     num_ctx: int = 16384) -> Optional[str]:
-    """Try primary model, fall back to secondary."""
+    """Try primary model, fall back to secondary.
+
+    Uses asyncio.wait_for as a hard wall-clock guard so a slow Ollama
+    response (which trickles bytes and resets the httpx read-timer) cannot
+    hold up the background job indefinitely.
+    """
     for model in [EXTRACTION_MODEL, FALLBACK_MODEL]:
         try:
-            async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-                response = await client.post(
-                    f"{OLLAMA_URL}/api/generate",
-                    json={
-                        "model": model,
-                        "prompt": prompt,
-                        "stream": False,
-                        "options": {"temperature": temperature, "num_ctx": num_ctx}
-                    }
-                )
-                response.raise_for_status()
-                result = response.json().get("response", "").strip()
-                if result:
-                    logger.info(f"LLM call succeeded with {model}")
-                    return result
+            async def _do_call():
+                async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+                    response = await client.post(
+                        f"{OLLAMA_URL}/api/generate",
+                        json={
+                            "model": model,
+                            "prompt": prompt,
+                            "stream": False,
+                            "options": {"temperature": temperature, "num_ctx": num_ctx}
+                        }
+                    )
+                    response.raise_for_status()
+                    return response.json().get("response", "").strip()
+
+            result = await asyncio.wait_for(_do_call(), timeout=CALL_HARD_TIMEOUT)
+            if result:
+                logger.info(f"LLM call succeeded with {model}")
+                return result
+        except asyncio.TimeoutError:
+            logger.warning(f"LLM call timed out (>{CALL_HARD_TIMEOUT}s) with {model}")
+            continue
         except Exception as e:
             logger.warning(f"LLM call failed with {model}: {e}")
             continue

@@ -42,19 +42,26 @@ def _job_progress(job_id: str, msg: str):
             _cv_jobs[job_id]['progress'].append(msg)
 
 
+# Hard wall-clock budget for the entire CV extraction job (12 min)
+_CV_JOB_TOTAL_TIMEOUT = 720
+
 async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: int,
                               original_filename: str):
     """Background coroutine — runs extract_and_anonymize and stores the result."""
+    import asyncio as _asyncio
     pool = _get_pool()
     conn = None
     try:
         conn = pool.getconn()
         _job_progress(job_id, f'🔍 Analysing structure…')
         from core.cv_anonymizer import extract_and_anonymize
-        result = await extract_and_anonymize(
-            cv_text=text,
-            yogi_name=yogi_name,
-            conn=conn
+        result = await _asyncio.wait_for(
+            extract_and_anonymize(
+                cv_text=text,
+                yogi_name=yogi_name,
+                conn=conn
+            ),
+            timeout=_CV_JOB_TOTAL_TIMEOUT
         )
         n_roles = len(result.get('work_history', []))
         n_skills = len(result.get('skills', []))
@@ -66,6 +73,10 @@ async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: in
         except Exception:
             pass
         _job_update(job_id, status='done', result=result)
+    except _asyncio.TimeoutError:
+        logger.error(f'CV extraction job {job_id} timed out after {_CV_JOB_TOTAL_TIMEOUT}s')
+        _job_update(job_id, status='failed',
+                    error='CV analysis took too long — please try again with a shorter CV')
     except Exception as e:
         logger.error(f'CV extraction job {job_id} failed: {e}')
         _job_update(job_id, status='failed', error=str(e))

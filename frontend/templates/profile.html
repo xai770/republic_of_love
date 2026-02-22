@@ -1859,6 +1859,14 @@ function _startCVPoller(jobId, filename, startMs) {
     _cvJobInterval = setInterval(async () => {
         try {
             const res = await fetch('/api/profiles/me/parse-cv/status/' + jobId);
+            if (res.status === 404) {
+                // Job gone (server restarted) — stop polling, clear stale key
+                clearInterval(_cvJobInterval); _cvJobInterval = null;
+                localStorage.removeItem(_CV_JOB_KEY);
+                _showCVJobBar('⚠ Upload session expired — please re-upload', '', 'failed');
+                setTimeout(_hideCVJobBar, 7000);
+                return;
+            }
             if (!res.ok) return;
             const job = await res.json();
             // Show latest new progress message
