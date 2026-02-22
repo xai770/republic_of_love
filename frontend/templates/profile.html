@@ -625,29 +625,103 @@
 }
 
 /* ── Tool icon buttons in right-pane header ────────────── */
-.pb-view-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 0.375rem;
+.pb-tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.5rem;
     border: 1px solid var(--border);
     background: transparent;
     cursor: pointer;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 0.95rem;
     transition: all 0.15s;
     color: var(--text-muted);
     flex-shrink: 0;
+    line-height: 1;
 }
-.pb-view-btn:hover {
+.pb-tool-btn .pb-tool-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+.pb-tool-btn:hover {
     border-color: var(--primary);
     background: rgba(37,99,235,0.06);
+    color: var(--primary);
 }
-.pb-view-btn.active {
+.pb-tool-btn.active {
     border-color: var(--primary);
     background: rgba(37,99,235,0.1);
     color: var(--primary);
+}
+
+/* wiggle + pulse intro animation */
+@keyframes pb-wiggle {
+    0%,100% { transform: rotate(0deg); }
+    15%  { transform: rotate(-8deg); }
+    30%  { transform: rotate(8deg); }
+    45%  { transform: rotate(-6deg); }
+    60%  { transform: rotate(6deg); }
+    75%  { transform: rotate(-3deg); }
+    90%  { transform: rotate(3deg); }
+}
+@keyframes pb-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.45); }
+    50%      { box-shadow: 0 0 0 7px rgba(37,99,235,0); }
+}
+.pb-tool-btn.pb-intro-anim {
+    animation: pb-wiggle 0.7s ease-in-out, pb-pulse 0.9s ease-out 0.4s 2;
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ── Intro tooltip (dismissable) ────────────────────────── */
+.pb-intro-tip {
+    display: none;
+    position: fixed;
+    top: 96px;
+    right: 1.75rem;
+    z-index: 1200;
+    background: var(--card-bg);
+    border: 1px solid var(--primary);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    max-width: 280px;
+    animation: pb-modal-in 0.2s ease-out;
+    pointer-events: auto;
+}
+.pb-intro-tip.visible { display: block; }
+.pb-intro-tip::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 2.5rem;
+    width: 12px;
+    height: 12px;
+    background: var(--card-bg);
+    border-left: 1px solid var(--primary);
+    border-top: 1px solid var(--primary);
+    transform: rotate(45deg);
+}
+.pb-intro-tip ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.55;
+}
+.pb-intro-tip strong { color: var(--primary); }
+.pb-intro-tip-dismiss {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.6rem;
+    display: block;
+    text-align: right;
 }
 
 /* ── Modal backdrop ─────────────────────────────────────── */
@@ -790,8 +864,21 @@
             <div class="pb-right-header">
                 <h2>📋 {{ t('profile.preview_title') }}</h2>
                 <div class="pb-right-actions">
-                    <button class="pb-view-btn" id="btn-view-upload" onclick="switchRightView('upload')" title="{{ t('profile.tab_upload') }}">📄</button>
-                    <button class="pb-view-btn" id="btn-view-form" onclick="switchRightView('form')" title="{{ t('profile.tab_form') }}">📝</button>
+                    <button class="pb-tool-btn" id="btn-view-upload" onclick="openModal('upload')" title="{{ t('profile.tab_upload') }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 16 12 12 8 16"></polyline>
+                            <line x1="12" y1="12" x2="12" y2="21"></line>
+                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                        </svg>
+                        <span class="pb-tool-label">{{ t('profile.tab_upload') or 'Upload' }}</span>
+                    </button>
+                    <button class="pb-tool-btn" id="btn-view-form" onclick="openModal('form')" title="{{ t('profile.tab_form') }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span class="pb-tool-label">{{ t('profile.tab_form') or 'Edit' }}</span>
+                    </button>
                     <span class="pb-completeness" id="pb-completeness">0%</span>
                     <button class="pb-download-btn" onclick="downloadProfile()" title="{{ t('profile.download') }}">
                         {{ t('profile.download') }}
@@ -814,6 +901,16 @@
         </div>
 
     </div>{# end .profile-builder #}
+
+    <!-- Intro tip (shown once on first visit, click anywhere dismisses) -->
+    <div class="pb-intro-tip" id="pb-intro-tip">
+        <strong>&#x1F4A1; {{ t('profile.intro_tip_title') or 'Two quick tools' }}</strong>
+        <ul>
+            <li><strong>&#x2191; {{ t('profile.tab_upload') }}</strong> &mdash; {{ t('profile.intro_tip_upload') or 'Upload your CV and we\'ll fill your profile automatically' }}</li>
+            <li><strong>&#x270F;&#xFE0F; {{ t('profile.tab_form') }}</strong> &mdash; {{ t('profile.intro_tip_form') or 'Edit your profile details manually' }}</li>
+        </ul>
+        <span class="pb-intro-tip-dismiss">{{ t('profile.intro_tip_dismiss') or 'Click anywhere to close' }}</span>
+    </div>
 
     <!-- ═══ UPLOAD MODAL ═══ -->
     <div class="pb-modal-backdrop" id="modal-upload" onclick="if(event.target===this)closeModal()">
@@ -947,6 +1044,25 @@
     </main>
 </div>
 
+<!-- ── MIRA WIDGET ─────────────────────────────────────────────── -->
+<div id="mira-widget" class="mira-widget" style="display:none;">
+    <button class="mira-fab" id="mira-fab-btn" onclick="toggleMiraChat()" title="Ask Mira">
+        <span id="mira-fab-icon">💬</span>
+    </button>
+    <div class="mira-chat-window" id="mira-chat-window">
+        <div class="mira-chat-header">
+            <span>🦉 Mira</span>
+            <button onclick="closeMiraChat()" title="Close">✕</button>
+        </div>
+        <div class="mira-chat-log" id="mira-chat-log"></div>
+        <div class="mira-chat-input-row">
+            <input type="text" id="mira-input" class="mira-input" placeholder="Ask me anything…"
+                   onkeydown="if(event.key==='Enter')sendMiraMsg()">
+            <button class="mira-send-btn" onclick="sendMiraMsg()">➤</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════
 // PROFILE BUILDER — Frontend Logic
@@ -982,6 +1098,131 @@ const I = {
     cv_positions: {{ t('profile.cv_positions') | tojson }},
     cv_skills: {{ t('profile.cv_skills') | tojson }},
 };
+
+// ── INTRO ANIMATION ──────────────────────────────────────
+
+function runIntroAnimation() {
+    if (sessionStorage.getItem('pb_intro_seen')) return;
+    sessionStorage.setItem('pb_intro_seen', '1');
+    const btns = [
+        document.getElementById('btn-view-upload'),
+        document.getElementById('btn-view-form')
+    ];
+    // Stagger wiggle+pulse on the two tool buttons
+    btns.forEach((btn, i) => {
+        if (!btn) return;
+        setTimeout(() => {
+            btn.classList.add('pb-intro-anim');
+            btn.addEventListener('animationend', () => btn.classList.remove('pb-intro-anim'), { once: true });
+        }, i * 350);
+    });
+    // Show tip after animations complete
+    setTimeout(() => {
+        const tip = document.getElementById('pb-intro-tip');
+        if (tip) {
+            tip.classList.add('visible');
+            const dismiss = () => {
+                tip.classList.remove('visible');
+                document.removeEventListener('click', dismiss);
+                document.removeEventListener('keydown', dismiss);
+            };
+            setTimeout(() => {
+                document.addEventListener('click', dismiss);
+                document.addEventListener('keydown', dismiss);
+            }, 400);
+        }
+    }, 1000);
+}
+
+// ── MIRA WIDGET ──────────────────────────────────────────
+
+const _mira = { open: false, inactivityTimer: null, inactivityDelay: 45000 };
+
+function _resetMiraInactivity() {
+    clearTimeout(_mira.inactivityTimer);
+    _mira.inactivityTimer = setTimeout(() => {
+        if (!_mira.open) {
+            const fab = document.getElementById('mira-fab-btn');
+            if (fab) {
+                fab.classList.add('pb-intro-anim');
+                fab.addEventListener('animationend', () => fab.classList.remove('pb-intro-anim'), { once: true });
+            }
+            setTimeout(() => { if (!_mira.open) openMiraChat(); }, 800);
+        }
+    }, _mira.inactivityDelay);
+}
+
+function openMiraChat() {
+    const w = document.getElementById('mira-widget');
+    const win = document.getElementById('mira-chat-window');
+    const icon = document.getElementById('mira-fab-icon');
+    if (!w) return;
+    w.style.display = 'block';
+    _mira.open = true;
+    if (win) win.style.display = 'flex';
+    if (icon) icon.textContent = '✕';
+    // Greeting if empty
+    const log = document.getElementById('mira-chat-log');
+    if (log && log.childElementCount === 0) {
+        _addMiraMsg('mira', '{{ t("profile.mira_greeting") or "Hi! I\'m Mira 🦉 — need help with your profile?" }}');
+    }
+    const inp = document.getElementById('mira-input');
+    if (inp) inp.focus();
+}
+
+function closeMiraChat() {
+    const win = document.getElementById('mira-chat-window');
+    const icon = document.getElementById('mira-fab-icon');
+    _mira.open = false;
+    if (win) win.style.display = 'none';
+    if (icon) icon.textContent = '💬';
+    _resetMiraInactivity();
+}
+
+function toggleMiraChat() {
+    if (_mira.open) closeMiraChat(); else openMiraChat();
+}
+
+function _addMiraMsg(who, text) {
+    const log = document.getElementById('mira-chat-log');
+    if (!log) return;
+    const div = document.createElement('div');
+    div.className = who === 'mira' ? 'mira-incoming' : 'mira-outgoing';
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+}
+
+async function sendMiraMsg() {
+    const inp = document.getElementById('mira-input');
+    if (!inp) return;
+    const text = inp.value.trim();
+    if (!text) return;
+    inp.value = '';
+    _addMiraMsg('user', text);
+    try {
+        const resp = await fetch('/api/profile/mira', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        });
+        const data = await resp.json();
+        _addMiraMsg('mira', data.reply || '…');
+    } catch (e) {
+        _addMiraMsg('mira', 'Sorry, something went wrong.');
+    }
+}
+
+function _initMira() {
+    const w = document.getElementById('mira-widget');
+    if (!w) return;
+    w.style.display = 'block';
+    // Wire activity events to reset inactivity timer
+    ['mousemove', 'keydown', 'click', 'scroll'].forEach(ev => {
+        document.addEventListener(ev, _resetMiraInactivity, { passive: true });
+    });
+    _resetMiraInactivity();
+}
 
 // ── MODAL OPEN / CLOSE ────────────────────────────────────
 
@@ -1615,6 +1856,8 @@ function downloadProfile() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
+    runIntroAnimation();
+    _initMira();
     // If no yogi name yet, open form modal so they can set it
     const yogiInput = document.getElementById('pf-yogi-name');
     if (yogiInput && !yogiInput.value.trim()) {
