@@ -338,6 +338,89 @@ def get_usage_balance(
     return get_balance(conn, user['user_id'])
 
 
+# Real compute costs per event (from billing_assumptions.yaml Section D).
+# These are what it costs US, not what we charge.
+_COMPUTE_COST_CENTS = {
+    'mira_message':  0.3,
+    'cv_extraction': 5.0,
+    'cover_letter':  3.0,
+    'match_report':  2.0,
+    'profile_embed': 0.2,
+}
+
+
+@router.get("/my-compute-impact")
+def get_my_compute_impact(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Return how much Talent Yoga has invested in AI compute for this yogi.
+    Broken down by event type, for the current month and all-time.
+
+    This is the REAL infrastructure cost, not what we charge.
+    Purpose: transparency and shared reality.
+    """
+    from datetime import date
+
+    today = date.today()
+    month_start = today.replace(day=1)
+    if month_start.month == 12:
+        month_end = month_start.replace(year=month_start.year + 1, month=1)
+    else:
+        month_end = month_start.replace(month=month_start.month + 1)
+
+    user_id = user['user_id']
+
+    with conn.cursor() as cur:
+        # Current month event counts by type
+        cur.execute("""
+            SELECT event_type, COUNT(*) as cnt
+            FROM usage_events
+            WHERE user_id = %s AND created_at >= %s AND created_at < %s
+            GROUP BY event_type
+        """, (user_id, month_start, month_end))
+        month_rows = cur.fetchall()
+
+        # All-time event counts by type
+        cur.execute("""
+            SELECT event_type, COUNT(*) as cnt
+            FROM usage_events
+            WHERE user_id = %s
+            GROUP BY event_type
+        """, (user_id,))
+        alltime_rows = cur.fetchall()
+
+    def compute_breakdown(rows):
+        breakdown = []
+        total_cents = 0.0
+        for r in rows:
+            et = r['event_type']
+            cnt = r['cnt']
+            cost_each = _COMPUTE_COST_CENTS.get(et, 0)
+            subtotal = round(cost_each * cnt, 2)
+            total_cents += subtotal
+            breakdown.append({
+                'event_type': et,
+                'count': cnt,
+                'compute_cost_cents': round(subtotal, 2),
+            })
+        return breakdown, round(total_cents, 2)
+
+    month_bd, month_total = compute_breakdown(month_rows)
+    alltime_bd, alltime_total = compute_breakdown(alltime_rows)
+
+    return {
+        'month': month_start.isoformat()[:7],
+        'this_month': {
+            'breakdown': month_bd,
+            'total_compute_cents': month_total,
+        },
+        'all_time': {
+            'breakdown': alltime_bd,
+            'total_compute_cents': alltime_total,
+        },
+    }
 # ── Transaction history + drill-down ──────────────────────────────────────────
 
 

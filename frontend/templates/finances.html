@@ -71,6 +71,18 @@
             </div>
         </div>
         
+        <!-- Infrastructure — Keep the Lights On -->
+        <div class="ledger-card" id="infra-card">
+            <h2>🔌 Was es kostet, das Licht an zu lassen / What it costs to keep the lights on</h2>
+            <div class="loading">Lade Daten...</div>
+        </div>
+
+        <!-- Personal AI Investment (visible only when logged in) -->
+        <div class="ledger-card" id="personal-card" style="display: none;">
+            <h2>🤖 Dein KI-Einsatz / Your AI Investment</h2>
+            <div class="loading">Lade Daten...</div>
+        </div>
+
         <!-- History -->
         <div class="ledger-card" id="history-card">
             <h2>📅 Verlauf / History</h2>
@@ -253,10 +265,142 @@
         function capitalize(s) {
             return s.charAt(0).toUpperCase() + s.slice(1);
         }
+
+        // Friendly labels for infra items
+        const INFRA_LABELS = {
+            gpu_server_amortization: '🖥️ GPU-Server (Abschreibung / amortization)',
+            electricity:             '⚡ Strom / Electricity',
+            backup_storage:          '💾 Backups',
+            domain_ssl:              '🌐 Domain & SSL',
+            vpn:                     '🔒 VPN',
+            pipeline_compute:        '⚙️ Nightly pipeline compute',
+        };
+        const EVENT_LABELS = {
+            mira_message:  '💬 Mira-Nachrichten / Mira messages',
+            cv_extraction: '📄 CV-Analysen / CV analyses',
+            cover_letter:  '✉️ Anschreiben / Cover letters',
+            match_report:  '📊 Match-Berichte / Match reports',
+            profile_embed: '🔄 Profil-Embeddings',
+        };
+
+        // Load infrastructure + system compute transparency
+        async function loadInfra() {
+            const card = document.getElementById('infra-card');
+            try {
+                const res = await fetch('/api/ledger/compute-transparency');
+                const data = await res.json();
+
+                const infraRows = data.infrastructure.breakdown.map(r =>
+                    `<tr><td>${INFRA_LABELS[r.item] || r.item}</td><td class="amount">${formatEuro(r.cents)}</td></tr>`
+                ).join('');
+
+                const aiRows = data.ai_compute.breakdown.map(r =>
+                    `<tr><td>${EVENT_LABELS[r.event_type] || r.event_type} (×${r.count})</td><td class="amount">${formatEuro(r.compute_cost_cents)}</td></tr>`
+                ).join('');
+
+                card.innerHTML = `
+                    <h2>🔌 Was es kostet, das Licht an zu lassen / What it costs to keep the lights on</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.2rem;">
+                        Echte monatliche Kosten — kein Marketing, keine versteckten Margen.<br>
+                        Real monthly costs — no marketing, no hidden margins.
+                    </p>
+                    <h4 style="margin-bottom: 0.6rem;">Infrastruktur / Infrastructure</h4>
+                    <table class="history-table" style="margin-bottom: 1.5rem;">
+                        <tbody>
+                            ${infraRows}
+                            <tr style="font-weight: 600; border-top: 2px solid var(--border);">
+                                <td>Gesamt / Total</td>
+                                <td class="amount">${formatEuro(data.infrastructure.total_cents)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h4 style="margin-bottom: 0.6rem;">KI-Rechenleistung diesen Monat / AI compute this month</h4>
+                    <table class="history-table" style="margin-bottom: 1.2rem;">
+                        <tbody>
+                            ${aiRows || '<tr><td colspan="2" style="color:var(--text-muted)">Noch keine Daten / No data yet</td></tr>'}
+                            <tr style="font-weight: 600; border-top: 2px solid var(--border);">
+                                <td>Gesamt / Total</td>
+                                <td class="amount">${formatEuro(data.ai_compute.total_cents)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="current-stats" style="margin-top: 1rem;">
+                        <div class="stat-box">
+                            <div class="stat-value">${data.active_yogis}</div>
+                            <div class="stat-label">Aktive Yogis</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${formatEuro(data.total_monthly_cost_cents)}</div>
+                            <div class="stat-label">Gesamtkosten / Total</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${data.active_yogis > 0 ? formatEuro(data.avg_cost_per_yogi_cents) : '—'}</div>
+                            <div class="stat-label">Pro Yogi / Per yogi</div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                card.innerHTML = '<h2>🔌 Infrastruktur</h2><p style="color: var(--error)">Fehler beim Laden</p>';
+            }
+        }
+
+        // Load personal AI investment (only if logged in)
+        async function loadPersonal() {
+            const card = document.getElementById('personal-card');
+            try {
+                const res = await fetch('/api/account/my-compute-impact');
+                if (res.status === 401 || res.status === 403) return; // not logged in
+                if (!res.ok) return;
+                const data = await res.json();
+                card.style.display = '';
+
+                const monthRows = data.this_month.breakdown.map(r =>
+                    `<tr><td>${EVENT_LABELS[r.event_type] || r.event_type} (×${r.count})</td><td class="amount">${formatEuro(r.compute_cost_cents)}</td></tr>`
+                ).join('');
+                const allRows = data.all_time.breakdown.map(r =>
+                    `<tr><td>${EVENT_LABELS[r.event_type] || r.event_type} (×${r.count})</td><td class="amount">${formatEuro(r.compute_cost_cents)}</td></tr>`
+                ).join('');
+
+                const monthTotal = data.this_month.total_compute_cents;
+                const allTotal = data.all_time.total_compute_cents;
+
+                card.innerHTML = `
+                    <h2>🤖 Dein KI-Einsatz / Your AI Investment</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.2rem;">
+                        So viel hat Talent Yoga diesen Monat in KI-Unterstützung für dich investiert.<br>
+                        This is how much Talent Yoga invested in AI assistance for you this month.
+                    </p>
+                    <h4 style="margin-bottom: 0.6rem;">${data.month} — diesen Monat / this month</h4>
+                    <table class="history-table" style="margin-bottom: 1.5rem;">
+                        <tbody>
+                            ${monthRows || '<tr><td colspan="2" style="color:var(--text-muted)">Noch keine Aktivität / No activity yet</td></tr>'}
+                            <tr style="font-weight: 600; border-top: 2px solid var(--border);">
+                                <td>Investiert / Invested</td>
+                                <td class="amount">${formatEuro(monthTotal)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h4 style="margin-bottom: 0.6rem;">Insgesamt / All time</h4>
+                    <table class="history-table">
+                        <tbody>
+                            ${allRows || '<tr><td colspan="2" style="color:var(--text-muted)">—</td></tr>'}
+                            <tr style="font-weight: 600; border-top: 2px solid var(--border);">
+                                <td>Gesamt investiert / Total invested</td>
+                                <td class="amount">${formatEuro(allTotal)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            } catch (err) {
+                // silently ignore — personal data is optional
+            }
+        }
         
         // Load on page ready
         document.addEventListener('DOMContentLoaded', () => {
             loadCurrent();
+            loadInfra();
+            loadPersonal();
             loadHistory();
         });
     </script>

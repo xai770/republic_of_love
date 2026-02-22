@@ -1475,6 +1475,11 @@ window.SEARCH_TOUR_I18N = {
         const msg = document.createElement('div');
         msg.className = `mira-message ${isUser ? 'user' : 'mira'}`;
         msg.textContent = content;
+        // Cost transparency hint on assistant messages
+        if (!isUser && window.CostHints) {
+            const hint = CostHints.create('mira_message', '{{ user.language }}' === 'en' ? 'en' : 'de');
+            if (hint) { hint.classList.add('cost-hint-block'); msg.appendChild(hint); }
+        }
         container.appendChild(msg);
         container.scrollTop = container.scrollHeight;
     }

@@ -164,3 +164,86 @@ def get_founder_debt(conn=Depends(get_db)):
             ORDER BY initial_investment_cents DESC
         """)
         return [FounderDebt(**row) for row in cur.fetchall()]
+
+
+# Real compute costs per event (from billing_assumptions.yaml Section D)
+_COMPUTE_COST_CENTS = {
+    'mira_message':  0.3,
+    'cv_extraction': 5.0,
+    'cover_letter':  3.0,
+    'match_report':  2.0,
+    'profile_embed': 0.2,
+}
+
+# Fixed monthly infrastructure costs (from billing_assumptions.yaml Sections B+C)
+_MONTHLY_INFRA_CENTS = {
+    'gpu_server_amortization': 6944,   # €69.44
+    'electricity':             3000,   # €30.00
+    'backup_storage':          500,    # €5.00
+    'domain_ssl':              300,    # €3.00
+    'vpn':                     1000,   # €10.00
+    'pipeline_compute':        1500,   # €15.00
+}
+
+
+@router.get("/compute-transparency")
+def get_compute_transparency(conn=Depends(get_db)):
+    """
+    System-wide compute and infrastructure cost transparency.
+    Public endpoint — shows real costs for shared stewardship.
+
+    Returns: monthly infra costs, total AI compute this month,
+    active yogi count, and average compute cost per yogi.
+    """
+    with conn.cursor() as cur:
+        # This month's AI events by type
+        cur.execute("""
+            SELECT event_type, COUNT(*) as cnt
+            FROM usage_events
+            WHERE created_at >= date_trunc('month', CURRENT_DATE)
+            GROUP BY event_type
+        """)
+        event_rows = cur.fetchall()
+
+        # Active yogis this month
+        cur.execute("""
+            SELECT COUNT(DISTINCT user_id) as active
+            FROM usage_events
+            WHERE created_at >= date_trunc('month', CURRENT_DATE)
+        """)
+        active_row = cur.fetchone()
+        active_yogis = active_row['active'] if active_row else 0
+
+    # Calculate total compute cost
+    ai_breakdown = []
+    total_ai_cents = 0.0
+    for r in event_rows:
+        et = r['event_type']
+        cnt = r['cnt']
+        cost_each = _COMPUTE_COST_CENTS.get(et, 0)
+        subtotal = round(cost_each * cnt, 2)
+        total_ai_cents += subtotal
+        ai_breakdown.append({
+            'event_type': et,
+            'count': cnt,
+            'compute_cost_cents': round(subtotal, 2),
+        })
+
+    total_infra_cents = sum(_MONTHLY_INFRA_CENTS.values())
+    total_cost_cents = round(total_infra_cents + total_ai_cents, 2)
+    avg_per_yogi_cents = round(total_cost_cents / active_yogis, 2) if active_yogis > 0 else 0
+
+    return {
+        'month': str(date.today().replace(day=1)),
+        'infrastructure': {
+            'breakdown': [{'item': k, 'cents': v} for k, v in _MONTHLY_INFRA_CENTS.items()],
+            'total_cents': total_infra_cents,
+        },
+        'ai_compute': {
+            'breakdown': ai_breakdown,
+            'total_cents': round(total_ai_cents, 2),
+        },
+        'total_monthly_cost_cents': total_cost_cents,
+        'active_yogis': active_yogis,
+        'avg_cost_per_yogi_cents': avg_per_yogi_cents,
+    }

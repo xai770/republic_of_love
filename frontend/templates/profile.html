@@ -1225,6 +1225,17 @@ async function uploadCV(file) {
 
         await importCV(data);
         addLogEntry('system', '✓ Import OK', 'cv_import');
+        // Cost transparency hint
+        if (window.CostHints) {
+            const lang = '{{ user.language }}' === 'en' ? 'en' : 'de';
+            const hint = CostHints.create('cv_extraction', lang);
+            if (hint) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'pb-log-entry system';
+                wrapper.appendChild(hint);
+                document.getElementById('pb-log').appendChild(wrapper);
+            }
+        }
         await refreshProfile();
 
     } catch (err) {

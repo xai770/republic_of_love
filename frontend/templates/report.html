@@ -219,6 +219,20 @@ function renderReport(data) {
     if (data.computed_at) {
         document.getElementById('generated-at').textContent = 'Generated: ' + new Date(data.computed_at).toLocaleString();
     }
+
+    // Cost transparency hint
+    if (window.CostHints) {
+        const types = ['match_report'];
+        if (data.cover_letter) types.push('cover_letter');
+        const lang = document.documentElement.lang === 'en' ? 'en' : 'de';
+        const hint = CostHints.createCombined(types, lang);
+        if (hint) {
+            hint.classList.add('cost-hint-block');
+            hint.style.marginTop = '12px';
+            const ts = document.getElementById('generated-at');
+            if (ts) ts.parentNode.insertBefore(hint, ts.nextSibling);
+        }
+    }
 }
 
 function renderSkillBreakdown(skills) {
