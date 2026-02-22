@@ -39,12 +39,13 @@ def get_conn():
 QUERY = """
 WITH embedded AS (
     -- postings whose CURRENT match_text has a fresh embedding
-    -- normalize_text_python = LOWER(btrim(...)) — same as the embedding actor
+    -- match on text_hash (indexed) not text — same hash as embedding actor:
+    -- sha256(text.lower().strip())[:32]
     SELECT pfm.posting_id
     FROM postings_for_matching pfm
     WHERE EXISTS (
         SELECT 1 FROM embeddings e
-        WHERE e.text = normalize_text_python(pfm.match_text)
+        WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(LOWER(TRIM(pfm.match_text)), 'UTF8')), 'hex'), 32)
     )
 )
 SELECT
@@ -74,7 +75,7 @@ WITH embedded AS (
     FROM postings_for_matching pfm
     WHERE EXISTS (
         SELECT 1 FROM embeddings e
-        WHERE e.text = normalize_text_python(pfm.match_text)
+        WHERE e.text_hash = LEFT(ENCODE(SHA256(CONVERT_TO(LOWER(TRIM(pfm.match_text)), 'UTF8')), 'hex'), 32)
     )
 )
 SELECT
