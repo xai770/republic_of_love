@@ -1328,8 +1328,20 @@
             }));
             msg.className   = 'ob-upload-ok';
             msg.textContent = t.s9_cv_uploading || '✓ Analyzing in the background…';
-            // Redirect to dashboard after a short pause
-            setTimeout(() => { window.location.href = '/dashboard'; }, 1800);
+            // Fade to white then redirect
+            setTimeout(() => {
+                const curtain = document.createElement('div');
+                curtain.style.cssText = [
+                    'position:fixed', 'inset:0', 'background:#ffffff',
+                    'opacity:0', 'transition:opacity 0.4s ease',
+                    'z-index:9999', 'pointer-events:none'
+                ].join(';');
+                document.body.appendChild(curtain);
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    curtain.style.opacity = '1';
+                }));
+                setTimeout(() => { window.location.href = '/dashboard'; }, 420);
+            }, 900);
         } catch(err) {
             // Restore zone so they can retry
             zone.style.display = '';
