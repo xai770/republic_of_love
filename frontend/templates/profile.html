@@ -624,24 +624,59 @@
     .pb-right { min-height: 50vh; }
 }
 
-/* ── Top-panel mode (form/upload tabs) ─────────────────── */
-/* When upload or form tab is active, show that pane in the upper half
-   and keep Adele's activity log in the lower half. */
-.pb-left.top-panel .pb-input-area {
-    flex: 0 0 50%;
-    max-height: 50%;
-    overflow-y: auto;
-    border-top: none;
-    border-bottom: 1px solid var(--border);
+/* ── Right-pane view icon buttons ──────────────────────── */
+.pb-view-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    color: var(--text-muted);
+    flex-shrink: 0;
 }
-.pb-left.top-panel .pb-log {
-    order: 1;   /* push log below input-area in flex order */
+.pb-view-btn:hover {
+    border-color: var(--primary);
+    background: rgba(37,99,235,0.06);
+}
+.pb-view-btn.active {
+    border-color: var(--primary);
+    background: rgba(37,99,235,0.1);
+    color: var(--primary);
+}
+
+/* ── Right-pane views (profile / upload / form) ─────────── */
+.pb-right-view {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
 }
-.pb-left.top-panel .pb-form-area.active,
-.pb-left.top-panel .pb-upload-area.active {
+/* Profile preview fills the right pane */
+#pb-view-profile .pb-preview {
+    flex: 1;
+    overflow-y: auto;
+}
+/* Upload view: pad and scroll */
+#pb-view-upload .pb-upload-area {
+    padding: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+}
+/* Form view: no max-height, scrolls naturally in pane */
+#pb-view-form .pb-form-area {
     max-height: none;
-    height: 100%;
+    flex: 1;
+    padding: 1rem 1.5rem 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── Dark mode ─────────────────────────────────────────── */
@@ -662,22 +697,10 @@
     <main class="main-content" style="padding:0; padding-bottom:0; max-width:none; overflow:hidden;">
     <div class="profile-builder">
         
-        <!-- ═══ LEFT PANE ═══ -->
+        <!-- ═══ LEFT PANE — Adele always ═══ -->
         <div class="pb-left">
-            <!-- Tab bar -->
-            <div class="pb-tabs">
-                <button class="pb-tab active" data-tab="chat" onclick="switchTab('chat')">
-                    <span class="pb-tab-icon">🎙️</span> {{ t('profile.tab_adele') }}
-                </button>
-                <button class="pb-tab" data-tab="upload" onclick="switchTab('upload')">
-                    <span class="pb-tab-icon">📄</span> {{ t('profile.tab_upload') }}
-                </button>
-                <button class="pb-tab" data-tab="form" onclick="switchTab('form')">
-                    <span class="pb-tab-icon">📝</span> {{ t('profile.tab_form') }}
-                </button>
-            </div>
 
-            <!-- Activity log (always visible) -->
+            <!-- Activity log -->
             <div class="pb-log" id="pb-log">
                 <div class="pb-log-empty" id="pb-log-empty">
                     <div class="pb-log-empty-icon">🎙️</div>
@@ -688,9 +711,8 @@
                 </div>
             </div>
 
-            <!-- Input area — changes per tab -->
+            <!-- Chat input (always visible) -->
             <div class="pb-input-area">
-                <!-- Chat input (default) -->
                 <div class="pb-chat-input" id="pb-input-chat">
                     <textarea id="pb-chat-text" rows="1" placeholder="{{ t('profile.chat_placeholder') }}"
                               onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendToAdele()}"
@@ -701,9 +723,41 @@
                         </svg>
                     </button>
                 </div>
+            </div>
+        </div>
 
-                <!-- Upload input -->
-                <div class="pb-upload-area" id="pb-input-upload">
+        <!-- ═══ RIGHT PANE ═══ -->
+        <div class="pb-right">
+            <div class="pb-right-header">
+                <h2>📋 {{ t('profile.preview_title') }}</h2>
+                <div class="pb-right-actions">
+                    <button class="pb-view-btn" id="btn-view-upload" onclick="switchRightView('upload')" title="{{ t('profile.tab_upload') }}">📄</button>
+                    <button class="pb-view-btn" id="btn-view-form" onclick="switchRightView('form')" title="{{ t('profile.tab_form') }}">📝</button>
+                    <span class="pb-completeness" id="pb-completeness">0%</span>
+                    <button class="pb-download-btn" onclick="downloadProfile()" title="{{ t('profile.download') }}">
+                        {{ t('profile.download') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- View: Profile preview (default) -->
+            <div id="pb-view-profile" class="pb-right-view">
+                <div class="pb-preview" id="pb-preview">
+                    <div class="pb-preview-content" id="pb-preview-content">
+                        <div class="pb-preview-empty" id="pb-preview-empty">
+                            <div class="pb-preview-empty-icon">📋</div>
+                            <div>
+                                <strong>{{ t('profile.preview_empty_title') }}</strong><br>
+                                {{ t('profile.preview_empty_desc') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: Upload CV -->
+            <div id="pb-view-upload" class="pb-right-view" style="display:none">
+                <div class="pb-upload-area active" id="pb-input-upload">
                     <div class="pb-dropzone" id="pb-dropzone"
                          ondrop="handleDrop(event)" ondragover="handleDragOver(event)"
                          ondragleave="handleDragLeave(event)"
@@ -720,9 +774,11 @@
                         <p>{{ t('profile.upload_analyzing') }}</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Form input -->
-                <div class="pb-form-area" id="pb-input-form">
+            <!-- View: Edit Form -->
+            <div id="pb-view-form" class="pb-right-view" style="display:none">
+                <div class="pb-form-area active" id="pb-input-form">
                     <div class="pb-form-toolbar">
                         <button class="pb-form-expand-btn" id="form-expand-btn"
                                 onclick="toggleFormExpand()">&#x26F6; Expand</button>
@@ -814,30 +870,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- ═══ RIGHT PANE ═══ -->
-        <div class="pb-right">
-            <div class="pb-right-header">
-                <h2>{{ t('profile.preview_title') }}</h2>
-                <div class="pb-right-actions">
-                    <span class="pb-completeness" id="pb-completeness">0%</span>
-                    <button class="pb-download-btn" onclick="downloadProfile()" title="{{ t('profile.download') }}">
-                        {{ t('profile.download') }}
-                    </button>
-                </div>
-            </div>
-            <div class="pb-preview" id="pb-preview">
-                <div class="pb-preview-content" id="pb-preview-content">
-                    <div class="pb-preview-empty" id="pb-preview-empty">
-                        <div class="pb-preview-empty-icon">📋</div>
-                        <div>
-                            <strong>{{ t('profile.preview_empty_title') }}</strong><br>
-                            {{ t('profile.preview_empty_desc') }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     </main>
 </div>
@@ -878,32 +910,42 @@ const I = {
     cv_skills: {{ t('profile.cv_skills') | tojson }},
 };
 
-// ── TAB SWITCHING ──────────────────────────────────────────
+// ── RIGHT-PANE VIEW SWITCHING ─────────────────────────────
 
-function switchTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.pb-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === tab);
+let currentRightView = 'profile';
+
+function switchRightView(view) {
+    // If clicking the active view icon, toggle back to profile
+    if (view === currentRightView && view !== 'profile') view = 'profile';
+    currentRightView = view;
+
+    ['profile', 'upload', 'form'].forEach(v => {
+        const el = document.getElementById('pb-view-' + v);
+        if (el) el.style.display = v === view ? 'flex' : 'none';
     });
-    document.getElementById('pb-input-chat').style.display = tab === 'chat' ? 'flex' : 'none';
-    document.getElementById('pb-input-upload').style.display = tab === 'upload' ? 'block' : 'none';
-    document.getElementById('pb-input-upload').classList.toggle('active', tab === 'upload');
-    document.getElementById('pb-input-form').style.display = tab === 'form' ? 'block' : 'none';
-    document.getElementById('pb-input-form').classList.toggle('active', tab === 'form');
 
-    // Form/upload tabs: show content in upper half, Adele log in lower half
-    const leftPane = document.querySelector('.pb-left');
-    leftPane.classList.toggle('top-panel', tab === 'upload' || tab === 'form');
+    // Active state on icon buttons
+    ['upload', 'form'].forEach(v => {
+        const btn = document.getElementById('btn-view-' + v);
+        if (btn) btn.classList.toggle('active', v === view);
+    });
 
-    if (tab === 'chat') document.getElementById('pb-chat-text').focus();
+    // Focus chat when not in a view that steals focus
+    if (view === 'profile') document.getElementById('pb-chat-text').focus();
 
-    // Collapse form expand overlay when switching away
-    if (tab !== 'form') {
+    // Collapse form expand overlay when leaving form
+    if (view !== 'form') {
         const form = document.getElementById('pb-input-form');
         const btn = document.getElementById('form-expand-btn');
         if (form) form.classList.remove('pb-expanded');
         if (btn) btn.innerHTML = '&#x26F6; Expand';
     }
+}
+
+// Legacy alias so any existing calls still work
+function switchTab(tab) {
+    if (tab === 'chat') switchRightView('profile');
+    else switchRightView(tab);
 }
 
 // ── FORM EXPAND TOGGLE ────────────────────────────────────
@@ -1496,16 +1538,15 @@ function downloadProfile() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
-    // If no yogi name yet, open form tab so they can set it inline
+    // Default: profile view visible; if no yogi name yet, open form so they can set it
+    switchRightView('profile');
     const yogiInput = document.getElementById('pf-yogi-name');
     if (yogiInput && !yogiInput.value.trim()) {
-        switchTab('form');
+        switchRightView('form');
         setTimeout(() => {
             yogiInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             yogiInput.focus();
         }, 100);
-    } else {
-        switchTab('chat');
     }
 });
 </script>
