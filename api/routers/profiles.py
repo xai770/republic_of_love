@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
 import json as _json
+import logging
 import tempfile
 import os
 import hashlib
@@ -19,6 +20,7 @@ from api.deps import get_db, require_user, _get_pool
 from config.settings import OLLAMA_EMBED_URL as _OLLAMA_EMBED_URL, EMBED_MODEL as _EMBED_MODEL
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
+logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -889,7 +891,7 @@ async def parse_cv(
             log_event(conn, user['user_id'], 'cv_extraction',
                       context={'filename': file.filename, 'text_len': len(result.get('raw_text', '') or '')})
         except Exception as e:
-            log.warning(f"Usage tracking failed for cv_extraction: {e}")
+            logger.warning(f"Usage tracking failed for cv_extraction: {e}")
 
         return result
         
