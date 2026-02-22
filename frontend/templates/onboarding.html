@@ -309,6 +309,12 @@
             width: 18px; height: 18px; margin-top: 2px;
             accent-color: #0d9488; flex-shrink: 0;
         }
+        .tc-row input[type="checkbox"]:disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        .tc-row:has(input:disabled) label {
+            opacity: 0.55; cursor: default;
+        }
         .tc-row label {
             font-size: 14px; color: #334155; cursor: pointer; line-height: 1.5;
         }
@@ -464,8 +470,9 @@
         <h2 id="s4-title"></h2>
         <div class="privacy-content" id="s4-content"></div>
         <div class="tc-row">
-            <input type="checkbox" id="tc-checkbox" onchange="toggleTerms()">
+            <input type="checkbox" id="tc-checkbox" onchange="toggleTerms()" disabled>
             <label for="tc-checkbox" id="s4-tc-label"></label>
+            <span class="validation-msg" id="tc-hint" style="display:block;margin-top:4px;"></span>
         </div>
         <div class="btn-row">
             <button class="btn btn-secondary" onclick="goTo(prevStepFrom(4))">← <span class="back-label"></span></button>
@@ -586,6 +593,8 @@
         currentStep: 1,
         totalSteps: 9,
         termsAccepted: false,
+        viewedTerms: false,
+        viewedPrivacy: false,
     };
 
     // ── Copy — 3 variants: en, de_du, de_sie ──────
@@ -819,6 +828,7 @@
         if ($('#s4-tc-label')) $('#s4-tc-label').innerHTML = t.s4_tc_label;
         if ($('#s4-accept')) $('#s4-accept').textContent = t.s4_accept;
         if ($('#s4-reject')) $('#s4-reject').textContent = t.s4_reject;
+        updateCheckboxState();
 
         // Step 5 — Billing
         if ($('#s5-title'))    $('#s5-title').textContent = t.s5_title;
@@ -985,6 +995,8 @@
         const lang = state.lang === 'en' ? 'en' : 'de';
         const doc = LEGAL[type] && LEGAL[type][lang];
         if (!doc) return;
+        if (type === 'terms')  state.viewedTerms = true;
+        if (type === 'privacy') state.viewedPrivacy = true;
         $('#legal-overlay-title').textContent = doc.title;
         $('#legal-overlay-body').innerHTML = doc.body;
         $('#legal-overlay').classList.add('active');
@@ -992,7 +1004,30 @@
 
     window.closeLegal = function() {
         $('#legal-overlay').classList.remove('active');
+        updateCheckboxState();
     };
+
+    function updateCheckboxState() {
+        const cb = $('#tc-checkbox');
+        const hint = $('#tc-hint');
+        const bothRead = state.viewedTerms && state.viewedPrivacy;
+        if (cb) cb.disabled = !bothRead;
+        if (hint) {
+            if (bothRead) {
+                hint.textContent = '';
+                hint.style.display = 'none';
+            } else {
+                const missing = [];
+                if (!state.viewedTerms)  missing.push(state.lang === 'en' ? 'Terms & Conditions' : 'AGB');
+                if (!state.viewedPrivacy) missing.push(state.lang === 'en' ? 'Privacy Policy' : 'Datenschutzerklärung');
+                hint.textContent = (state.lang === 'en'
+                    ? 'Please read the ' + missing.join(' and ') + ' first.'
+                    : 'Bitte lesen Sie zuerst die ' + missing.join(' und ') + '.');
+                hint.className = 'validation-msg warning';
+                hint.style.display = 'block';
+            }
+        }
+    }
 
     // ── Step 6 — Gender select ────────────────────
     window.selectGender = function(g) {
