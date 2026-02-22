@@ -22,13 +22,13 @@ The bill answers three questions:
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  talent.yoga — Deine Monatsübersicht / Your Monthly Summary     ║
-║  Zeitraum: Februar 2026                                         ║
-║  Yogi: Luna (user_id: 4)                                       ║
-║  Tier: Full (€9.90/Monat)                                      ║
+║  talent.yoga — Deine Monatsübersicht / Your Monthly Summary      ║
+║  Zeitraum: Februar 2026                                          ║
+║  Yogi: Luna (user_id: 4)                                         ║
+║  Tier: Full (€9.90/Monat)                                        ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
-║  A. DEINE KI-NUTZUNG / YOUR AI USAGE                            ║
+║  A. DEINE KI-NUTZUNG / YOUR AI USAGE                             ║
 ║  ┌────────────────────────────┬───────┬─────────┬──────────────┐ ║
 ║  │ Aktion                     │ Anzahl│ Preis   │ Summe        │ ║
 ║  ├────────────────────────────┼───────┼─────────┼──────────────┤ ║
@@ -41,7 +41,7 @@ The bill answers three questions:
 ║  │ GESAMT KI-Nutzung          │    58 │         │ €3.44        │ ║
 ║  └────────────────────────────┴───────┴─────────┴──────────────┘ ║
 ║                                                                  ║
-║  B. WAS ES UNS KOSTET, DICH ZU BEDIENEN / COST TO SERVE YOU     ║
+║  B. WAS ES UNS KOSTET, DICH ZU BEDIENEN / COST TO SERVE YOU      ║
 ║  ┌────────────────────────────────────────────┬──────────────┐   ║
 ║  │ Rechenkosten (GPU für deine KI-Nutzung)    │ €0.14        │   ║
 ║  │ Dein Anteil Serverbetrieb (1/N)            │ €0.07        │   ║
@@ -63,11 +63,11 @@ The bill answers three questions:
 ║                                                                  ║
 ║  D. GEMEINSCHAFT / COMMUNITY                                     ║
 ║  ┌──────────────────────────────────────────────────────────┐    ║
-║  │ Aktive Yogis diesen Monat:        1,247                   │    ║
-║  │ Davon zahlend:                      312 (25%)             │    ║
-║  │ Gesamtkosten Plattform:           €286                    │    ║
-║  │ Gründer-Schuld verbleibend:       €783,260                │    ║
-║  │ Fortschritt:  ████░░░░░░░░░  1.6%                          │    ║
+║  │ Aktive Yogis diesen Monat:        1,247                  │    ║
+║  │ Davon zahlend:                      312 (25%)            │    ║
+║  │ Gesamtkosten Plattform:           €286                   │    ║
+║  │ Gründer-Schuld verbleibend:       €783,260               │    ║
+║  │ Fortschritt:  ████░░░░░░░░░  1.6%                        │    ║
 ║  └──────────────────────────────────────────────────────────┘    ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
@@ -380,3 +380,117 @@ def generate_bill(user_id: int, period_start: date, period_end: date) -> YogiBil
 4. **Build bill API** — `GET /api/account/bill?month=2026-02`
 5. **Build bill UI** — Personal finances tab showing monthly bill
 6. **Implement daily quota** — `check_access()` returns tier + limits for free users
+
+---
+
+## Appendix: Transaction Drill-Down
+
+**Added 2026-02-22**
+
+Every yogi can view their entire transaction history and drill into each event
+to see what happened. "What was that chat? What was that cover letter?"
+
+### Context JSONB Schema
+
+Each `usage_events` row stores a `context` JSONB column with event-type-specific
+IDs that link back to source tables:
+
+| Event Type | Context Keys | Links To |
+|---|---|---|
+| `mira_message` | `user_message_id`, `mira_message_id`, `message_len`, `fallback` | `yogi_messages.message_id` |
+| `cover_letter` | `match_id`, `posting_id` | `profile_posting_matches.match_id` |
+| `match_report` | `match_id`, `posting_id` | `profile_posting_matches.match_id` |
+| `cv_extraction` | `session_id` | `adele_sessions.session_id` |
+| `profile_embed` | `profile_id` | `profiles.profile_id` |
+
+### API Endpoints
+
+**`GET /api/account/transactions?month=2026-02&limit=100&offset=0`**
+
+Returns a paginated list of usage events for the month, each with:
+- `event_id`, `event_type`, `cost_cents`, `created_at`, `billed`
+- `label` — human-readable preview (e.g. "Mira: Wie finde ich einen Job?")
+- `has_detail` — true if drill-down is available
+
+Response:
+```json
+{
+  "month": "2026-02",
+  "events": [
+    {
+      "event_id": 47,
+      "event_type": "mira_message",
+      "cost_cents": 2,
+      "label": "Mira: Wie finde ich einen Job in Berlin?",
+      "created_at": "2026-02-22T14:30:00+00:00",
+      "billed": false,
+      "has_detail": true
+    },
+    {
+      "event_id": 46,
+      "event_type": "cover_letter",
+      "cost_cents": 30,
+      "label": "Anschreiben: Deutsche Bank AG — Data Engineer",
+      "created_at": "2026-02-22T13:15:00+00:00",
+      "billed": false,
+      "has_detail": true
+    }
+  ],
+  "total_events": 58,
+  "total_cents": 344,
+  "limit": 100,
+  "offset": 0
+}
+```
+
+**`GET /api/account/transactions/{event_id}`**
+
+Returns the full detail behind a single event. Example for `mira_message`:
+
+```json
+{
+  "event_id": 47,
+  "event_type": "mira_message",
+  "cost_cents": 2,
+  "created_at": "2026-02-22T14:30:00+00:00",
+  "billed": false,
+  "context": {
+    "user_message_id": 512,
+    "mira_message_id": 513,
+    "message_len": 42,
+    "fallback": false
+  },
+  "detail": {
+    "type": "mira_message",
+    "messages": [
+      {"role": "user", "content": "Wie finde ich einen Job in Berlin?", "at": "2026-02-22T14:30:00+00:00"},
+      {"role": "mira", "content": "Das kommt auf deine Branche an! ...", "at": "2026-02-22T14:30:01+00:00"}
+    ]
+  }
+}
+```
+
+Example for `cover_letter`:
+
+```json
+{
+  "detail": {
+    "type": "cover_letter",
+    "company": "Deutsche Bank AG",
+    "title": "Data Engineer",
+    "external_url": "https://careers.db.com/...",
+    "match_rate": "good",
+    "recommendation": "apply",
+    "confidence": 0.85,
+    "cover_letter": "Sehr geehrte Damen und Herren, ..."
+  }
+}
+```
+
+### Implementation
+
+- **Migration 060**: GIN index on `usage_events.context` for efficient lookups
+- **Mira chat handler**: Now captures `message_id` from both INSERT RETURNING and passes to `log_event`
+- **Account router**: `GET /transactions` (list) and `GET /transactions/{event_id}` (detail)
+- **Label builder**: `_build_event_label()` generates German preview text per event type
+- **Detail fetcher**: `_fetch_event_detail()` joins to source table and returns full content

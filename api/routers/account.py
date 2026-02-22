@@ -336,3 +336,296 @@ def get_usage_balance(
     """
     from lib.usage_tracker import get_balance
     return get_balance(conn, user['user_id'])
+
+
+# ── Transaction history + drill-down ──────────────────────────────────────────
+
+
+@router.get("/transactions")
+def get_transactions(
+    month: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Return the user's usage event history with summary previews.
+
+    Each event includes a short human-readable label so the yogi knows
+    what the charge was for (e.g. "Mira: Wie finde ich einen Job?",
+    "Anschreiben: Deutsche Bank AG — Data Engineer").
+
+    Query params:
+        month  — YYYY-MM (default: current month)
+        limit  — max rows (default 100)
+        offset — pagination offset
+    """
+    from datetime import date
+
+    if month:
+        try:
+            year, mon = month.split("-")
+            period_start = date(int(year), int(mon), 1)
+        except (ValueError, TypeError):
+            raise HTTPException(400, "month must be YYYY-MM")
+    else:
+        today = date.today()
+        period_start = today.replace(day=1)
+
+    # Next month start for range query
+    if period_start.month == 12:
+        period_end = period_start.replace(year=period_start.year + 1, month=1)
+    else:
+        period_end = period_start.replace(month=period_start.month + 1)
+
+    user_id = user["user_id"]
+
+    with conn.cursor() as cur:
+        # Get events with a LEFT JOIN preview from yogi_messages (for mira/adele chats)
+        cur.execute("""
+            SELECT
+                e.event_id,
+                e.event_type,
+                e.cost_cents,
+                e.context,
+                e.created_at,
+                e.billed_at
+            FROM usage_events e
+            WHERE e.user_id = %s
+              AND e.created_at >= %s
+              AND e.created_at < %s
+            ORDER BY e.created_at DESC
+            LIMIT %s OFFSET %s
+        """, (user_id, period_start, period_end, limit, offset))
+        events = cur.fetchall()
+
+        # Get total count for pagination
+        cur.execute("""
+            SELECT COUNT(*) AS total,
+                   COALESCE(SUM(cost_cents), 0) AS total_cents
+            FROM usage_events
+            WHERE user_id = %s
+              AND created_at >= %s
+              AND created_at < %s
+        """, (user_id, period_start, period_end))
+        summary = cur.fetchone()
+
+    # Enrich each event with a human-readable label
+    enriched = []
+    for ev in events:
+        ctx = ev["context"] or {}
+        label = _build_event_label(ev["event_type"], ctx, conn)
+        enriched.append({
+            "event_id": ev["event_id"],
+            "event_type": ev["event_type"],
+            "cost_cents": ev["cost_cents"],
+            "label": label,
+            "created_at": ev["created_at"].isoformat() if ev["created_at"] else None,
+            "billed": ev["billed_at"] is not None,
+            "has_detail": ev["event_type"] in (
+                "mira_message", "cover_letter", "match_report", "cv_extraction",
+            ),
+        })
+
+    return {
+        "month": period_start.isoformat()[:7],
+        "events": enriched,
+        "total_events": summary["total"],
+        "total_cents": summary["total_cents"],
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+@router.get("/transactions/{event_id}")
+def get_transaction_detail(
+    event_id: int,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Drill into a single usage event — show what happened.
+
+    Returns the full content: the chat message, the cover letter text,
+    the match analysis, or the CV extraction summary.  Yogi can only
+    view their own events.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT event_id, event_type, cost_cents, context, created_at, billed_at
+            FROM usage_events
+            WHERE event_id = %s AND user_id = %s
+        """, (event_id, user["user_id"]))
+        ev = cur.fetchone()
+
+    if not ev:
+        raise HTTPException(404, "Event not found")
+
+    ctx = ev["context"] or {}
+    detail = _fetch_event_detail(ev["event_type"], ctx, conn)
+
+    return {
+        "event_id": ev["event_id"],
+        "event_type": ev["event_type"],
+        "cost_cents": ev["cost_cents"],
+        "created_at": ev["created_at"].isoformat() if ev["created_at"] else None,
+        "billed": ev["billed_at"] is not None,
+        "context": ctx,
+        "detail": detail,
+    }
+
+
+# ── Helpers for transaction labels + drill-down ──────────────────────────────
+
+
+def _build_event_label(event_type: str, ctx: dict, conn) -> str:
+    """
+    Build a short human-readable label for a usage event.
+    Examples:
+        "Mira: Wie finde ich einen Job in Berlin?"
+        "Anschreiben: Deutsche Bank AG — Data Engineer"
+        "Match-Bericht: Siemens AG — Software Developer"
+        "Lebenslauf-Analyse"
+        "Profil-Update"
+    """
+    try:
+        if event_type == "mira_message":
+            msg_id = ctx.get("user_message_id")
+            if msg_id:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT LEFT(body, 60) AS preview FROM yogi_messages WHERE message_id = %s",
+                        (msg_id,),
+                    )
+                    row = cur.fetchone()
+                if row and row["preview"]:
+                    preview = row["preview"]
+                    if len(preview) >= 60:
+                        preview = preview[:57] + "..."
+                    return f"Mira: {preview}"
+            return "Mira-Gespräch"
+
+        if event_type in ("cover_letter", "match_report"):
+            match_id = ctx.get("match_id")
+            posting_id = ctx.get("posting_id")
+            if match_id or posting_id:
+                with conn.cursor() as cur:
+                    if match_id:
+                        cur.execute("""
+                            SELECT p.company, p.title
+                            FROM profile_posting_matches m
+                            JOIN postings p ON p.posting_id = m.posting_id
+                            WHERE m.match_id = %s
+                        """, (match_id,))
+                    else:
+                        cur.execute(
+                            "SELECT company, title FROM postings WHERE posting_id = %s",
+                            (posting_id,),
+                        )
+                    row = cur.fetchone()
+                if row:
+                    company = row.get("company") or "?"
+                    title = row.get("title") or "?"
+                    prefix = "Anschreiben" if event_type == "cover_letter" else "Match-Bericht"
+                    return f"{prefix}: {company} — {title}"
+            return "Anschreiben" if event_type == "cover_letter" else "Match-Bericht"
+
+        if event_type == "cv_extraction":
+            return "Lebenslauf-Analyse"
+
+        if event_type == "profile_embed":
+            return "Profil-Update"
+
+    except Exception:
+        pass  # Fall through to generic label
+
+    return event_type.replace("_", " ").title()
+
+
+def _fetch_event_detail(event_type: str, ctx: dict, conn) -> dict:
+    """
+    Fetch the full content behind a usage event for drill-down view.
+    Returns a dict with event-type-specific fields.
+    """
+    detail: dict = {"type": event_type}
+
+    try:
+        if event_type == "mira_message":
+            user_msg_id = ctx.get("user_message_id")
+            mira_msg_id = ctx.get("mira_message_id")
+            msgs = []
+            with conn.cursor() as cur:
+                if user_msg_id:
+                    cur.execute(
+                        "SELECT body, created_at FROM yogi_messages WHERE message_id = %s",
+                        (user_msg_id,),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        msgs.append({"role": "user", "content": row["body"],
+                                     "at": row["created_at"].isoformat() if row["created_at"] else None})
+                if mira_msg_id:
+                    cur.execute(
+                        "SELECT body, created_at FROM yogi_messages WHERE message_id = %s",
+                        (mira_msg_id,),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        msgs.append({"role": "mira", "content": row["body"],
+                                     "at": row["created_at"].isoformat() if row["created_at"] else None})
+            detail["messages"] = msgs
+
+        elif event_type in ("cover_letter", "match_report"):
+            match_id = ctx.get("match_id")
+            if match_id:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT m.match_rate, m.recommendation, m.confidence,
+                               m.go_reasons, m.nogo_reasons,
+                               m.cover_letter, m.nogo_narrative,
+                               p.company, p.title, p.external_url
+                        FROM profile_posting_matches m
+                        JOIN postings p ON p.posting_id = m.posting_id
+                        WHERE m.match_id = %s
+                    """, (match_id,))
+                    row = cur.fetchone()
+                if row:
+                    detail["company"] = row.get("company")
+                    detail["title"] = row.get("title")
+                    detail["external_url"] = row.get("external_url")
+                    detail["match_rate"] = row.get("match_rate")
+                    detail["recommendation"] = row.get("recommendation")
+                    detail["confidence"] = float(row["confidence"]) if row.get("confidence") else None
+                    if event_type == "cover_letter":
+                        detail["cover_letter"] = row.get("cover_letter")
+                    else:
+                        detail["go_reasons"] = row.get("go_reasons")
+                        detail["nogo_reasons"] = row.get("nogo_reasons")
+                        detail["nogo_narrative"] = row.get("nogo_narrative")
+
+        elif event_type == "cv_extraction":
+            session_id = ctx.get("session_id")
+            if session_id:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT phase, work_history_count, turn_count,
+                               started_at, completed_at
+                        FROM adele_sessions WHERE session_id = %s
+                    """, (session_id,))
+                    row = cur.fetchone()
+                if row:
+                    detail["phase"] = row["phase"]
+                    detail["work_history_count"] = row["work_history_count"]
+                    detail["turn_count"] = row["turn_count"]
+                    detail["started_at"] = row["started_at"].isoformat() if row["started_at"] else None
+                    detail["completed_at"] = row["completed_at"].isoformat() if row["completed_at"] else None
+
+        elif event_type == "profile_embed":
+            detail["info"] = "Profile embedding was refreshed after a profile edit."
+
+    except Exception as e:
+        log.warning(f"Failed to fetch detail for event {event_type}: {e}")
+        detail["error"] = "Detail unavailable"
+
+    return detail

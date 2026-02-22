@@ -99,27 +99,38 @@ async def chat(
         logger.warning(f"FAQ candidate detection failed: {e}")
 
     # --- PERSIST: Save both user message and Mira's reply to yogi_messages ---
+    user_message_id = None
+    mira_message_id = None
     try:
         with conn.cursor() as cur:
             # Save user message
             cur.execute("""
                 INSERT INTO yogi_messages (user_id, sender_type, message_type, body, recipient_type)
                 VALUES (%s, 'yogi', 'chat', %s, 'mira')
+                RETURNING message_id
             """, (user['user_id'], message))
+            user_message_id = cur.fetchone()['message_id']
             # Save Mira's reply
             cur.execute("""
                 INSERT INTO yogi_messages (user_id, sender_type, message_type, body)
                 VALUES (%s, 'mira', 'chat', %s)
+                RETURNING message_id
             """, (user['user_id'], response.reply))
+            mira_message_id = cur.fetchone()['message_id']
             conn.commit()
     except Exception as e:
         logger.warning(f"Failed to persist chat messages: {e}")
 
-    # --- USAGE: Log billable event ---
+    # --- USAGE: Log billable event (with message_ids for drill-down) ---
     try:
         from lib.usage_tracker import log_event
         log_event(conn, user['user_id'], 'mira_message',
-                  context={'message_len': len(message), 'fallback': response.fallback})
+                  context={
+                      'user_message_id': user_message_id,
+                      'mira_message_id': mira_message_id,
+                      'message_len': len(message),
+                      'fallback': response.fallback,
+                  })
     except Exception as e:
         logger.warning(f"Usage tracking failed: {e}")
 
