@@ -38,11 +38,13 @@ def get_conn():
 
 QUERY = """
 WITH embedded AS (
-    -- postings whose CURRENT match_text has an embedding (valid/fresh)
+    -- postings whose CURRENT match_text has a fresh embedding
+    -- normalize_text_python = LOWER(btrim(...)) — same as the embedding actor
     SELECT pfm.posting_id
     FROM postings_for_matching pfm
     WHERE EXISTS (
-        SELECT 1 FROM embeddings e WHERE e.text = pfm.match_text
+        SELECT 1 FROM embeddings e
+        WHERE e.text = normalize_text_python(pfm.match_text)
     )
 )
 SELECT
@@ -71,7 +73,8 @@ WITH embedded AS (
     SELECT pfm.posting_id
     FROM postings_for_matching pfm
     WHERE EXISTS (
-        SELECT 1 FROM embeddings e WHERE e.text = pfm.match_text
+        SELECT 1 FROM embeddings e
+        WHERE e.text = normalize_text_python(pfm.match_text)
     )
 )
 SELECT
@@ -191,7 +194,6 @@ def run(as_json=False):
     print()
     print(f'  embeddings table total rows : {emb_table:,}')
     print(f'  current (match_text matched): {t["has_embedding"]:,}')
-    print(f'  orphaned (stale/superseded) : {orphaned:,}  ← these need re-embedding')
     print(f'  active postings to re-embed : {emb_need_rerun:,}')
     print()
     print('  Source-specific pipeline rules (why stale embeddings happen):')
