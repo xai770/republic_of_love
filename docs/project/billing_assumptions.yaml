@@ -21,7 +21,7 @@ ai_event_prices:
   cv_extraction:       50    # €0.50 — Adele CV parse + profile build
   cover_letter:        30    # €0.30 — Clara cover letter for a specific posting
   match_report:        20    # €0.20 — Clara match quality report
-  profile_embed:       5     # €0.05 — re-embedding after profile edit
+  profile_embed:       0     # €0.00 — internal only, cost absorbed into cv_extraction
 
 # ╔═══════════════════════════════════════════════════════════════╗
 # ║  SECTION B — Hardware & Infrastructure (fixed monthly)       ║
