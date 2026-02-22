@@ -398,6 +398,13 @@
 <div class="wizard" id="wizard">
     <span class="step-counter" id="step-counter"></span>
 
+    <!-- Inline legal overlay (covers entire wizard card) -->
+    <div class="legal-overlay" id="legal-overlay">
+        <h3 id="legal-overlay-title"></h3>
+        <div class="legal-body" id="legal-overlay-body"></div>
+        <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
+    </div>
+
     <!-- ════════ STEP 1 — Language ════════ -->
     <div class="step active" data-step="1">
         <h2 id="s1-title">Choose your language</h2>
@@ -466,12 +473,6 @@
                 <button class="btn btn-danger" onclick="rejectPrivacy()" id="s4-reject"></button>
                 <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept" disabled></button>
             </div>
-        </div>
-        <!-- Inline legal overlay -->
-        <div class="legal-overlay" id="legal-overlay">
-            <h3 id="legal-overlay-title"></h3>
-            <div class="legal-body" id="legal-overlay-body"></div>
-            <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
         </div>
     </div>
 

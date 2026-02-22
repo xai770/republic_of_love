@@ -176,10 +176,12 @@ def onboarding_page(request: Request, conn=Depends(get_db)):
     if user.get("onboarding_completed_at"):
         return RedirectResponse(url="/dashboard", status_code=302)
 
-    return templates.TemplateResponse("onboarding.html", {
+    resp = templates.TemplateResponse("onboarding.html", {
         "request": request,
         "user": user,
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return resp
 
 
 @app.get("/dashboard")
