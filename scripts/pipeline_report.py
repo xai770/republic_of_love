@@ -38,7 +38,7 @@ def get_conn():
 
 QUERY = """
 WITH embedded AS (
-    -- postings that have an embedding for their match_text
+    -- postings whose CURRENT match_text has an embedding (valid/fresh)
     SELECT pfm.posting_id
     FROM postings_for_matching pfm
     WHERE EXISTS (
@@ -138,7 +138,7 @@ def run(as_json=False):
         'active':        'Active',
         'has_desc':      'Has description',
         'has_summary':   'Has summary',
-        'has_embedding': 'Has embedding',
+        'has_embedding': 'Embedding (current)',
     }
 
     # Compute column widths
@@ -183,15 +183,23 @@ def run(as_json=False):
     print(f'    Has summary     {pct(t["has_summary"],   t["total"])}  ({t["has_summary"]:,} / {t["total"]:,})')
     print()
     print('  Coverage (of active postings only):')
-    print(f'    Has description {pct(t["active_has_desc"],    t["active"])}  ({t["active_has_desc"]:,} / {t["active"]:,})')
-    print(f'    Has summary     {pct(t["active_has_summary"], t["active"])}  ({t["active_has_summary"]:,} / {t["active"]:,})')
-    print(f'    Has embedding   {pct(t["has_embedding"],      t["active"])}  ({t["has_embedding"]:,} / {t["active"]:,})')
+    print(f'    Has description   {pct(t["active_has_desc"],    t["active"])}  ({t["active_has_desc"]:,} / {t["active"]:,})')
+    print(f'    Has summary       {pct(t["active_has_summary"], t["active"])}  ({t["active_has_summary"]:,} / {t["active"]:,})')
+    print(f'    Embedding current {pct(t["has_embedding"],      t["active"])}  ({t["has_embedding"]:,} / {t["active"]:,})')
+    emb_need_rerun = t["active"] - t["has_embedding"]
+    orphaned = emb_table - t["has_embedding"]
     print()
-    print(f'  embeddings table: {emb_table:,} rows total')
-    if t["has_embedding"] < t["active"] * 0.5:
-        print(f'  ⚠  WARNING: only {t["has_embedding"]:,} active postings match their current match_text in embeddings.')
-        print(f'     The embeddings table has {emb_table:,} rows but texts may be stale.')
-        print(f'     Run the embedding actor to re-embed current match_texts.')
+    print(f'  embeddings table total rows : {emb_table:,}')
+    print(f'  current (match_text matched): {t["has_embedding"]:,}')
+    print(f'  orphaned (stale/superseded) : {orphaned:,}  ← these need re-embedding')
+    print(f'  active postings to re-embed : {emb_need_rerun:,}')
+    print()
+    print('  Source-specific pipeline rules (why stale embeddings happen):')
+    print('    arbeitsagentur : embed job_description directly — no LLM summary')
+    print('                     stale when: description backfill updates job_description')
+    print('    deutsche_bank  : LLM extracts summary → embed extracted_summary')
+    print('                     stale when: extracted_summary written after embedding')
+    print('    Fix: always run the embedding actor LAST, after all text-modifying stages.')
     print()
 
 
