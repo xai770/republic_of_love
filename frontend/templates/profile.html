@@ -220,6 +220,45 @@
     padding: 1.5rem 1rem;
 }
 
+/* ── Background CV job floating chip ────────────────────────────────── */
+#cv-job-bar {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 1.1rem;
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--accent, #6c6fe4);
+    border-radius: 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+    font-size: 0.85rem;
+    color: var(--text, #e0e0f0);
+    min-width: 200px;
+    max-width: 320px;
+    pointer-events: none;
+    transition: border-color 0.4s, opacity 0.4s;
+}
+#cv-job-bar.done   { border-color: #4caf50; }
+#cv-job-bar.failed { border-color: #e57373; }
+.cv-job-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent, #6c6fe4);
+    flex-shrink: 0;
+    animation: cv-job-pulse 1.3s ease-in-out infinite;
+}
+#cv-job-bar.done   .cv-job-dot { background: #4caf50; animation: none; }
+#cv-job-bar.failed .cv-job-dot { background: #e57373; animation: none; }
+@keyframes cv-job-pulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.82); }
+    50%       { opacity: 1;   transform: scale(1.2); }
+}
+#cv-job-bar-msg { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#cv-job-bar-eta { font-size: 0.76rem; color: var(--text-muted, #888); flex-shrink: 0; }
+
 /* Logo orbit — same animation as onboarding */
 .cv-orbit {
     position: relative;
@@ -1788,115 +1827,134 @@ function resetUploadArea() {
     document.getElementById('pb-dropzone').style.display = '';
 }
 
+// ── Background CV job helpers ──────────────────────────────────────────────
+const _CV_JOB_KEY = 'cv_pending_job';
+let _cvJobInterval = null;
+
+function _showCVJobBar(msg, eta, state) {  // state: '' | 'done' | 'failed'
+    const bar = document.getElementById('cv-job-bar');
+    if (!bar) return;
+    document.getElementById('cv-job-bar-msg').textContent = msg;
+    document.getElementById('cv-job-bar-eta').textContent = eta || '';
+    bar.className = state || '';
+    bar.style.display = 'flex';
+}
+
+function _hideCVJobBar() {
+    const bar = document.getElementById('cv-job-bar');
+    if (bar) bar.style.display = 'none';
+}
+
+function _cvETA(startMs) {
+    const remaining = Math.max(0, 200 - (Date.now() - startMs) / 1000);
+    if (remaining < 15)  return '';
+    if (remaining < 75)  return '< 1 min';
+    return '~' + Math.ceil(remaining / 60) + ' min';
+}
+
+function _startCVPoller(jobId, filename, startMs) {
+    if (_cvJobInterval) clearInterval(_cvJobInterval);
+    let seenProgress = 0;
+    _showCVJobBar('Analyzing "' + filename + '"…', _cvETA(startMs));
+    _cvJobInterval = setInterval(async () => {
+        try {
+            const res = await fetch('/api/profiles/me/parse-cv/status/' + jobId);
+            if (!res.ok) return;
+            const job = await res.json();
+            // Show latest new progress message
+            const msgs = job.progress || [];
+            const msg = msgs.length > seenProgress
+                ? msgs[msgs.length - 1]
+                : document.getElementById('cv-job-bar-msg').textContent;
+            seenProgress = msgs.length;
+            if (job.status === 'done') {
+                clearInterval(_cvJobInterval); _cvJobInterval = null;
+                localStorage.removeItem(_CV_JOB_KEY);
+                _onCVJobDone(job.result, filename).catch(console.warn);
+            } else if (job.status === 'failed') {
+                clearInterval(_cvJobInterval); _cvJobInterval = null;
+                localStorage.removeItem(_CV_JOB_KEY);
+                _showCVJobBar('❌ ' + (job.error || 'Extraction failed'), '', 'failed');
+                setTimeout(_hideCVJobBar, 6000);
+            } else {
+                _showCVJobBar(msg, _cvETA(startMs));
+            }
+        } catch (_) { /* network blip — retry next tick */ }
+    }, 3000);
+}
+
+async function _onCVJobDone(data, filename) {
+    _showCVJobBar('✅ "' + filename + '" imported!', '', 'done');
+    addLogEntry('adele', I.cv_extracted.replace('{parts}',
+        [data.current_title, (data.work_history||[]).length + ' ' + I.cv_positions,
+         (data.skills||[]).length + ' ' + I.cv_skills].filter(Boolean).join(', ')));
+    try {
+        await importCV(data);
+        addLogEntry('system', '✓ Import OK', 'cv_import');
+        await refreshProfile();
+    } catch (e) { console.warn('CV import error:', e); }
+    // Show done state in upload area if it's visible
+    const doneEl = document.getElementById('pb-upload-done');
+    if (doneEl) {
+        const parts = [];
+        if (data.current_title) parts.push(data.current_title);
+        if ((data.work_history||[]).length) parts.push(data.work_history.length + ' ' + I.cv_positions);
+        if ((data.skills||[]).length) parts.push(data.skills.length + ' ' + I.cv_skills);
+        document.getElementById('cv-done-title').textContent = '"' + filename + '" imported';
+        document.getElementById('cv-done-sub').textContent = parts.length ? 'Found: ' + parts.join(' · ') : 'Profile updated.';
+        doneEl.style.display = 'flex';
+    }
+    setTimeout(_hideCVJobBar, 5000);
+}
+
+// Resume any in-progress job after page reload
+(function () {
+    try {
+        const saved = JSON.parse(localStorage.getItem(_CV_JOB_KEY) || 'null');
+        if (saved && saved.job_id) _startCVPoller(saved.job_id, saved.filename || 'CV', saved.start_ms || Date.now());
+    } catch (_) {}
+})();
+
 async function uploadCV(file) {
-    // Hide dropzone, show orbit spinner + log
+    // Show spinner briefly while the file uploads (usually < 1 s)
     document.getElementById('pb-dropzone').style.display = 'none';
-    document.getElementById('pb-upload-done').style.display = 'none';
-    document.getElementById('pb-cv-log').innerHTML = '';
     document.getElementById('pb-upload-status').style.display = 'flex';
-    addLogEntry('system', 'CV: ' + file.name, 'cv_upload');
+    document.getElementById('pb-cv-log').innerHTML = '';
     _cvLog('📂 Uploading "' + file.name + '"…');
 
     const formData = new FormData();
     formData.append('file', file);
-
-    let jobId = null;
     try {
-        // POST parse-cv — returns immediately with job_id
-        const startRes = await fetch('/api/profiles/me/parse-cv', {
-            method: 'POST',
-            body: formData
-        });
-        if (!startRes.ok) {
-            const err = await startRes.json().catch(() => ({}));
+        const res = await fetch('/api/profiles/me/parse-cv', { method: 'POST', body: formData });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
             throw new Error(err.detail || I.cv_upload_failed);
         }
-        const startData = await startRes.json();
-        jobId = startData.job_id;
-        _cvLog('🧠 Extracting — this takes about 2 minutes…');
-    } catch (err) {
-        _cvLog('❌ ' + err.message, 'err');
-        addLogEntry('system', I.cv_error.replace('{error}', err.message), 'error');
-        setTimeout(resetUploadArea, 3000);
-        return;
-    }
+        const { job_id } = await res.json();
 
-    // Poll job status every 3 seconds
-    let seenProgress = 0;
-    let data = null;
-    for (let attempt = 0; attempt < 120; attempt++) {  // max 6 minutes
-        await new Promise(r => setTimeout(r, 3000));
-        try {
-            const statusRes = await fetch('/api/profiles/me/parse-cv/status/' + jobId);
-            if (!statusRes.ok) continue;
-            const job = await statusRes.json();
+        // Restore the dropzone immediately — user is free to do other things
+        resetUploadArea();
 
-            // Show any new progress messages from the server
-            const msgs = job.progress || [];
-            for (let i = seenProgress; i < msgs.length; i++) {
-                _cvLog(msgs[i]);
-            }
-            seenProgress = msgs.length;
+        // Persist job so it survives a page reload
+        const startMs = Date.now();
+        localStorage.setItem(_CV_JOB_KEY, JSON.stringify({ job_id, filename: file.name, start_ms: startMs }));
 
-            if (job.status === 'done') {
-                data = job.result;
-                break;
-            }
-            if (job.status === 'failed') {
-                throw new Error(job.error || I.cv_upload_failed);
-            }
-        } catch (err) {
-            if (err.message && err.message !== 'Failed to fetch') {
-                _cvLog('❌ ' + err.message, 'err');
-                addLogEntry('system', I.cv_error.replace('{error}', err.message), 'error');
-                setTimeout(resetUploadArea, 3000);
-                return;
-            }
-        }
-    }
-
-    if (!data) {
-        _cvLog('❌ Extraction timed out', 'err');
-        setTimeout(resetUploadArea, 3000);
-        return;
-    }
-
-    try {
-        const parts = [];
-        if (data.current_title) parts.push(data.current_title);
-        if (data.work_history && data.work_history.length) parts.push(data.work_history.length + ' ' + I.cv_positions);
-        if (data.skills && data.skills.length) parts.push(data.skills.length + ' ' + I.cv_skills);
-        const summary = parts.join(' · ');
-
-        addLogEntry('adele', I.cv_extracted.replace('{parts}', parts.join(', ')));
-
-        await importCV(data);
-        _cvLog('💾 Profile saved', 'ok');
-        addLogEntry('system', '✓ Import OK', 'cv_import');
-
-        if (window.CostHints) {
-            const lang = '{{ user.language }}' === 'en' ? 'en' : 'de';
-            const hint = CostHints.create('cv_extraction', lang);
-            if (hint) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'pb-log-entry system';
-                wrapper.appendChild(hint);
-                document.getElementById('pb-log').appendChild(wrapper);
-            }
-        }
-        await refreshProfile();
-
-        document.getElementById('pb-upload-status').style.display = 'none';
-        const doneEl = document.getElementById('pb-upload-done');
-        document.getElementById('cv-done-title').textContent = '"' + file.name + '" imported';
-        document.getElementById('cv-done-sub').textContent =
-            summary ? 'Found: ' + summary : 'Your profile has been updated.';
-        doneEl.style.display = 'flex';
+        // Start background polling — shows floating chip in bottom-right corner
+        _startCVPoller(job_id, file.name, startMs);
+        addLogEntry('system', 'CV: "' + file.name + '" — analyzing in background…', 'cv_upload');
 
     } catch (err) {
-        _cvLog('❌ ' + err.message, 'err');
+        resetUploadArea();
+        // Show error inline in the dropzone
+        const dz = document.getElementById('pb-dropzone');
+        if (dz) {
+            const p = document.createElement('p');
+            p.style.cssText = 'color:#e57373;margin-top:0.5rem;font-size:0.88rem';
+            p.textContent = '❌ ' + err.message;
+            dz.appendChild(p);
+            setTimeout(() => p.remove(), 5000);
+        }
         addLogEntry('system', I.cv_error.replace('{error}', err.message), 'error');
-        setTimeout(resetUploadArea, 3000);
     }
 }
 
@@ -2080,6 +2138,115 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadActivityLog();
     _initMira();
     runIntroAnimation();  // schedules 5 s inactivity trigger
+    _initDevLog();
 });
+
+// ── DEV LOG PANEL ──────────────────────────────────────────────────────────
+// Floating live tail of server app.log. Toggle with the ⌨ button.
+function _initDevLog() {
+    const panel = document.getElementById('dev-log-panel');
+    const btn   = document.getElementById('dev-log-toggle');
+    const pre   = document.getElementById('dev-log-pre');
+    if (!panel) return;
+
+    let es = null;
+    let open = false;
+
+    function startSSE() {
+        if (es) return;
+        es = new EventSource('/api/devlog/stream');
+        es.onmessage = (e) => {
+            const line = document.createElement('div');
+            line.textContent = e.data;
+            // colour-code by level
+            if (/ERROR|CRITICAL/i.test(e.data))  line.style.color = '#f87171';
+            else if (/WARNING/i.test(e.data))    line.style.color = '#fbbf24';
+            else if (/cv_extract|parse.cv|job_/i.test(e.data)) line.style.color = '#34d399';
+            pre.appendChild(line);
+            // keep last 300 lines
+            while (pre.children.length > 300) pre.removeChild(pre.firstChild);
+            pre.scrollTop = pre.scrollHeight;
+        };
+        es.onerror = () => {
+            const line = document.createElement('div');
+            line.textContent = '-- stream disconnected, retrying --';
+            line.style.color = '#94a3b8';
+            pre.appendChild(line);
+        };
+    }
+
+    function stopSSE() {
+        if (es) { es.close(); es = null; }
+    }
+
+    btn.addEventListener('click', () => {
+        open = !open;
+        panel.style.display = open ? 'flex' : 'none';
+        btn.textContent = open ? '✕' : '🖥';
+        if (open) startSSE(); else stopSSE();
+    });
+
+    document.getElementById('dev-log-clear').addEventListener('click', () => {
+        pre.innerHTML = '';
+    });
+
+    document.getElementById('dev-log-pause').addEventListener('click', (e) => {
+        if (es) { stopSSE(); e.target.textContent = '▶'; }
+        else    { startSSE(); e.target.textContent = '⏸'; }
+    });
+}
 </script>
+
+<!-- DEV LOG PANEL -->
+<style>
+#dev-log-toggle {
+    position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 9999;
+    width: 2.4rem; height: 2.4rem; border-radius: 50%;
+    background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+    font-size: 1.1rem; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    transition: background .15s;
+}
+#dev-log-toggle:hover { background: #334155; color: #e2e8f0; }
+#dev-log-panel {
+    display: none; flex-direction: column;
+    position: fixed; bottom: 4.2rem; right: 1.2rem; z-index: 9998;
+    width: min(680px, 96vw); height: 280px;
+    background: #0f172a; border: 1px solid #334155; border-radius: .6rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,.6); overflow: hidden;
+}
+#dev-log-toolbar {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .35rem .6rem; background: #1e293b; border-bottom: 1px solid #334155;
+    font-size: .72rem; color: #64748b; flex-shrink: 0;
+}
+#dev-log-toolbar span { flex: 1; font-family: monospace; }
+#dev-log-toolbar button {
+    background: none; border: 1px solid #334155; color: #94a3b8;
+    border-radius: .25rem; padding: .1rem .4rem; cursor: pointer; font-size: .7rem;
+}
+#dev-log-toolbar button:hover { color: #e2e8f0; border-color: #64748b; }
+#dev-log-pre {
+    flex: 1; overflow-y: auto; padding: .5rem .75rem;
+    font-family: 'JetBrains Mono', 'Fira Mono', monospace; font-size: .68rem;
+    line-height: 1.45; color: #cbd5e1; word-break: break-all;
+}
+</style>
+
+<!-- CV background job status chip -->
+<div id="cv-job-bar">
+    <div class="cv-job-dot"></div>
+    <span id="cv-job-bar-msg">Analyzing CV…</span>
+    <span id="cv-job-bar-eta"></span>
+</div>
+
+<button id="dev-log-toggle" title="Dev log">🖥</button>
+<div id="dev-log-panel">
+    <div id="dev-log-toolbar">
+        <span>app.log — live</span>
+        <button id="dev-log-pause" title="Pause">⏸</button>
+        <button id="dev-log-clear" title="Clear">🗑</button>
+    </div>
+    <div id="dev-log-pre"></div>
+</div>
 {% endblock %}
