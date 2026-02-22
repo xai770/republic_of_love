@@ -297,6 +297,55 @@
             .flag-btn { width: 100px; height: 100px; font-size: 44px; }
             .name-chip { padding: 12px 16px; font-size: 14px; }
         }
+
+        /* ── T&C checkbox (step 4) ────────────────────── */
+        .tc-row {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-top: 8px; padding: 12px 14px;
+            background: #f0fdf4; border-radius: 10px;
+            border: 1px solid #bbf7d0;
+        }
+        .tc-row input[type="checkbox"] {
+            width: 18px; height: 18px; margin-top: 2px;
+            accent-color: #0d9488; flex-shrink: 0;
+        }
+        .tc-row label {
+            font-size: 14px; color: #334155; cursor: pointer; line-height: 1.5;
+        }
+        .tc-row a { color: #0d9488; text-decoration: underline; }
+
+        /* ── Billing info (step 5) ────────────────────── */
+        .billing-cards {
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .billing-card {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 14px 18px; border-radius: 12px;
+            background: #f8fafc; border: 1px solid #e2e8f0;
+        }
+        .billing-card .bc-icon { font-size: 24px; flex-shrink: 0; }
+        .billing-card .bc-text { font-size: 14px; color: #334155; line-height: 1.55; }
+        .billing-card .bc-text strong { color: #0d9488; }
+
+        /* ── Kickstart (step 9) ───────────────────────── */
+        .kickstart-row {
+            display: flex; gap: 16px; justify-content: center;
+            flex-wrap: wrap; margin-top: 4px;
+        }
+        .kickstart-card {
+            flex: 1; min-width: 180px; max-width: 220px;
+            padding: 24px 16px; border-radius: 16px;
+            border: 2px solid #e2e8f0; background: #fff;
+            text-align: center; cursor: pointer;
+            transition: all .2s;
+        }
+        .kickstart-card:hover {
+            border-color: #0d9488; transform: translateY(-3px);
+            box-shadow: 0 4px 16px rgba(13,148,136,.15);
+        }
+        .kickstart-card .ks-icon { font-size: 36px; margin-bottom: 8px; }
+        .kickstart-card .ks-label { font-size: 15px; font-weight: 600; color: #1e293b; }
+        .kickstart-card .ks-desc { font-size: 13px; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -369,78 +418,116 @@
         </div>
     </div>
 
-    <!-- ════════ STEP 4 — Privacy ════════ -->
+    <!-- ════════ STEP 4 — Terms & Privacy ════════ -->
     <div class="step" data-step="4">
         <h2 id="s4-title"></h2>
         <div class="privacy-content" id="s4-content"></div>
+        <div class="tc-row">
+            <input type="checkbox" id="tc-checkbox" onchange="toggleTerms()">
+            <label for="tc-checkbox" id="s4-tc-label"></label>
+        </div>
         <div class="btn-row">
             <button class="btn btn-secondary" onclick="goTo(prevStepFrom(4))">← <span class="back-label"></span></button>
             <div style="display:flex;gap:12px;margin-left:auto;">
                 <button class="btn btn-danger" onclick="rejectPrivacy()" id="s4-reject"></button>
-                <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept"></button>
+                <button class="btn btn-primary" onclick="goTo(5)" id="s4-accept" disabled></button>
             </div>
         </div>
     </div>
 
-    <!-- ════════ STEP 5 — Describe your vibe ════════ -->
+    <!-- ════════ STEP 5 — How billing works ════════ -->
     <div class="step" data-step="5">
         <h2 id="s5-title"></h2>
         <p id="s5-subtitle"></p>
+        <div class="billing-cards" id="s5-cards"></div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goTo(4)">← <span class="back-label"></span></button>
+            <button class="btn btn-primary" onclick="goTo(6)">
+                <span class="next-label"></span> →
+            </button>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 6 — Describe your vibe ════════ -->
+    <div class="step" data-step="6">
+        <h2 id="s6-title"></h2>
+        <p id="s6-subtitle"></p>
         <input class="manual-input" id="keyword-input" type="text" placeholder="" maxlength="200"
                autocomplete="off" style="margin-bottom: 4px;"/>
         <div class="gender-row" style="margin-top: 8px;">
             <button class="gender-btn selected" data-gender="neutral" onclick="selectGender('neutral')">
-                <span id="s5-gender-neutral"></span>
+                <span id="s6-gender-neutral"></span>
             </button>
             <button class="gender-btn" data-gender="feminine" onclick="selectGender('feminine')">
-                <span id="s5-gender-feminine"></span>
+                <span id="s6-gender-feminine"></span>
             </button>
             <button class="gender-btn" data-gender="masculine" onclick="selectGender('masculine')">
-                <span id="s5-gender-masculine"></span>
+                <span id="s6-gender-masculine"></span>
             </button>
         </div>
         <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goTo(4)">← <span class="back-label"></span></button>
+            <button class="btn btn-secondary" onclick="goTo(5)">← <span class="back-label"></span></button>
             <div style="display:flex;gap:12px;align-items:center;">
-                <button class="btn btn-ghost" onclick="goTo(7)" id="s5-manual-link"></button>
+                <button class="btn btn-ghost" onclick="goTo(8)" id="s6-manual-link"></button>
                 <button class="btn btn-primary" id="btn-generate" onclick="generateLLMNames()">
-                    <span id="s5-generate-label"></span> →
+                    <span id="s6-generate-label"></span> →
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ════════ STEP 6 — Name results grid ════════ -->
-    <div class="step" data-step="6">
-        <h2 id="s6-title"></h2>
-        <p id="s6-subtitle" style="font-size:13px;color:#64748b;margin-top:-12px;"></p>
+    <!-- ════════ STEP 7 — Name results grid ════════ -->
+    <div class="step" data-step="7">
+        <h2 id="s7-title"></h2>
+        <p id="s7-subtitle" style="font-size:13px;color:#64748b;margin-top:-12px;"></p>
         <div class="name-grid" id="name-grid">
             <!-- Filled by LLM -->
         </div>
         <div class="grid-footer">
-            <button class="btn btn-ghost" onclick="goTo(5)" id="s6-retry-link">🔄</button>
-            <button class="btn btn-ghost" onclick="goTo(7)" id="s6-manual-link"></button>
+            <button class="btn btn-ghost" onclick="goTo(6)" id="s7-retry-link">🔄</button>
+            <button class="btn btn-ghost" onclick="goTo(8)" id="s7-manual-link"></button>
         </div>
         <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goTo(5)">← <span class="back-label"></span></button>
+            <button class="btn btn-secondary" onclick="goTo(6)">← <span class="back-label"></span></button>
             <button class="btn btn-primary" id="btn-confirm-grid" disabled onclick="confirmGridName()">
                 <span class="next-label"></span>
             </button>
         </div>
     </div>
 
-    <!-- ════════ STEP 7 — Manual entry ════════ -->
-    <div class="step" data-step="7">
-        <h2 id="s7-title"></h2>
-        <p id="s7-subtitle"></p>
+    <!-- ════════ STEP 8 — Manual entry ════════ -->
+    <div class="step" data-step="8">
+        <h2 id="s8-title"></h2>
+        <p id="s8-subtitle"></p>
         <input class="manual-input" id="manual-name" type="text" placeholder="" maxlength="40"
                oninput="validateManualName()" autocomplete="off"/>
         <div class="validation-msg" id="validation-msg"></div>
         <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goTo(5)">← <span class="back-label"></span></button>
+            <button class="btn btn-secondary" onclick="goTo(6)">← <span class="back-label"></span></button>
             <button class="btn btn-primary" id="btn-confirm-manual" disabled onclick="confirmManualName()">
-                <span id="s7-confirm-label"></span>
+                <span id="s8-confirm-label"></span>
             </button>
+        </div>
+    </div>
+
+    <!-- ════════ STEP 9 — Profile kickstart ════════ -->
+    <div class="step" data-step="9">
+        <h2 id="s9-title"></h2>
+        <p id="s9-subtitle"></p>
+        <div class="kickstart-row">
+            <div class="kickstart-card" onclick="window.location.href='/profiles/me'">
+                <div class="ks-icon">📄</div>
+                <div class="ks-label" id="s9-cv-label"></div>
+                <div class="ks-desc" id="s9-cv-desc"></div>
+            </div>
+            <div class="kickstart-card" onclick="window.location.href='/mira'">
+                <div class="ks-icon">💬</div>
+                <div class="ks-label" id="s9-chat-label"></div>
+                <div class="ks-desc" id="s9-chat-desc"></div>
+            </div>
+        </div>
+        <div class="btn-row" style="justify-content:center;">
+            <button class="btn btn-ghost" id="s9-skip" onclick="window.location.href='/dashboard'"></button>
         </div>
     </div>
 </div>
@@ -456,7 +543,8 @@
         gender: 'neutral',
         chosenName: null,
         currentStep: 1,
-        totalSteps: 7,      // recalculated for EN (skip du/sie)
+        totalSteps: 9,
+        termsAccepted: false,
     };
 
     // ── Copy — 3 variants: en, de_du, de_sie ──────
@@ -467,7 +555,7 @@
             s2_info: "We're working on expanding — but for now, all positions are within Germany.",
             s3_title: "",
             s3_subtitle: "",
-            s4_title: "Your privacy matters",
+            s4_title: "Your privacy & our terms",
             s4_content: [
                 "We don't have your personal data — and that's by design. Your real name is never stored anywhere in our system.",
                 "You operate behind a yogi name. Other yogis only see your yogi name — your real identity stays hidden.",
@@ -475,27 +563,43 @@
                 "All data stays on servers in Germany. EU law (GDPR) applies to everything we do.",
                 "You can download or permanently delete your account at any time — no questions asked.",
             ],
+            s4_tc_label: 'I have read and accept the <a href="/legal/terms" target="_blank">Terms &amp; Conditions</a> and <a href="/legal/privacy" target="_blank">Privacy Policy</a>.',
             s4_accept: "I accept",
             s4_reject: "I decline",
-            s5_title: "One more thing — your Yogi Name",
-            s5_subtitle: "To keep your identity private from employers, you\'ll go by a Yogi Name here. Share a few words that describe you and we\'ll craft one.",
-            s5_placeholder: "e.g. forest, calm, tech, moon",
-            s5_generate_label: "Generate",
-            s5_manual_link: "I'd rather type my own →",
-            s5_gender_neutral: "✨ Neutral",
-            s5_gender_feminine: "🌸 Feminine",
-            s5_gender_masculine: "🔷 Masculine",
-            s6_title: "Pick a name",
-            s6_subtitle: "Created just for you.",
-            s6_generating: "Creating your names…",
-            s6_retry_link: "🔄 New words",
+            s5_title: "How billing works",
+            s5_subtitle: "Transparency is important to us — here\u2019s the deal.",
+            s5_cards: [
+                { icon: "\uD83C\uDF81", text: "<strong>14-day free trial</strong> — \u20AC5 of AI credit to explore everything." },
+                { icon: "\uD83E\uDD16", text: "<strong>We only charge for AI work</strong> — browsing jobs, reading profiles, and managing your account is always free." },
+                { icon: "\uD83D\uDCB0", text: "<strong>After your trial</strong> — plans start at \u20AC9.50/month plus usage. No surprises." },
+                { icon: "\uD83D\uDCCA", text: "<strong>Full transparency</strong> — see exactly what you\u2019ve used anytime under Finances." },
+            ],
+            s6_title: "One more thing — your Yogi Name",
+            s6_subtitle: "To keep your identity private from employers, you\'ll go by a Yogi Name here. Share a few words that describe you and we\'ll craft one.",
+            s6_placeholder: "e.g. forest, calm, tech, moon",
+            s6_generate_label: "Generate",
             s6_manual_link: "I'd rather type my own →",
-            s6_no_names: "No names generated — try different words.",
-            s6_error_names: "Error generating names",
-            s7_title: "Enter your yogi name",
-            s7_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
-            s7_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
-            s7_confirm: "Confirm",
+            s6_gender_neutral: "✨ Neutral",
+            s6_gender_feminine: "🌸 Feminine",
+            s6_gender_masculine: "🔷 Masculine",
+            s7_title: "Pick a name",
+            s7_subtitle: "Created just for you.",
+            s7_generating: "Creating your names…",
+            s7_retry_link: "🔄 New words",
+            s7_manual_link: "I'd rather type my own →",
+            s7_no_names: "No names generated — try different words.",
+            s7_error_names: "Error generating names",
+            s8_title: "Enter your yogi name",
+            s8_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
+            s8_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
+            s8_confirm: "Confirm",
+            s9_title: "You're all set!",
+            s9_subtitle: "Here are two great ways to hit the ground running.",
+            s9_cv_label: "Upload your CV",
+            s9_cv_desc: "We'll extract your skills and match you to jobs",
+            s9_chat_label: "Chat with Mira",
+            s9_chat_desc: "Get personalized guidance from our AI assistant",
+            s9_skip: "I'll explore on my own →",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -506,7 +610,7 @@
             s2_info: "Wir arbeiten daran, das zu erweitern — aber im Moment sind alle Positionen innerhalb Deutschlands.",
             s3_title: "Wie wollen wir uns anreden?",
             s3_subtitle: "Du entscheidest, wie wir miteinander sprechen.",
-            s4_title: "Deine Daten gehören dir",
+            s4_title: "Deine Daten & unsere Bedingungen",
             s4_content: [
                 "Wir haben deine persönlichen Daten gar nicht — und das ist Absicht. Dein echter Name wird nirgendwo in unserem System gespeichert.",
                 "Du bist hinter einem Yogi-Namen unterwegs. Andere Yogis sehen nur deinen Yogi-Namen — deine echte Identität bleibt verborgen.",
@@ -514,27 +618,43 @@
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Du kannst jederzeit alle Daten herunterladen oder dein Konto dauerhaft löschen — ohne Rückfragen.",
             ],
+            s4_tc_label: 'Ich habe die <a href="/legal/terms" target="_blank">AGB</a> und die <a href="/legal/privacy" target="_blank">Datenschutzerklärung</a> gelesen und akzeptiere sie.',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
-            s5_title: "Noch kurz — dein Yogi-Name",
-            s5_subtitle: "Damit Arbeitgeber dich nicht identifizieren können, trittst du hier unter einem Yogi-Namen auf. Schreib ein paar Wörter, die dich beschreiben — wir erfinden daraus deinen Namen.",
-            s5_placeholder: "z.B. Wald, ruhig, Technik, Mond",
-            s5_generate_label: "Generieren",
-            s5_manual_link: "Ich tippe lieber selber →",
-            s5_gender_neutral: "✨ Neutral",
-            s5_gender_feminine: "🌸 Feminin",
-            s5_gender_masculine: "🔷 Maskulin",
-            s6_title: "Wähle einen Namen",
-            s6_subtitle: "Extra für dich erfunden.",
-            s6_generating: "Deine Namen entstehen…",
-            s6_retry_link: "🔄 Neue Wörter",
+            s5_title: "So funktioniert die Abrechnung",
+            s5_subtitle: "Transparenz ist uns wichtig — hier die Fakten.",
+            s5_cards: [
+                { icon: "\uD83C\uDF81", text: "<strong>14 Tage kostenlos testen</strong> — \u20AC5 KI-Guthaben zum Ausprobieren." },
+                { icon: "\uD83E\uDD16", text: "<strong>Wir berechnen nur KI-Arbeit</strong> — Stellen durchstöbern, Profile lesen und dein Konto verwalten ist immer kostenlos." },
+                { icon: "\uD83D\uDCB0", text: "<strong>Nach dem Probezeitraum</strong> — Tarife ab \u20AC9,50/Monat plus Nutzung. Keine Überraschungen." },
+                { icon: "\uD83D\uDCCA", text: "<strong>Volle Transparenz</strong> — sieh jederzeit genau, was du verbraucht hast, unter Finanzen." },
+            ],
+            s6_title: "Noch kurz — dein Yogi-Name",
+            s6_subtitle: "Damit Arbeitgeber dich nicht identifizieren können, trittst du hier unter einem Yogi-Namen auf. Schreib ein paar Wörter, die dich beschreiben — wir erfinden daraus deinen Namen.",
+            s6_placeholder: "z.B. Wald, ruhig, Technik, Mond",
+            s6_generate_label: "Generieren",
             s6_manual_link: "Ich tippe lieber selber →",
-            s6_no_names: "Keine Namen erzeugt — versuch andere Wörter.",
-            s6_error_names: "Fehler beim Generieren der Namen",
-            s7_title: "Gib deinen Yogi-Namen ein",
-            s7_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
-            s7_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
-            s7_confirm: "Bestätigen",
+            s6_gender_neutral: "✨ Neutral",
+            s6_gender_feminine: "🌸 Feminin",
+            s6_gender_masculine: "🔷 Maskulin",
+            s7_title: "Wähle einen Namen",
+            s7_subtitle: "Extra für dich erfunden.",
+            s7_generating: "Deine Namen entstehen…",
+            s7_retry_link: "🔄 Neue Wörter",
+            s7_manual_link: "Ich tippe lieber selber →",
+            s7_no_names: "Keine Namen erzeugt — versuch andere Wörter.",
+            s7_error_names: "Fehler beim Generieren der Namen",
+            s8_title: "Gib deinen Yogi-Namen ein",
+            s8_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
+            s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
+            s8_confirm: "Bestätigen",
+            s9_title: "Alles klar!",
+            s9_subtitle: "Hier sind zwei tolle Wege, um direkt loszulegen.",
+            s9_cv_label: "Lebenslauf hochladen",
+            s9_cv_desc: "Wir extrahieren deine Fähigkeiten und finden passende Stellen",
+            s9_chat_label: "Mit Mira chatten",
+            s9_chat_desc: "Lass dir persönlich von unserer KI-Assistentin helfen",
+            s9_skip: "Ich schaue mich erstmal um →",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -545,7 +665,7 @@
             s2_info: "Wir arbeiten daran, das zu erweitern — aber im Moment sind alle Positionen innerhalb Deutschlands.",
             s3_title: "Wie möchten Sie angesprochen werden?",
             s3_subtitle: "Sie entscheiden, wie wir miteinander sprechen.",
-            s4_title: "Ihre Daten gehören Ihnen",
+            s4_title: "Ihre Daten & unsere Bedingungen",
             s4_content: [
                 "Wir haben Ihre persönlichen Daten gar nicht — und das ist Absicht. Ihr echter Name wird nirgendwo in unserem System gespeichert.",
                 "Sie sind hinter einem Yogi-Namen unterwegs. Andere Yogis sehen nur Ihren Yogi-Namen — Ihre echte Identität bleibt verborgen.",
@@ -553,27 +673,43 @@
                 "Alle Daten liegen auf Servern in Deutschland. EU-Recht (DSGVO) gilt für alles, was wir tun.",
                 "Sie können jederzeit alle Daten herunterladen oder Ihr Konto dauerhaft löschen — ohne Rückfragen.",
             ],
+            s4_tc_label: 'Ich habe die <a href="/legal/terms" target="_blank">AGB</a> und die <a href="/legal/privacy" target="_blank">Datenschutzerklärung</a> gelesen und akzeptiere sie.',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
-            s5_title: "Noch kurz — Ihr Yogi-Name",
-            s5_subtitle: "Damit Arbeitgeber Sie nicht identifizieren können, treten Sie hier unter einem Yogi-Namen auf. Schreiben Sie ein paar Wörter, die Sie beschreiben — wir erfinden daraus Ihren Namen.",
-            s5_placeholder: "z.B. Wald, ruhig, Technik, Mond",
-            s5_generate_label: "Generieren",
-            s5_manual_link: "Ich tippe lieber selber →",
-            s5_gender_neutral: "✨ Neutral",
-            s5_gender_feminine: "🌸 Feminin",
-            s5_gender_masculine: "🔷 Maskulin",
-            s6_title: "Wählen Sie einen Namen",
-            s6_subtitle: "Extra für Sie erfunden.",
-            s6_generating: "Ihre Namen entstehen…",
-            s6_retry_link: "🔄 Neue Wörter",
+            s5_title: "So funktioniert die Abrechnung",
+            s5_subtitle: "Transparenz ist uns wichtig — hier die Fakten.",
+            s5_cards: [
+                { icon: "\uD83C\uDF81", text: "<strong>14 Tage kostenlos testen</strong> — \u20AC5 KI-Guthaben zum Ausprobieren." },
+                { icon: "\uD83E\uDD16", text: "<strong>Wir berechnen nur KI-Arbeit</strong> — Stellen durchstöbern, Profile lesen und Ihr Konto verwalten ist immer kostenlos." },
+                { icon: "\uD83D\uDCB0", text: "<strong>Nach dem Probezeitraum</strong> — Tarife ab \u20AC9,50/Monat plus Nutzung. Keine Überraschungen." },
+                { icon: "\uD83D\uDCCA", text: "<strong>Volle Transparenz</strong> — sehen Sie jederzeit genau, was Sie verbraucht haben, unter Finanzen." },
+            ],
+            s6_title: "Noch kurz — Ihr Yogi-Name",
+            s6_subtitle: "Damit Arbeitgeber Sie nicht identifizieren können, treten Sie hier unter einem Yogi-Namen auf. Schreiben Sie ein paar Wörter, die Sie beschreiben — wir erfinden daraus Ihren Namen.",
+            s6_placeholder: "z.B. Wald, ruhig, Technik, Mond",
+            s6_generate_label: "Generieren",
             s6_manual_link: "Ich tippe lieber selber →",
-            s6_no_names: "Keine Namen erzeugt — versuchen Sie andere Wörter.",
-            s6_error_names: "Fehler beim Generieren der Namen",
-            s7_title: "Geben Sie Ihren Yogi-Namen ein",
-            s7_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
-            s7_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
-            s7_confirm: "Bestätigen",
+            s6_gender_neutral: "✨ Neutral",
+            s6_gender_feminine: "🌸 Feminin",
+            s6_gender_masculine: "🔷 Maskulin",
+            s7_title: "Wählen Sie einen Namen",
+            s7_subtitle: "Extra für Sie erfunden.",
+            s7_generating: "Ihre Namen entstehen…",
+            s7_retry_link: "🔄 Neue Wörter",
+            s7_manual_link: "Ich tippe lieber selber →",
+            s7_no_names: "Keine Namen erzeugt — versuchen Sie andere Wörter.",
+            s7_error_names: "Fehler beim Generieren der Namen",
+            s8_title: "Geben Sie Ihren Yogi-Namen ein",
+            s8_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
+            s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
+            s8_confirm: "Bestätigen",
+            s9_title: "Alles bereit!",
+            s9_subtitle: "Hier sind zwei hervorragende Wege, um direkt loszulegen.",
+            s9_cv_label: "Lebenslauf hochladen",
+            s9_cv_desc: "Wir extrahieren Ihre Fähigkeiten und finden passende Stellen",
+            s9_chat_label: "Mit Mira chatten",
+            s9_chat_desc: "Lassen Sie sich persönlich von unserer KI-Assistentin beraten",
+            s9_skip: "Ich schaue mich erstmal um →",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -590,15 +726,14 @@
     function $$(sel) { return document.querySelectorAll(sel); }
 
     function effectiveSteps() {
-        // EN → skip step 3 (Du/Sie), steps are 1,2,4,5,6,7 → 6 total
-        // DE → all 7
-        return state.lang === 'en' ? 6 : 7;
+        // Numbered steps only (step 9 kickstart is unnumbered)
+        return state.lang === 'en' ? 7 : 8;
     }
 
     function visibleStepNumber(step) {
         if (state.lang !== 'en') return step;
-        // EN: 1→1, 2→2, 4→3, 5→4, 6→5, 7→6
-        const map = {1:1, 2:2, 4:3, 5:4, 6:5, 7:6};
+        // EN skips step 3 (Du/Sie): 1→1, 2→2, 4→3, 5→4, 6→5, 7→6, 8→7
+        const map = {1:1, 2:2, 4:3, 5:4, 6:5, 7:6, 8:7};
         return map[step] || step;
     }
 
@@ -617,10 +752,10 @@
     // ── Apply copy to UI ───────────────────────────
     function applyText() {
         const t = c();
-        // Step counter
+        // Step counter — show for steps 2-8 only
         const vis = visibleStepNumber(state.currentStep);
         const total = effectiveSteps();
-        if (state.currentStep > 1) {
+        if (state.currentStep > 1 && state.currentStep <= 8) {
             $('#step-counter').textContent = t.step_counter.replace('{a}', vis).replace('{b}', total);
         } else {
             $('#step-counter').textContent = '';
@@ -634,36 +769,56 @@
         if ($('#s3-title'))    $('#s3-title').textContent = t.s3_title || '';
         if ($('#s3-subtitle')) $('#s3-subtitle').textContent = t.s3_subtitle || '';
 
-        // Step 4
+        // Step 4 — Terms & Privacy
         if ($('#s4-title')) $('#s4-title').textContent = t.s4_title;
         if ($('#s4-content')) {
             const items = t.s4_content || [];
             $('#s4-content').innerHTML = '<ul>' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
         }
+        if ($('#s4-tc-label')) $('#s4-tc-label').innerHTML = t.s4_tc_label;
         if ($('#s4-accept')) $('#s4-accept').textContent = t.s4_accept;
         if ($('#s4-reject')) $('#s4-reject').textContent = t.s4_reject;
 
-        // Step 5 — keyword input
-        if ($('#s5-title'))            $('#s5-title').textContent = t.s5_title;
-        if ($('#s5-subtitle'))         $('#s5-subtitle').textContent = t.s5_subtitle;
-        if ($('#keyword-input'))       $('#keyword-input').placeholder = t.s5_placeholder;
-        if ($('#s5-generate-label'))   $('#s5-generate-label').textContent = t.s5_generate_label;
-        if ($('#s5-manual-link'))      $('#s5-manual-link').textContent = t.s5_manual_link;
-        if ($('#s5-gender-neutral'))   $('#s5-gender-neutral').textContent = t.s5_gender_neutral;
-        if ($('#s5-gender-feminine'))  $('#s5-gender-feminine').textContent = t.s5_gender_feminine;
-        if ($('#s5-gender-masculine')) $('#s5-gender-masculine').textContent = t.s5_gender_masculine;
+        // Step 5 — Billing
+        if ($('#s5-title'))    $('#s5-title').textContent = t.s5_title;
+        if ($('#s5-subtitle')) $('#s5-subtitle').textContent = t.s5_subtitle;
+        if ($('#s5-cards')) {
+            const cards = t.s5_cards || [];
+            $('#s5-cards').innerHTML = cards.map(cd =>
+                '<div class="billing-card"><div class="bc-icon">' + cd.icon + '</div><div class="bc-text">' + cd.text + '</div></div>'
+            ).join('');
+        }
 
-        // Step 6 — LLM results
-        if ($('#s6-title'))        $('#s6-title').textContent = t.s6_title;
-        if ($('#s6-subtitle'))     $('#s6-subtitle').textContent = t.s6_subtitle;
-        if ($('#s6-retry-link'))   $('#s6-retry-link').textContent = t.s6_retry_link;
-        if ($('#s6-manual-link'))  $('#s6-manual-link').textContent = t.s6_manual_link;
+        // Step 6 — Keywords
+        if ($('#s6-title'))            $('#s6-title').textContent = t.s6_title;
+        if ($('#s6-subtitle'))         $('#s6-subtitle').textContent = t.s6_subtitle;
+        if ($('#keyword-input'))       $('#keyword-input').placeholder = t.s6_placeholder;
+        if ($('#s6-generate-label'))   $('#s6-generate-label').textContent = t.s6_generate_label;
+        if ($('#s6-manual-link'))      $('#s6-manual-link').textContent = t.s6_manual_link;
+        if ($('#s6-gender-neutral'))   $('#s6-gender-neutral').textContent = t.s6_gender_neutral;
+        if ($('#s6-gender-feminine'))  $('#s6-gender-feminine').textContent = t.s6_gender_feminine;
+        if ($('#s6-gender-masculine')) $('#s6-gender-masculine').textContent = t.s6_gender_masculine;
 
-        // Step 7
-        if ($('#s7-title'))    $('#s7-title').textContent = t.s7_title;
-        if ($('#s7-subtitle')) $('#s7-subtitle').textContent = t.s7_subtitle;
-        if ($('#manual-name')) $('#manual-name').placeholder = t.s7_placeholder;
-        if ($('#s7-confirm-label')) $('#s7-confirm-label').textContent = t.s7_confirm;
+        // Step 7 — LLM results
+        if ($('#s7-title'))        $('#s7-title').textContent = t.s7_title;
+        if ($('#s7-subtitle'))     $('#s7-subtitle').textContent = t.s7_subtitle;
+        if ($('#s7-retry-link'))   $('#s7-retry-link').textContent = t.s7_retry_link;
+        if ($('#s7-manual-link'))  $('#s7-manual-link').textContent = t.s7_manual_link;
+
+        // Step 8 — Manual entry
+        if ($('#s8-title'))    $('#s8-title').textContent = t.s8_title;
+        if ($('#s8-subtitle')) $('#s8-subtitle').textContent = t.s8_subtitle;
+        if ($('#manual-name')) $('#manual-name').placeholder = t.s8_placeholder;
+        if ($('#s8-confirm-label')) $('#s8-confirm-label').textContent = t.s8_confirm;
+
+        // Step 9 — Kickstart
+        if ($('#s9-title'))      $('#s9-title').textContent = t.s9_title;
+        if ($('#s9-subtitle'))   $('#s9-subtitle').textContent = t.s9_subtitle;
+        if ($('#s9-cv-label'))   $('#s9-cv-label').textContent = t.s9_cv_label;
+        if ($('#s9-cv-desc'))    $('#s9-cv-desc').textContent = t.s9_cv_desc;
+        if ($('#s9-chat-label')) $('#s9-chat-label').textContent = t.s9_chat_label;
+        if ($('#s9-chat-desc'))  $('#s9-chat-desc').textContent = t.s9_chat_desc;
+        if ($('#s9-skip'))       $('#s9-skip').textContent = t.s9_skip;
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
@@ -720,22 +875,29 @@
         setTimeout(() => goTo(4), 400);
     };
 
-    // ── Step 4 — Privacy reject ────────────────────
+    // ── Step 4 — Terms checkbox + Privacy ──────────
+    window.toggleTerms = function() {
+        const cb = $('#tc-checkbox');
+        state.termsAccepted = cb && cb.checked;
+        const btn = $('#s4-accept');
+        if (btn) btn.disabled = !state.termsAccepted;
+    };
+
     window.rejectPrivacy = function() {
         const screen = $('#dismissed-screen');
         screen.classList.add('active');
     };
 
-    // ── Step 5 — Gender select ────────────────────
+    // ── Step 6 — Gender select ────────────────────
     window.selectGender = function(g) {
         state.gender = g;
         $$('.gender-btn').forEach(b => b.classList.toggle('selected', b.dataset.gender === g));
     };
 
-    // ── Step 5→6 — Generate LLM names ─────────────
+    // ── Step 6→7 — Generate LLM names ─────────────
     function generatingHTML() {
         const t = c();
-        const msg = t.s6_generating || 'Creating your names…';
+        const msg = t.s7_generating || 'Creating your names…';
         return `<div class="generating-stage">
             <div class="logo-orbit">
                 <img src="/static/images/icons/logo.png" alt="talent.yoga">
@@ -751,8 +913,8 @@
 
     window.generateLLMNames = async function() {
         const keywords = ($('#keyword-input').value || '').trim();
-        // Navigate to step 6 immediately with animation
-        goTo(6);
+        // Navigate to step 7 (name grid) immediately with animation
+        goTo(7);
         const grid = $('#name-grid');
         grid.innerHTML = generatingHTML();
         state.chosenName = null;
@@ -767,7 +929,7 @@
             const names = data.suggestions || [];
             grid.innerHTML = '';
             if (names.length === 0) {
-                grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#94a3b8;">${c().s6_no_names}</p>`;
+                grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#94a3b8;">${c().s7_no_names}</p>`;
                 return;
             }
             names.forEach(name => {
@@ -778,7 +940,7 @@
                 grid.appendChild(chip);
             });
         } catch (e) {
-            grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#dc2626;">${c().s6_error_names}</p>`;
+            grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#dc2626;">${c().s7_error_names}</p>`;
         }
     };
 
@@ -802,7 +964,7 @@
         completeOnboarding(state.chosenName);
     };
 
-    // ── Step 7 — Manual entry ──────────────────────
+    // ── Step 8 — Manual entry ──────────────────────
     let validateTimer = null;
     window.validateManualName = function() {
         const input = $('#manual-name');
@@ -873,20 +1035,22 @@
                     language: state.lang,
                     formality: state.formality,
                     yogi_name: yogiName,
+                    terms_accepted: state.termsAccepted,
                 }),
             });
             const data = await resp.json();
             if (data.ok) {
                 // Set language cookie so the app remembers
                 document.cookie = `lang=${state.lang};path=/;max-age=${365*86400};samesite=lax`;
-                window.location.href = '/dashboard';
+                // Show profile kickstart instead of going straight to dashboard
+                goTo(9);
             } else {
                 alert(data.error || data.detail || 'Error');
-                if (btn) { btn.disabled = false; btn.innerHTML = c().s7_confirm || 'Confirm'; }
+                if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
             }
         } catch (e) {
             alert('Network error');
-            if (btn) { btn.disabled = false; btn.innerHTML = c().s7_confirm || 'Confirm'; }
+            if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
         }
     }
 

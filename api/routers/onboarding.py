@@ -2,8 +2,9 @@
 Onboarding API — completes the first-login wizard.
 
 POST /api/onboarding/complete
-    Body: { language, formality, yogi_name }
-    Sets language, formality, yogi_name, onboarding_completed_at on the users row.
+    Body: { language, formality, yogi_name, terms_accepted }
+    Sets language, formality, yogi_name, terms_accepted_at,
+    onboarding_completed_at on the users row.
 """
 from fastapi import APIRouter, HTTPException, Depends, Request
 from api.deps import get_db
@@ -36,6 +37,7 @@ async def complete_onboarding(
     language = body.get("language", "de")
     formality = body.get("formality", "du")
     yogi_name = (body.get("yogi_name") or "").strip()
+    terms_accepted = body.get("terms_accepted", False)
 
     # ── Validate inputs ──────────────────────────────
     if language not in ("de", "en"):
@@ -44,6 +46,8 @@ async def complete_onboarding(
         formality = "du"
     if not yogi_name or len(yogi_name) < 3:
         return {"ok": False, "error": "Yogi name must be at least 3 characters."}
+    if not terms_accepted:
+        return {"ok": False, "error": "You must accept the Terms & Conditions."}
 
     # ── Validate name via Taro ───────────────────────
     from core.taro import validate_yogi_name
@@ -94,6 +98,7 @@ async def complete_onboarding(
             SET yogi_name = %s,
                 language = %s,
                 formality = %s,
+                terms_accepted_at = NOW(),
                 onboarding_completed_at = NOW()
             WHERE user_id = %s
         """, (yogi_name, language, formality, user["user_id"]))
