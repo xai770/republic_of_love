@@ -11,6 +11,33 @@
 .app-layout {
     animation: ty-page-in 0.45s ease both;
 }
+/* CV job status chip */
+#cv-job-bar {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9000;
+    display: none; align-items: center; gap: 0.65rem;
+    padding: 0.6rem 1.1rem;
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--accent, #6c6fe4); border-radius: 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+    font-size: 0.85rem; color: var(--text, #e0e0f0);
+    min-width: 200px; max-width: 320px;
+    transition: border-color 0.4s;
+}
+#cv-job-bar.done   { border-color: #4caf50; }
+#cv-job-bar.failed { border-color: #e57373; }
+.cv-job-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent, #6c6fe4); flex-shrink: 0;
+    animation: cv-job-pulse 1.3s ease-in-out infinite;
+}
+#cv-job-bar.done   .cv-job-dot { background: #4caf50; animation: none; }
+#cv-job-bar.failed .cv-job-dot { background: #e57373; animation: none; }
+@keyframes cv-job-pulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.82); }
+    50%       { opacity: 1;   transform: scale(1.2); }
+}
+#cv-job-bar-msg { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#cv-job-bar-eta { font-size: 0.76rem; color: var(--text-muted, #888); flex-shrink: 0; }
 </style>
 {% endblock %}
 
@@ -135,6 +162,13 @@
             <p id="daily-quote">„{{ t('dashboard.quote_default') }}"</p>
         </footer>
     </main>
+</div>
+
+<!-- CV Background Job Status Chip -->
+<div id="cv-job-bar">
+    <span class="cv-job-dot"></span>
+    <span id="cv-job-bar-msg">Analyzing CV…</span>
+    <span id="cv-job-bar-eta"></span>
 </div>
 
 <!-- Mira Chat Widget -->
@@ -806,5 +840,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ── CV background job chip ─────────────────────────────
+(function() {
+    const _CV_JOB_KEY = 'cv_pending_job';
+    let _timer = null;
+
+    function _bar(msg, eta, state) {
+        const el = document.getElementById('cv-job-bar');
+        if (!el) return;
+        document.getElementById('cv-job-bar-msg').textContent = msg;
+        document.getElementById('cv-job-bar-eta').textContent = eta || '';
+        el.className = state || '';
+        el.style.display = 'flex';
+    }
+    function _hide() {
+        const el = document.getElementById('cv-job-bar');
+        if (el) el.style.display = 'none';
+    }
+    function _eta(startMs) {
+        const r = Math.max(0, 200 - (Date.now() - startMs) / 1000);
+        return r < 15 ? '' : r < 75 ? '< 1 min' : '~' + Math.ceil(r / 60) + ' min';
+    }
+
+    const saved = JSON.parse(localStorage.getItem(_CV_JOB_KEY) || 'null');
+    if (!saved || !saved.job_id) return;
+
+    let seen = 0;
+    _bar('Analyzing "' + (saved.filename || 'CV') + '"…', _eta(saved.start_ms || Date.now()));
+
+    _timer = setInterval(async () => {
+        try {
+            const res = await fetch('/api/profiles/me/parse-cv/status/' + saved.job_id);
+            if (res.status === 404) {
+                clearInterval(_timer);
+                localStorage.removeItem(_CV_JOB_KEY);
+                _bar('\u26a0 Upload session expired \u2014 please re-upload', '', 'failed');
+                setTimeout(_hide, 7000);
+                return;
+            }
+            if (!res.ok) return;
+            const job = await res.json();
+            const msgs = job.progress || [];
+            const msg = msgs.length > seen
+                ? msgs[msgs.length - 1]
+                : document.getElementById('cv-job-bar-msg').textContent;
+            seen = msgs.length;
+            if (job.status === 'done') {
+                clearInterval(_timer);
+                localStorage.removeItem(_CV_JOB_KEY);
+                _bar('\u2705 CV imported! Refreshing\u2026', '', 'done');
+                setTimeout(() => window.location.reload(), 2500);
+            } else if (job.status === 'failed') {
+                clearInterval(_timer);
+                localStorage.removeItem(_CV_JOB_KEY);
+                _bar('\u274c ' + (job.error || 'Extraction failed'), '', 'failed');
+                setTimeout(_hide, 6000);
+            } else {
+                _bar(msg, _eta(saved.start_ms || Date.now()));
+            }
+        } catch (_) {}
+    }, 3000);
+})();
 </script>
 {% endblock %}
