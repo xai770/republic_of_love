@@ -1263,17 +1263,12 @@ function _fireIntroAnim() {
     }
 }
 
-let _introPending = false;  // true if we want to fire but a modal was open
+let _introCancelled = false;  // set to true the moment any tool is opened
 
 function runIntroAnimation() {
-    // Fire after 4 s from page load — no dependency on user inactivity.
-    // If a modal is already open at that point, defer until closeModal().
+    // Fire 4 s after page load — but only if the user hasn't touched a tool yet.
     setTimeout(() => {
-        if (_activeModal) {
-            _introPending = true;   // closeModal() will pick this up
-        } else {
-            _fireIntroAnim();
-        }
+        if (!_introCancelled) _fireIntroAnim();
     }, 4000);
 }
 
@@ -1372,6 +1367,7 @@ function _initMira() {
 let _activeModal = null;
 
 function openModal(name) {
+    _introCancelled = true;  // user found the tools themselves — skip intro tip
     // Toggle: clicking the already-open modal icon closes it
     if (_activeModal === name) { closeModal(); return; }
     closeModal(); // close any currently open one first
@@ -1393,11 +1389,6 @@ function closeModal() {
         const btn = document.getElementById('btn-view-' + _activeModal);
         if (btn) btn.classList.remove('active');
         _activeModal = null;
-        // If intro anim was deferred because the modal was open, fire it now
-        if (_introPending) {
-            _introPending = false;
-            setTimeout(_fireIntroAnim, 400);  // small pause so modal finishes closing
-        }
     }
 }
 
