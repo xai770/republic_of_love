@@ -16,6 +16,7 @@ Usage:
     from core.cv_anonymizer import extract_and_anonymize
     result = await extract_and_anonymize(cv_text, yogi_name="Phoenix")
 """
+import asyncio
 import datetime
 import json
 import os
@@ -32,7 +33,9 @@ logger = get_logger(__name__)
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434')
 EXTRACTION_MODEL = "qwen2.5:7b"
 FALLBACK_MODEL = "gemma3:4b"
-TIMEOUT = 180.0
+TIMEOUT = 120.0        # per-call timeout — chunks are small so 120 s is generous
+CHUNK_SIZE = 3500     # chars per CV chunk for Pass 1
+PASS2_CONCURRENCY = 5 # max simultaneous Pass-2 LLM calls
 
 # ─────────────────────────────────────────────────────────
 # Company generalization templates
@@ -208,6 +211,43 @@ def _clean_cv_text(cv_text: str) -> str:
     return cv_text.strip()
 
 
+def _chunk_cv_text(cv_text: str, chunk_size: int = CHUNK_SIZE) -> List[str]:
+    """Split CV text into overlapping chunks at paragraph boundaries.
+
+    Each chunk is at most *chunk_size* characters.  We always split at a blank
+    line so we never cut a role entry in half.  A small overlap (the last two
+    lines of the previous chunk) is prepended to each new chunk so that roles
+    that span a boundary are still captured.
+    """
+    if len(cv_text) <= chunk_size:
+        return [cv_text]
+
+    paragraphs = re.split(r'\n{2,}', cv_text)
+    chunks: List[str] = []
+    current: List[str] = []
+    current_len = 0
+    overlap_lines: List[str] = []  # last paragraph of previous chunk
+
+    for para in paragraphs:
+        para_len = len(para) + 2  # +2 for the \n\n separator
+        if current_len + para_len > chunk_size and current:
+            chunk_text = '\n\n'.join(current)
+            chunks.append(chunk_text)
+            # carry last paragraph as overlap into next chunk
+            overlap_lines = current[-1:]
+            current = overlap_lines[:]
+            current_len = sum(len(p) + 2 for p in current)
+        current.append(para)
+        current_len += para_len
+
+    if current:
+        chunks.append('\n\n'.join(current))
+
+    logger.info(f"CV chunked: {len(cv_text)} chars → {len(chunks)} chunks "
+                f"(~{len(cv_text)//len(chunks)} chars each)")
+    return chunks
+
+
 # ─────────────────────────────────────────────────────────
 # Date parsing helpers
 # ─────────────────────────────────────────────────────────
@@ -262,38 +302,75 @@ async def extract_and_anonymize(
         raise ValueError("yogi_name is required for anonymization")
 
     cv_text = _clean_cv_text(cv_text)
-    cv_text = cv_text[:20000]  # generous limit — Pass 1 prompt is small
+    cv_text = cv_text[:24000]  # hard cap — chunker handles the splitting
 
     logger.info(f"CV extraction: {len(cv_text)} chars, yogi_name={yogi_name}")
 
-    # ── Pass 1: Structure extraction ──────────────────────
-    prompt_1 = STRUCTURE_PROMPT.format(cv_text=cv_text)
-    raw_1 = await _call_llm(prompt_1, temperature=0.1)
-    if not raw_1:
+    # ── Pass 1: Chunked structure extraction ──────────────
+    # Split the CV into small chunks so each LLM call is fast and reliable.
+    # Results from all chunks are merged (de-duplicated by role title+company).
+    chunks = _chunk_cv_text(cv_text)
+
+    all_roles: List[dict] = []
+    all_education: List[dict] = []
+    all_languages: List[str] = []
+    all_certs: List[str] = []
+    detected_name: Optional[str] = None
+
+    for chunk_idx, chunk in enumerate(chunks):
+        prompt_1 = STRUCTURE_PROMPT.format(cv_text=chunk)
+        raw_1 = await _call_llm(prompt_1, temperature=0.1)
+        if not raw_1:
+            logger.warning(f"Pass 1 chunk {chunk_idx+1}/{len(chunks)} failed — skipping")
+            continue
+
+        structure = _extract_json(raw_1)
+        if not structure:
+            logger.warning(f"Pass 1 chunk {chunk_idx+1} JSON parse failed — skipping")
+            continue
+
+        chunk_roles = structure.get('roles', []) or []
+        all_roles.extend(r for r in chunk_roles if isinstance(r, dict))
+        all_education.extend(e for e in (structure.get('education') or []) if isinstance(e, dict))
+        all_languages.extend(structure.get('languages') or [])
+        all_certs.extend(structure.get('certifications') or [])
+        if not detected_name:
+            detected_name = structure.get('person_name')
+
+        logger.info(f"Pass 1 chunk {chunk_idx+1}/{len(chunks)}: "
+                    f"+{len(chunk_roles)} roles (total so far: {len(all_roles)})")
+
+    if not all_roles:
         raise ValueError("Pass 1 (structure extraction) failed with all models")
 
-    structure = _extract_json(raw_1)
-    if not structure:
-        logger.error(f"Pass 1 JSON parse failed: {raw_1[:300]}")
-        raise ValueError("Pass 1 returned invalid JSON")
+    # De-duplicate roles: same title+company = same role appearing in overlap
+    seen_keys: set = set()
+    roles: List[dict] = []
+    for r in all_roles:
+        key = (str(r.get('title', '')).strip().lower(),
+               str(r.get('company', '')).strip().lower())
+        if key not in seen_keys:
+            seen_keys.add(key)
+            roles.append(r)
 
-    roles = structure.get('roles', [])
-    if not isinstance(roles, list):
-        roles = []
+    # De-dup education/languages/certs
+    all_education = list({str(e.get('institution',''))+str(e.get('field','')): e
+                          for e in all_education}.values())
+    all_languages = sorted(set(str(l).strip() for l in all_languages if l))[:10]
+    all_certs = sorted(set(str(c).strip() for c in all_certs if c))[:10]
 
-    logger.info(f"Pass 1 extracted {len(roles)} roles, "
-                f"{len(structure.get('education', []))} education, "
-                f"{len(structure.get('languages', []))} languages")
-
-    detected_name = structure.get('person_name')
+    logger.info(f"Pass 1 total: {len(roles)} roles, "
+                f"{len(all_education)} education, "
+                f"{len(all_languages)} languages (from {len(chunks)} chunks)")
 
     # ── Pass 2: Per-role anonymization + skill extraction ─
-    all_skills: List[str] = []
-    anonymized_roles: List[dict] = []
+    # Run all roles concurrently (capped at PASS2_CONCURRENCY in-flight at once)
+    # to avoid sequential 6 s × N_roles delays.
 
-    for i, role in enumerate(roles[:20]):  # cap at 20 roles
+    async def _process_role(i: int, role: dict):
+        """Anonymize one role; returns (index, anonymized_dict)."""
         if not isinstance(role, dict):
-            continue
+            return i, None
 
         company = str(role.get('company', 'unknown'))
         title = str(role.get('title', 'unknown role'))
@@ -301,11 +378,11 @@ async def extract_and_anonymize(
         if not isinstance(resps, list):
             resps = [str(resps)] if resps else []
 
-        # Try company registry first (no LLM needed)
-        employer_desc = None
-        industry = None
+        employer_desc: Optional[str] = None
+        industry: Optional[str] = None
         role_skills: List[str] = []
 
+        # Company registry lookup (sync, but fast)
         if conn:
             try:
                 from core.company_anonymizer import lookup_or_queue
@@ -315,7 +392,6 @@ async def extract_and_anonymize(
             except Exception as e:
                 logger.debug(f"Registry lookup failed for '{company}': {e}")
 
-        # LLM anonymization: generalize company + extract skills from responsibilities
         resp_text = '\n'.join(f"- {r}" for r in resps[:8])
         role_prompt = ROLE_ANONYMIZE_PROMPT.format(
             company=company,
@@ -330,18 +406,15 @@ async def extract_and_anonymize(
             if role_parsed:
                 if not employer_desc:
                     employer_desc = role_parsed.get('employer_description', 'a company')
-                role_skills = role_parsed.get('skills', [])
-                if isinstance(role_skills, list):
-                    all_skills.extend(str(s).strip() for s in role_skills if s)
-                else:
+                role_skills = role_parsed.get('skills', []) or []
+                if not isinstance(role_skills, list):
                     role_skills = []
-                if not industry:
-                    industry = role_parsed.get('industry', '')
+                industry = role_parsed.get('industry', '') or ''
 
         if not employer_desc:
             employer_desc = 'a company'
 
-        # Parse dates
+        # Date parsing
         start_year = _parse_year(role.get('start_year'))
         end_year_raw = role.get('end_year')
         is_current = False
@@ -356,13 +429,16 @@ async def extract_and_anonymize(
         start_month = _parse_month(role.get('start_month'))
         end_month = _parse_month(role.get('end_month'))
 
-        # Calculate duration from dates if available
         duration_years = None
         if start_year:
             end_y = end_year or datetime.date.today().year
             duration_years = max(1, end_y - start_year)
 
-        anonymized_roles.append({
+        logger.info(f"  Role {i+1}/{len(roles[:20])}: {title} → {employer_desc} "
+                    f"({start_year or '?'}-{end_year or ('today' if is_current else '?')}) "
+                    f"[{len(role_skills)} skills]")
+
+        return i, {
             'employer_description': employer_desc,
             'role': title,
             'start_year': start_year,
@@ -373,19 +449,36 @@ async def extract_and_anonymize(
             'duration_years': duration_years,
             'industry': industry or '',
             'key_responsibilities': [str(r) for r in resps[:5]],
-            'technologies_used': [str(s) for s in (role_skills if isinstance(role_skills, list) else [])][:10],
-        })
+            'technologies_used': [str(s) for s in role_skills][:10],
+            '_skills': role_skills,  # kept for skill aggregation, removed later
+        }
 
-        logger.info(f"  Role {i+1}/{len(roles)}: {title} → {employer_desc} "
-                     f"({start_year or '?'}-{end_year or ('today' if is_current else '?')}) "
-                     f"[{len(role_skills) if isinstance(role_skills, list) else 0} skills]")
+    # Semaphore limits concurrent Ollama calls so the GPU isn't overwhelmed
+    sem = asyncio.Semaphore(PASS2_CONCURRENCY)
+
+    async def _process_with_sem(i: int, role: dict):
+        async with sem:
+            return await _process_role(i, role)
+
+    tasks = [_process_with_sem(i, role) for i, role in enumerate(roles[:20])]
+    results_raw = await asyncio.gather(*tasks)
+
+    # Reassemble in original order, collect skills
+    all_skills: List[str] = []
+    anonymized_roles: List[dict] = []
+    for _i, anon in sorted(results_raw, key=lambda x: x[0]):
+        if anon is None:
+            continue
+        role_skills = anon.pop('_skills', [])
+        all_skills.extend(str(s).strip() for s in role_skills if s)
+        anonymized_roles.append(anon)
 
     # Dedupe and sort skills
     all_skills = sorted(set(s for s in all_skills if s and len(s) > 1))
 
-    # Languages and certifications from Pass 1
-    languages = [str(l).strip() for l in structure.get('languages', []) if l][:10]
-    certifications = [str(c).strip() for c in structure.get('certifications', []) if c][:10]
+    # Languages and certifications merged from all chunks in Pass 1
+    languages = all_languages
+    certifications = all_certs
 
     # Calculate total years from date range
     years_experience = None
@@ -416,9 +509,9 @@ async def extract_and_anonymize(
     summary = _build_summary(yogi_name, current_title, years_experience,
                              career_level, all_skills[:8], anonymized_roles)
 
-    # Education
+    # Education merged from all chunks in Pass 1
     education = []
-    for edu in structure.get('education', [])[:5]:
+    for edu in all_education[:5]:
         if isinstance(edu, dict):
             education.append({
                 'level': str(edu.get('degree', edu.get('level', 'unknown'))),
