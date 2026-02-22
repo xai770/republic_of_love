@@ -62,6 +62,56 @@ Is qwen2.5:7b actually working at all? The `CALL_HARD_TIMEOUT = 240s` fires befo
 
 ## Pending
 
-- [ ] Run headless test script to confirm stack works without UI/HTTP noise
-- [ ] Consider making gemma3:4b the primary model (or configurable per env)
+- [x] Run headless test script to confirm stack works without UI/HTTP noise
+- [x] Make gemma3:4b the primary model
 - [ ] DB persistence for CV jobs (survive restarts) — lower priority given partial saves
+
+---
+
+## End-of-Day Summary — ✅ Victory
+
+### What we actually shipped today (all committed)
+
+| Commit | What |
+|--------|------|
+| `adb7bea` | Partial saves for CV extraction |
+| `67c694b` | **Swap primary model to gemma3:4b** + headless test script + this daily note |
+| (today) | UX fix: modal auto-closes 2.5s after drop with confirmation message |
+
+### Model swap results (headless, real CV)
+
+```
+✅ Done in 220.4s (3m 40s)
+   Roles: 20 · Skills: 50 · LLM failures: 0
+   Primary model (gemma3:4b): 6/6 chunks succeeded
+```
+
+### End-to-end UI test — 20:16 run
+
+| Time | Event |
+|------|-------|
+| 20:16:06 | CV uploaded via browser, job started |
+| 20:16:31 | chunk 1/6 done (+6 roles, gemma3:4b, ~25s) |
+| 20:16:52 | chunk 2/6 done (+5 roles, ~21s) |
+| 20:18:43 | **CV anonymized: 50 skills, 20 roles** ✅ |
+| — | `profil.md` written into `docs/daily_notes/` |
+
+**Total wall time: 2 min 37 sec. Zero failures.**
+
+### Before vs. After (same CV, same machine)
+
+| | Before (qwen primary) | After (gemma primary) |
+|---|---|---|
+| Per chunk (worst case) | ~3 min (fail + fallback) | ~25 sec |
+| Pass 1 (6 chunks) | ~18 min | ~2.5 min |
+| Full CV | timing out | **2m37s** |
+| LLM failures | 6/6 chunks | 0/6 |
+
+### Status at sign-off
+
+- Service: `talent-yoga active`, PID 1255545
+- Model: `gemma3:4b` primary, `qwen2.5:7b` fallback
+- Upload UX: modal now shows confirmation then auto-closes; chip tracks progress bottom-left
+- Profile: 20 roles, 50 skills loaded into Schnuffi's profile
+
+Good day. 🎉

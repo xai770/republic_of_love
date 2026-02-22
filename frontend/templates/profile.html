@@ -1956,14 +1956,19 @@ async function uploadCV(file) {
         }
         const { job_id } = await res.json();
 
-        // Restore the dropzone immediately — user is free to do other things
-        resetUploadArea();
-
         // Persist job so it survives a page reload
         const startMs = Date.now();
         localStorage.setItem(_CV_JOB_KEY, JSON.stringify({ job_id, filename: file.name, start_ms: startMs }));
 
-        // Start background polling — shows floating chip in bottom-right corner
+        // Show a clear "received" message in the modal before closing it
+        _cvLog('✅ "' + file.name + '" received — analyzing in background…');
+        _cvLog('⏳ This takes ~4 minutes. You can close this window.');
+        document.getElementById('pb-upload-status').style.display = 'flex';
+
+        // Close the modal after a short pause so the user sees the confirmation
+        setTimeout(() => { resetUploadArea(); closeModal(); }, 2500);
+
+        // Start background polling — shows floating chip in bottom-left corner
         _startCVPoller(job_id, file.name, startMs);
         addLogEntry('system', 'CV: "' + file.name + '" — analyzing in background…', 'cv_upload');
 
