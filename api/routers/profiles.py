@@ -1,7 +1,7 @@
 """
 Profile endpoints — CRUD for user profiles.
 """
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
@@ -21,6 +21,63 @@ from config.settings import OLLAMA_EMBED_URL as _OLLAMA_EMBED_URL, EMBED_MODEL a
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 logger = logging.getLogger(__name__)
+
+# ── CV extraction job store ──────────────────────────────────────────────────
+# Background tasks run in the FastAPI event loop; results are stored here so
+# the browser can poll /me/parse-cv/status/{job_id} without keeping an HTTP
+# connection open for the full (potentially 3+ min) extraction.
+_cv_jobs: dict = {}
+_cv_jobs_lock = threading.Lock()
+
+
+def _job_update(job_id: str, **kwargs):
+    with _cv_jobs_lock:
+        if job_id in _cv_jobs:
+            _cv_jobs[job_id].update(kwargs)
+
+
+def _job_progress(job_id: str, msg: str):
+    with _cv_jobs_lock:
+        if job_id in _cv_jobs:
+            _cv_jobs[job_id]['progress'].append(msg)
+
+
+async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: int,
+                              original_filename: str):
+    """Background coroutine — runs extract_and_anonymize and stores the result."""
+    pool = _get_pool()
+    conn = None
+    try:
+        conn = pool.getconn()
+        _job_progress(job_id, f'🔍 Analysing structure…')
+        from core.cv_anonymizer import extract_and_anonymize
+        result = await extract_and_anonymize(
+            cv_text=text,
+            yogi_name=yogi_name,
+            conn=conn
+        )
+        n_roles = len(result.get('work_history', []))
+        n_skills = len(result.get('skills', []))
+        _job_progress(job_id, f'✅ Found {n_roles} roles · {n_skills} skills')
+        try:
+            from lib.usage_tracker import log_event
+            log_event(conn, user_id, 'cv_extraction',
+                      context={'filename': original_filename})
+        except Exception:
+            pass
+        _job_update(job_id, status='done', result=result)
+    except Exception as e:
+        logger.error(f'CV extraction job {job_id} failed: {e}')
+        _job_update(job_id, status='failed', error=str(e))
+    finally:
+        if conn:
+            try:
+                pool.putconn(conn)
+            except Exception:
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -818,89 +875,82 @@ Extract all work experiences. Use null for missing dates. Order by most recent f
 @router.post("/me/parse-cv")
 async def parse_cv(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     user: dict = Depends(require_user),
     conn = Depends(get_db)
 ):
     """
-    Parse uploaded CV (PDF/DOCX/TXT/MD) and extract ANONYMIZED career data.
-    
-    Privacy-first:
-    - File is processed in memory only (never written to disk permanently)
-    - LLM extracts + anonymizes: real name → yogi_name, companies → generalized
-    - PII safety net validates output before returning
-    - Raw text is discarded after processing
-    
-    Returns anonymized structured profile for yogi confirmation.
+    Parse uploaded CV — returns a job_id immediately.
+    The LLM extraction runs as a background task (can take 1-3 minutes).
+    Poll GET /me/parse-cv/status/{job_id} for progress and result.
     """
+    import uuid
     filename = file.filename.lower()
     content = await file.read()
-    
     text = ""
-    
+
     try:
         if filename.endswith('.pdf'):
             import pymupdf
             with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
                 tmp.write(content)
                 tmp_path = tmp.name
-            
             doc = pymupdf.open(tmp_path)
             text = "\n".join(page.get_text() for page in doc)
             doc.close()
             os.unlink(tmp_path)
-            
         elif filename.endswith(('.docx', '.doc')):
             from docx import Document
             import io
             doc = Document(io.BytesIO(content))
             text = "\n".join(para.text for para in doc.paragraphs)
-            
-        elif filename.endswith('.txt') or filename.endswith('.md'):
+        elif filename.endswith(('.txt', '.md')):
             text = content.decode('utf-8', errors='ignore')
-            
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type. Use PDF, DOCX, TXT, or MD.")
-        
+
         if not text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from file")
-        
-        # Get yogi_name for anonymization
+
+        # Get yogi_name now (while we still have a live connection)
         with conn.cursor() as cur:
             cur.execute("SELECT yogi_name FROM users WHERE user_id = %s", (user['user_id'],))
             row = cur.fetchone()
             yogi_name = row['yogi_name'] if row else None
-        
+
         if not yogi_name:
             raise HTTPException(status_code=400, detail="Please set your yogi name first (chat with Mira)")
-        
-        # Anonymize with LLM + PII safety check
-        from core.cv_anonymizer import extract_and_anonymize
-        result = await extract_and_anonymize(
-            cv_text=text,
-            yogi_name=yogi_name,
-            conn=conn
+
+        # Create job entry and kick off background extraction
+        job_id = str(uuid.uuid4())[:12]
+        with _cv_jobs_lock:
+            _cv_jobs[job_id] = {
+                'status': 'running',
+                'progress': [f'📂 "{file.filename}" read ({len(text):,} chars)'],
+                'result': None,
+                'error': None,
+            }
+
+        background_tasks.add_task(
+            _run_cv_extraction, job_id, text, yogi_name, user['user_id'], file.filename
         )
-        
-        # Explicitly discard raw text
-        del text
-        del content
 
-        # --- USAGE: Log billable CV extraction event ---
-        try:
-            from lib.usage_tracker import log_event
-            log_event(conn, user['user_id'], 'cv_extraction',
-                      context={'filename': file.filename, 'text_len': len(result.get('raw_text', '') or '')})
-        except Exception as e:
-            logger.warning(f"Usage tracking failed for cv_extraction: {e}")
+        return {'job_id': job_id, 'status': 'running'}
 
-        return result
-        
     except HTTPException:
         raise
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+
+
+@router.get("/me/parse-cv/status/{job_id}")
+async def parse_cv_status(job_id: str, user: dict = Depends(require_user)):
+    """Poll CV extraction job status. Returns progress list and result when done."""
+    with _cv_jobs_lock:
+        job = dict(_cv_jobs.get(job_id, {}))
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 
 # --- CV Import (save anonymized data to profile) ---
