@@ -439,7 +439,7 @@ def save_profile(user_id: int, collected: dict, conn):
                 SELECT yogi_name FROM users WHERE user_id = %s
             """, (user_id,))
             u = cur.fetchone()
-            yogi_name = u['yogi_name'] if u else 'New Yogi'
+            yogi_name = (u['yogi_name'] if u else None) or 'New Yogi'
             cur.execute("""
                 INSERT INTO profiles (full_name, user_id, profile_source)
                 VALUES (%s, %s, 'adele_interview')

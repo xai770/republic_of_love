@@ -174,21 +174,30 @@ MIRA_ONBOARDING = [
 ]
 
 ADELE_INTERVIEW = [
-    ("Hi Adele!", "Adele intro — should ask about current role"),
-    ("I'm a backend engineer at Siemens, building microservices for IoT platforms. I've been here for 3 years.",
-     "current_role → should ask for more details or move to work history"),
-    ("Before that I was at BMW for 2 years as a software developer, working on the connected car platform.",
-     "work_history entry 1"),
-    ("No, that's all my work experience.",
+    ("I'm a backend engineer at Siemens, building microservices for IoT platforms. I've been here since 2022.",
+     "current_role — should confirm title+company, ask for responsibilities"),
+    ("I design and own the event-driven data pipeline that connects 50+ IoT devices to our analytics platform.",
+     "responsibilities turn 1 — should ask 'was noch?'"),
+    ("I also lead a team of 4 engineers and run our bi-weekly architecture reviews.",
+     "responsibilities turn 2 — should ask 'was noch?'"),
+    ("weiter",
+     "move on — should ask about previous role"),
+    ("Before that I was at BMW for 2 years as a software developer, 2020 to 2022.",
+     "work_history entry 1 — should confirm and ask for responsibilities"),
+    ("I built the REST API for the connected car remote services app, used by 2 million customers.",
+     "work history resps turn 1"),
+    ("weiter",
+     "done with BMW — ask for role before that"),
+    ("No more, that was my first job.",
      "should move to skills"),
-    ("Python, Go, Docker, Kubernetes, PostgreSQL, Redis, gRPC, CI/CD, Terraform, AWS",
+    ("Python, Go, Docker, Kubernetes, PostgreSQL, Redis, gRPC, Terraform, AWS",
      "skills phase"),
-    ("I have a Master's in Computer Science from TU Munich, graduated 2019.",
+    ("Master's in Computer Science, TU Munich, 2019.",
      "education phase"),
-    ("I'd like to stay in Munich, remote is fine too. Looking for senior roles, 85-100k range. I want to work with distributed systems.",
+    ("Looking for senior or staff engineer roles, Munich or remote, 90-110k. Distributed systems and platform engineering.",
      "preferences phase"),
     ("Yes, save it!",
-     "should confirm and save profile"),
+     "confirm and save"),
 ]
 
 
@@ -245,6 +254,12 @@ def main():
     # ── Step 2: Adele Interview ──
     if not args.skip_adele:
         print("\n── Step 2: Adele Interview ──")
+
+        # Trigger opening greeting (advances session to current_role)
+        greet_r = requests.get(f"{BASE_URL}/api/adele/greet", cookies=cookies, timeout=15)
+        if greet_r.ok and greet_r.json().get('reply'):
+            pr("Adele", greet_r.json()['reply'], phase='current_role')
+        time.sleep(0.3)
         for msg, expect in ADELE_INTERVIEW:
             pr("You", msg)
             resp = chat_adele(msg, cookies)
