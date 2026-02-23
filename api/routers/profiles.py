@@ -30,6 +30,22 @@ _cv_jobs: dict = {}
 _cv_jobs_lock = threading.Lock()
 
 
+def _detect_language(text: str) -> str:
+    """
+    Detect whether a text is German ('de') or English ('en').
+    Uses langdetect; defaults to 'de' on failure or ambiguity.
+    """
+    if not text or len(text.strip()) < 20:
+        return 'de'
+    try:
+        from langdetect import detect
+        detected = detect(text)
+        return detected if detected in ('de', 'en') else 'de'
+    except Exception:
+        return 'de'
+
+
+
 def _job_update(job_id: str, **kwargs):
     with _cv_jobs_lock:
         if job_id in _cv_jobs:
@@ -176,23 +192,28 @@ async def _run_translation(job_id: str, user_id: int, target_lang: str):
 
         done = 0
 
-        # 1. Summary
+        # 1. Summary — write to profile_translations cache (NON-DESTRUCTIVE)
         if summary and summary.strip():
-            _job_progress(job_id, f'🌐 Übersetze Zusammenfassung…')
+            _job_progress(job_id, '🌐 Übersetze Zusammenfassung…')
             translated = await _asyncio.wait_for(
                 ask_llm(summary, system_prompt), timeout=120
             )
             if translated and translated.strip():
                 with conn.cursor() as cur:
-                    cur.execute(
-                        "UPDATE profiles SET profile_summary = %s WHERE profile_id = %s",
-                        (translated.strip(), profile_id)
-                    )
+                    cur.execute("""
+                        INSERT INTO profile_translations
+                            (profile_id, language, profile_summary, model)
+                        VALUES (%s, %s, %s, 'gemma3:4b')
+                        ON CONFLICT (profile_id, language)
+                        DO UPDATE SET profile_summary = EXCLUDED.profile_summary,
+                                      translated_at   = NOW(),
+                                      model           = EXCLUDED.model
+                    """, (profile_id, target_lang, translated.strip()))
                     conn.commit()
             done += 1
             _job_progress(job_id, f'🌐 Zusammenfassung fertig ({done}/{total})')
 
-        # 2. Work-history descriptions
+        # 2. Work-history — write to profile_work_history_translations cache
         for entry in entries:
             title = entry['job_title'] or '…'
             _job_progress(job_id, f'🌐 Übersetze „{title}"… ({done + 1}/{total})')
@@ -201,19 +222,26 @@ async def _run_translation(job_id: str, user_id: int, target_lang: str):
             )
             if translated and translated.strip():
                 with conn.cursor() as cur:
-                    cur.execute(
-                        "UPDATE profile_work_history SET job_description = %s "
-                        "WHERE work_history_id = %s",
-                        (translated.strip(), entry['work_history_id'])
-                    )
+                    cur.execute("""
+                        INSERT INTO profile_work_history_translations
+                            (work_history_id, language, job_description, model)
+                        VALUES (%s, %s, %s, 'gemma3:4b')
+                        ON CONFLICT (work_history_id, language)
+                        DO UPDATE SET job_description = EXCLUDED.job_description,
+                                      translated_at   = NOW(),
+                                      model           = EXCLUDED.model
+                    """, (entry['work_history_id'], target_lang, translated.strip()))
                     conn.commit()
             done += 1
             _job_progress(job_id, f'🌐 {done}/{total} Abschnitte übersetzt…')
 
-        _job_progress(job_id, f'✅ Übersetzung fertig — {done} Abschnitte')
+        _job_progress(job_id, f'✅ Übersetzung fertig — {done} Abschnitte. 🔄 Starte Embedding…')
+
+        # 3. Kick off embedding for the new language version in background
+        _schedule_profile_embedding_for_language(user_id, target_lang)
+
         try:
             from lib.audit import log_audit_event
-            import psycopg2.extras  # noqa – conn is already open
             log_audit_event(conn, user_id, actor='yogi',
                             event_type='profile_translate',
                             detail={'lang': target_lang, 'translated': done})
@@ -254,6 +282,52 @@ def _build_profile_text(profile: dict) -> str:
         ' '.join(skills),
         (profile.get('profile_summary') or '')[:500],
         profile.get('experience_level') or '',
+    ]
+    return ' | '.join(p for p in parts if p).strip()
+
+
+def _build_profile_text_for_language(user_id: int, conn, language: str) -> str:
+    """
+    Build profile text for embedding in the given language.
+    - language == profile.language  → canonical text (identical to _build_profile_text)
+    - language != profile.language  → substitute translated summary from the cache
+      (falls back to canonical text if no translation exists yet)
+    Returns '' if no profile found.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT p.profile_id,
+                   COALESCE(p.language, 'de') AS canonical_lang,
+                   p.skill_keywords, p.current_title,
+                   p.profile_summary, p.experience_level,
+                   pt.profile_summary AS translated_summary
+            FROM profiles p
+            LEFT JOIN profile_translations pt
+                   ON pt.profile_id = p.profile_id AND pt.language = %s
+            WHERE p.user_id = %s
+            ORDER BY p.updated_at DESC NULLS LAST
+            LIMIT 1
+        """, (language, user_id))
+        row = cur.fetchone()
+
+    if not row:
+        return ''
+
+    # Same language as canonical — use original text
+    if language == row['canonical_lang']:
+        return _build_profile_text(row)
+
+    # Different language — substitute translated summary (or fall back to canonical)
+    summary = row.get('translated_summary') or row.get('profile_summary') or ''
+    raw_skills = row.get('skill_keywords') or []
+    if isinstance(raw_skills, dict):
+        raw_skills = raw_skills.get('keywords', [])
+    skills = [str(s) for s in raw_skills]
+    parts = [
+        row.get('current_title') or '',
+        ' '.join(skills),
+        summary[:500],
+        row.get('experience_level') or '',
     ]
     return ' | '.join(p for p in parts if p).strip()
 
@@ -335,6 +409,81 @@ def _schedule_profile_embedding(user_id: int) -> None:
     t = threading.Thread(
         target=_compute_profile_embedding_bg,
         args=(user_id,),
+        daemon=True
+    )
+    t.start()
+
+
+def _compute_profile_embedding_for_language_bg(user_id: int, language: str) -> None:
+    """
+    Background thread: build profile text in `language` (using translation cache
+    where available), compute the embedding, and store it in the embeddings table.
+    The SHA-256 hash of the translated text naturally produces a distinct cache row.
+    """
+    import logging as _logging
+    _log = _logging.getLogger(__name__)
+    conn = None
+    pool = None
+    try:
+        pool = _get_pool()
+        conn = pool.getconn()
+        conn.autocommit = False
+
+        text = _build_profile_text_for_language(user_id, conn, language)
+        if not text:
+            _log.info('No profile text for user %s lang %s — skip embedding', user_id, language)
+            return
+
+        text_clean = text.lower().strip()
+        text_hash = hashlib.sha256(text_clean.encode()).hexdigest()[:32]
+
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1 FROM embeddings WHERE text_hash = %s', (text_hash,))
+            if cur.fetchone():
+                _log.info('Embedding already cached for user %s lang %s', user_id, language)
+                return
+
+        resp = _requests.post(
+            _OLLAMA_EMBED_URL,
+            json={'model': _EMBED_MODEL, 'prompt': text_clean},
+            timeout=60
+        )
+        if resp.status_code != 200:
+            _log.warning('Ollama embedding error %s for user %s lang %s',
+                         resp.status_code, user_id, language)
+            return
+
+        embedding = resp.json().get('embedding')
+        if not embedding:
+            return
+
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO embeddings (text_hash, text, embedding, model)
+                VALUES (%s, %s, %s::jsonb, %s)
+                ON CONFLICT (text_hash) DO NOTHING
+            """, (text_hash, text, _json.dumps(embedding), _EMBED_MODEL))
+        conn.commit()
+        _log.info('Profile %s-embedding cached for user %s (hash %s)', language, user_id, text_hash)
+
+    except Exception as exc:
+        _log.error('_compute_profile_embedding_for_language_bg error user %s lang %s: %s',
+                   user_id, language, exc)
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+    finally:
+        if conn and pool:
+            pool.putconn(conn)
+
+
+def _schedule_profile_embedding_for_language(user_id: int, language: str) -> None:
+    """Fire-and-forget: compute profile embedding for a specific language version."""
+    t = threading.Thread(
+        target=_compute_profile_embedding_for_language_bg,
+        args=(user_id, language),
         daemon=True
     )
     t.start()
@@ -1154,38 +1303,109 @@ async def parse_cv_status(job_id: str, user: dict = Depends(require_user)):
 async def translate_profile(
     request: Request,
     background_tasks: BackgroundTasks = BackgroundTasks(),
-    user: dict = Depends(require_user),
+    target: Optional[str] = None,    # explicit override; else auto-computed
+    user: dict = Depends(require_unfrozen_user),
     conn=Depends(get_db)
 ):
     """
-    Translate free-text profile fields (summary + work descriptions) to the
-    user's chosen language (read from the 'lang' cookie).
+    Translate the yogi's profile into the *other* language and cache it
+    non-destructively in profile_translations / profile_work_history_translations.
+
+    Target language is derived automatically:
+      - DE profile → translate to EN (to match English job postings)
+      - EN profile → translate to DE
+    Pass ?target=en or ?target=de to override.
+
     Returns a job_id — poll /me/parse-cv/status/{job_id} for progress.
+    The canonical profile is never modified.
     """
     import uuid
-    from api.i18n import get_language_from_request
 
-    target_lang = get_language_from_request(request) or 'de'
-
-    # Ensure profile exists
     with conn.cursor() as cur:
-        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
-        if not cur.fetchone():
-            raise HTTPException(status_code=404, detail="No profile found — build one first")
+        cur.execute(
+            "SELECT profile_id, COALESCE(language, 'de') AS language FROM profiles WHERE user_id = %s",
+            (user['user_id'],)
+        )
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="No profile found — build one first")
+
+    canonical_lang = row['language']
+    target_lang = target if target in ('de', 'en') else ('en' if canonical_lang == 'de' else 'de')
+
+    if target_lang == canonical_lang:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Profile is already in '{canonical_lang}' — nothing to translate."
+        )
+
+    # Check whether a cached translation already exists
+    profile_id = row['profile_id']
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT translated_at FROM profile_translations "
+            "WHERE profile_id = %s AND language = %s",
+            (profile_id, target_lang)
+        )
+        existing = cur.fetchone()
 
     job_id = str(uuid.uuid4())[:12]
-    target_label = 'Deutsch' if target_lang == 'de' else target_lang.upper()
+    lang_labels = {'de': 'Deutsch', 'en': 'English'}
+    target_label = lang_labels.get(target_lang, target_lang.upper())
+    cached_note = ' (aktualisiert bestehende Übersetzung)' if existing else ''
     with _cv_jobs_lock:
         _cv_jobs[job_id] = {
             'status': 'running',
-            'progress': [f'🌐 Starte Übersetzung nach {target_label}…'],
+            'progress': [f'🌐 Starte Übersetzung nach {target_label}{cached_note}…'],
             'result': None,
             'partial_result': None,
             'error': None,
         }
 
     background_tasks.add_task(_run_translation, job_id, user['user_id'], target_lang)
-    return {'job_id': job_id, 'status': 'running'}
+    return {
+        'job_id': job_id,
+        'status': 'running',
+        'canonical_lang': canonical_lang,
+        'target_lang': target_lang,
+        'had_existing_cache': bool(existing),
+    }
+
+
+@router.get("/me/translation-status")
+def get_translation_status(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Returns translation cache status for the current yogi.
+    The UI uses this to decide whether to show the 'Generate English profile' button.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT p.profile_id,
+                   COALESCE(p.language, 'de') AS canonical_lang,
+                   json_agg(
+                       json_build_object(
+                           'language',      pt.language,
+                           'translated_at', pt.translated_at,
+                           'has_summary',   pt.profile_summary IS NOT NULL
+                       )
+                   ) FILTER (WHERE pt.translation_id IS NOT NULL) AS translations
+            FROM profiles p
+            LEFT JOIN profile_translations pt ON pt.profile_id = p.profile_id
+            WHERE p.user_id = %s
+            GROUP BY p.profile_id, p.language
+        """, (user['user_id'],))
+        row = cur.fetchone()
+
+    if not row:
+        return {'canonical_lang': 'de', 'translations': []}
+
+    return {
+        'canonical_lang': row['canonical_lang'],
+        'translations': row['translations'] or [],
+    }
 
 
 # --- CV Import (save anonymized data to profile) ---
@@ -1309,7 +1529,27 @@ def import_cv(
 
         conn.commit()
 
-    # Kick off embedding computation in background (Adele's signal)
+    # Detect & persist the canonical language of this profile
+    detect_corpus = ' '.join(filter(None, [
+        data.profile_summary or '',
+        ' '.join(
+            ' '.join(r.key_responsibilities)
+            for r in data.work_history
+            if r.key_responsibilities
+        ),
+    ]))
+    detected_lang = _detect_language(detect_corpus)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE profiles SET language = %s WHERE profile_id = %s",
+                (detected_lang, profile_id)
+            )
+            conn.commit()
+    except Exception as _lang_err:
+        logger.warning('Could not set profiles.language for profile %s: %s', profile_id, _lang_err)
+
+    # Kick off embedding computation in background — canonical language first
     _schedule_profile_embedding(user['user_id'])
 
     # --- USAGE: Log billable profile embed event ---
@@ -1317,13 +1557,14 @@ def import_cv(
         from lib.usage_tracker import log_event
         log_event(conn, user['user_id'], 'profile_embed',
                   context={'profile_id': profile_id, 'skills_count': len(all_keywords),
-                           'work_entries': imported_count})
+                           'work_entries': imported_count, 'lang': detected_lang})
     except Exception as e:
-        log.warning(f"Usage tracking failed for profile_embed: {e}")
+        logger.warning(f"Usage tracking failed for profile_embed: {e}")
 
     return {
         "status": "ok",
         "profile_id": profile_id,
+        "language": detected_lang,
         "skills_imported": len(all_keywords),
         "work_entries_imported": imported_count,
         "message": f"Profile updated: {len(all_keywords)} skills, {imported_count} work entries imported"

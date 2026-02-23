@@ -143,9 +143,10 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
 
     # Basic info — use yogi_name for anonymity (never expose real name)
     cur.execute("""
-        SELECT p.profile_id, COALESCE(u.yogi_name, 'Yogi') AS display_name,
+        SELECT p.profile_id, p.user_id, COALESCE(u.yogi_name, 'Yogi') AS display_name,
                p.current_title, p.skill_keywords, p.experience_level,
-               p.profile_summary, p.years_of_experience
+               p.profile_summary, p.years_of_experience,
+               COALESCE(p.language, 'de') AS language
         FROM profiles p
         LEFT JOIN users u ON p.user_id = u.user_id
         WHERE p.profile_id = %s
@@ -156,6 +157,7 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
 
     profile = {
         'profile_id': row['profile_id'],
+        'user_id':    row.get('user_id'),          # needed for translation lookup
         'name': row['display_name'],
         'title': row['current_title'],
         'skills': [],
@@ -163,6 +165,7 @@ def get_profile_data(conn, profile_id: int) -> Optional[Dict]:
         'qualification_level': EXPERIENCE_TO_KLDB.get(row['experience_level']),
         'years_of_experience': row['years_of_experience'],
         'profile_summary': row['profile_summary'] or '',
+        'language': row.get('language') or 'de',   # canonical language of the profile
         'work_history': [],
     }
 
@@ -212,7 +215,7 @@ def get_posting_data(conn, posting_id: int) -> Optional[Dict]:
     cur.execute("""
         SELECT posting_id, job_title, source, extracted_summary,
                job_description, qualification_level, location_city,
-               berufenet_name
+               berufenet_name, source_language
         FROM postings WHERE posting_id = %s
     """, (posting_id,))
     row = cur.fetchone()
@@ -228,6 +231,7 @@ def get_posting_data(conn, posting_id: int) -> Optional[Dict]:
         'berufenet_name': row['berufenet_name'] or '',
         'summary': row['extracted_summary'] or '',
         'description': row['job_description'] or '',
+        'source_language': row['source_language'] or 'de',  # default to DE for undetected
     }
 
     # Build match_text — same format as embeddings pipeline uses
@@ -248,6 +252,57 @@ def build_profile_text(profile: Dict) -> str:
         parts.append(f"current role: {profile['title']}")
     if profile['skills']:
         parts.append(f"skills: {', '.join(profile['skills'][:20])}")
+    for wh in profile['work_history'][:5]:
+        parts.append(f"worked as {wh['title']} at {wh['company']}")
+        if wh.get('technologies'):
+            parts.append(f"using {', '.join(wh['technologies'][:5])}")
+    return ' '.join(parts)
+
+
+def build_profile_text_for_language(conn, profile: Dict, language: str) -> str:
+    """
+    Build profile text for embedding in the requested language.
+
+    - language matches profile['language']  → use canonical text (no DB lookup)
+    - language does not match              → substitute translated summary from
+      profile_translations cache (falls back to canonical if not yet translated)
+
+    This is what powers language-routed matching:
+      DE profile + EN posting → use EN translation for profile embedding
+      DE profile + DE posting → use canonical DE text for profile embedding
+    """
+    canonical_lang = profile.get('language', 'de')
+
+    if language == canonical_lang:
+        return build_profile_text(profile)
+
+    # Try to load the translated summary
+    profile_id = profile.get('profile_id')
+    translated_summary = None
+    if profile_id:
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT profile_summary FROM profile_translations "
+                "WHERE profile_id = %s AND language = %s",
+                (profile_id, language)
+            )
+            row = cur.fetchone()
+            if row:
+                translated_summary = row['profile_summary']
+        except Exception as e:
+            logger.warning('Failed to load translation cache for profile %s lang %s: %s',
+                           profile_id, language, e)
+
+    # Build the same structure but swap in the translated summary
+    parts = []
+    if profile['title']:
+        parts.append(f"current role: {profile['title']}")
+    if profile['skills']:
+        parts.append(f"skills: {', '.join(profile['skills'][:20])}")
+    summary = translated_summary or profile.get('profile_summary', '')
+    if summary:
+        parts.append(summary[:400])
     for wh in profile['work_history'][:5]:
         parts.append(f"worked as {wh['title']} at {wh['company']}")
         if wh.get('technologies'):
@@ -319,26 +374,40 @@ def check_qualification_gate(profile: Dict, posting: Dict) -> Tuple[bool, str]:
 def compute_similarity(conn, profile: Dict, posting: Dict) -> Dict:
     """Compute embedding similarity between profile text and posting text.
 
-    Uses whole-document comparison: profile skills+history vs posting summary.
+    Language routing: if the posting is in English and the profile has an
+    English translation, the EN translation is used for embedding comparison.
+    This eliminates the cross-lingual distance penalty between DE profiles
+    and EN job postings.
+
     Returns a similarity score and skill overlap analysis.
     """
-    # Build profile text for embedding
-    profile_text = build_profile_text(profile)
+    posting_lang = posting.get('source_language') or 'de'
+    profile_lang = profile.get('language', 'de')
+
+    # Choose the profile text that matches the posting's language
+    if posting_lang != profile_lang:
+        profile_text = build_profile_text_for_language(conn, profile, posting_lang)
+        used_translation = (posting_lang != profile_lang)
+    else:
+        profile_text = build_profile_text(profile)
+        used_translation = False
+
     posting_text = posting.get('match_text', posting.get('title', ''))
 
     if not profile_text or not posting_text:
-        return {'score': 0.0, 'method': 'none', 'skill_overlap': []}
+        return {'score': 0.0, 'method': 'none', 'skill_overlap': [], 'used_translation': False}
 
     # Get embeddings (cached)
     profile_emb = get_cached_embedding(conn, profile_text)
     posting_emb = get_cached_embedding(conn, posting_text)
 
     if profile_emb is None or posting_emb is None:
-        return {'score': 0.0, 'method': 'embedding_failed', 'skill_overlap': []}
+        return {'score': 0.0, 'method': 'embedding_failed', 'skill_overlap': [],
+                'used_translation': used_translation}
 
     score = cosine_similarity(profile_emb, posting_emb)
 
-    # Also compute simple keyword overlap for the LLM context
+    # Simple keyword overlap for LLM context
     posting_lower = posting_text.lower()
     skill_overlap = []
     for skill in profile.get('skills', []):
@@ -349,6 +418,9 @@ def compute_similarity(conn, profile: Dict, posting: Dict) -> Dict:
         'score': round(score, 3),
         'method': 'bge-m3',
         'skill_overlap': skill_overlap,
+        'used_translation': used_translation,
+        'posting_lang': posting_lang,
+        'profile_lang': profile_lang,
     }
 
 
@@ -597,9 +669,12 @@ def process_match(conn, profile_id: int, posting_id: int) -> Dict:
         llm_result.get('nogo_narrative'),
         llm_result.get('_model_used', MODEL),
         json.dumps({
-            'embedding_score': match_data['score'],
-            'method': match_data['method'],
-            'skill_overlap': match_data['skill_overlap'],
+            'embedding_score':   match_data['score'],
+            'method':            match_data['method'],
+            'skill_overlap':     match_data['skill_overlap'],
+            'posting_lang':      match_data.get('posting_lang', 'de'),
+            'profile_lang':      match_data.get('profile_lang', 'de'),
+            'used_translation':  match_data.get('used_translation', False),
         }),
     ))
     match_id = cur.fetchone()['match_id']

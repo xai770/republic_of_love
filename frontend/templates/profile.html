@@ -1020,6 +1020,74 @@
 [data-theme="dark"] .pb-preview-content blockquote { background: rgba(37, 99, 235, 0.08); }
 [data-theme="dark"] .pb-dropzone:hover,
 [data-theme="dark"] .pb-dropzone.drag-over { background: rgba(37, 99, 235, 0.08); }
+
+/* ── Form modal inner tabs (Experience / Skills) ─────── */
+.pb-form-inner-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--card-bg);
+    margin: -0.75rem -1rem 0.75rem;  /* bleed to modal edges */
+    padding: 0;
+    flex-shrink: 0;
+}
+.pb-form-inner-tab {
+    flex: 1;
+    padding: 0.6rem 0.5rem;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+.pb-form-inner-tab:hover { color: var(--text); }
+.pb-form-inner-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+.pb-form-tab-panel { display: none; }
+.pb-form-tab-panel.active { display: block; }
+
+/* Translation status banner inside Skills tab */
+.pb-translation-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.83rem;
+    margin-bottom: 1rem;
+    background: rgba(37, 99, 235, 0.07);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    color: var(--text);
+}
+.pb-translation-banner .pb-trans-badge {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.pb-translation-banner .pb-trans-info { flex: 1; line-height: 1.35; }
+.pb-translation-banner .pb-trans-btn {
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--primary);
+    background: none;
+    color: var(--primary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.15s;
+}
+.pb-translation-banner .pb-trans-btn:hover {
+    background: var(--primary);
+    color: #fff;
+}
 </style>
 {% endblock %}
 
@@ -1205,6 +1273,22 @@
                         <button class="pb-form-expand-btn" id="form-expand-btn"
                                 onclick="toggleFormExpand()">&#x26F6; Expand</button>
                     </div>
+
+                    <!-- Inner tab bar: Experience | Skills -->
+                    <div class="pb-form-inner-tabs">
+                        <button class="pb-form-inner-tab active" id="ftab-experience"
+                                onclick="switchFormTab('experience')">
+                            💼 {{ t('profile.tab_experience') or 'Experience' }}
+                        </button>
+                        <button class="pb-form-inner-tab" id="ftab-skills"
+                                onclick="switchFormTab('skills')">
+                            🎯 {{ t('profile.tab_skills') or 'Skills' }}
+                        </button>
+                    </div>
+
+                    <!-- ── EXPERIENCE PANEL ─────────────────── -->
+                    <div class="pb-form-tab-panel active" id="fpanel-experience">
+
                     <div class="pb-form-section">
                         <h3>{{ t('profile.section_identity') }}</h3>
                         <div class="pb-form-row">
@@ -1253,28 +1337,6 @@
                         <button class="pb-add-btn" onclick="addEntry('project')">{{ t('profile.add_project') }}</button>
                     </div>
 
-                    <!-- Skills -->
-                    <div class="pb-form-section">
-                        <h3>{{ t('profile.section_skills') }}</h3>
-                        <div class="pb-form-row">
-                            <label>{{ t('profile.skills_extracted_label') }}</label>
-                            <div id="pf-extracted-skills" class="pb-skill-chips"></div>
-                        </div>
-                        <div class="pb-form-row">
-                            <label>{{ t('profile.skills_implied_label') }}</label>
-                            <div id="pf-implied-skills" class="pb-skill-chips"></div>
-                        </div>
-                        <div class="pb-skill-add-row">
-                            <input type="text" id="pf-new-skill" placeholder="{{ t('profile.skills_add_placeholder') }}"
-                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addSkill();}">
-                            <select id="pf-skill-source">
-                                <option value="extracted">{{ t('profile.skills_source_extracted') }}</option>
-                                <option value="implied">{{ t('profile.skills_source_implied') }}</option>
-                            </select>
-                            <button type="button" onclick="addSkill()">{{ t('profile.skills_add_btn') }}</button>
-                        </div>
-                    </div>
-
                     <!-- Search Preferences -->
                     <div class="pb-form-section">
                         <h3>{{ t('profile.section_preferences') }}</h3>
@@ -1310,6 +1372,46 @@
                         </div>
                     </div>
                     <button class="pb-form-btn" onclick="saveFormData()">{{ t('profile.save_all') }}</button>
+
+                    </div><!-- /fpanel-experience -->
+
+                    <!-- ── SKILLS PANEL ──────────────────────── -->
+                    <div class="pb-form-tab-panel" id="fpanel-skills">
+
+                    <!-- Translation status banner (populated by JS) -->
+                    <div id="pb-translation-banner" style="display:none;" class="pb-translation-banner">
+                        <span class="pb-trans-badge">🌐</span>
+                        <span class="pb-trans-info" id="pb-trans-info"></span>
+                        <button class="pb-trans-btn" id="pb-trans-btn" onclick="startTranslate()">
+                            {{ t('profile.translate_btn') or 'Translate' }}
+                        </button>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="pb-form-section">
+                        <h3>{{ t('profile.section_skills') }}</h3>
+                        <div class="pb-form-row">
+                            <label>{{ t('profile.skills_extracted_label') }}</label>
+                            <div id="pf-extracted-skills" class="pb-skill-chips"></div>
+                        </div>
+                        <div class="pb-form-row">
+                            <label>{{ t('profile.skills_implied_label') }}</label>
+                            <div id="pf-implied-skills" class="pb-skill-chips"></div>
+                        </div>
+                        <div class="pb-skill-add-row">
+                            <input type="text" id="pf-new-skill" placeholder="{{ t('profile.skills_add_placeholder') }}"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addSkill();}">
+                            <select id="pf-skill-source">
+                                <option value="extracted">{{ t('profile.skills_source_extracted') }}</option>
+                                <option value="implied">{{ t('profile.skills_source_implied') }}</option>
+                            </select>
+                            <button type="button" onclick="addSkill()">{{ t('profile.skills_add_btn') }}</button>
+                        </div>
+                    </div>
+                    <button class="pb-form-btn" onclick="saveFormData()">{{ t('profile.save_all') }}</button>
+
+                    </div><!-- /fpanel-skills -->
+
                 </div>
             </div>
         </div>
@@ -1567,6 +1669,14 @@ function toggleFormExpand() {
     const btn = document.getElementById('form-expand-btn');
     const isExpanded = form.classList.toggle('pb-expanded');
     btn.innerHTML = isExpanded ? '&#x2715; Close' : '&#x26F6; Expand';
+}
+
+// ── FORM INNER TAB SWITCH (Experience / Skills) ────────────
+function switchFormTab(name) {
+    ['experience', 'skills'].forEach(t => {
+        document.getElementById('ftab-' + t).classList.toggle('active', t === name);
+        document.getElementById('fpanel-' + t).classList.toggle('active', t === name);
+    });
 }
 
 // ── AUTO-RESIZE TEXTAREA ───────────────────────────────────
@@ -1857,6 +1967,41 @@ async function loadFormDefaults() {
     } catch(e) {}
 }
 
+// ── TRANSLATION STATUS BANNER ──────────────────────────────
+async function loadTranslationStatus() {
+    try {
+        const res = await fetch('/api/profiles/me/translation-status');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const banner = document.getElementById('pb-translation-banner');
+        const info   = document.getElementById('pb-trans-info');
+        const btn    = document.getElementById('pb-trans-btn');
+        if (!banner || !info) return;
+
+        const canonical = data.canonical_lang || 'de';
+        const targetLang = canonical === 'de' ? 'en' : 'de';
+        const langLabels = { de: 'Deutsch', en: 'English' };
+        const existing = (data.translations || []).find(t => t.language === targetLang);
+
+        if (existing && existing.has_summary) {
+            const when = existing.translated_at
+                ? new Date(existing.translated_at).toLocaleDateString()
+                : '';
+            info.innerHTML = `<strong>✓ ${langLabels[targetLang]} version ready</strong><br>
+                <span style="color:var(--text-muted);font-size:0.78rem">Last updated ${when} · used to match ${langLabels[targetLang]} job postings</span>`;
+            btn.textContent = '↻ Refresh';
+        } else {
+            info.innerHTML = `<strong>Match ${langLabels[targetLang]} job postings better</strong><br>
+                <span style="color:var(--text-muted);font-size:0.78rem">Your ${langLabels[canonical]} profile can't fully compete with ${langLabels[targetLang]} CVs — translate once to unlock equal matching.</span>`;
+            btn.textContent = '🌐 Generate';
+        }
+        banner.style.display = 'flex';
+    } catch(e) {
+        console.warn('Could not load translation status:', e);
+    }
+}
+
 // ── ADELE CHAT ─────────────────────────────────────────────
 
 async function sendToAdele() {
@@ -1990,7 +2135,7 @@ function _startTranslatePoller(jobId, startMs) {
                 clearInterval(_translateInterval); _translateInterval = null;
                 const n = job.result?.translated ?? '?';
                 _showCVJobBar(`✅ ${n} Abschnitte übersetzt`, '', 'done');
-                setTimeout(() => { _hideCVJobBar(); loadProfile(); }, 3500);
+                setTimeout(() => { _hideCVJobBar(); loadProfile(); loadTranslationStatus(); }, 3500);
                 document.getElementById('btn-translate').disabled = false;
             } else if (job.status === 'failed') {
                 clearInterval(_translateInterval); _translateInterval = null;
@@ -2419,6 +2564,7 @@ async function _adeleAutoGreet() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
+    loadTranslationStatus();   // non-blocking
     await _adeleAutoGreet();  // greet if fresh session
     _initMira();
     runIntroAnimation();  // schedules 5 s inactivity trigger
