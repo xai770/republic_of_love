@@ -107,14 +107,41 @@ async def greet(
     current_role so the next user message is processed correctly.
     Idempotent — returns null if the session is already past intro.
     """
-    from core.adele import get_session, _update_session, _INTRO_EN, _INTRO_DE
+    from core.adele import (get_session, _update_session, _INTRO_EN, _INTRO_DE,
+                             _intro_has_profile_de, _intro_has_profile_en)
     lang = get_language_from_request(req)
 
     session = get_session(user['user_id'], conn)
     if session['phase'] != 'intro':
         return {"reply": None, "phase": session['phase']}
 
-    greeting = _INTRO_DE if lang == 'de' else _INTRO_EN
+    # Check whether the user already has a profile with work history
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT p.profile_id, p.current_title, "
+                "COUNT(wh.work_history_id) AS role_count "
+                "FROM profiles p "
+                "LEFT JOIN profile_work_history wh ON wh.profile_id = p.profile_id "
+                "WHERE p.user_id = %s "
+                "GROUP BY p.profile_id, p.current_title",
+                (user['user_id'],)
+            )
+            profile_row = cur.fetchone()
+    except Exception as e:
+        logger.warning(f"greet: profile query failed: {e}")
+        profile_row = None
+
+    if profile_row and (profile_row.get('role_count') or 0) > 0:
+        role_count = profile_row['role_count']
+        current_title = profile_row.get('current_title')
+        greeting = (
+            _intro_has_profile_de(role_count, current_title)
+            if lang == 'de'
+            else _intro_has_profile_en(role_count, current_title)
+        )
+    else:
+        greeting = _INTRO_DE if lang == 'de' else _INTRO_EN
     _update_session(conn, session['session_id'], 'current_role',
                     session['collected'], turn_count=0)
 

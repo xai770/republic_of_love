@@ -203,16 +203,20 @@ Use one emoji maximum. Do NOT use bullet points or lists.
 # LLM call
 # ─────────────────────────────────────────────────────────
 
-async def _ask_llm(prompt: str, temperature: float = 0.1, model: str = MODEL) -> Optional[str]:
+async def _ask_llm(prompt: str, temperature: float = 0.1, model: str = MODEL,
+                   system: str = "") -> Optional[str]:
     """Call Ollama for extraction or conversation."""
     try:
+        payload: dict = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": temperature}
+        }
+        if system:
+            payload["system"] = system
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            resp = await client.post(OLLAMA_URL, json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-                "options": {"temperature": temperature}
-            })
+            resp = await client.post(OLLAMA_URL, json=payload)
             resp.raise_for_status()
             return resp.json().get("response", "").strip()
     except Exception as e:
@@ -220,13 +224,14 @@ async def _ask_llm(prompt: str, temperature: float = 0.1, model: str = MODEL) ->
         return None
 
 
-async def _ask_llm_cascade(prompt: str, temperature: float = 0.1) -> Optional[str]:
+async def _ask_llm_cascade(prompt: str, temperature: float = 0.1,
+                            system: str = "") -> Optional[str]:
     """Try primary model, fall back to secondary model."""
-    result = await _ask_llm(prompt, temperature=temperature, model=MODEL)
+    result = await _ask_llm(prompt, temperature=temperature, model=MODEL, system=system)
     if result:
         return result
     logger.warning(f"Primary model {MODEL} failed, trying fallback {FALLBACK_MODEL}")
-    return await _ask_llm(prompt, temperature=temperature, model=FALLBACK_MODEL)
+    return await _ask_llm(prompt, temperature=temperature, model=FALLBACK_MODEL, system=system)
 
 
 def _parse_json(text: str) -> Optional[dict]:
@@ -643,6 +648,9 @@ async def adele_chat(message: str, user_id: int, conn,
 
     message = message.strip()
 
+    # Build profile context once — used as LLM system prompt for extractions
+    profile_ctx = build_profile_context(user_id, conn)
+
     # Check for restart intent
     if re.match(r'^(?:restart|reset|start over|von vorne|nochmal|neu starten)\s*$',
                 message, re.IGNORECASE):
@@ -675,7 +683,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
     # ── CURRENT_ROLE phase ──
     if phase == 'current_role':
-        extracted = await _extract(phase, message, collected)
+        extracted = await _extract(phase, message, collected, profile_ctx=profile_ctx)
 
         # ── Responsibilities follow-up: user is elaborating on an already-captured role
         if collected.get('current_title') and collected.get('work_history'):
@@ -824,7 +832,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
     # ── WORK_HISTORY phase (loop) ──
     if phase == 'work_history':
-        extracted = await _extract(phase, message, collected)
+        extracted = await _extract(phase, message, collected, profile_ctx=profile_ctx)
 
         # If the last entry already has responsibilities, a "fertig"/"done"/"weiter"
         # means "done describing THIS role" – not "no more previous jobs".
@@ -971,7 +979,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
     # ── SKILLS phase ──
     if phase == 'skills':
-        extracted = await _extract(phase, message, collected)
+        extracted = await _extract(phase, message, collected, profile_ctx=profile_ctx)
         if extracted:
             # Merge all skill-like keys into 'skills'
             new_skills = set()
@@ -1022,7 +1030,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
     # ── EDUCATION phase ──
     if phase == 'education':
-        extracted = await _extract(phase, message, collected)
+        extracted = await _extract(phase, message, collected, profile_ctx=profile_ctx)
         if extracted and extracted.get('education'):
             collected['education'] = extracted['education']
 
@@ -1045,7 +1053,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
     # ── PREFERENCES phase ──
     if phase == 'preferences':
-        extracted = await _extract(phase, message, collected)
+        extracted = await _extract(phase, message, collected, profile_ctx=profile_ctx)
         if extracted:
             prefs = {}
             for key in ('desired_roles', 'desired_locations', 'salary_min',
@@ -1141,12 +1149,13 @@ async def adele_chat(message: str, user_id: int, conn,
 # Helper: extract data from message via LLM
 # ─────────────────────────────────────────────────────────
 
-async def _extract(phase: str, message: str, collected: dict) -> Optional[dict]:
+async def _extract(phase: str, message: str, collected: dict,
+                   profile_ctx: str = "") -> Optional[dict]:
     """Run LLM extraction for a phase."""
     prompt = _extract_prompt(phase, message, collected)
     if not prompt or prompt == "{}":
         return None
-    raw = await _ask_llm_cascade(prompt)
+    raw = await _ask_llm_cascade(prompt, system=profile_ctx)
     return _parse_json(raw)
 
 
@@ -1261,3 +1270,73 @@ _INTRO_DE = (
     "für deinen Datenschutz.\n\n"
     "Fangen wir an: **Was ist dein aktueller (oder letzter) Jobtitel und bei welcher Firma?**"
 )
+
+
+def _intro_has_profile_en(role_count: int, current_title: Optional[str]) -> str:
+    title_clause = f" — currently **{current_title}**" if current_title else ""
+    roles_word = "role" if role_count == 1 else "roles"
+    return (
+        f"Welcome back! I can see you already have a profile with "
+        f"**{role_count} {roles_word}**{title_clause}. 👋\n\n"
+        "You can keep building on what's already there or tell me about anything "
+        "that's changed — a new job, updated responsibilities, or new skills.\n\n"
+        "**What would you like to update or add?**"
+    )
+
+
+def _intro_has_profile_de(role_count: int, current_title: Optional[str]) -> str:
+    title_clause = f" — aktuell **{current_title}**" if current_title else ""
+    roles_word = "Stelle" if role_count == 1 else "Stellen"
+    return (
+        f"Willkommen zurück! Ich sehe, du hast bereits ein Profil mit "
+        f"**{role_count} {roles_word}**{title_clause}. 👋\n\n"
+        "Du kannst gerne weitermachen oder mir von Änderungen erzählen — "
+        "ein neuer Job, aktualisierte Aufgaben oder neue Fähigkeiten.\n\n"
+        "**Was möchtest du ergänzen oder aktualisieren?**"
+    )
+
+
+def build_profile_context(user_id: int, conn) -> str:
+    """
+    Build a concise profile snapshot string to use as LLM system context.
+    Returns empty string if the user has no profile or no work history.
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT profile_id, current_title, profile_summary "
+                "FROM profiles WHERE user_id = %s",
+                (user_id,)
+            )
+            profile = cur.fetchone()
+            if not profile:
+                return ""
+
+            cur.execute(
+                "SELECT job_title, job_description, is_current "
+                "FROM profile_work_history WHERE profile_id = %s "
+                "ORDER BY is_current DESC, start_date DESC NULLS LAST LIMIT 6",
+                (profile['profile_id'],)
+            )
+            jobs = cur.fetchall()
+
+        if not jobs:
+            return ""
+
+        lines = ["[CANDIDATE PROFILE — use this as background context only]"]
+        if profile.get('current_title'):
+            lines.append(f"Current title: {profile['current_title']}")
+        if profile.get('profile_summary'):
+            summary = profile['profile_summary'][:400].replace('\n', ' ')
+            lines.append(f"Summary: {summary}")
+        lines.append(f"Work history ({len(jobs)} roles):")
+        for i, job in enumerate(jobs, 1):
+            title = job.get('job_title') or 'Unknown role'
+            desc = (job.get('job_description') or '')[:120].replace('\n', ' ')
+            current_flag = " (current)" if job.get('is_current') else ""
+            lines.append(f"  {i}. {title}{current_flag}" + (f" — {desc}" if desc else ""))
+        lines.append("")
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"build_profile_context failed for user {user_id}: {e}")
+        return ""
