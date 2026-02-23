@@ -16,6 +16,7 @@ from components.fundamentals import render_fundamentals_tab
 from components.pipeline_status import render_pipeline_status_tab  
 from components.results import render_results_tab
 from components.analyze import render_analyze_tab
+from components.users import render_users_tab
 from database.views import create_all_views
 from database.connection import test_connection
 
@@ -119,12 +120,13 @@ def main():
             st.error(f"❌ Failed to initialize database views: {e}")
             st.stop()
     
-    # Four-tab interface
-    tab1, tab2, tab3, tab4 = st.tabs([
+    # Five-tab interface
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🏗️ Fundamentals", 
         "⚙️ Pipeline Status",
         "📊 Execution History",
-        "📈 Analyze"
+        "📈 Analyze",
+        "👥 Users"
     ])
     
     with tab1:
@@ -138,6 +140,9 @@ def main():
     
     with tab4:
         render_analyze_tab()  # Bottom-up: instruction_runs → session_runs → recipe_runs for debugging
+
+    with tab5:
+        render_users_tab()  # Han Solo: freeze / unfreeze accounts + audit timeline
 
 if __name__ == "__main__":
     main()

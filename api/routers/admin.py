@@ -830,3 +830,94 @@ def owl_triage_auto(
     return RedirectResponse(
         f"/admin/owl-triage?page={page}&flash={flash}&flash_type=success",
         status_code=303)
+
+
+# ─────────────────────────────────────────────────────────
+# Han Solo freeze / unfreeze  (Track B)
+# ─────────────────────────────────────────────────────────
+
+@router.post("/users/{user_id}/freeze")
+def freeze_user(user_id: int, request: Request, conn=Depends(get_db)):
+    """
+    Freeze a user — set freeze_flag = TRUE.
+    Blocks all LLM features for that user.  Requires admin privilege.
+    Returns the updated freeze state.
+    """
+    admin, err = _require_admin(request, conn)
+    if err:
+        from fastapi import HTTPException as _HTTPException
+        raise _HTTPException(status_code=403, detail="Admin access required")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET freeze_flag = TRUE WHERE user_id = %s RETURNING user_id, freeze_flag",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            from fastapi import HTTPException as _HTTPException
+            raise _HTTPException(status_code=404, detail="User not found")
+    conn.commit()
+
+    try:
+        from lib.audit import log_audit_event
+        log_audit_event(conn, user_id, actor='admin',
+                        event_type='freeze',
+                        detail={'by_admin_id': admin['user_id']})
+    except Exception:
+        pass
+
+    return {"user_id": user_id, "freeze_flag": True, "status": "frozen"}
+
+
+@router.post("/users/{user_id}/unfreeze")
+def unfreeze_user(user_id: int, request: Request, conn=Depends(get_db)):
+    """
+    Unfreeze a user — set freeze_flag = FALSE.
+    Requires admin privilege.
+    """
+    admin, err = _require_admin(request, conn)
+    if err:
+        from fastapi import HTTPException as _HTTPException
+        raise _HTTPException(status_code=403, detail="Admin access required")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET freeze_flag = FALSE WHERE user_id = %s RETURNING user_id, freeze_flag",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            from fastapi import HTTPException as _HTTPException
+            raise _HTTPException(status_code=404, detail="User not found")
+    conn.commit()
+
+    try:
+        from lib.audit import log_audit_event
+        log_audit_event(conn, user_id, actor='admin',
+                        event_type='unfreeze',
+                        detail={'by_admin_id': admin['user_id']})
+    except Exception:
+        pass
+
+    return {"user_id": user_id, "freeze_flag": False, "status": "active"}
+
+
+@router.get("/users/frozen")
+def list_frozen_users(request: Request, conn=Depends(get_db)):
+    """
+    Return all users with freeze_flag = TRUE.
+    Admin only.
+    """
+    _, err = _require_admin(request, conn)
+    if err:
+        from fastapi import HTTPException as _HTTPException
+        raise _HTTPException(status_code=403, detail="Admin access required")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT user_id, email, display_name, freeze_flag "
+            "FROM users WHERE freeze_flag = TRUE ORDER BY user_id"
+        )
+        rows = cur.fetchall()
+    return {"frozen_users": [dict(r) for r in rows]}

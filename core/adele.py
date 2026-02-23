@@ -622,6 +622,14 @@ def _try_save(user_id: int, collected: dict, conn):
         return
     try:
         save_profile(user_id, collected, conn)
+        try:
+            from lib.audit import log_audit_event
+            log_audit_event(conn, user_id, actor='adele',
+                            event_type='adele_save',
+                            detail={'roles': len(collected.get('work_history') or []),
+                                    'has_title': bool(collected.get('current_title'))})
+        except Exception:
+            pass
     except Exception as e:
         logger.warning(f"Incremental profile save failed: {e}")
 

@@ -82,8 +82,13 @@ async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: in
         _job_progress(job_id, f'✅ Found {n_roles} roles · {n_skills} skills')
         try:
             from lib.usage_tracker import log_event
+            from lib.audit import log_audit_event
             log_event(conn, user_id, 'cv_extraction',
                       context={'filename': original_filename})
+            log_audit_event(conn, user_id, actor='yogi', event_type='cv_upload',
+                            detail={'filename': original_filename,
+                                    'roles': len(result.get('work_history', [])),
+                                    'skills': len(result.get('skills', []))})
         except Exception:
             pass
         _job_update(job_id, status='done', result=result)
@@ -206,6 +211,14 @@ async def _run_translation(job_id: str, user_id: int, target_lang: str):
             _job_progress(job_id, f'🌐 {done}/{total} Abschnitte übersetzt…')
 
         _job_progress(job_id, f'✅ Übersetzung fertig — {done} Abschnitte')
+        try:
+            from lib.audit import log_audit_event
+            import psycopg2.extras  # noqa – conn is already open
+            log_audit_event(conn, user_id, actor='yogi',
+                            event_type='profile_translate',
+                            detail={'lang': target_lang, 'translated': done})
+        except Exception:
+            pass
         _job_update(job_id, status='done', result={'translated': done, 'lang': target_lang})
 
     except _asyncio.TimeoutError:

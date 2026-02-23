@@ -152,6 +152,14 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
             conn.commit()
     except Exception:
         pass  # non-critical
+
+    # --- Audit log ---
+    try:
+        from lib.audit import log_audit_event
+        log_audit_event(conn, user_id, actor='system', event_type='login',
+                        detail={'email': email})
+    except Exception:
+        pass
     
     # Check if user has completed onboarding
     with conn.cursor() as cur:
@@ -206,6 +214,11 @@ def logout(request: Request, conn=Depends(get_db)):
                         VALUES (%s, 'system', 'event', 'logoff')
                     """, (uid,))
                     conn.commit()
+                try:
+                    from lib.audit import log_audit_event
+                    log_audit_event(conn, uid, actor='system', event_type='logout')
+                except Exception:
+                    pass
     except Exception:
         pass  # non-critical — still log out
 

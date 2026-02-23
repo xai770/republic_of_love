@@ -181,3 +181,18 @@ def get_session_status(
         "progress": progress,
         "has_data": bool(session.get('collected')),
     }
+
+
+@router.get("/audit")
+def get_audit_timeline(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Return the last 100 audit events for the current user as a prose timeline.
+    Used by the yogi to see what data Adele/the system has recorded.
+    """
+    from lib.audit import get_audit_timeline, event_to_prose
+    events = get_audit_timeline(conn, user['user_id'], limit=100)
+    timeline = [event_to_prose(e) for e in events]
+    return {"events": events, "timeline": timeline}
