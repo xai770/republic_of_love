@@ -1838,6 +1838,7 @@ async function sendToAdele() {
     const text = input.value.trim();
     if (!text) return;
 
+    _cancelIntro();
     addLogEntry('yogi', text);
     input.value = '';
     autoResize(input);
@@ -2307,7 +2308,7 @@ async function addSkill() {
 
 async function _adeleAutoGreet() {
     // If the chat log is empty → session is new → trigger Adele's opening greeting
-    const log = document.getElementById('pb-chat-log');
+    const log = document.getElementById('pb-log');
     if (log && log.querySelectorAll('.pb-log-entry').length > 0) return;
     try {
         const lang = document.documentElement.lang || 'de';
