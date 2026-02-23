@@ -1161,6 +1161,12 @@
                     <input type="file" id="pb-file-input" accept=".pdf,.docx,.doc,.txt,.md"
                            onchange="handleFileSelect(event)" hidden>
 
+                    <!-- GDPR consent checkbox (required before upload) -->
+                    <label id="pb-gdpr-wrap" style="display:flex;align-items:flex-start;gap:8px;padding:10px 4px 4px;font-size:0.82rem;color:var(--text-muted);cursor:pointer;">
+                        <input type="checkbox" id="pb-gdpr-consent" style="margin-top:2px;flex-shrink:0;">
+                        <span>{{ t('profile.cv_gdpr_label') }}</span>
+                    </label>
+
                     <!-- Processing spinner + mini-log -->
                     <div class="pb-upload-status" id="pb-upload-status">
                         <div class="cv-orbit">
@@ -1364,6 +1370,8 @@ const I = {
     cv_upload_failed: {{ t('profile.cv_upload_failed') | tojson }},
     cv_positions: {{ t('profile.cv_positions') | tojson }},
     cv_skills: {{ t('profile.cv_skills') | tojson }},
+    cv_gdpr_label: {{ t('profile.cv_gdpr_label') | tojson }},
+    cv_gdpr_required: {{ t('profile.cv_gdpr_required') | tojson }},
 };
 
 // ── INTRO ANIMATION ──────────────────────────────────────
@@ -2113,6 +2121,13 @@ async function _onCVJobDone(data, filename, partial) {
 })();
 
 async function uploadCV(file) {
+    // Guard: GDPR consent required before sending to LLM
+    const gdprCb = document.getElementById('pb-gdpr-consent');
+    if (!gdprCb || !gdprCb.checked) {
+        alert(I.cv_gdpr_required || 'Please give consent before uploading.');
+        document.getElementById('pb-file-input').value = '';
+        return;
+    }
     // Show spinner briefly while the file uploads (usually < 1 s)
     document.getElementById('pb-dropzone').style.display = 'none';
     document.getElementById('pb-upload-status').style.display = 'flex';
@@ -2121,6 +2136,7 @@ async function uploadCV(file) {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('gdpr_consent', 'true');
     try {
         const res = await fetch('/api/profiles/me/parse-cv', { method: 'POST', body: formData });
         if (!res.ok) {

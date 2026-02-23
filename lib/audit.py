@@ -131,6 +131,7 @@ _EVENT_PROSE: dict[str, str] = {
     "profile_embed":      "Profile embedding refreshed",
     "freeze":             "Account frozen by admin",
     "unfreeze":           "Account unfrozen by admin",
+    "gdpr_consent":       "Gave GDPR consent for CV processing",
 }
 
 

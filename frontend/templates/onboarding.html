@@ -631,6 +631,11 @@
             <input type="file" id="ob-file-input" accept=".pdf,.docx,.doc,.txt,.md"
                    hidden onchange="_obHandleFile(this.files[0])">
             <div id="ob-upload-msg" style="display:none;margin-top:8px;text-align:center;font-size:14px;color:#4CAF50;"></div>
+            <!-- GDPR consent checkbox -->
+            <label id="ob-gdpr-wrap" style="display:flex;align-items:flex-start;gap:8px;padding:10px 4px 2px;font-size:0.82rem;color:#64748b;cursor:pointer;">
+                <input type="checkbox" id="ob-gdpr-consent" style="margin-top:2px;flex-shrink:0;">
+                <span id="ob-gdpr-label"></span>
+            </label>
         </div>
 
         <!-- Skip link only -->
@@ -716,6 +721,8 @@
             s9_cv_hint: "PDF, DOCX or TXT · Analysis runs in the background — you'll see a notification when done",
             s9_cv_uploading: "\u2713 Got it! Analyzing in the background\u2026",
             s9_skip: "Skip for now — I'll do this later →",
+            s9_gdpr_label: "I consent to my CV being processed by AI services (GDPR consent).",
+            s9_gdpr_required: "Please tick the consent box before uploading.",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -779,6 +786,8 @@
             s9_cv_hint: "PDF, DOCX oder TXT · Analyse läuft im Hintergrund — du bekommst eine Benachrichtigung",
             s9_cv_uploading: "\u2713 Erhalten! Analyse l\xe4uft im Hintergrund\u2026",
             s9_skip: "Jetzt überspringen — ich mache das später →",
+            s9_gdpr_label: "Ich stimme der Verarbeitung meines Lebenslaufs durch KI-Dienste zu (DSGVO-Einwilligung).",
+            s9_gdpr_required: "Bitte stimme zuerst der Verarbeitung zu.",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -842,6 +851,8 @@
             s9_cv_hint: "PDF, DOCX oder TXT · Analyse läuft im Hintergrund — Sie erhalten eine Benachrichtigung",
             s9_cv_uploading: "\u2713 Erhalten! Analyse l\xe4uft im Hintergrund\u2026",
             s9_skip: "Jetzt überspringen — ich mache das später →",
+            s9_gdpr_label: "Ich stimme der Verarbeitung meines Lebenslaufs durch KI-Dienste zu (DSGVO-Einwilligung).",
+            s9_gdpr_required: "Bitte stimme zuerst der Verarbeitung zu.",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -958,6 +969,7 @@
         if ($('#s9-cv-label'))   $('#s9-cv-label').textContent   = t.s9_cv_label;
         if ($('#s9-cv-hint'))    $('#s9-cv-hint').textContent    = t.s9_cv_hint || '';
         if ($('#s9-skip'))       $('#s9-skip').textContent       = t.s9_skip;
+        if ($('#ob-gdpr-label'))  $('#ob-gdpr-label').textContent  = t.s9_gdpr_label || '';
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
@@ -1308,6 +1320,14 @@
     };
     window._obHandleFile = async function(file) {
         if (!file) return;
+        // GDPR gate — user must tick consent before LLM touches their data
+        const gdprCb = document.getElementById('ob-gdpr-consent');
+        if (!gdprCb || !gdprCb.checked) {
+            const t2 = c && typeof c === 'function' ? c() : {};
+            alert(t2.s9_gdpr_required || 'Please tick the consent box before uploading.');
+            document.getElementById('ob-file-input').value = '';
+            return;
+        }
         const zone = document.getElementById('ob-upload-zone');
         const msg  = document.getElementById('ob-upload-msg');
         const t    = c();
@@ -1319,6 +1339,7 @@
         try {
             const fd = new FormData();
             fd.append('file', file);
+            fd.append('gdpr_consent', 'true');
             const res = await fetch('/api/profiles/me/parse-cv', { method: 'POST', body: fd });
             if (!res.ok) throw new Error((await res.json().catch(()=>({}))).detail || 'Upload failed');
             const { job_id } = await res.json();

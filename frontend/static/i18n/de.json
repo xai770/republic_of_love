@@ -184,6 +184,8 @@
     "cv_upload_failed": "Upload fehlgeschlagen",
     "cv_positions": "Positionen",
     "cv_skills": "Skills",
+    "cv_gdpr_label": "Ich stimme der Verarbeitung meines Lebenslaufs durch KI-Dienste zu (DSGVO-Einwilligung).",
+    "cv_gdpr_required": "Bitte stimme zuerst der KI-Verarbeitung zu.",
     "intro_tip_title": "Drei Wege zu deinem Profil",
     "intro_tip_adele_strong": "Mit Adele chatten",
     "intro_tip_adele_body": "Sprich einfach mit Adele im linken Panel — sie fragt nach deinen Rollen, Aufgaben, Skills und Ausbildung und schreibt dein Profil automatisch aus deinen Antworten.",

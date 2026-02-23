@@ -1,7 +1,7 @@
 """
 Profile endpoints — CRUD for user profiles.
 """
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
@@ -1051,6 +1051,7 @@ Extract all work experiences. Use null for missing dates. Order by most recent f
 @router.post("/me/parse-cv")
 async def parse_cv(
     file: UploadFile = File(...),
+    gdpr_consent: str = Form(default=""),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     user: dict = Depends(require_user),
     conn = Depends(get_db)
@@ -1059,7 +1060,13 @@ async def parse_cv(
     Parse uploaded CV — returns a job_id immediately.
     The LLM extraction runs as a background task (can take 1-3 minutes).
     Poll GET /me/parse-cv/status/{job_id} for progress and result.
+    Requires explicit GDPR consent: send gdpr_consent=true in the form.
     """
+    if gdpr_consent.lower() not in ("true", "1", "yes"):
+        raise HTTPException(
+            status_code=422,
+            detail="GDPR consent required before CV processing. Send gdpr_consent=true."
+        )
     import uuid
     filename = file.filename.lower()
     content = await file.read()
@@ -1097,7 +1104,20 @@ async def parse_cv(
         if not yogi_name:
             raise HTTPException(status_code=400, detail="Please set your yogi name first (chat with Mira)")
 
-        # Create job entry and kick off background extraction
+        # Record GDPR consent
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET gdpr_cv_consent_at = NOW() WHERE user_id = %s",
+                (user['user_id'],)
+            )
+        conn.commit()
+        try:
+            from lib.audit import log_audit_event
+            log_audit_event(conn, user['user_id'], actor='yogi',
+                            event_type='gdpr_consent',
+                            detail={'filename': file.filename})
+        except Exception:
+            pass
         job_id = str(uuid.uuid4())[:12]
         with _cv_jobs_lock:
             _cv_jobs[job_id] = {
