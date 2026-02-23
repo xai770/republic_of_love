@@ -145,3 +145,82 @@ Shows courage concretely. Each bar is clickable → jumps to filtered `/matches`
 ## Next Session Starting Point
 → `/profile` polish and tweak  
 → Schema design for `yogi_posting_events` (can happen in parallel)
+
+---
+
+## Afternoon Session — What We Actually Built
+
+*(Started from the roadmap above and just kept going.)*
+
+### Track A — Profile-aware Adele greeting `4265bfe`
+- `build_profile_context(user_id, conn)` in `core/adele.py` — queries `profiles` +  
+  `profile_work_history`, assembles a compact context string for the LLM
+- Two new greeting variants: `_intro_has_profile_de()` / `_intro_has_profile_en()`  
+  — Adele now opens differently if she already knows you
+- `_ask_llm` / `_ask_llm_cascade` got a `system=` kwarg passed through to Ollama
+- All 5 `_extract()` calls in `adele_chat` now receive `profile_ctx=`
+- `greet` endpoint queries the DB before choosing which greeting to use
+
+### Track B — Audit log, freeze flag, Han Solo button `51e7694`
+
+**Schema** (`migrations/yogi_audit_log_20260223.sql`, applied):
+- `yogi_audit_log` table — append-only, DB-level `NO UPDATE / NO DELETE` rules
+- `users.freeze_flag BOOLEAN DEFAULT FALSE`
+- Indexes on `user_id`, `event_type`, `created_at DESC`
+
+**`lib/audit.py`** (new):
+- `log_audit_event()` — never raises, returns -1 on failure
+- `get_audit_timeline()` — newest-first, limit param
+- `event_to_prose()` — human-readable sentences from raw events
+- Event types: `login`, `logout`, `cv_upload`, `adele_save`, `profile_translate`,  
+  `profile_embed`, `freeze`, `unfreeze`, `gdpr_consent`
+
+**Wired into:**
+- `auth.py` — login + logout
+- `profiles.py` — CV upload + translation
+- `adele.py` — `_try_save()`
+
+**New API endpoints:**
+- `GET /api/adele/audit` — prose timeline + raw events for the logged-in user
+- `POST /admin/users/{id}/freeze` — sets freeze_flag, logs audit event
+- `POST /admin/users/{id}/unfreeze`
+- `GET /admin/users/frozen` — list all frozen accounts
+
+**Han Solo button** (`by_admin/components/users.py` + `by_admin/app.py`):
+- New **👥 Users** tab in Streamlit admin (5th tab)
+- Summary metrics: total / frozen / disabled
+- Per-user expandable rows: 🧊 Freeze / 🔓 Unfreeze buttons, last 10 audit events inline
+- Email / name filter + "show frozen only" checkbox
+
+### GDPR consent checkbox `71ee189` + `a1c3672`
+
+**Schema** (`migrations/gdpr_cv_consent_20260223.sql`, applied):
+- `users.gdpr_cv_consent_at TIMESTAMPTZ`
+
+**Backend gate** (`parse_cv` endpoint):
+- New `gdpr_consent: str = Form(default="")` parameter
+- Returns **422** if not `"true"` — LLM never touches the CV without explicit consent
+- On consent: stamps `gdpr_cv_consent_at`, writes `gdpr_consent` audit event
+
+**Frontend** (both `profile.html` and onboarding step 9):
+- Checkbox rendered above the dropzone; file input blocked + alert shown if unticked
+- `gdpr_consent=true` appended to `FormData` on submit
+- Plain-language label (not legalese): explains what AI reads, what gets anonymised,  
+  that the CV is never shown to employers
+- All three language variants: English, de-Du, de-Sie (formal)
+
+---
+
+## Final Commit List for the Day
+
+| Hash | Description |
+|------|-------------|
+| `5ad8ba6` | Tour UX + pipeline_health fixes |
+| `4265bfe` | Track A — profile-aware Adele greeting |
+| `51e7694` | Track B — audit log, freeze flag, Han Solo button |
+| `71ee189` | GDPR consent checkbox for CV upload |
+| `a1c3672` | Plain-language GDPR consent copy |
+
+Five meaningful commits. Infrastructure that was deferred for months — immutable audit  
+trail, freeze controls, explicit consent before LLM sees user data — all landed in one  
+afternoon session. Not bad.
