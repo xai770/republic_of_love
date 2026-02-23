@@ -192,7 +192,9 @@
     "intro_tip_form_strong": "Formular ausfüllen",
     "intro_tip_form_body": "Lieber selbst tippen? Öffne das Formular und trage Namen, Jobtitel, Skills, frühere Stellen und andere Details in deinem eigenen Tempo ein.",
     "intro_tip_footer": "Alle drei Wege ergänzen sich — nimm einfach den, der dir am leichtesten fällt. Wenn dein Profil fertig ist, kannst du es herunterladen oder mit Arbeitgebern teilen.",
-    "intro_tip_dismiss": "Klick irgendwo · Esc · oder hier tippen zum Schließen"
+    "intro_tip_dismiss": "Klick irgendwo · Esc · oder hier tippen zum Schließen",
+    "translate_btn": "Übersetzen",
+    "translate_tooltip": "Profiltexte mit KI ins Deutsche übersetzen (Zusammenfassung & Berufserfahrung)"
   },
   "matches": {
     "page_title": "Meine Pipeline",

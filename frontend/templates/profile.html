@@ -1085,6 +1085,16 @@
                         </svg>
                         <span class="pb-tool-label">{{ t('profile.tab_form') or 'Edit' }}</span>
                     </button>
+                    <button class="pb-tool-btn" id="btn-translate" onclick="startTranslate()"
+                        title="{{ t('profile.translate_tooltip') }}">
+                        <!-- Globe icon -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <span class="pb-tool-label">{{ t('profile.translate_btn') }}</span>
+                    </button>
                     <span class="pb-completeness" id="pb-completeness">0%</span>
                     <button class="pb-download-btn" onclick="downloadProfile()" title="{{ t('profile.download') }}">
                         {{ t('profile.download') }}
@@ -1927,6 +1937,63 @@ function resetUploadArea() {
     const fi = document.getElementById('pb-file-input');
     if (fi) fi.value = '';
     document.getElementById('pb-dropzone').style.display = '';
+}
+
+// ── Profile translation ──────────────────────────────────────────────────────
+let _translateInterval = null;
+
+async function startTranslate() {
+    const btn = document.getElementById('btn-translate');
+    if (btn) btn.disabled = true;
+    const startMs = Date.now();
+    try {
+        const res = await fetch('/api/profiles/me/translate', { method: 'POST' });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            _showCVJobBar('❌ ' + (err.detail || 'Übersetzung fehlgeschlagen'), '', 'failed');
+            setTimeout(_hideCVJobBar, 5000);
+            if (btn) btn.disabled = false;
+            return;
+        }
+        const { job_id } = await res.json();
+        _startTranslatePoller(job_id, startMs);
+    } catch (e) {
+        _showCVJobBar('❌ Netzwerkfehler', '', 'failed');
+        setTimeout(_hideCVJobBar, 5000);
+        if (btn) btn.disabled = false;
+    }
+}
+
+function _startTranslatePoller(jobId, startMs) {
+    if (_translateInterval) clearInterval(_translateInterval);
+    let seenProgress = 0;
+    _showCVJobBar('🌐 Übersetze Profil…', '');
+    _translateInterval = setInterval(async () => {
+        try {
+            const res = await fetch('/api/profiles/me/parse-cv/status/' + jobId);
+            if (!res.ok) return;
+            const job = await res.json();
+            const msgs = job.progress || [];
+            const msg = msgs.length > seenProgress
+                ? msgs[msgs.length - 1]
+                : document.getElementById('cv-job-bar-msg').textContent;
+            seenProgress = msgs.length;
+            if (job.status === 'done') {
+                clearInterval(_translateInterval); _translateInterval = null;
+                const n = job.result?.translated ?? '?';
+                _showCVJobBar(`✅ ${n} Abschnitte übersetzt`, '', 'done');
+                setTimeout(() => { _hideCVJobBar(); loadProfile(); }, 3500);
+                document.getElementById('btn-translate').disabled = false;
+            } else if (job.status === 'failed') {
+                clearInterval(_translateInterval); _translateInterval = null;
+                _showCVJobBar('❌ ' + (job.error || 'Übersetzung fehlgeschlagen'), '', 'failed');
+                setTimeout(_hideCVJobBar, 6000);
+                document.getElementById('btn-translate').disabled = false;
+            } else {
+                _showCVJobBar(msg, '');
+            }
+        } catch (_) { /* network blip */ }
+    }, 3000);
 }
 
 // ── Background CV job helpers ──────────────────────────────────────────────

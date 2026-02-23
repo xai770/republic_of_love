@@ -115,6 +115,117 @@ async def _run_cv_extraction(job_id: str, text: str, yogi_name: str, user_id: in
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Background task: translate free-text profile fields via local LLM
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def _run_translation(job_id: str, user_id: int, target_lang: str):
+    """
+    Translate profile_summary and each work-history job_description in-place.
+    Skips: job titles, company names, skill keywords — those stay as-is.
+    """
+    import asyncio as _asyncio
+    from core.mira_llm import ask_llm
+
+    pool = _get_pool()
+    conn = None
+    try:
+        conn = pool.getconn()
+        lang_name = {'de': 'German (Deutsch)', 'en': 'English'}.get(target_lang, target_lang)
+        system_prompt = (
+            f"You are a professional translator. Translate the following text to {lang_name}. "
+            f"Rules: "
+            f"Do NOT translate company names, job titles, technology names, programming languages or framework names. "
+            f"Preserve all bullet points, semicolons, line breaks and paragraph structure exactly. "
+            f"Use professional business language. "
+            f"Reply with ONLY the translated text — no introduction, no explanation."
+        )
+
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT profile_id, profile_summary FROM profiles WHERE user_id = %s",
+                (user_id,)
+            )
+            row = cur.fetchone()
+        if not row:
+            _job_update(job_id, status='failed', error='Profile not found')
+            return
+
+        profile_id = row['profile_id']
+
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT work_history_id, job_title, job_description
+                FROM profile_work_history
+                WHERE profile_id = %s
+                  AND job_description IS NOT NULL AND TRIM(job_description) != ''
+                ORDER BY COALESCE(end_date, CURRENT_DATE) DESC
+            """, (profile_id,))
+            entries = cur.fetchall()
+
+        summary = row['profile_summary']
+        total = len(entries) + (1 if summary else 0)
+        if total == 0:
+            _job_update(job_id, status='done',
+                        result={'translated': 0, 'lang': target_lang})
+            return
+
+        done = 0
+
+        # 1. Summary
+        if summary and summary.strip():
+            _job_progress(job_id, f'🌐 Übersetze Zusammenfassung…')
+            translated = await _asyncio.wait_for(
+                ask_llm(summary, system_prompt), timeout=120
+            )
+            if translated and translated.strip():
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE profiles SET profile_summary = %s WHERE profile_id = %s",
+                        (translated.strip(), profile_id)
+                    )
+                    conn.commit()
+            done += 1
+            _job_progress(job_id, f'🌐 Zusammenfassung fertig ({done}/{total})')
+
+        # 2. Work-history descriptions
+        for entry in entries:
+            title = entry['job_title'] or '…'
+            _job_progress(job_id, f'🌐 Übersetze „{title}"… ({done + 1}/{total})')
+            translated = await _asyncio.wait_for(
+                ask_llm(entry['job_description'], system_prompt), timeout=120
+            )
+            if translated and translated.strip():
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE profile_work_history SET job_description = %s "
+                        "WHERE work_history_id = %s",
+                        (translated.strip(), entry['work_history_id'])
+                    )
+                    conn.commit()
+            done += 1
+            _job_progress(job_id, f'🌐 {done}/{total} Abschnitte übersetzt…')
+
+        _job_progress(job_id, f'✅ Übersetzung fertig — {done} Abschnitte')
+        _job_update(job_id, status='done', result={'translated': done, 'lang': target_lang})
+
+    except _asyncio.TimeoutError:
+        logger.error(f'Translation job {job_id} timed out')
+        _job_update(job_id, status='failed', error='Übersetzung hat zu lange gedauert — bitte erneut versuchen')
+    except Exception as e:
+        logger.error(f'Translation job {job_id} failed: {e}')
+        _job_update(job_id, status='failed', error=str(e))
+    finally:
+        if conn:
+            try:
+                pool.putconn(conn)
+            except Exception:
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Background helper: compute & cache profile embedding after CV import
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1004,6 +1115,44 @@ async def parse_cv_status(job_id: str, user: dict = Depends(require_user)):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.post("/me/translate")
+async def translate_profile(
+    request: Request,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Translate free-text profile fields (summary + work descriptions) to the
+    user's chosen language (read from the 'lang' cookie).
+    Returns a job_id — poll /me/parse-cv/status/{job_id} for progress.
+    """
+    import uuid
+    from api.i18n import get_language_from_request
+
+    target_lang = get_language_from_request(request) or 'de'
+
+    # Ensure profile exists
+    with conn.cursor() as cur:
+        cur.execute("SELECT profile_id FROM profiles WHERE user_id = %s", (user['user_id'],))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="No profile found — build one first")
+
+    job_id = str(uuid.uuid4())[:12]
+    target_label = 'Deutsch' if target_lang == 'de' else target_lang.upper()
+    with _cv_jobs_lock:
+        _cv_jobs[job_id] = {
+            'status': 'running',
+            'progress': [f'🌐 Starte Übersetzung nach {target_label}…'],
+            'result': None,
+            'partial_result': None,
+            'error': None,
+        }
+
+    background_tasks.add_task(_run_translation, job_id, user['user_id'], target_lang)
+    return {'job_id': job_id, 'status': 'running'}
 
 
 # --- CV Import (save anonymized data to profile) ---

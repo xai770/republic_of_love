@@ -187,7 +187,9 @@
     "intro_tip_form_strong": "Edit Form",
     "intro_tip_form_body": "Prefer to type it yourself? Open the form to add or refine your name, job title, skills, past roles and any other details at your own pace.",
     "intro_tip_footer": "All three tools work together — use whichever feels easiest. Once your profile looks good, you can download it or share it with employers.",
-    "intro_tip_dismiss": "Click anywhere · Press Esc · or tap here to close"
+    "intro_tip_dismiss": "Click anywhere · Press Esc · or tap here to close",
+    "translate_btn": "Translate",
+    "translate_tooltip": "AI-translate your profile texts to your chosen language (summary & work history)"
   },
   "matches": {
     "page_title": "My Pipeline",
