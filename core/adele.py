@@ -20,6 +20,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 import httpx
+from psycopg2.extras import Json
 
 from core.logging_config import get_logger
 from core.company_anonymizer import lookup_or_queue
@@ -461,6 +462,10 @@ def save_profile(user_id: int, collected: dict, conn):
         # Preferences
         prefs = collected.get('preferences', {})
 
+        # implied_skills: only write if Pass 3 produced results and column is empty
+        implied = collected.get('implied_skills') or []
+        implied_json = Json(implied) if implied else None
+
         # Update profile
         cur.execute("""
             UPDATE profiles SET
@@ -468,6 +473,10 @@ def save_profile(user_id: int, collected: dict, conn):
                 experience_level = COALESCE(%s, experience_level),
                 years_of_experience = COALESCE(%s, years_of_experience),
                 skill_keywords = %s,
+                implied_skills = CASE
+                    WHEN %s IS NOT NULL THEN %s
+                    ELSE implied_skills
+                END,
                 profile_summary = COALESCE(%s, profile_summary),
                 desired_roles = COALESCE(%s, desired_roles),
                 desired_locations = COALESCE(%s, desired_locations),
@@ -482,6 +491,7 @@ def save_profile(user_id: int, collected: dict, conn):
             collected.get('career_level'),
             years_exp,
             Json(all_keywords),
+            implied_json, implied_json,  # CASE condition + value
             collected.get('profile_summary'),
             prefs.get('desired_roles') if prefs else None,
             prefs.get('desired_locations') if prefs else None,

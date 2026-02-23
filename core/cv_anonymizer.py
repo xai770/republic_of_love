@@ -1,13 +1,17 @@
 """
-CV Anonymizer — Two-pass extraction and anonymization of career data.
+CV Anonymizer — Three-pass extraction and anonymization of career data.
 
 Core principle: "What we don't have, we can't leak."
 
-Architecture (two-pass):
+Architecture (three-pass):
     Pass 1 — STRUCTURE: LLM splits CV into role blocks with dates, company,
              title, responsibilities. Small focused prompt, no anonymization.
     Pass 2 — ANONYMIZE + SKILLS: For each role, LLM generalizes company name
              and extracts skills/technologies from responsibilities.
+    Pass 3 — IMPLIED SKILLS: One LLM call over the full work history to infer
+             skills that are demonstrated by achievements but never stated
+             explicitly. E.g. "designed backend/frontend" → Python, SQL,
+             System Architecture. Stored separately as implied_skills.
     Final  — PII safety check validates the output.
 
 The LLM runs locally (Ollama). Data never leaves our infrastructure.
@@ -37,6 +41,7 @@ TIMEOUT = 120.0        # per-call timeout — chunks are small so 120 s is gener
 CALL_HARD_TIMEOUT = 240.0  # asyncio.wait_for wall-clock limit per LLM call
 CHUNK_SIZE = 3500     # chars per CV chunk for Pass 1
 PASS2_CONCURRENCY = 5 # max simultaneous Pass-2 LLM calls
+IMPLIED_DEDUP_THRESHOLD = 0.85  # how similar a candidate must be to an existing skill to be suppressed
 
 # ─────────────────────────────────────────────────────────
 # Company generalization templates
@@ -146,11 +151,49 @@ JSON:"""
 
 
 # ─────────────────────────────────────────────────────────
+# Pass 3 — Whole-profile implied skill inference prompt
+# ─────────────────────────────────────────────────────────
+
+IMPLIED_SKILLS_PROMPT = """You are an expert career analyst. Your job: identify skills that are DEMONSTRATED
+by this career history but NEVER EXPLICITLY STATED.
+
+RULES:
+- Only infer skills with clear evidence in the achievements.
+- Do NOT repeat skills the person already listed (provided below).
+- Focus on: technical tools/languages, methodologies, domain knowledge.
+- Each skill must have a concrete evidence quote from the text.
+- Categories: TECHNICAL | BUSINESS | MANAGEMENT | DOMAIN | SOFT
+- Confidence: high | medium | low
+
+EXAMPLES of good implied skills:
+- "Designed frontend and backend systems" → SQL, Python/programming, system architecture
+- "Integrating feeds from various data sources" → ETL, data pipeline design, API integration  
+- "Automated KPI reporting" → scripting, data visualization, dashboard tools
+- "Led global team of 200+ license managers" → org design, training & development, documentation
+- "Prepared monthly updates for Board of Director" → executive communication, data storytelling
+
+ALREADY KNOWN SKILLS (do not repeat these):
+{known_skills}
+
+CAREER ACHIEVEMENTS TO ANALYZE:
+{achievements_text}
+
+Return ONLY a JSON array (no explanation):
+[
+  {{"name": "SQL", "category": "TECHNICAL", "confidence": "high",
+    "evidence": "Designed systems to collect, maintain, analyze and report license data for 80k+ users"}},
+  ...
+]
+
+JSON:"""
+
+
+# ─────────────────────────────────────────────────────────
 # LLM call helpers
 # ─────────────────────────────────────────────────────────
 
 async def _call_llm(prompt: str, temperature: float = 0.1,
-                    num_ctx: int = 16384) -> Optional[str]:
+                    num_ctx: int = 16384, num_predict: int = -1) -> Optional[str]:
     """Try primary model, fall back to secondary.
 
     Uses asyncio.wait_for as a hard wall-clock guard so a slow Ollama
@@ -167,7 +210,8 @@ async def _call_llm(prompt: str, temperature: float = 0.1,
                             "model": model,
                             "prompt": prompt,
                             "stream": False,
-                            "options": {"temperature": temperature, "num_ctx": num_ctx}
+                            "options": {"temperature": temperature, "num_ctx": num_ctx,
+                                        **({"num_predict": num_predict} if num_predict != -1 else {})}
                         }
                     )
                     response.raise_for_status()
@@ -187,27 +231,33 @@ async def _call_llm(prompt: str, temperature: float = 0.1,
 
 
 def _extract_json(text: str) -> Optional[dict]:
-    """Extract JSON object from LLM response text."""
+    """Extract JSON object or array from LLM response text."""
     text = text.strip()
-    if text.startswith('{'):
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            pass
-    match = re.search(r'\{[\s\S]*\}', text)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
+    # Try direct parse (object or array)
+    for start, pattern in [('{', r'\{[\s\S]*\}'), ('[', r'\[[\s\S]*\]')]:
+        if text.startswith(start):
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                pass
+    # Search with regex for object or array
+    for pattern in (r'\{[\s\S]*\}', r'\[[\s\S]*\]'):
+        match = re.search(pattern, text)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+    # Strip code fences and retry
     cleaned = re.sub(r'```(?:json)?\s*', '', text)
-    cleaned = re.sub(r'```\s*$', '', cleaned)
-    match = re.search(r'\{[\s\S]*\}', cleaned)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
+    cleaned = re.sub(r'```\s*$', '', cleaned).strip()
+    for pattern in (r'\{[\s\S]*\}', r'\[[\s\S]*\]'):
+        match = re.search(pattern, cleaned)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
     return None
 
 
@@ -556,6 +606,14 @@ async def extract_and_anonymize(
                 'duration_years': None,
             })
 
+    # ── Pass 3: Implied skill inference ───────────────────
+    # One LLM call over all responsibilities — infers skills
+    # demonstrated by achievements but never explicitly stated.
+    implied_skills = await _infer_implied_skills(anonymized_roles, all_skills)
+    logger.info(f"Pass 3: {len(implied_skills)} implied skills inferred")
+    if on_partial and implied_skills:
+        on_partial({'type': 'pass3_implied', 'count': len(implied_skills)})
+
     # Assemble result
     result = {
         'yogi_name': yogi_name,
@@ -563,6 +621,7 @@ async def extract_and_anonymize(
         'career_level': career_level,
         'current_title': current_title,
         'skills': all_skills[:50],
+        'implied_skills': implied_skills,
         'languages': languages,
         'certifications': certifications,
         'work_history': anonymized_roles,
@@ -578,6 +637,90 @@ async def extract_and_anonymize(
                 f"dates={'yes' if any(r.get('start_year') for r in result['work_history']) else 'no'}")
 
     return result
+
+
+# ─────────────────────────────────────────────────────────
+# Pass 3 — Implied skill inference
+# ─────────────────────────────────────────────────────────
+
+async def _infer_implied_skills(
+    anonymized_roles: List[dict],
+    known_skills: List[str],
+) -> List[dict]:
+    """
+    Pass 3: infer skills demonstrated by achievements but never stated.
+
+    Takes the full work history (already anonymized), concatenates all
+    key_responsibilities, and asks the LLM what skills must have been
+    required to produce those outcomes.
+
+    Returns list of {name, category, confidence, evidence} dicts, with
+    any near-duplicate of known_skills already removed.
+    """
+    if not anonymized_roles:
+        return []
+
+    # Build achievements text: role title + responsibilities for all roles
+    lines = []
+    for role in anonymized_roles:
+        title = role.get('job_title') or role.get('role', '')
+        employer = role.get('employer_description', '')
+        resps = role.get('key_responsibilities') or []
+        if title or resps:
+            lines.append(f"Role: {title} at {employer}")
+            for r in resps:
+                lines.append(f"  - {r}")
+    achievements_text = '\n'.join(lines)[:6000]  # cap to ~6k chars
+
+    if not achievements_text.strip():
+        return []
+
+    known_lower = {s.lower() for s in known_skills}
+
+    prompt = IMPLIED_SKILLS_PROMPT.format(
+        known_skills=', '.join(sorted(known_skills)[:60]),
+        achievements_text=achievements_text,
+    )
+
+    raw = await _call_llm(prompt, temperature=0.15, num_ctx=8192, num_predict=2048)
+    if not raw:
+        logger.warning("Pass 3 (implied skills): LLM returned nothing")
+        return []
+
+    parsed = _extract_json(raw)
+    if not parsed or not isinstance(parsed, list):
+        logger.warning(f"Pass 3: JSON parse failed — raw: {raw[:200]}")
+        return []
+
+    results: List[dict] = []
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get('name', '') or item.get('skill', '')).strip()
+        if not name or len(name) < 2:
+            continue
+
+        # Deduplicate against known skills (case-insensitive + substring)
+        name_lower = name.lower()
+        if name_lower in known_lower:
+            continue
+        if any(name_lower in kl or kl in name_lower for kl in known_lower):
+            continue
+
+        results.append({
+            'name':       name,
+            'category':   str(item.get('category', 'GENERAL')).upper(),
+            'confidence': str(item.get('confidence', 'medium')).lower(),
+            'evidence':   str(item.get('evidence', ''))[:200],
+        })
+
+    # Keep high/medium only, cap at 30
+    priority = {'high': 0, 'medium': 1, 'low': 2}
+    results.sort(key=lambda x: priority.get(x['confidence'], 3))
+    results = [r for r in results if r['confidence'] in ('high', 'medium')][:30]
+
+    logger.info(f"Pass 3: {len(results)} implied skills (from {len(parsed)} candidates)")
+    return results
 
 
 # ─────────────────────────────────────────────────────────
