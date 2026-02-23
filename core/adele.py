@@ -605,6 +605,20 @@ def _format_summary(collected: dict, lang: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────
+# Incremental save helper
+# ─────────────────────────────────────────────────────────
+
+def _try_save(user_id: int, collected: dict, conn):
+    """Save profile to DB so the right-pane preview stays current after each turn."""
+    if not collected.get('current_title') and not collected.get('work_history'):
+        return
+    try:
+        save_profile(user_id, collected, conn)
+    except Exception as e:
+        logger.warning(f"Incremental profile save failed: {e}")
+
+
+# ─────────────────────────────────────────────────────────
 # Main chat function
 # ─────────────────────────────────────────────────────────
 
@@ -666,11 +680,33 @@ async def adele_chat(message: str, user_id: int, conn,
     # ── CURRENT_ROLE phase ──
     if phase == 'current_role':
         extracted = await _extract(phase, message, collected)
-        if extracted:
+
+        # ── Responsibilities follow-up: user is elaborating on an already-captured role
+        if collected.get('current_title') and collected.get('work_history') and extracted:
+            resps = extracted.get('responsibilities', [])
+            if resps:
+                collected['work_history'][0].setdefault('key_responsibilities', []).extend(resps)
+                _update_session(conn, session['session_id'], 'work_history', collected,
+                                work_history_count=1, turn_count=turn)
+                _try_save(user_id, collected, conn)
+                return AdeleResponse(
+                    reply=_reply(language,
+                        "Got it — responsibilities noted.\n\n"
+                        "What was your previous role before that? "
+                        "If this was your first job, just say so.",
+                        "Verstanden — Aufgaben notiert.\n\n"
+                        "Was war deine vorherige Position davor? "
+                        "Wenn das dein erster Job war, sag einfach Bescheid."),
+                    language=language,
+                    phase='work_history',
+                    collected=collected,
+                )
+
+        if extracted and (extracted.get('current_title') or extracted.get('company_name')):
             # Store current title
             if extracted.get('current_title'):
                 collected['current_title'] = extracted['current_title']
-            # Start work_history with first entry
+            # Build work entry (replace first entry to avoid duplicates on re-entry)
             company = extracted.get('company_name')
             entry = _build_work_entry(
                 role=extracted.get('current_title'),
@@ -681,11 +717,11 @@ async def adele_chat(message: str, user_id: int, conn,
                 conn=conn,
                 lang=language,
             )
-            collected.setdefault('work_history', []).append(entry)
+            if collected.get('work_history'):
+                collected['work_history'][0] = entry
+            else:
+                collected['work_history'] = [entry]
             wh_count = 1
-
-            _update_session(conn, session['session_id'], 'work_history', collected,
-                            work_history_count=wh_count, turn_count=turn)
 
             # Say what we got + ask about responsibilities if thin
             emp_raw = entry.get('employer_description')
@@ -698,6 +734,9 @@ async def adele_chat(message: str, user_id: int, conn,
 
             if role_label and entry.get('key_responsibilities'):
                 # Good enough — move to previous jobs
+                _update_session(conn, session['session_id'], 'work_history', collected,
+                                work_history_count=wh_count, turn_count=turn)
+                _try_save(user_id, collected, conn)
                 return AdeleResponse(
                     reply=_reply(language,
                         f"Got it — **{role_label}** at {emp_en}{dur_str}.\n\n"
@@ -711,6 +750,10 @@ async def adele_chat(message: str, user_id: int, conn,
                     collected=collected,
                 )
             elif role_label:
+                # Stay in current_role to collect responsibilities
+                _update_session(conn, session['session_id'], 'current_role', collected,
+                                work_history_count=wh_count, turn_count=turn)
+                _try_save(user_id, collected, conn)
                 return AdeleResponse(
                     reply=_reply(language,
                         f"Got it — **{role_label}** at {emp_en}{dur_str}.\n\n"
@@ -723,6 +766,8 @@ async def adele_chat(message: str, user_id: int, conn,
                 )
             else:
                 # Got a company but no title — ask for the title specifically
+                _update_session(conn, session['session_id'], 'current_role', collected,
+                                turn_count=turn)
                 return AdeleResponse(
                     reply=_reply(language,
                         f"I see you're at {emp_en} — what's your job title there?",
@@ -789,6 +834,7 @@ async def adele_chat(message: str, user_id: int, conn,
             wh_count = len(collected['work_history'])
             _update_session(conn, session['session_id'], 'work_history', collected,
                             work_history_count=wh_count, turn_count=turn)
+            _try_save(user_id, collected, conn)
 
             emp_raw = entry.get('employer_description')
             emp_de = _nominative_to_dative_de(emp_raw) if emp_raw else None
@@ -840,6 +886,19 @@ async def adele_chat(message: str, user_id: int, conn,
                 )
                 _update_session(conn, session['session_id'], 'work_history', collected,
                                 turn_count=turn)
+                _try_save(user_id, collected, conn)
+                return AdeleResponse(
+                    reply=_reply(language,
+                        "Got it — noted those details.\n\n"
+                        "What was your previous role before that? "
+                        "If this was your first job, just say so.",
+                        "Gut, notiert!\n\n"
+                        "Was war deine vorherige Position davor? "
+                        "Wenn das dein erster Job war, sag einfach Bescheid."),
+                    language=language,
+                    phase='work_history',
+                    collected=collected,
+                )
 
         # If user is asking a question or offering to elaborate, respond conversationally
         if _detect_redirect(message):
@@ -895,6 +954,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
         _update_session(conn, session['session_id'], 'education', collected,
                         turn_count=turn)
+        _try_save(user_id, collected, conn)
 
         skills_str = ', '.join(collected.get('skills', [])) or 'none yet'
         return AdeleResponse(
@@ -916,6 +976,7 @@ async def adele_chat(message: str, user_id: int, conn,
 
         _update_session(conn, session['session_id'], 'preferences', collected,
                         turn_count=turn)
+        _try_save(user_id, collected, conn)
 
         return AdeleResponse(
             reply=_reply(language,
