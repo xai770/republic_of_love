@@ -1257,11 +1257,48 @@ def update_my_skill(
 # ─────────────────────────────────────────────────────────
 
 @router.get("/me/markdown")
-def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db)):
+def get_profile_markdown(request: Request, user: dict = Depends(require_user), conn=Depends(get_db)):
     """
     Render the current user's profile as a Markdown document.
     Used by the split-pane profile builder's right-side preview.
     """
+    from api.i18n import get_language_from_request
+    lang = get_language_from_request(request)
+
+    _T = {
+        'de': {
+            'work':             'Berufserfahrung',
+            'education':        'Ausbildung',
+            'projects':         'Projekte',
+            'skills':           'Fähigkeiten',
+            'prefs':            'Suchpräferenzen',
+            'desired_roles':    'Wunschrollen',
+            'desired_locs':     'Wunschorte',
+            'salary':           'Gehaltsvorstellung',
+            'min_seniority':    'Mindestlevel',
+            'present':          'heute',
+            'years':            'Jahre',
+            'months':           'Monate',
+            'no_profile':       '_Noch kein Profil vorhanden. Sprich mit Adele, lade deinen Lebenslauf hoch, oder füll das Formular aus._',
+        },
+        'en': {
+            'work':             'Work Experience',
+            'education':        'Education',
+            'projects':         'Projects',
+            'skills':           'Skills',
+            'prefs':            'Search Preferences',
+            'desired_roles':    'Target Roles',
+            'desired_locs':     'Preferred Locations',
+            'salary':           'Salary Expectation',
+            'min_seniority':    'Minimum Level',
+            'present':          'present',
+            'years':            'years',
+            'months':           'months',
+            'no_profile':       '_No profile yet. Chat with Adele, upload your CV, or fill in the form._',
+        },
+    }
+    T = _T.get(lang, _T['en'])
+
     with conn.cursor() as cur:
         # Profile basics
         cur.execute("""
@@ -1276,7 +1313,7 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
         profile = cur.fetchone()
 
         if not profile:
-            return {"markdown": "_Noch kein Profil vorhanden. Sprich mit Adele, lade deinen Lebenslauf hoch, oder fülle das Formular aus._", "completeness": 0}
+            return {"markdown": T['no_profile'], "completeness": 0}
 
         # Work history (includes education and projects via entry_type)
         cur.execute("""
@@ -1325,7 +1362,7 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
             if job.get('start_date'):
                 start = job['start_date'].strftime('%m/%Y')
                 if job.get('is_current'):
-                    end = 'heute'
+                    end = T['present']
                 elif job.get('end_date'):
                     end = job['end_date'].strftime('%m/%Y')
                 else:
@@ -1333,7 +1370,7 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
                 date_range = f"{start} – {end}"
             elif job.get('duration_months'):
                 years = job['duration_months'] / 12
-                date_range = f"~{years:.0f} Jahre" if years >= 1 else f"~{job['duration_months']} Monate"
+                date_range = f"~{years:.0f} {T['years']}" if years >= 1 else f"~{job['duration_months']} {T['months']}"
             else:
                 date_range = ''
 
@@ -1353,19 +1390,19 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
 
     # Work History
     if work_history:
-        lines.append('## Berufserfahrung')
+        lines.append(f"## {T['work']}")
         lines.append('')
         _render_entries(work_history, lines)
 
     # Education
     if education:
-        lines.append('## Ausbildung')
+        lines.append(f"## {T['education']}")
         lines.append('')
         _render_entries(education, lines)
 
     # Projects
     if projects:
-        lines.append('## Projekte')
+        lines.append(f"## {T['projects']}")
         lines.append('')
         _render_entries(projects, lines)
 
@@ -1379,7 +1416,7 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
         skills = sorted(set(kw)) if kw else []
 
     if skills:
-        lines.append('## Skills')
+        lines.append(f"## {T['skills']}")
         lines.append('')
         lines.append(', '.join(f"**{s}**" for s in skills))
         lines.append('')
@@ -1387,21 +1424,21 @@ def get_profile_markdown(user: dict = Depends(require_user), conn=Depends(get_db
     # Preferences
     prefs_parts = []
     if profile.get('desired_roles'):
-        prefs_parts.append(f"**Wunschrollen:** {', '.join(profile['desired_roles'])}")
+        prefs_parts.append(f"**{T['desired_roles']}:** {', '.join(profile['desired_roles'])}")
     if profile.get('desired_locations'):
-        prefs_parts.append(f"**Wunschorte:** {', '.join(profile['desired_locations'])}")
+        prefs_parts.append(f"**{T['desired_locs']}:** {', '.join(profile['desired_locations'])}")
     sal_parts = []
     if profile.get('expected_salary_min'):
         sal_parts.append(f"{profile['expected_salary_min']:,}€")
     if profile.get('expected_salary_max'):
         sal_parts.append(f"{profile['expected_salary_max']:,}€")
     if sal_parts:
-        prefs_parts.append(f"**Gehaltsvorstellung:** {' – '.join(sal_parts)}")
+        prefs_parts.append(f"**{T['salary']}:** {' – '.join(sal_parts)}")
     if profile.get('min_seniority'):
-        prefs_parts.append(f"**Mindestlevel:** {profile['min_seniority']}")
+        prefs_parts.append(f"**{T['min_seniority']}:** {profile['min_seniority']}")
 
     if prefs_parts:
-        lines.append('## Suchpräferenzen')
+        lines.append(f"## {T['prefs']}")
         lines.append('')
         for p in prefs_parts:
             lines.append(f"- {p}")

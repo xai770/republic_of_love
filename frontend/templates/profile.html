@@ -935,7 +935,7 @@
 /* ── Modal window ───────────────────────────────────────── */
 .pb-modal {
     width: 66.7vw;
-    height: 66.7vh;
+    height: 83vh;
     background: var(--bg);
     border-radius: 1rem;
     box-shadow: 0 30px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04);
@@ -1056,7 +1056,7 @@
         <!-- ═══ RIGHT PANE ═══ -->
         <div class="pb-right">
             <div class="pb-right-header">
-                <h2>📋 {{ t('profile.preview_title') }}</h2>
+                <h2>{{ t('profile.preview_title') }}</h2>
                 <div class="pb-right-actions">
                     <button class="pb-tool-btn" id="btn-view-upload" onclick="openModal('upload')"
                         title="Upload your CV or résumé — we'll read it and instantly fill in all your profile fields, skills, work history and education for you.">
@@ -1230,23 +1230,23 @@
 
                     <!-- Skills -->
                     <div class="pb-form-section">
-                        <h3>🎯 Skills</h3>
+                        <h3>{{ t('profile.section_skills') }}</h3>
                         <div class="pb-form-row">
-                            <label>📋 Extracted from CV</label>
+                            <label>{{ t('profile.skills_extracted_label') }}</label>
                             <div id="pf-extracted-skills" class="pb-skill-chips"></div>
                         </div>
                         <div class="pb-form-row">
-                            <label>✨ Implied by experience</label>
+                            <label>{{ t('profile.skills_implied_label') }}</label>
                             <div id="pf-implied-skills" class="pb-skill-chips"></div>
                         </div>
                         <div class="pb-skill-add-row">
-                            <input type="text" id="pf-new-skill" placeholder="Add a skill…"
+                            <input type="text" id="pf-new-skill" placeholder="{{ t('profile.skills_add_placeholder') }}"
                                    onkeydown="if(event.key==='Enter'){event.preventDefault();addSkill();}">
                             <select id="pf-skill-source">
-                                <option value="extracted">Extracted</option>
-                                <option value="implied">Implied</option>
+                                <option value="extracted">{{ t('profile.skills_source_extracted') }}</option>
+                                <option value="implied">{{ t('profile.skills_source_implied') }}</option>
                             </select>
-                            <button type="button" onclick="addSkill()">+ Add</button>
+                            <button type="button" onclick="addSkill()">{{ t('profile.skills_add_btn') }}</button>
                         </div>
                     </div>
 
