@@ -645,10 +645,13 @@ async def adele_chat(message: str, user_id: int, conn,
                 message, re.IGNORECASE):
         _reset_session(conn, user_id)
         session = get_session(user_id, conn)
+        # Advance immediately to current_role — the intro text already asks the question
+        _update_session(conn, session['session_id'], 'current_role', {},
+                        turn_count=0)
         return AdeleResponse(
             reply=_reply(language, _INTRO_EN, _INTRO_DE),
             language=language,
-            phase='intro',
+            phase='current_role',
             actions={'adele': 'restart'}
         )
 
@@ -659,23 +662,13 @@ async def adele_chat(message: str, user_id: int, conn,
     turn = session['turn_count'] + 1
 
     # ── INTRO phase ──
+    # This only runs the very first time a user reaches the page before
+    # _adeleAutoGreet has advance the phase.  Try to extract job info first;
+    # if found, process exactly like current_role so we never waste a turn.
     if phase == 'intro':
-        # Use LLM to respond naturally to the user's first message
-        conv_prompt = _conversation_prompt('intro', message, collected, language)
-        llm_reply = await _ask_llm_cascade(conv_prompt, temperature=0.7)
-
-        if not llm_reply:
-            # Last resort: canned intro (both LLMs failed)
-            llm_reply = _reply(language, _INTRO_EN, _INTRO_DE)
-
         _update_session(conn, session['session_id'], 'current_role', collected,
                         turn_count=turn)
-        return AdeleResponse(
-            reply=llm_reply,
-            language=language,
-            phase='current_role',
-            actions={'adele': 'started'}
-        )
+        phase = 'current_role'  # fall through to current_role handler below
 
     # ── CURRENT_ROLE phase ──
     if phase == 'current_role':
