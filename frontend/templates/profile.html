@@ -220,26 +220,35 @@
     padding: 1.5rem 1rem;
 }
 
-/* ── Background CV job floating chip ────────────────────────────────── */
-#cv-job-bar {
+/* ── Background CV job — footer status bar ──────────────────────────── */
+#cv-status-footer {
     position: fixed;
-    bottom: 1.5rem;
-    left: 1.5rem;
-    z-index: 9000;
+    bottom: 0; left: 0; right: 0;
+    height: 32px;
     display: none;
     align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    z-index: 9000;
+}
+#cv-status-footer.cv-running { display: flex; }
+/* shrink profile-builder while footer is visible */
+.profile-builder.cv-running { height: calc(100vh - 80px - 32px) !important; }
+
+#cv-job-bar {
+    display: flex;
+    align-items: center;
     gap: 0.65rem;
-    padding: 0.6rem 1.1rem;
-    background: var(--surface2, #1e1e2e);
+    padding: 0.25rem 1.1rem;
     border: 1px solid var(--accent, #6c6fe4);
     border-radius: 2rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.45);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text, #e0e0f0);
     min-width: 200px;
-    max-width: 320px;
+    max-width: 380px;
     pointer-events: none;
-    transition: border-color 0.4s, opacity 0.4s;
+    transition: border-color 0.4s;
 }
 #cv-job-bar.done   { border-color: #4caf50; }
 #cv-job-bar.failed { border-color: #e57373; }
@@ -1932,16 +1941,20 @@ let _cvJobInterval = null;
 
 function _showCVJobBar(msg, eta, state) {  // state: '' | 'done' | 'failed'
     const bar = document.getElementById('cv-job-bar');
+    const footer = document.getElementById('cv-status-footer');
     if (!bar) return;
     document.getElementById('cv-job-bar-msg').textContent = msg;
     document.getElementById('cv-job-bar-eta').textContent = eta || '';
     bar.className = state || '';
-    bar.style.display = 'flex';
+    footer.classList.add('cv-running');
+    document.querySelector('.profile-builder').classList.add('cv-running');
 }
 
 function _hideCVJobBar() {
-    const bar = document.getElementById('cv-job-bar');
-    if (bar) bar.style.display = 'none';
+    const footer = document.getElementById('cv-status-footer');
+    if (footer) footer.classList.remove('cv-running');
+    const pb = document.querySelector('.profile-builder');
+    if (pb) pb.classList.remove('cv-running');
 }
 
 function _cvETA(startMs) {
@@ -2427,11 +2440,13 @@ function _initDevLog() {
 }
 </style>
 
-<!-- CV background job status chip -->
-<div id="cv-job-bar">
-    <div class="cv-job-dot"></div>
-    <span id="cv-job-bar-msg">Analyzing CV…</span>
-    <span id="cv-job-bar-eta"></span>
+<!-- CV background job status footer -->
+<div id="cv-status-footer">
+    <div id="cv-job-bar">
+        <div class="cv-job-dot"></div>
+        <span id="cv-job-bar-msg">Analyzing CV…</span>
+        <span id="cv-job-bar-eta"></span>
+    </div>
 </div>
 
 <button id="dev-log-toggle" title="Dev log">🖥</button>
