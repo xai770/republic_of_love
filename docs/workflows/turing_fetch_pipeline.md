@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/generate_fetch_docs.py` — do not edit by hand.
 > Regenerated on every git commit via `.git/hooks/post-commit`.
 
-**Generated:** 2026-02-22 10:32:23
+**Generated:** 2026-02-23 22:25:11
 **Script:** `scripts/turing_fetch.sh` (608 lines)
 **Schedule:** `50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force`
 **Log:** `logs/turing_fetch.log`
@@ -13,16 +13,16 @@
 
 | Metric | Count |
 |--------|------:|
-| Total postings | 318,120 |
-| Active postings | 176,823 |
-| — Arbeitsagentur | 175,310 |
-| — Deutsche Bank | 1,513 |
-| With description (>150 chars) | 298,364 |
+| Total postings | 320,912 |
+| Active postings | 178,112 |
+| — Arbeitsagentur | 176,607 |
+| — Deutsche Bank | 1,505 |
+| With description (>150 chars) | 301,045 |
 | With extracted summary | 7,672 |
-| Embeddable (postings_for_matching) | 167,733 |
-| Total embeddings | 316,517 |
-| Berufenet classified | 171,064 |
-| OWL vocabulary (confirmed) | 108,596 |
+| Embeddable (postings_for_matching) | 168,914 |
+| Total embeddings | 318,102 |
+| Berufenet classified | 172,332 |
+| OWL vocabulary (confirmed) | 109,591 |
 | OWL pending triage | 0 |
 
 ---
@@ -1582,4 +1582,4 @@ Auto-triggered on every `git commit` via `.git/hooks/post-commit`.
 
 ---
 
-_Generated 2026-02-22 10:32:23 by generate_fetch_docs.py_
+_Generated 2026-02-23 22:25:11 by generate_fetch_docs.py_
