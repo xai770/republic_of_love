@@ -1110,29 +1110,23 @@
 
     <!-- Intro tip (shown once on first visit, click anywhere dismisses) -->
     <div class="pb-intro-tip" id="pb-intro-tip">
-        <h3>&#x1F4A1; Three ways to build your profile</h3>
+        <h3>&#x1F4A1; {{ t('profile.intro_tip_title') }}</h3>
         <ul>
             <li>
-                <strong>&#x1F916; Chat with Adele</strong> &mdash;
-                Just talk to Adele in the left panel — she'll ask about your roles, responsibilities,
-                skills and education, and write your profile from your answers automatically.
+                <strong>&#x1F916; {{ t('profile.intro_tip_adele_strong') }}</strong> &mdash;
+                {{ t('profile.intro_tip_adele_body') }}
             </li>
             <li>
-                <strong>&#x2601;&#xFE0F; Upload CV</strong> &mdash;
-                Have a résumé or CV handy? Upload it and we automatically extract your work history,
-                skills, education and languages — your profile fills itself in seconds.
+                <strong>&#x2601;&#xFE0F; {{ t('profile.intro_tip_upload_strong') }}</strong> &mdash;
+                {{ t('profile.intro_tip_upload_body') }}
             </li>
             <li>
-                <strong>&#x270F;&#xFE0F; Edit Form</strong> &mdash;
-                Prefer to type it yourself? Open the form to add or refine your name, job title,
-                skills, past roles and any other details at your own pace.
+                <strong>&#x270F;&#xFE0F; {{ t('profile.intro_tip_form_strong') }}</strong> &mdash;
+                {{ t('profile.intro_tip_form_body') }}
             </li>
         </ul>
-        <p class="pb-tip-sub">
-            All three tools work together — use whichever feels easiest.
-            Once your profile looks good, you can download it or share it with employers.
-        </p>
-        <span class="pb-intro-tip-dismiss">Click anywhere &nbsp;·&nbsp; Press Esc &nbsp;·&nbsp; or tap here to close</span>
+        <p class="pb-tip-sub">{{ t('profile.intro_tip_footer') }}</p>
+        <span class="pb-intro-tip-dismiss">{{ t('profile.intro_tip_dismiss') }}</span>
     </div>
 
     <!-- ═══ UPLOAD MODAL ═══ -->

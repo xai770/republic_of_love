@@ -183,7 +183,16 @@
     "cv_error": "CV error: {error}",
     "cv_upload_failed": "Upload fehlgeschlagen",
     "cv_positions": "Positionen",
-    "cv_skills": "Skills"
+    "cv_skills": "Skills",
+    "intro_tip_title": "Drei Wege zu deinem Profil",
+    "intro_tip_adele_strong": "Mit Adele chatten",
+    "intro_tip_adele_body": "Sprich einfach mit Adele im linken Panel — sie fragt nach deinen Rollen, Aufgaben, Skills und Ausbildung und schreibt dein Profil automatisch aus deinen Antworten.",
+    "intro_tip_upload_strong": "Lebenslauf hochladen",
+    "intro_tip_upload_body": "Hast du einen Lebenslauf zur Hand? Lade ihn hoch und wir extrahieren automatisch Berufserfahrung, Skills, Ausbildung und Sprachen — dein Profil füllt sich in Sekunden.",
+    "intro_tip_form_strong": "Formular ausfüllen",
+    "intro_tip_form_body": "Lieber selbst tippen? Öffne das Formular und trage Namen, Jobtitel, Skills, frühere Stellen und andere Details in deinem eigenen Tempo ein.",
+    "intro_tip_footer": "Alle drei Wege ergänzen sich — nimm einfach den, der dir am leichtesten fällt. Wenn dein Profil fertig ist, kannst du es herunterladen oder mit Arbeitgebern teilen.",
+    "intro_tip_dismiss": "Klick irgendwo · Esc · oder hier tippen zum Schließen"
   },
   "matches": {
     "page_title": "Meine Pipeline",

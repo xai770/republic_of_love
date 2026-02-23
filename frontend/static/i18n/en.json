@@ -178,7 +178,16 @@
     "cv_error": "CV error: {error}",
     "cv_upload_failed": "Upload failed",
     "cv_positions": "positions",
-    "cv_skills": "skills"
+    "cv_skills": "skills",
+    "intro_tip_title": "Three ways to build your profile",
+    "intro_tip_adele_strong": "Chat with Adele",
+    "intro_tip_adele_body": "Just talk to Adele in the left panel — she'll ask about your roles, responsibilities, skills and education, and write your profile from your answers automatically.",
+    "intro_tip_upload_strong": "Upload CV",
+    "intro_tip_upload_body": "Have a résumé or CV handy? Upload it and we automatically extract your work history, skills, education and languages — your profile fills itself in seconds.",
+    "intro_tip_form_strong": "Edit Form",
+    "intro_tip_form_body": "Prefer to type it yourself? Open the form to add or refine your name, job title, skills, past roles and any other details at your own pace.",
+    "intro_tip_footer": "All three tools work together — use whichever feels easiest. Once your profile looks good, you can download it or share it with employers.",
+    "intro_tip_dismiss": "Click anywhere · Press Esc · or tap here to close"
   },
   "matches": {
     "page_title": "My Pipeline",
