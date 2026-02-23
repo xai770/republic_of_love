@@ -86,6 +86,8 @@ IMPORTANT RULES:
   PM=Project Manager, BA=Business Analyst, UX=UX Designer, QA=QA Engineer
 - For self-employment, freelance, or founding a startup: set current_title to
   'Freelancer' (or the relevant role) and company_name to null
+- Fix obvious typos and spelling errors in German and English when writing responsibilities
+  (e.g. 'Strategieüpapiere' → 'Strategiepapiere', 'repprt' → 'Report')
 - If something is not mentioned, use null. Do not invent fields."""
 
     elif phase == 'work_history':
@@ -116,7 +118,8 @@ Set "wants_more" to false if the yogi says they have no more previous jobs,
 says "that's all", "no more", "nothing before that", or similar.
 Otherwise set "wants_more" to true.
 
-If something is not mentioned, use null. Extract EXACTLY what they said."""
+Fix obvious typos and spelling errors in German and English when writing responsibilities.
+If something is not mentioned, use null."""
 
     elif phase == 'skills':
         return f"""Extract ALL technical skills, tools, technologies, programming languages, frameworks, 
