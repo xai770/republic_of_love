@@ -252,6 +252,7 @@ class ProfileResponse(BaseModel):
     has_work_history: bool = False
     has_preferences: bool = False
     completeness: int = 0  # 0-100%
+    implied_skills: List[str] = []
     # Preference fields for form pre-population
     desired_roles: Optional[List[str]] = None
     desired_locations: Optional[List[str]] = None
@@ -272,6 +273,12 @@ class PreferencesUpdate(BaseModel):
     expected_salary_min: Optional[int] = None
     expected_salary_max: Optional[int] = None
     min_seniority: Optional[str] = None
+
+
+class SkillUpdate(BaseModel):
+    action: str          # "add" | "remove"
+    skill: str
+    source: str = "extracted"  # "extracted" | "implied"
 
 
 class WorkHistoryCreate(BaseModel):
@@ -313,6 +320,7 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
             SELECT p.profile_id, u.yogi_name as display_name, p.email,
                    p.current_title as title, p.desired_locations[1] as location,
                    p.desired_roles, p.desired_locations, p.skill_keywords,
+                   p.implied_skills,
                    p.expected_salary_min, p.expected_salary_max, p.min_seniority
             FROM profiles p
             JOIN users u ON p.user_id = u.user_id
@@ -327,7 +335,16 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
         if skill_keywords:
             if isinstance(skill_keywords, str):
                 skill_keywords = json.loads(skill_keywords)
-            skills = sorted(set(skill_keywords)) if skill_keywords else []
+            skills = sorted(set(str(s) for s in skill_keywords)) if skill_keywords else []
+
+        # Parse implied skills — JSONB [{name, category, confidence, evidence}]
+        raw_implied = profile.get('implied_skills') or []
+        if isinstance(raw_implied, str):
+            raw_implied = json.loads(raw_implied)
+        implied_names = sorted(set(
+            e['name'] for e in raw_implied
+            if isinstance(e, dict) and e.get('name')
+        ))
         
         # Check for work history
         cur.execute("""
@@ -368,6 +385,7 @@ def get_my_profile(user: dict = Depends(require_user), conn=Depends(get_db)):
             location=profile['location'],
             skills=skills,
             skill_count=len(skills),
+            implied_skills=implied_names,
             has_work_history=has_work_history,
             has_preferences=has_preferences,
             completeness=completeness,
@@ -1156,6 +1174,77 @@ def get_my_skills(user: dict = Depends(require_user), conn=Depends(get_db)):
             skill_keywords = json.loads(skill_keywords)
         
         return [SkillResponse(skill=s) for s in sorted(set(skill_keywords))]
+
+
+@router.patch("/me/skills")
+def update_my_skill(
+    body: SkillUpdate,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Add or remove a skill.
+    source='extracted' operates on skill_keywords (string[]).
+    source='implied'   operates on implied_skills ({name,...}[]).
+    """
+    import json as _json
+    if body.action not in ("add", "remove"):
+        raise HTTPException(status_code=400, detail="action must be 'add' or 'remove'")
+    if body.source not in ("extracted", "implied"):
+        raise HTTPException(status_code=400, detail="source must be 'extracted' or 'implied'")
+
+    skill = body.skill.strip()
+    if not skill:
+        raise HTTPException(status_code=400, detail="skill must not be empty")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT profile_id, skill_keywords, implied_skills FROM profiles WHERE user_id = %s",
+            (user['user_id'],)
+        )
+        profile = cur.fetchone()
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        profile_id = profile['profile_id']
+
+        if body.source == "extracted":
+            kws = profile['skill_keywords'] or []
+            if isinstance(kws, str):
+                kws = _json.loads(kws)
+            kw_set = set(str(s) for s in kws)
+            if body.action == "add":
+                kw_set.add(skill)
+            else:
+                kw_set.discard(skill)
+            cur.execute(
+                "UPDATE profiles SET skill_keywords = %s, updated_at = NOW() WHERE profile_id = %s",
+                (Json(sorted(kw_set)), profile_id)
+            )
+        else:
+            implied = profile['implied_skills'] or []
+            if isinstance(implied, str):
+                implied = _json.loads(implied)
+            if body.action == "add":
+                existing = {e['name'].lower() for e in implied if isinstance(e, dict) and e.get('name')}
+                if skill.lower() not in existing:
+                    implied.append({
+                        "name": skill,
+                        "category": "GENERAL",
+                        "confidence": "high",
+                        "evidence": "Added manually"
+                    })
+            else:
+                implied = [
+                    e for e in implied
+                    if not (isinstance(e, dict) and e.get('name', '').strip() == skill)
+                ]
+            cur.execute(
+                "UPDATE profiles SET implied_skills = %s, updated_at = NOW() WHERE profile_id = %s",
+                (Json(implied), profile_id)
+            )
+
+        conn.commit()
+    return {"ok": True}
 
 
 # Note: /me/reextract endpoint removed (2026-02-03)

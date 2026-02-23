@@ -578,6 +578,65 @@
     background: rgba(37, 99, 235, 0.04);
 }
 
+/* ── Skill chips ─────────────────────────────────────── */
+.pb-skill-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-height: 1.8rem;
+    margin-bottom: 0.25rem;
+}
+.pb-skill-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+.pb-skill-extracted {
+    background: rgba(37, 99, 235, 0.11);
+    color: var(--primary);
+    border: 1px solid rgba(37, 99, 235, 0.22);
+}
+.pb-skill-implied {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+    border: 1px solid rgba(124, 58, 237, 0.22);
+}
+.pb-skill-chip button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.55;
+    font-size: 0.68rem;
+    padding: 0;
+    line-height: 1;
+}
+.pb-skill-chip button:hover { opacity: 1; }
+.pb-skill-add-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+.pb-skill-add-row input { flex: 1; }
+.pb-skill-add-row select { width: auto; min-width: 6.5rem; }
+.pb-skill-add-row button {
+    white-space: nowrap;
+    padding: 0.42rem 0.7rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.pb-skill-add-row button:hover { opacity: 0.88; }
+
 .pb-entry-card .pb-form-row { margin-bottom: 0.5rem; }
 .pb-entry-card .pb-form-row:last-child { margin-bottom: 0; }
 
@@ -1169,6 +1228,28 @@
                         <button class="pb-add-btn" onclick="addEntry('project')">{{ t('profile.add_project') }}</button>
                     </div>
 
+                    <!-- Skills -->
+                    <div class="pb-form-section">
+                        <h3>🎯 Skills</h3>
+                        <div class="pb-form-row">
+                            <label>📋 Extracted from CV</label>
+                            <div id="pf-extracted-skills" class="pb-skill-chips"></div>
+                        </div>
+                        <div class="pb-form-row">
+                            <label>✨ Implied by experience</label>
+                            <div id="pf-implied-skills" class="pb-skill-chips"></div>
+                        </div>
+                        <div class="pb-skill-add-row">
+                            <input type="text" id="pf-new-skill" placeholder="Add a skill…"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addSkill();}">
+                            <select id="pf-skill-source">
+                                <option value="extracted">Extracted</option>
+                                <option value="implied">Implied</option>
+                            </select>
+                            <button type="button" onclick="addSkill()">+ Add</button>
+                        </div>
+                    </div>
+
                     <!-- Search Preferences -->
                     <div class="pb-form-section">
                         <h3>{{ t('profile.section_preferences') }}</h3>
@@ -1727,6 +1808,8 @@ async function loadFormDefaults() {
         if (p.expected_salary_min) document.getElementById('pf-salary-min').value = p.expected_salary_min;
         if (p.expected_salary_max) document.getElementById('pf-salary-max').value = p.expected_salary_max;
         if (p.min_seniority) document.getElementById('pf-seniority').value = p.min_seniority;
+        renderSkillChips('pf-extracted-skills', p.skills || [], 'extracted');
+        renderSkillChips('pf-implied-skills', p.implied_skills || [], 'implied');
     } catch(e) {}
 
     // Load existing entries (work history, education, projects)
@@ -2158,6 +2241,56 @@ function downloadProfile() {
     a.download = 'profil.md';
     a.click();
     URL.revokeObjectURL(url);
+}
+
+// ── SKILL CHIPS ────────────────────────────────────────────
+
+function _esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderSkillChips(containerId, skills, source) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = (skills || []).map(s =>
+        `<span class="pb-skill-chip pb-skill-${source}">${_esc(s)}<button onclick="removeSkill(${JSON.stringify(s)},${JSON.stringify(source)})" title="Remove">✕</button></span>`
+    ).join('');
+}
+
+async function _reloadSkillChips() {
+    try {
+        const pr = await fetch('/api/profiles/me');
+        if (!pr.ok) return;
+        const p = await pr.json();
+        renderSkillChips('pf-extracted-skills', p.skills || [], 'extracted');
+        renderSkillChips('pf-implied-skills', p.implied_skills || [], 'implied');
+    } catch(e) {}
+}
+
+async function removeSkill(skill, source) {
+    try {
+        const res = await fetch('/api/profiles/me/skills', {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'remove', skill, source})
+        });
+        if (res.ok) await _reloadSkillChips();
+    } catch(e) {}
+}
+
+async function addSkill() {
+    const input = document.getElementById('pf-new-skill');
+    const sourceEl = document.getElementById('pf-skill-source');
+    const skill = (input.value || '').trim();
+    if (!skill) return;
+    try {
+        const res = await fetch('/api/profiles/me/skills', {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'add', skill, source: sourceEl.value})
+        });
+        if (res.ok) { input.value = ''; await _reloadSkillChips(); }
+    } catch(e) {}
 }
 
 // ── INIT ───────────────────────────────────────────────────
