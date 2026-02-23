@@ -675,25 +675,73 @@ async def adele_chat(message: str, user_id: int, conn,
         extracted = await _extract(phase, message, collected)
 
         # ── Responsibilities follow-up: user is elaborating on an already-captured role
-        if collected.get('current_title') and collected.get('work_history') and extracted:
-            resps = extracted.get('responsibilities', [])
-            if resps:
-                collected['work_history'][0].setdefault('key_responsibilities', []).extend(resps)
-                _update_session(conn, session['session_id'], 'work_history', collected,
+        if collected.get('current_title') and collected.get('work_history'):
+            entry = collected['work_history'][0]
+            has_resps_already = bool(entry.get('key_responsibilities'))
+            move_on = _detect_move_on(message)
+
+            # Extract any new responsibilities from this message
+            new_resps = (extracted or {}).get('responsibilities', []) if extracted else []
+
+            if new_resps:
+                entry.setdefault('key_responsibilities', []).extend(new_resps)
+                _update_session(conn, session['session_id'], 'current_role', collected,
                                 work_history_count=1, turn_count=turn)
                 _try_save(user_id, collected, conn)
+
+            if move_on:
+                # User is done with this role — advance to previous jobs
+                _update_session(conn, session['session_id'], 'work_history', collected,
+                                work_history_count=1, turn_count=turn)
                 return AdeleResponse(
                     reply=_reply(language,
-                        "Got it — responsibilities noted.\n\n"
+                        "Got it — moving on.\n\n"
                         "What was your previous role before that? "
                         "If this was your first job, just say so.",
-                        "Verstanden — Aufgaben notiert.\n\n"
+                        "Alles klar — weiter geht's.\n\n"
                         "Was war deine vorherige Position davor? "
                         "Wenn das dein erster Job war, sag einfach Bescheid."),
                     language=language,
                     phase='work_history',
                     collected=collected,
                 )
+            elif new_resps:
+                # Captured more — ask if there's anything else
+                return AdeleResponse(
+                    reply=_reply(language,
+                        "Notiert! Was hast du noch in dieser Position gemacht? "
+                        "Wenn du fertig bist, sag einfach \"weiter\".",
+                        "Notiert! Was hast du noch in dieser Position gemacht? "
+                        "Wenn du fertig bist, sag einfach \"weiter\"."),
+                    language=language,
+                    phase='current_role',
+                    collected=collected,
+                )
+            else:
+                # Nothing extracted, nothing to move on from — gentle re-prompt
+                if entry.get('key_responsibilities'):
+                    return AdeleResponse(
+                        reply=_reply(language,
+                            "Got it. Anything else to add about that role? "
+                            "Or say \"next\" when you're ready to move on.",
+                            "Alles klar. Noch etwas hinzuzufügen? "
+                            "Oder sag \"weiter\", wenn du bereit bist."),
+                        language=language,
+                        phase='current_role',
+                        collected=collected,
+                    )
+                # else: no resps yet — ask for them (fall through to role ask below)
+            # After responsibilities block — do NOT fall to title/company extractor
+            return AdeleResponse(
+                reply=_reply(language,
+                    "What are your main responsibilities there? "
+                    "What do you actually do day-to-day?",
+                    "Was sind deine Hauptaufgaben dort? "
+                    "Was machst du so im Tagesgeschäft?"),
+                language=language,
+                phase='current_role',
+                collected=collected,
+            )
 
         if extracted and (extracted.get('current_title') or extracted.get('company_name')):
             # Store current title
@@ -774,6 +822,28 @@ async def adele_chat(message: str, user_id: int, conn,
     # ── WORK_HISTORY phase (loop) ──
     if phase == 'work_history':
         extracted = await _extract(phase, message, collected)
+
+        # If the last entry already has responsibilities, a "fertig"/"done"/"weiter"
+        # means "done describing THIS role" – not "no more previous jobs".
+        # Prioritise that before the global no_more check.
+        wh_list = collected.get('work_history', [])
+        last_has_resps = bool(wh_list and wh_list[-1].get('key_responsibilities'))
+        if _detect_move_on(message) and last_has_resps:
+            # Ask for the previous role
+            _update_session(conn, session['session_id'], 'work_history', collected,
+                            turn_count=turn)
+            return AdeleResponse(
+                reply=_reply(language,
+                    "Got it — moving on.\n\n"
+                    "What was your previous role before that? "
+                    "If this was your first job, just say so.",
+                    "Alles klar — weiter geht's.\n\n"
+                    "Was war deine vorherige Position davor? "
+                    "Wenn das dein erster Job war, sag einfach Bescheid."),
+                language=language,
+                phase='work_history',
+                collected=collected,
+            )
 
         # Check if yogi says "no more jobs"
         no_more = _detect_no_more(message) or \
@@ -857,24 +927,27 @@ async def adele_chat(message: str, user_id: int, conn,
         if extracted and extracted.get('responsibilities'):
             wh = collected.get('work_history', [])
             if wh:
-                wh[-1].setdefault('key_responsibilities', []).extend(
-                    extracted['responsibilities']
-                )
+                last = wh[-1]
+                new_resps = extracted['responsibilities']
+                last.setdefault('key_responsibilities', []).extend(new_resps)
                 _update_session(conn, session['session_id'], 'work_history', collected,
                                 turn_count=turn)
                 _try_save(user_id, collected, conn)
-                return AdeleResponse(
-                    reply=_reply(language,
-                        "Got it — noted those details.\n\n"
-                        "What was your previous role before that? "
-                        "If this was your first job, just say so.",
-                        "Gut, notiert!\n\n"
-                        "Was war deine vorherige Position davor? "
-                        "Wenn das dein erster Job war, sag einfach Bescheid."),
-                    language=language,
-                    phase='work_history',
-                    collected=collected,
-                )
+                if not _detect_move_on(message):
+                    # Stay on this role — ask if there's more
+                    role_label = last.get('role') or ''
+                    role_str = f" als **{role_label}**" if role_label else ''
+                    return AdeleResponse(
+                        reply=_reply(language,
+                            f"Noted! What else did you do in that role? "
+                            f"Say \"next\" when you're done.",
+                            f"Notiert! Was hast du noch in dieser Position gemacht? "
+                            f"Sag \"weiter\", wenn du fertig bist."),
+                        language=language,
+                        phase='work_history',
+                        collected=collected,
+                    )
+                # else: fall through to the "move on" / previous-role question below
 
         # If user is asking a question or offering to elaborate, respond conversationally
         if _detect_redirect(message):
@@ -1104,6 +1177,28 @@ def _build_work_entry(role: str, company_name: str, duration_hint: str,
         entry['industry'] = industry_hint
 
     return entry
+
+
+# ─────────────────────────────────────────────────────────
+# Helper: detect "done with this position, move on"
+# ─────────────────────────────────────────────────────────
+
+_MOVE_ON_PATTERNS = re.compile(
+    r'\b(?:'
+    r'weiter|n[äa]chste?[rs]?|next|done|fertig|'
+    r'das\s*war(?:\'?s|\s*alles)|'
+    r'reicht\s*(?:so|das)|'
+    r'kein(?:e)?\s*(?:weitere[ns]?|mehr)\s*(?:aufgaben?|t[äa]tigkeiten?|projektee?)?|'
+    r'nichts\s*(?:mehr|weiter)|'
+    r'gehen\s*wir\s*weiter|machen\s*wir\s*weiter|'
+    r'n[äa]chste\s*(?:position|stelle|job|firma)'
+    r')\b',
+    re.IGNORECASE
+)
+
+def _detect_move_on(message: str) -> bool:
+    """Detect 'I'm done with this role, let's move to the next topic'."""
+    return bool(_MOVE_ON_PATTERNS.search(message))
 
 
 # ─────────────────────────────────────────────────────────
