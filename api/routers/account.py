@@ -712,3 +712,30 @@ def _fetch_event_detail(event_type: str, ctx: dict, conn) -> dict:
         detail["error"] = "Detail unavailable"
 
     return detail
+
+
+@router.delete("/cv-consent")
+def withdraw_cv_consent(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    GDPR Article 17 — right to withdraw consent.
+    Clears gdpr_cv_consent_at so future CV uploads will require a fresh tick.
+    Logs the withdrawal to the audit trail.
+    """
+    user_id = user["user_id"]
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET gdpr_cv_consent_at = NULL WHERE user_id = %s",
+            (user_id,),
+        )
+    conn.commit()
+    try:
+        from lib.audit import log_audit_event
+        log_audit_event(conn, user_id, actor="yogi",
+                        event_type="gdpr_consent_withdrawn",
+                        detail={"via": "account_settings"})
+    except Exception:
+        pass
+    return {"ok": True, "message": "CV processing consent withdrawn. We will not use your CV data in future AI jobs until you consent again."}

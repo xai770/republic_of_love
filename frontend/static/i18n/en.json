@@ -398,6 +398,14 @@
     "gdpr_hint": "You have the right to a copy of all data we store about you.",
     "download_data": "Download my data",
     "delete_account": "Delete account",
-    "delete_warning": "This will permanently delete your account and all data within 30 days."
+    "delete_warning": "This will permanently delete your account and all data within 30 days.",
+    "ai_privacy": "AI & Privacy",
+    "cv_consent_given": "CV processing consent given on",
+    "cv_consent_none": "No CV processing consent on record.",
+    "withdraw_cv_consent": "Withdraw consent",
+    "withdraw_cv_consent_confirm": "This means your current CV data will not be used for future AI jobs until you consent again. Continue?",
+    "cv_consent_withdrawn": "Consent withdrawn. Your CV will not be processed by AI until you consent again.",
+    "activity_log": "My activity log",
+    "activity_log_empty": "No activity recorded yet."
   }
 }

@@ -94,7 +94,8 @@ def get_current_user(request: Request, conn=Depends(get_db)) -> Optional[dict]:
             cur.execute("""
                 SELECT user_id, email, display_name, avatar_url, enabled,
                        notification_email, notification_consent_at, notification_preferences,
-                       is_admin, yogi_name, onboarding_completed_at
+                       is_admin, yogi_name, onboarding_completed_at,
+                       freeze_flag, gdpr_cv_consent_at
                 FROM users
                 WHERE user_id = %s AND enabled = TRUE
             """, (user_id,))
@@ -116,6 +117,19 @@ def require_user(user: Optional[dict] = Depends(get_current_user)) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+def require_unfrozen_user(user: dict = Depends(require_user)) -> dict:
+    """
+    Dependency that blocks frozen accounts from LLM-touching routes.
+    Raises 403 with a clear message so the frontend can show a help prompt.
+    """
+    if user.get('freeze_flag'):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been suspended. Please contact support.",
         )
     return user
 

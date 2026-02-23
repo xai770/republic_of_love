@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from api.config import FRONTEND_URL, DEBUG
-from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding
+from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding, devlog
 from api.deps import get_current_user, get_db
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
@@ -74,6 +74,7 @@ app.include_router(admin.router)
 app.include_router(feedback.router, prefix="/api", tags=["feedback"])
 app.include_router(intelligence.router, prefix="/api")
 app.include_router(onboarding.router, prefix="/api")
+app.include_router(devlog.router,    prefix="/api")
 # Admin mount: same router exposed at /admin/feedback for admin dashboard & template links
 app.include_router(feedback.router, prefix="/admin", tags=["feedback-admin"], include_in_schema=False)
 
@@ -326,6 +327,7 @@ def account_page(request: Request, conn=Depends(get_db)):
     notification_email = user.get('notification_email')
     notification_consent_at = user.get('notification_consent_at')
     notification_preferences = user.get('notification_preferences') or {}
+    gdpr_cv_consent_at = user.get('gdpr_cv_consent_at')
     
     return templates.TemplateResponse("account.html", {
         "request": request,
@@ -333,6 +335,7 @@ def account_page(request: Request, conn=Depends(get_db)):
         "notification_email": notification_email,
         "notification_consent_at": notification_consent_at,
         "notification_preferences": notification_preferences,
+        "gdpr_cv_consent_at": gdpr_cv_consent_at,
         **get_i18n_context(request)
     })
 

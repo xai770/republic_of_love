@@ -107,6 +107,37 @@
                 </div>
             </section>
             
+            <!-- AI & Privacy -->
+            <section class="account-section">
+                <h2>🔐 {{ t('account.ai_privacy') if t('account.ai_privacy') else 'AI &amp; Privacy' }}</h2>
+
+                <!-- CV processing consent -->
+                <div class="account-field">
+                    <label>CV Processing Consent</label>
+                    {% if gdpr_cv_consent_at %}
+                    <p style="margin:6px 0; color: var(--text-muted); font-size:0.9rem;">
+                        ✅ {{ t('account.cv_consent_given') if t('account.cv_consent_given') else 'Consent given on' }}
+                        {{ gdpr_cv_consent_at.strftime('%d.%m.%Y') }}
+                    </p>
+                    <button class="btn-secondary" onclick="withdrawCVConsent()" style="margin-top:6px;">
+                        {{ t('account.withdraw_cv_consent') if t('account.withdraw_cv_consent') else 'Withdraw consent' }}
+                    </button>
+                    {% else %}
+                    <p style="margin:6px 0; color: var(--text-muted); font-size:0.9rem;">
+                        {{ t('account.cv_consent_none') if t('account.cv_consent_none') else 'No CV processing consent on record.' }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Audit / activity log -->
+                <div class="account-field" style="margin-top:16px;">
+                    <label>{{ t('account.activity_log') if t('account.activity_log') else 'My activity log' }}</label>
+                    <div id="audit-log" style="margin-top:8px; font-size:0.85rem; color: var(--text-muted); font-family: monospace; line-height:1.7;">
+                        Loading…
+                    </div>
+                </div>
+            </section>
+
             <!-- My Data (GDPR) -->
             <section class="account-section account-danger-zone">
                 <h2>📦 {{ t('account.my_data') if t('account.my_data') else 'My Data' }}</h2>
@@ -234,6 +265,40 @@ async function confirmDeleteAccount() {
         showToast('Network error. Please try again.');
     }
 }
+
+// Withdraw CV consent (GDPR Article 17)
+async function withdrawCVConsent() {
+    const confirmMsg = {{ t('account.withdraw_cv_consent_confirm') | tojson if t('account.withdraw_cv_consent_confirm') else '"This means your CV data will not be used for future AI jobs until you consent again. Continue?"' }};
+    if (!confirm(confirmMsg)) return;
+    try {
+        const res = await fetch('/api/account/cv-consent', { method: 'DELETE' });
+        if (res.ok) {
+            showToast({{ t('account.cv_consent_withdrawn') | tojson if t('account.cv_consent_withdrawn') else '"Consent withdrawn."' }});
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showToast('Error — please try again.');
+        }
+    } catch (e) {
+        showToast('Network error.');
+    }
+}
+
+// Load audit trail
+(async function loadAudit() {
+    const el = document.getElementById('audit-log');
+    if (!el) return;
+    try {
+        const res = await fetch('/api/adele/audit');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const lines = (data.timeline || []).slice(0, 10);
+        el.innerHTML = lines.length
+            ? lines.map(l => `<div>${l}</div>`).join('')
+            : {{ t('account.activity_log_empty') | tojson if t('account.activity_log_empty') else '"No activity recorded yet."' }};
+    } catch (_) {
+        el.textContent = '—';
+    }
+})();
 
 // Toast helper
 function showToast(message) {

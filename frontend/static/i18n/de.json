@@ -403,6 +403,14 @@
     "gdpr_hint": "Du hast das Recht auf eine Kopie aller Daten, die wir über dich speichern.",
     "download_data": "Meine Daten herunterladen",
     "delete_account": "Konto löschen",
-    "delete_warning": "Dein Konto und alle Daten werden innerhalb von 30 Tagen unwiderruflich gelöscht."
+    "delete_warning": "Dein Konto und alle Daten werden innerhalb von 30 Tagen unwiderruflich gelöscht.",
+    "ai_privacy": "KI & Datenschutz",
+    "cv_consent_given": "Einwilligung zur KI-Verarbeitung erteilt am",
+    "cv_consent_none": "Keine KI-Einwilligung hinterlegt.",
+    "withdraw_cv_consent": "Einwilligung widerrufen",
+    "withdraw_cv_consent_confirm": "Deine Lebenslauf-Daten werden künftig nicht mehr für KI-Jobs verwendet, bis du erneut einwilligst. Fortfahren?",
+    "cv_consent_withdrawn": "Einwilligung widerrufen. Dein Lebenslauf wird nicht mehr durch KI verarbeitet, bis du erneut zustimmst.",
+    "activity_log": "Mein Aktivitätsprotokoll",
+    "activity_log_empty": "Noch keine Aktivitäten aufgezeichnet."
   }
 }

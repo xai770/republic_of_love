@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List
 
-from api.deps import get_db, require_user
+from api.deps import get_db, require_user, require_unfrozen_user
 from api.i18n import get_language_from_request
 from core.logging_config import get_logger
 
@@ -39,7 +39,7 @@ class AdeleChatResponse(BaseModel):
 async def chat(
     req: Request,
     request: AdeleChatRequest,
-    user: dict = Depends(require_user),
+    user: dict = Depends(require_unfrozen_user),
     conn=Depends(get_db)
 ):
     """

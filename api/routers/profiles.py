@@ -16,7 +16,7 @@ import requests as _requests
 
 from psycopg2.extras import Json
 
-from api.deps import get_db, require_user, _get_pool
+from api.deps import get_db, require_user, require_unfrozen_user, _get_pool
 from config.settings import OLLAMA_EMBED_URL as _OLLAMA_EMBED_URL, EMBED_MODEL as _EMBED_MODEL
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -1053,7 +1053,7 @@ async def parse_cv(
     file: UploadFile = File(...),
     gdpr_consent: str = Form(default=""),
     background_tasks: BackgroundTasks = BackgroundTasks(),
-    user: dict = Depends(require_user),
+    user: dict = Depends(require_unfrozen_user),
     conn = Depends(get_db)
 ):
     """
