@@ -2311,8 +2311,7 @@ async function _adeleAutoGreet() {
     const log = document.getElementById('pb-log');
     if (log && log.querySelectorAll('.pb-log-entry').length > 0) return;
     try {
-        const lang = document.documentElement.lang || 'de';
-        const res = await fetch('/api/adele/greet?lang=' + lang);
+        const res = await fetch('/api/adele/greet'); // lang resolved server-side from cookie
         if (!res.ok) return;
         const data = await res.json();
         if (data.reply) {

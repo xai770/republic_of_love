@@ -5,11 +5,12 @@ Endpoint: POST /api/adele/chat
 Like Mira's chat but with interview-state tracking.
 Messages are persisted in yogi_messages for continuity.
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List
 
 from api.deps import get_db, require_user
+from api.i18n import get_language_from_request
 from core.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -36,6 +37,7 @@ class AdeleChatResponse(BaseModel):
 
 @router.post("/chat", response_model=AdeleChatResponse)
 async def chat(
+    req: Request,
     request: AdeleChatRequest,
     user: dict = Depends(require_user),
     conn=Depends(get_db)
@@ -58,8 +60,11 @@ async def chat(
             phase='intro'
         )
 
-    # Detect language from the message
-    language = detect_language(message)
+    # Use cookie language as primary source; fall back to message-based detection
+    # (message detection fails for short words like 'weiter', 'ja', etc.)
+    language = get_language_from_request(req)
+    if not language:
+        language = detect_language(message)
 
     # Call Adele's chat logic
     response = await adele_chat(message, user['user_id'], conn, language=language)
@@ -93,9 +98,9 @@ async def chat(
 
 @router.get("/greet")
 async def greet(
+    req: Request,
     user: dict = Depends(require_user),
-    conn=Depends(get_db),
-    lang: str = 'de'
+    conn=Depends(get_db)
 ):
     """
     Return Adele's opening greeting for a new session and advance phase to
@@ -103,6 +108,7 @@ async def greet(
     Idempotent — returns null if the session is already past intro.
     """
     from core.adele import get_session, _update_session, _INTRO_EN, _INTRO_DE
+    lang = get_language_from_request(req)
 
     session = get_session(user['user_id'], conn)
     if session['phase'] != 'intro':
