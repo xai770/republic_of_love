@@ -16,7 +16,8 @@ const MIRA_TOUR_STEPS = [
                     <p>Schön, dass du da bist! Lass uns einen kurzen Rundgang machen.</p>
                     <p>Wir zeigen dir die wichtigsten Funktionen — und am Ende lernst du <strong>Mira</strong> kennen, deine persönliche Karrierebegleiterin.</p>
                     <p class="mira-tour-action">Klick auf <strong>Weiter</strong>, um die Tour zu starten.</p>
-                    <p class="mira-tour-hint">Klick auf <strong>Abbrechen</strong> um die Tour zu überspringen — du kannst sie jederzeit über 🎓 Tour in der Seitenleiste starten.</p>
+                    <p class="mira-tour-hint">Klick auf <strong>Abbrechen</strong> um die Tour zu überspringen — du kannst sie jederzeit über Tour in der Seitenleiste starten:</p>
+                    <p class="mira-tour-sidebar-icon">🎓</p>
                 </div>
             `,
             side: 'center',
@@ -153,7 +154,7 @@ function initMiraTour() {
         prevBtnText: '← Zurück',
         doneBtnText: 'Fertig!',
         allowClose: true,
-        overlayColor: 'rgba(0, 0, 0, 0.75)',
+        overlayColor: 'rgba(0, 0, 0, 0.35)',
         stagePadding: 10,
         stageRadius: 8,
         popoverClass: 'mira-tour-popover',
@@ -177,11 +178,9 @@ function initMiraTour() {
             }, 600);
         },
         
-        onPopoverRender: (popover, options) => {
-            // Move the native close button (X) to the footer as "Abbrechen"
-            // Driver.js intercepts all mouse events on custom buttons,
-            // but its OWN close button works natively — so we reuse it.
+        onPopoverRender: (popover, { state }) => {
             setTimeout(() => {
+                // --- Move Abbrechen (close btn) into footer left ---
                 const footer = document.querySelector('.driver-popover-footer');
                 const closeBtn = document.querySelector('.driver-popover-close-btn');
                 if (footer && closeBtn && !closeBtn.dataset.moved) {
@@ -190,12 +189,31 @@ function initMiraTour() {
                     closeBtn.dataset.moved = 'true';
                     footer.insertBefore(closeBtn, footer.firstChild);
                 }
-                // On first step, hide the disabled prev button (Abbrechen replaces it)
+                // On first step, hide the disabled prev button
                 const prevBtn = document.querySelector('.driver-popover-prev-btn');
                 if (prevBtn && prevBtn.disabled) {
                     prevBtn.style.display = 'none';
                 }
+
+                // --- Inline progress into title as "Title (N von T)" ---
+                const progress = document.querySelector('.driver-popover-progress-text');
+                const titleEl = document.querySelector('.driver-popover-title');
+                if (progress && titleEl) {
+                    // Strip any previously appended progress span
+                    const old = titleEl.querySelector('.tour-progress-inline');
+                    if (old) old.remove();
+                    const span = document.createElement('span');
+                    span.className = 'tour-progress-inline';
+                    span.textContent = ` (${progress.textContent.trim()})`;
+                    titleEl.appendChild(span);
+                    progress.style.display = 'none';
+                }
             }, 50);
+
+            // Step 0 (welcome screen) — spotlight the tour button
+            if ((state?.activeIndex ?? 0) === 0) {
+                setTimeout(spotlightTourButton, 400);
+            }
         },
         
         onHighlightStarted: (element, step, options) => {
@@ -206,8 +224,18 @@ function initMiraTour() {
     return driverObj;
 }
 
-// Start tour (manual trigger or first-time)
-function startMiraTour() {
+// Track whether any user interaction has happened since page load.
+// If so, skip the spotlight — user clearly knows their way around.
+let _userInteracted = false;
+let _tourAutoStart = false;
+['click', 'keydown', 'touchstart'].forEach(evt =>
+    window.addEventListener(evt, () => { _userInteracted = true; }, { once: true, capture: true })
+);
+
+// Start tour. autoStart=true when triggered automatically on first visit;
+// false when the user clicked the tour button themselves.
+function startMiraTour(autoStart = false) {
+    _tourAutoStart = autoStart;
     window._tourActive = true;
     // Collapse Mira chat during tour (keep FAB visible for the intro step)
     const miraWidget = document.getElementById('mira-widget');
@@ -218,6 +246,17 @@ function startMiraTour() {
         driverObj.setSteps(MIRA_TOUR_STEPS);
         driverObj.drive();
     }
+}
+
+// Spotlight the tour button in the sidebar (step 0 — the welcome screen
+// that mentions "🎓 Tour in der Seitenleiste").
+// Only fires on auto-start AND only if the user hasn't already interacted.
+function spotlightTourButton() {
+    if (!_tourAutoStart || _userInteracted) return;
+    const btn = document.querySelector('a.nav-item[data-tooltip="Tour starten"]');
+    if (!btn) return;
+    btn.classList.add('tour-btn-spotlight');
+    setTimeout(() => btn.classList.remove('tour-btn-spotlight'), 3200);
 }
 
 // Check if should auto-start tour
@@ -233,10 +272,10 @@ function checkAutoStartTour() {
         return;
     }
     
-    // Check if this is first visit (give page time to load)
+    // Give the page 5 seconds to breathe before surprising the yogi
     setTimeout(() => {
-        startMiraTour();
-    }, 1000);
+        startMiraTour(true);  // autoStart=true → enables spotlight animation
+    }, 5000);
 }
 
 // Manual trigger from help menu or button

@@ -22,6 +22,9 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# Ensure project root is on sys.path when run directly
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from core.database import get_connection
 
 
@@ -280,8 +283,14 @@ def get_recent_activity() -> dict:
         }
 
 
-def get_data_anomalies() -> list:
-    """Check for data anomalies."""
+def get_data_anomalies(embed_gap: int | None = None) -> list:
+    """Check for data anomalies.
+    
+    Args:
+        embed_gap: Pre-computed count of postings missing embeddings (from
+                   get_pending_work). If provided, skips the expensive
+                   normalize_text_python subquery.
+    """
     anomalies = []
     
     with get_connection() as conn:
@@ -319,13 +328,15 @@ def get_data_anomalies() -> list:
         if stale > 1000:
             anomalies.append(f"⚠️ {stale:,} stale postings (first seen >30d, last seen >7d, not invalidated)")
         
-        # Check embedding gap (must match work_query normalization)
-        cur.execute(r"""
-            SELECT COUNT(*) as cnt
-            FROM postings_for_matching p
-            WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.text = normalize_text_python(p.match_text))
-        """)
-        embed_gap = cur.fetchone()['cnt']
+        # Check embedding gap — reuse pre-computed value if available to avoid
+        # running the expensive normalize_text_python subquery twice
+        if embed_gap is None:
+            cur.execute(r"""
+                SELECT COUNT(*) as cnt
+                FROM postings_for_matching p
+                WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.text = normalize_text_python(p.match_text))
+            """)
+            embed_gap = cur.fetchone()['cnt']
         if embed_gap > 500:
             anomalies.append(f"⚠️ {embed_gap:,} postings missing embeddings")
     
@@ -513,7 +524,7 @@ def main():
     last_run = get_last_pipeline_run()
     pending = get_pending_work()
     activity = get_recent_activity()
-    anomalies = get_data_anomalies()
+    anomalies = get_data_anomalies(embed_gap=pending.get('need_embedding'))
     totals = get_totals()
     
     if args.json:
