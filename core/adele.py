@@ -732,24 +732,7 @@ async def adele_chat(message: str, user_id: int, conn,
             dur = entry.get('duration_years')
             dur_str = f" ({dur} {'years' if language == 'en' else 'Jahre'})" if dur else ""
 
-            if role_label and entry.get('key_responsibilities'):
-                # Good enough — move to previous jobs
-                _update_session(conn, session['session_id'], 'work_history', collected,
-                                work_history_count=wh_count, turn_count=turn)
-                _try_save(user_id, collected, conn)
-                return AdeleResponse(
-                    reply=_reply(language,
-                        f"Got it — **{role_label}** at {emp_en}{dur_str}.\n\n"
-                        f"What was your previous role before that? "
-                        f"If this was your first job, just say so.",
-                        f"Verstanden — **{role_label}** bei {emp_de}{dur_str}.\n\n"
-                        f"Was war deine vorherige Position davor? "
-                        f"Wenn das dein erster Job war, sag einfach Bescheid."),
-                    language=language,
-                    phase='work_history',
-                    collected=collected,
-                )
-            elif role_label:
+            if role_label:
                 # Stay in current_role to collect responsibilities
                 _update_session(conn, session['session_id'], 'current_role', collected,
                                 work_history_count=wh_count, turn_count=turn)

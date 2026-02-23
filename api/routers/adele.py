@@ -91,6 +91,42 @@ async def chat(
     )
 
 
+@router.get("/greet")
+async def greet(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+    lang: str = 'de'
+):
+    """
+    Return Adele's opening greeting for a new session and advance phase to
+    current_role so the next user message is processed correctly.
+    Idempotent — returns null if the session is already past intro.
+    """
+    from core.adele import get_session, _update_session, _INTRO_EN, _INTRO_DE
+
+    session = get_session(user['user_id'], conn)
+    if session['phase'] != 'intro':
+        return {"reply": None, "phase": session['phase']}
+
+    greeting = _INTRO_DE if lang == 'de' else _INTRO_EN
+    _update_session(conn, session['session_id'], 'current_role',
+                    session['collected'], turn_count=0)
+
+    # Persist as Adele message so it appears on reload
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO yogi_messages
+                    (user_id, sender_type, message_type, body)
+                VALUES (%s, 'adele', 'chat', %s)
+            """, (user['user_id'], greeting))
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Failed to persist greet: {e}")
+
+    return {"reply": greeting, "phase": "current_role"}
+
+
 @router.get("/session")
 def get_session_status(
     user: dict = Depends(require_user),

@@ -1043,7 +1043,8 @@
                 <div class="pb-chat-input" id="pb-input-chat">
                     <textarea id="pb-chat-text" rows="1" placeholder="{{ t('profile.chat_placeholder') }}"
                               onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendToAdele()}"
-                              oninput="autoResize(this)"></textarea>
+                              oninput="autoResize(this)"
+                              onfocus="_cancelIntro()"></textarea>
                     <button class="pb-send-btn" onclick="sendToAdele()" id="pb-send-btn" title="Senden">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
@@ -1383,7 +1384,15 @@ function _fireIntroAnim() {
     }
 }
 
-let _introCancelled = false;  // set to true the moment any tool is opened
+let _introCancelled = false;  // set to true the moment any control is activated
+
+function _cancelIntro() {
+    if (_introCancelled) return;
+    _introCancelled = true;
+    clearTimeout(_mira.inactivityTimer);  // stop Mira auto-pop
+    const tip = document.getElementById('pb-intro-tip');
+    if (tip) tip.classList.remove('visible');
+}
 
 function runIntroAnimation() {
     // Fire 4 s after page load — but only if the user hasn't touched a tool yet.
@@ -1398,8 +1407,9 @@ const _mira = { open: false, inactivityTimer: null, inactivityDelay: 45000 };
 
 function _resetMiraInactivity() {
     clearTimeout(_mira.inactivityTimer);
+    if (_introCancelled) return;  // user already engaged — no more auto-pops
     _mira.inactivityTimer = setTimeout(() => {
-        if (!_mira.open) {
+        if (!_mira.open && !_introCancelled) {
             const fab = document.getElementById('mira-fab-btn');
             if (fab) {
                 fab.classList.add('pb-intro-anim');
@@ -1487,7 +1497,7 @@ function _initMira() {
 let _activeModal = null;
 
 function openModal(name) {
-    _introCancelled = true;  // user found the tools themselves — skip intro tip
+    _cancelIntro();  // user found the tools themselves — skip intro tip
     // Toggle: clicking the already-open modal icon closes it
     if (_activeModal === name) { closeModal(); return; }
     closeModal(); // close any currently open one first
@@ -2295,9 +2305,26 @@ async function addSkill() {
 
 // ── INIT ───────────────────────────────────────────────────
 
+async function _adeleAutoGreet() {
+    // If the chat log is empty → session is new → trigger Adele's opening greeting
+    const log = document.getElementById('pb-chat-log');
+    if (log && log.querySelectorAll('.pb-log-entry').length > 0) return;
+    try {
+        const lang = document.documentElement.lang || 'de';
+        const res = await fetch('/api/adele/greet?lang=' + lang);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.reply) {
+            // Slight delay so the page feels like Adele 'arrived' naturally
+            setTimeout(() => addLogEntry('adele', data.reply), 800);
+        }
+    } catch (e) { /* silent — non-critical */ }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
+    await _adeleAutoGreet();  // greet if fresh session
     _initMira();
     runIntroAnimation();  // schedules 5 s inactivity trigger
     _initDevLog();
