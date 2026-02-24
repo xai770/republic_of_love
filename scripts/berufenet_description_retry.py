@@ -272,16 +272,39 @@ def process(limit: int = 0, dry_run: bool = False):
 
                     primary = picked[0]
                     with conn.cursor() as cur:
-                        # Update ALL matching postings
+                        # Fetch full OWL metadata so we write name/kldb/qualification_level too
+                        cur.execute("""
+                            SELECT on2.display_name,
+                                   o.metadata->>'kldb' AS kldb,
+                                   (o.metadata->>'qualification_level')::int AS qualification_level
+                            FROM owl o
+                            JOIN owl_names on2
+                                ON on2.owl_id = o.owl_id
+                               AND on2.is_primary = true
+                               AND on2.language = 'de'
+                            WHERE o.owl_type = 'berufenet'
+                              AND (o.metadata->>'berufenet_id')::int = %s
+                            LIMIT 1
+                        """, (primary['berufenet_id'],))
+                        owl_meta = cur.fetchone()
+                        b_name  = owl_meta[0] if owl_meta else None
+                        b_kldb  = owl_meta[1] if owl_meta else None
+                        b_qlvl  = owl_meta[2] if owl_meta else None
+
+                        # Update ALL matching postings (full metadata, not just the ID)
                         cur.execute("""
                             UPDATE postings
-                            SET berufenet_id = %s,
-                                berufenet_verified = 'llm_description_retry',
-                                berufenet_score = %s
+                            SET berufenet_id         = %s,
+                                berufenet_verified   = 'llm_description_retry',
+                                berufenet_score      = %s,
+                                berufenet_name       = %s,
+                                berufenet_kldb       = %s,
+                                qualification_level  = %s
                             WHERE (berufenet_verified = 'pending_owl' OR berufenet_verified = 'no_match')
                               AND berufenet_id IS NULL
                               AND LOWER(job_title) = LOWER(%s)
-                        """, (primary['berufenet_id'], primary.get('score', 0), item['raw_value']))
+                        """, (primary['berufenet_id'], primary.get('score', 0),
+                              b_name, b_kldb, b_qlvl, item['raw_value']))
                         updated = cur.rowcount
 
                         # Add OWL synonym
