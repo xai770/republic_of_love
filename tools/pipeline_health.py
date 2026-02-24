@@ -296,18 +296,24 @@ def get_data_anomalies(embed_gap: int | None = None) -> list:
     with get_connection() as conn:
         cur = conn.cursor()
         
-        # Check for duplicate external_ids
+        # Check for duplicate external_ids among rows that the partial unique index
+        # covers: invalidated = false AND enabled = true.
+        # Invalidated/disabled rows are historical copies and are intentionally
+        # allowed to share an external_id — the DB partial index enforces the
+        # real constraint, so duplicates here would be a genuine integrity failure.
         cur.execute("""
             SELECT external_id, COUNT(*) as cnt
             FROM postings
             WHERE external_id IS NOT NULL
+              AND invalidated = false
+              AND enabled = true
             GROUP BY external_id
             HAVING COUNT(*) > 1
             LIMIT 5
         """)
         dupes = cur.fetchall()
         if dupes:
-            anomalies.append(f"⚠️ {len(dupes)} duplicate external_ids (showing first 5)")
+            anomalies.append(f"⚠️ {len(dupes)} duplicate external_ids among active postings (showing first 5)")
         
         # Check for postings with berufenet_id but no qualification_level
         cur.execute("""
