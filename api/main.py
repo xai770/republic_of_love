@@ -107,14 +107,25 @@ def get_translations(lang: str):
 
 
 @app.get("/api/i18n/set/{lang}")
-def set_language(lang: str, response: Response, request: Request):
-    """Set language preference via cookie and redirect back."""
+def set_language(lang: str, response: Response, request: Request, conn=Depends(get_db)):
+    """Set language preference via cookie and persist to DB for authenticated users."""
     if lang not in SUPPORTED_LANGUAGES:
         lang = DEFAULT_LANGUAGE
-    
+
+    # Persist to DB if user is logged in
+    user = get_current_user(request, conn)
+    if user:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE users SET language = %s WHERE user_id = %s",
+                            (lang, user['user_id']))
+            conn.commit()
+        except Exception:
+            pass  # non-critical — cookie still set
+
     # Get referer or default to home
     referer = request.headers.get("referer", "/")
-    
+
     response = RedirectResponse(url=referer, status_code=302)
     response.set_cookie(
         key="lang",
@@ -312,8 +323,14 @@ def messages_page(request: Request, conn=Depends(get_db)):
 
 
 @app.get("/account")
+def account_redirect():
+    """Backwards-compatible redirect from /account to /settings."""
+    return RedirectResponse(url="/settings", status_code=301)
+
+
+@app.get("/settings")
 def account_page(request: Request, conn=Depends(get_db)):
-    """Account settings page."""
+    """Settings page."""
     if not templates:
         return {"error": "Frontend not configured"}
     

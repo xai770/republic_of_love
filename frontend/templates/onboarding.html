@@ -640,26 +640,70 @@
 
         <!-- Skip link only -->
         <div style="text-align:center;margin-top:16px;">
-            <a href="/dashboard" id="s9-skip" style="font-size:13px;color:#64748b;text-decoration:underline;cursor:pointer;"></a>
+            <a href="#" id="s9-skip" style="font-size:13px;color:#64748b;text-decoration:underline;cursor:pointer;"
+               onclick="_obCVSkip(); return false;"></a>
         </div>
     </div>
 
-    <!-- ════════ STEP 10 — Notification opt-in ════════ -->
+    <!-- ════════ STEP 10 — Language confirmation ════════ -->
     <div class="step" data-step="10">
         <h2 id="s10-title"></h2>
         <p id="s10-subtitle" style="color:#94a3b8;font-size:0.95rem;"></p>
 
+        <div style="margin-top:24px;display:flex;flex-direction:column;gap:16px;">
+            <div>
+                <label for="s10-ui-select"
+                       style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:6px;"
+                       id="s10-ui-label"></label>
+                <select id="s10-ui-select" onchange="_obLangUIChange(this.value)"
+                        style="width:100%;padding:10px 14px;border-radius:10px;
+                               border:1px solid #334155;background:#1e293b;
+                               color:#f1f5f9;font-size:1rem;">
+                    <option value="de">Deutsch</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div>
+                <label for="s10-content-select"
+                       style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:6px;"
+                       id="s10-content-label"></label>
+                <select id="s10-content-select"
+                        style="width:100%;padding:10px 14px;border-radius:10px;
+                               border:1px solid #334155;background:#1e293b;
+                               color:#f1f5f9;font-size:1rem;">
+                    <option value="de">Deutsch</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </div>
+
+        <p style="font-size:0.78rem;color:#64748b;margin-top:14px;text-align:center;"
+           id="s10-cover-note"></p>
+
+        <div style="margin-top:20px;">
+            <button class="btn btn-primary" id="s10-confirm-btn"
+                    onclick="_obLangConfirm()"></button>
+        </div>
+        <p style="font-size:0.75rem;color:#475569;margin-top:10px;text-align:center;"
+           id="s10-settings-note"></p>
+    </div>
+
+    <!-- ════════ STEP 11 — Notification opt-in ════════ -->
+    <div class="step" data-step="11">
+        <h2 id="s11-title"></h2>
+        <p id="s11-subtitle" style="color:#94a3b8;font-size:0.95rem;"></p>
+
         <div style="margin-top:24px;">
-            <input type="email" id="s10-email-input"
+            <input type="email" id="s11-email-input"
                    style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #334155;
                           background:#1e293b;color:#f1f5f9;font-size:1rem;box-sizing:border-box;"
                    autocomplete="email"/>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
-            <button class="btn btn-primary" id="s10-enable-btn"
+            <button class="btn btn-primary" id="s11-enable-btn"
                     onclick="_obNotifSubmit()"></button>
-            <button class="btn btn-ghost" id="s10-skip-btn" style="color:#64748b;"
+            <button class="btn btn-ghost" id="s11-skip-btn" style="color:#64748b;"
                     onclick="_obNotifSkip()"></button>
         </div>
 
@@ -735,7 +779,7 @@
             s8_subtitle: "Choose a creative pseudonym. Not your real name — something unique.",
             s8_placeholder: "e.g. NorthstarCoder, CoffeeKoala",
             s8_confirm: "Confirm",
-            s9_title: "One last thing — upload your CV!",
+            s9_title: "Upload your CV",
             s9_subtitle: "We'll find jobs tailored to your career while you explore.",
             s9_why: [
                 "Tailored job matches based on your actual skills and experience — not just keywords.",
@@ -748,12 +792,19 @@
             s9_skip: "Skip for now — I'll do this later →",
             s9_gdpr_label: "I allow talent.yoga\u2019s AI to read my CV to extract skills, work history and education. My name, email and employer names are anonymised before any job matching \u2014 my CV is never shown to employers directly.",
             s9_gdpr_required: "Please tick the box to confirm you\u2019re happy for the AI to read your CV before we can process it.",
-            s10_title: "Want to know when your dream job arrives?",
-            s10_subtitle: "We\u2019ll send a short email the moment Clara finds a great match. Nothing else, ever.",
-            s10_placeholder: "your@email.com (optional)",
-            s10_enable: "Yes, notify me",
-            s10_skip: "Skip for now",
-            s10_saving: "Saving\u2026",
+            s10_title: "Your language settings",
+            s10_subtitle: "We\u2019ve pre-filled what we detected \u2014 adjust if needed.",
+            s10_ui_label: "Interface language (menus, messages, logs)",
+            s10_content_label: "Profile & skills language (CV, generated content)",
+            s10_cover_note: "Cover letters will automatically match each job posting\u2019s language.",
+            s10_confirm: "Confirm",
+            s10_settings_note: "These can be changed anytime in Settings.",
+            s11_title: "Want to know when your dream job arrives?",
+            s11_subtitle: "We\u2019ll send a short email the moment Clara finds a great match. Nothing else, ever.",
+            s11_placeholder: "your@email.com (optional)",
+            s11_enable: "Yes, notify me",
+            s11_skip: "Skip for now",
+            s11_saving: "Saving\u2026",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -806,7 +857,7 @@
             s8_subtitle: "Wähle ein kreatives Pseudonym. Nicht dein echter Name — etwas Einzigartiges.",
             s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
             s8_confirm: "Bestätigen",
-            s9_title: "Noch eine Sache — lad deinen Lebenslauf hoch!",
+            s9_title: "Lade deinen Lebenslauf hoch",
             s9_subtitle: "Wir suchen für dich passende Jobs, während du die Plattform entdeckst.",
             s9_why: [
                 "Jobvorschläge, die wirklich zu deiner Erfahrung und deinen Fähigkeiten passen — nicht nur zu Schlagwörtern.",
@@ -819,12 +870,19 @@
             s9_skip: "Jetzt überspringen — ich mache das später →",
             s9_gdpr_label: "Ich erlaube talent.yoga, meinen Lebenslauf mit KI zu analysieren, um Skills, Berufserfahrung und Ausbildung zu extrahieren. Name, E-Mail und Firmennamen werden vor dem Matching anonymisiert \u2014 mein Lebenslauf wird nie direkt an Arbeitgeber weitergegeben.",
             s9_gdpr_required: "Bitte best\u00e4tige zun\u00e4chst, dass die KI deinen Lebenslauf lesen darf.",
-            s10_title: "Soll ich dir Bescheid geben, wenn dein Traumjob auftaucht?",
-            s10_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir dir eine kurze Mail. Nichts weiter, niemals.",
-            s10_placeholder: "deine@mail.de (optional)",
-            s10_enable: "Ja, bitte benachrichtigen",
-            s10_skip: "Jetzt \u00fcberspringen",
-            s10_saving: "Speichern\u2026",
+            s10_title: "Deine Spracheinstellungen",
+            s10_subtitle: "Wir haben vorausgef\u00fcllt, was wir erkannt haben \u2014 passe es bei Bedarf an.",
+            s10_ui_label: "Sprache der Oberfl\u00e4che (Men\u00fcs, Nachrichten, Notizen)",
+            s10_content_label: "Profil- & Kompetenzsprache (Lebenslauf, generierte Inhalte)",
+            s10_cover_note: "Anschreiben werden automatisch in der Sprache der jeweiligen Stellenausschreibung erstellt.",
+            s10_confirm: "Best\u00e4tigen",
+            s10_settings_note: "Diese Einstellungen k\u00f6nnen jederzeit unter Einstellungen ge\u00e4ndert werden.",
+            s11_title: "Soll ich dir Bescheid geben, wenn dein Traumjob auftaucht?",
+            s11_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir dir eine kurze Mail. Nichts weiter, niemals.",
+            s11_placeholder: "deine@mail.de (optional)",
+            s11_enable: "Ja, bitte benachrichtigen",
+            s11_skip: "Jetzt \u00fcberspringen",
+            s11_saving: "Speichern\u2026",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -877,7 +935,7 @@
             s8_subtitle: "Wählen Sie ein kreatives Pseudonym. Nicht Ihr echter Name — etwas Einzigartiges.",
             s8_placeholder: "z.B. NordlichtCoder, KaffeeKoala",
             s8_confirm: "Bestätigen",
-            s9_title: "Noch eine Sache — laden Sie Ihren Lebenslauf hoch!",
+            s9_title: "Laden Sie Ihren Lebenslauf hoch",
             s9_subtitle: "Wir suchen für Sie passende Jobs, während Sie die Plattform erkunden.",
             s9_why: [
                 "Jobvorschläge, die wirklich zu Ihrer Erfahrung und Ihren Fähigkeiten passen — nicht nur zu Schlagwörtern.",
@@ -890,12 +948,19 @@
             s9_skip: "Jetzt überspringen — ich mache das später →",
             s9_gdpr_label: "Ich erlaube talent.yoga, meinen Lebenslauf mit KI zu analysieren, um Skills, Berufserfahrung und Ausbildung zu extrahieren. Name, E-Mail und Firmennamen werden vor dem Matching anonymisiert \u2014 mein Lebenslauf wird nie direkt an Arbeitgeber weitergegeben.",
             s9_gdpr_required: "Bitte best\u00e4tigen Sie zun\u00e4chst, dass die KI Ihren Lebenslauf lesen darf.",
-            s10_title: "Soll ich Ihnen Bescheid geben, wenn Ihr Traumjob auftaucht?",
-            s10_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir Ihnen eine kurze Mail. Nichts weiter, niemals.",
-            s10_placeholder: "Ihre@mail.de (optional)",
-            s10_enable: "Ja, bitte benachrichtigen",
-            s10_skip: "Jetzt \u00fcberspringen",
-            s10_saving: "Speichern\u2026",
+            s10_title: "Ihre Spracheinstellungen",
+            s10_subtitle: "Wir haben vorausgef\u00fcllt, was wir erkannt haben \u2014 passen Sie es bei Bedarf an.",
+            s10_ui_label: "Sprache der Oberfl\u00e4che (Men\u00fcs, Nachrichten, Notizen)",
+            s10_content_label: "Profil- & Kompetenzsprache (Lebenslauf, generierte Inhalte)",
+            s10_cover_note: "Anschreiben werden automatisch in der Sprache der jeweiligen Stellenausschreibung erstellt.",
+            s10_confirm: "Best\u00e4tigen",
+            s10_settings_note: "Diese Einstellungen k\u00f6nnen jederzeit unter Einstellungen ge\u00e4ndert werden.",
+            s11_title: "Soll ich Ihnen Bescheid geben, wenn Ihr Traumjob auftaucht?",
+            s11_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir Ihnen eine kurze Mail. Nichts weiter, niemals.",
+            s11_placeholder: "Ihre@mail.de (optional)",
+            s11_enable: "Ja, bitte benachrichtigen",
+            s11_skip: "Jetzt \u00fcberspringen",
+            s11_saving: "Speichern\u2026",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -1014,12 +1079,27 @@
         if ($('#s9-skip'))       $('#s9-skip').textContent       = t.s9_skip;
         if ($('#ob-gdpr-label'))  $('#ob-gdpr-label').textContent  = t.s9_gdpr_label || '';
 
-        // Step 10 — Notification opt-in
-        if ($('#s10-title'))       $('#s10-title').textContent       = t.s10_title || '';
-        if ($('#s10-subtitle'))    $('#s10-subtitle').textContent    = t.s10_subtitle || '';
-        if ($('#s10-email-input')) $('#s10-email-input').placeholder = t.s10_placeholder || '';
-        if ($('#s10-enable-btn'))  $('#s10-enable-btn').textContent  = t.s10_enable || '';
-        if ($('#s10-skip-btn'))    $('#s10-skip-btn').textContent    = t.s10_skip || '';
+        // Step 10 — Language settings
+        if ($('#s10-title'))        $('#s10-title').textContent        = t.s10_title || '';
+        if ($('#s10-subtitle'))     $('#s10-subtitle').textContent     = t.s10_subtitle || '';
+        if ($('#s10-ui-label'))     $('#s10-ui-label').textContent     = t.s10_ui_label || '';
+        if ($('#s10-content-label'))$('#s10-content-label').textContent= t.s10_content_label || '';
+        if ($('#s10-cover-note'))   $('#s10-cover-note').textContent   = t.s10_cover_note || '';
+        if ($('#s10-confirm-btn'))  $('#s10-confirm-btn').textContent  = t.s10_confirm || '';
+        if ($('#s10-settings-note'))$('#s10-settings-note').textContent= t.s10_settings_note || '';
+        // Pre-fill selects when entering step 10
+        if (state.currentStep === 10) {
+            const uiSel = document.getElementById('s10-ui-select');
+            if (uiSel && state.lang) uiSel.value = state.lang;
+            const cntSel = document.getElementById('s10-content-select');
+            if (cntSel && state.lang) cntSel.value = state.lang;
+        }
+        // Step 11 — Notification opt-in
+        if ($('#s11-title'))       $('#s11-title').textContent       = t.s11_title || '';
+        if ($('#s11-subtitle'))    $('#s11-subtitle').textContent    = t.s11_subtitle || '';
+        if ($('#s11-email-input')) $('#s11-email-input').placeholder = t.s11_placeholder || '';
+        if ($('#s11-enable-btn'))  $('#s11-enable-btn').textContent  = t.s11_enable || '';
+        if ($('#s11-skip-btn'))    $('#s11-skip-btn').textContent    = t.s11_skip || '';
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
@@ -1350,8 +1430,8 @@
             if (data.ok) {
                 // Set language cookie so the app remembers
                 document.cookie = `lang=${state.lang};path=/;max-age=${365*86400};samesite=lax`;
-                // Show notification opt-in before CV kickstart
-                goTo(10);
+                // Go to CV upload
+                goTo(9);
             } else {
                 alert(data.error || data.detail || 'Error');
                 if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
@@ -1364,14 +1444,14 @@
 
     // ── Notification opt-in (step 10) ───────────
     window._obNotifSkip = function() {
-        goTo(9); // proceed to CV upload without saving email
+        window.location.href = '/dashboard';
     };
 
     window._obNotifSubmit = async function() {
         const input = $('#s10-email-input');
         const email = input ? input.value.trim() : '';
         const enableBtn = $('#s10-enable-btn');
-        if (enableBtn) { enableBtn.disabled = true; enableBtn.textContent = c().s10_saving || '...'; }
+        if (enableBtn) { enableBtn.disabled = true; enableBtn.textContent = c().s11_saving || '...'; }
 
         if (email) {
             try {
@@ -1384,9 +1464,37 @@
                 // non-critical — proceed regardless
             }
         }
-        goTo(9); // proceed to CV upload
+        window.location.href = '/dashboard';
     };
 
+    // ── CV skip (step 9) ────────────────────────
+    window._obCVSkip = function() {
+        goTo(10);
+    };
+
+    // ── Language settings (step 10) ─────────────
+    window._obLangUIChange = function(val) {
+        state.lang = val;
+        document.cookie = `lang=${val};path=/;max-age=${365*86400};samesite=lax`;
+        applyText();
+    };
+
+    window._obLangConfirm = async function() {
+        const uiSel     = document.getElementById('s10-ui-select');
+        const contentSel= document.getElementById('s10-content-select');
+        const uiLang    = uiSel     ? uiSel.value     : (state.lang || 'de');
+        const contentLang = contentSel ? contentSel.value : uiLang;
+        const confirmBtn = document.getElementById('s10-confirm-btn');
+        if (confirmBtn) { confirmBtn.disabled = true; }
+        try {
+            await fetch('/api/account/language-settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ui_language: uiLang, content_language: contentLang }),
+            });
+        } catch(e) { /* non-critical */ }
+        goTo(11);
+    };
     // ── CV upload (step 9) ──────────────────────────
     window._obHandleDrop = function(e) {
         e.preventDefault();
@@ -1424,20 +1532,7 @@
             }));
             msg.className   = 'ob-upload-ok';
             msg.textContent = t.s9_cv_uploading || '✓ Analyzing in the background…';
-            // Fade to white then redirect
-            setTimeout(() => {
-                const curtain = document.createElement('div');
-                curtain.style.cssText = [
-                    'position:fixed', 'inset:0', 'background:#ffffff',
-                    'opacity:0', 'transition:opacity 0.4s ease',
-                    'z-index:9999', 'pointer-events:none'
-                ].join(';');
-                document.body.appendChild(curtain);
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    curtain.style.opacity = '1';
-                }));
-                setTimeout(() => { window.location.href = '/dashboard'; }, 420);
-            }, 900);
+            setTimeout(() => goTo(10), 1200);
         } catch(err) {
             // Restore zone so they can retry
             zone.style.display = '';

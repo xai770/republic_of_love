@@ -168,14 +168,15 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
     except Exception:
         pass
     
-    # Check if user has completed onboarding
+    # Check if user has completed onboarding and get language preference
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT onboarding_completed_at FROM users WHERE user_id = %s",
+            "SELECT onboarding_completed_at, language FROM users WHERE user_id = %s",
             (user_id,)
         )
         row = cur.fetchone()
         needs_onboarding = not row or not row.get("onboarding_completed_at")
+        user_language = (row.get("language") or "de") if row else "de"
 
     # Create session token — email is NOT included; route handlers get it
     # via require_user → deps.get_current_user which decrypts from DB.
@@ -198,6 +199,13 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
         secure=not DEBUG,  # True in production (HTTPS), False in dev
         samesite="lax",
         max_age=SESSION_EXPIRE_HOURS * 3600,
+    )
+    response.set_cookie(
+        key="lang",
+        value=user_language,
+        max_age=365 * 24 * 60 * 60,
+        httponly=False,
+        samesite="lax",
     )
     return response
 
@@ -258,7 +266,7 @@ if DEBUG:
         This allows testing without Google OAuth.
         """
         with conn.cursor() as cur:
-            cur.execute("SELECT user_id, email, onboarding_completed_at FROM users WHERE user_id = %s", (user_id,))
+            cur.execute("SELECT user_id, email, onboarding_completed_at, language FROM users WHERE user_id = %s", (user_id,))
             user = cur.fetchone()
         
         if not user:
@@ -283,5 +291,12 @@ if DEBUG:
             secure=False,
             samesite="lax",
             max_age=SESSION_EXPIRE_HOURS * 3600,
+        )
+        response.set_cookie(
+            key="lang",
+            value=user.get("language") or "de",
+            max_age=365 * 24 * 60 * 60,
+            httponly=False,
+            samesite="lax",
         )
         return response

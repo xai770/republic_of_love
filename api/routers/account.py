@@ -745,3 +745,39 @@ def withdraw_cv_consent(
     except Exception:
         pass
     return {"ok": True, "message": "CV processing consent withdrawn. We will not use your CV data in future AI jobs until you consent again."}
+
+
+class LanguageSettings(BaseModel):
+    ui_language: str
+    content_language: str
+
+
+@router.post("/language-settings")
+def save_language_settings(
+    data: LanguageSettings,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Persist UI language (users.language) and content language (profiles.language).
+    Called from the onboarding language confirmation step and from /settings.
+    """
+    from api.i18n import SUPPORTED_LANGUAGES
+    if data.ui_language not in SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail="Invalid ui_language")
+    if data.content_language not in SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail="Invalid content_language")
+
+    user_id = user["user_id"]
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET language = %s WHERE user_id = %s",
+            (data.ui_language, user_id),
+        )
+        # Update the active profile's content language if one exists
+        cur.execute(
+            "UPDATE profiles SET language = %s WHERE user_id = %s",
+            (data.content_language, user_id),
+        )
+    conn.commit()
+    return {"ok": True}
