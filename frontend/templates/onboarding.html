@@ -1574,7 +1574,13 @@
 
     // ── Complete — save everything ─────────────────
     async function completeOnboarding(yogiName) {
-        const btn = document.activeElement;
+        // Grab confirm buttons by ID so we can always restore them
+        const gridBtn = $('#btn-confirm-grid');
+        const manualBtn = $('#btn-confirm-manual');
+        const btn = gridBtn && !gridBtn.disabled ? gridBtn
+                  : manualBtn && !manualBtn.disabled ? manualBtn
+                  : document.activeElement;
+        const btnLabel = btn ? btn.textContent : '';
         if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>'; }
 
         try {
@@ -1596,11 +1602,11 @@
                 goTo(9);
             } else {
                 alert(data.error || data.detail || 'Error');
-                if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
+                if (btn) { btn.disabled = false; btn.textContent = btnLabel || c().s8_confirm || 'Confirm'; }
             }
         } catch (e) {
             alert('Network error');
-            if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
+            if (btn) { btn.disabled = false; btn.textContent = btnLabel || c().s8_confirm || 'Confirm'; }
         }
     }
 
