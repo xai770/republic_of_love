@@ -1078,6 +1078,10 @@
         return step - 1;
     };
 
+    // ── Brand helper (shared) ───────────────────────
+    const brandify = s => s.replace(/talent\.yoga/g,
+        '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
+
     // ── Apply copy to UI ───────────────────────────
     function applyText() {
         const t = c();
@@ -1092,8 +1096,6 @@
 
         // Step 2 — letter-style sources
         if ($('#s2-welcome') && t.s2_welcome) {
-            const brandify = s => s.replace(/talent\.yoga/g,
-                '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
             const body = t.s2_welcome.slice(0, -1);
             const tail = t.s2_welcome.slice(-1);
             $('#s2-welcome').innerHTML = body
@@ -1285,8 +1287,6 @@
             sc.textContent = copyObj.step_counter.replace('{a}', vis).replace('{b}', total);
         }
         if (w && t.welcome) {
-            const brandify = s => s.replace(/talent\.yoga/g,
-                '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
             const closing = $('#s1-closing');
             const body = t.welcome.slice(0, -1);
             const tail = t.welcome.slice(-1);
