@@ -89,7 +89,7 @@
         }
         .flag-btn:hover .flag-label, .flag-btn.selected .flag-label { opacity: 1; }
 
-        /* ── Germany map (step 2) ─────────────────────── */
+        /* ── Germany map (step 2) — legacy, kept as fallback ── */
         .germany-visual {
             display: flex; flex-direction: column; align-items: center; gap: 16px;
             margin: 8px 0;
@@ -490,20 +490,26 @@
         </div>
     </div>
 
-    <!-- ════════ STEP 2 — Germany notice ════════ -->
-    <div class="step" data-step="2">
-        <h2 id="s2-title"></h2>
-        <div class="germany-visual">
-            <img src="/static/images/germany_flag_map.png" alt="Germany" class="germany-map-img">
-        </div>
-        <div class="info-box">
-            <p id="s2-info"></p>
-        </div>
-        <div class="btn-row">
-            <button class="btn btn-secondary" onclick="goTo(1)">← <span class="back-label"></span></button>
-            <button class="btn btn-primary" onclick="goTo(nextStepFrom(2))">
-                <span class="next-label"></span> →
-            </button>
+    <!-- ════════ STEP 2 — Data sources ════════ -->
+    <div class="step" data-step="2" style="gap:0;">
+        <div id="s2-welcome" style="
+            flex:1;min-height:0;overflow-y:auto;
+            text-align:left;line-height:1.7;
+            font-size:0.92rem;color:#334155;
+            padding:0 2px 0;
+        "></div>
+        <div style="margin-top:auto;padding-top:4px;">
+            <div id="s2-closing" style="
+                text-align:left;line-height:1.7;
+                font-size:0.92rem;color:#334155;
+                margin-bottom:20px;
+            "></div>
+            <div class="btn-row" style="margin-top:0;">
+                <button class="btn btn-secondary" onclick="goTo(1)">← <span class="back-label"></span></button>
+                <button class="btn btn-primary" onclick="goTo(nextStepFrom(2))">
+                    <span class="next-label"></span> →
+                </button>
+            </div>
         </div>
     </div>
 
@@ -757,8 +763,18 @@
     const COPY = {
         en: {
             step_counter: "Step {a} of {b}",
-            s2_title: "talent.yoga currently only loads jobs from Germany!",
-            s2_info: "We're working on expanding — but for now, all positions are within Germany.",
+            s2_welcome: [
+                '<span style="font-size:1.25rem;font-weight:600;color:#1e293b;">Where do the jobs come from?</span>',
+                '',
+                'talent.yoga collects job postings directly from employer career pages and public job portals. Every listing you see here is real, current, and sourced from the original publisher.',
+                '',
+                '<span style="font-size:0.78rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;">Currently connected sources</span>',
+                '<strong>Bundesagentur für Arbeit</strong> — arbeitsagentur.de<br><span style="color:#64748b;">Germany\u2019s federal employment agency. Over <strong style="color:#0d9488;">330,000</strong> active postings.</span>',
+                '<strong>Deutsche Bank</strong> — careers.db.com<br><span style="color:#64748b;">Direct from their Workday career portal. Over <strong style="color:#0d9488;">4,300</strong> active postings.</span>',
+                '',
+                'New sources are continuously being added. Our goal is to cover as many German employers as possible \u2014 from DAX corporations to mid-sized companies and public institutions.',
+                '<strong>Right now, all positions are located in Germany.</strong>',
+            ],
             s3_title: "",
             s3_subtitle: "",
             s4_title: "Your privacy & our terms",
@@ -835,8 +851,18 @@
         },
         de_du: {
             step_counter: "Schritt {a} von {b}",
-            s2_title: "Momentan lädt talent.yoga nur Stellen aus Deutschland!",
-            s2_info: "Wir arbeiten daran, das zu erweitern — aber im Moment sind alle Positionen innerhalb Deutschlands.",
+            s2_welcome: [
+                '<span style="font-size:1.25rem;font-weight:600;color:#1e293b;">Woher kommen die Stellen?</span>',
+                '',
+                'talent.yoga sammelt Stellenanzeigen direkt von Karriereseiten der Arbeitgeber und \u00f6ffentlichen Jobportalen. Jede Stelle, die hier angezeigt wird, ist echt, aktuell und stammt direkt von der Originalquelle.',
+                '',
+                '<span style="font-size:0.78rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;">Aktuell angebundene Quellen</span>',
+                '<strong>Bundesagentur f\u00fcr Arbeit</strong> \u2014 arbeitsagentur.de<br><span style="color:#64748b;">Die \u00f6ffentliche Jobvermittlung des Bundes. \u00dcber <strong style="color:#0d9488;">330.000</strong> aktive Stellenanzeigen.</span>',
+                '<strong>Deutsche Bank</strong> \u2014 careers.db.com<br><span style="color:#64748b;">Direkt aus dem Workday-Karriereportal. \u00dcber <strong style="color:#0d9488;">4.300</strong> aktive Stellenanzeigen.</span>',
+                '',
+                'Neue Quellen werden laufend angebunden. Unser Ziel ist es, m\u00f6glichst viele deutsche Arbeitgeber abzudecken \u2014 von DAX-Konzernen \u00fcber den Mittelstand bis hin zu \u00f6ffentlichen Einrichtungen.',
+                '<strong>Derzeit befinden sich alle Stellen in Deutschland.</strong>',
+            ],
             s3_title: "Wie wollen wir uns anreden?",
             s3_subtitle: "Du entscheidest, wie wir miteinander sprechen.",
             s4_title: "Deine Daten & unsere Bedingungen",
@@ -913,8 +939,18 @@
         },
         de_sie: {
             step_counter: "Schritt {a} von {b}",
-            s2_title: "Momentan lädt talent.yoga nur Stellen aus Deutschland!",
-            s2_info: "Wir arbeiten daran, das zu erweitern — aber im Moment sind alle Positionen innerhalb Deutschlands.",
+            s2_welcome: [
+                '<span style="font-size:1.25rem;font-weight:600;color:#1e293b;">Woher kommen die Stellen?</span>',
+                '',
+                'talent.yoga sammelt Stellenanzeigen direkt von Karriereseiten der Arbeitgeber und \u00f6ffentlichen Jobportalen. Jede Stelle, die hier angezeigt wird, ist echt, aktuell und stammt direkt von der Originalquelle.',
+                '',
+                '<span style="font-size:0.78rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#94a3b8;">Aktuell angebundene Quellen</span>',
+                '<strong>Bundesagentur f\u00fcr Arbeit</strong> \u2014 arbeitsagentur.de<br><span style="color:#64748b;">Die \u00f6ffentliche Jobvermittlung des Bundes. \u00dcber <strong style="color:#0d9488;">330.000</strong> aktive Stellenanzeigen.</span>',
+                '<strong>Deutsche Bank</strong> \u2014 careers.db.com<br><span style="color:#64748b;">Direkt aus dem Workday-Karriereportal. \u00dcber <strong style="color:#0d9488;">4.300</strong> aktive Stellenanzeigen.</span>',
+                '',
+                'Neue Quellen werden laufend angebunden. Unser Ziel ist es, m\u00f6glichst viele deutsche Arbeitgeber abzudecken \u2014 von DAX-Konzernen \u00fcber den Mittelstand bis hin zu \u00f6ffentlichen Einrichtungen.',
+                '<strong>Derzeit befinden sich alle Stellen in Deutschland.</strong>',
+            ],
             s3_title: "Wie möchten Sie angesprochen werden?",
             s3_subtitle: "Sie entscheiden, wie wir miteinander sprechen.",
             s4_title: "Ihre Daten & unsere Bedingungen",
@@ -1027,18 +1063,29 @@
     // ── Apply copy to UI ───────────────────────────
     function applyText() {
         const t = c();
-        // Step counter — show for steps 2-8 only
+        // Step counter — show for steps 1-8
         const vis = visibleStepNumber(state.currentStep);
         const total = effectiveSteps();
-        if (state.currentStep > 1 && state.currentStep <= 8) {
+        if (state.currentStep >= 1 && state.currentStep <= 8) {
             $('#step-counter').textContent = t.step_counter.replace('{a}', vis).replace('{b}', total);
         } else {
             $('#step-counter').textContent = '';
         }
 
-        // Step 2
-        if ($('#s2-title')) $('#s2-title').textContent = t.s2_title;
-        if ($('#s2-info'))  $('#s2-info').textContent = t.s2_info;
+        // Step 2 — letter-style sources
+        if ($('#s2-welcome') && t.s2_welcome) {
+            const brandify = s => s.replace(/talent\.yoga/g,
+                '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
+            const body = t.s2_welcome.slice(0, -1);
+            const tail = t.s2_welcome.slice(-1);
+            $('#s2-welcome').innerHTML = body
+                .map(para => para === '' ? '<div style="height:0.6em;"></div>' : `<p style="margin:0 0 1em;">${brandify(para)}</p>`)
+                .join('');
+            const closing = $('#s2-closing');
+            if (closing) closing.innerHTML = tail
+                .map(para => `<p style="margin:0 0 0.5em;">${brandify(para)}</p>`)
+                .join('');
+        }
 
         // Step 3
         if ($('#s3-title'))    $('#s3-title').textContent = t.s3_title || '';
@@ -1164,7 +1211,7 @@
             ],
         },
         en: {
-            label: 'Language',
+            label: 'Select Language',
             welcome: [
                 '<span style="font-size:1.25rem;font-weight:600;color:#1e293b;">Hello,</span>',
                 '',
@@ -1184,6 +1231,15 @@
         const w = $('#s1-welcome');
         const lbl = $('#s1-label');
         if (lbl) lbl.textContent = t.label || '';
+        // Update step counter to match previewed language
+        const sc = $('#step-counter');
+        if (sc) {
+            const copyLang = lang || state.lang || 'de';
+            const copyObj = copyLang === 'en' ? COPY.en : COPY.de_du;
+            const vis = visibleStepNumber(state.currentStep);
+            const total = effectiveSteps();
+            sc.textContent = copyObj.step_counter.replace('{a}', vis).replace('{b}', total);
+        }
         if (w && t.welcome) {
             const brandify = s => s.replace(/talent\.yoga/g,
                 '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
