@@ -20,7 +20,8 @@
 
         /* ── Frosted-glass card ───────────────────────── */
         .wizard {
-            width: min(768px, 92vw);
+            width: 768px;
+            max-width: 92vw;
             min-height: min(80vh, calc(100vh - 48px));
             max-height: calc(100vh - 48px);
             overflow-y: auto;
@@ -32,7 +33,7 @@
             padding: 40px 44px 36px;
             position: relative;
             display: flex; flex-direction: column;
-            transition: opacity .35s ease, transform .35s ease;
+            transition: opacity .35s ease, transform .35s ease, width .4s ease, min-height .4s ease;
         }
         .wizard.fade-out { opacity: 0; transform: translateY(12px); pointer-events: none; }
 
@@ -1184,6 +1185,29 @@
         if ($('#dismissed-text')) $('#dismissed-text').textContent = t.dismissed;
     }
 
+    // ── Per-step card sizes ──────────────────────────
+    //    w = width in px, mh = min-height CSS value (null → auto)
+    const stepSizes = {
+        1:  { w: 768, mh: 'min(80vh, calc(100vh - 48px))' },
+        2:  { w: 768, mh: 'min(80vh, calc(100vh - 48px))' },
+        3:  { w: 620, mh: null },
+        4:  { w: 700, mh: null },
+        5:  { w: 680, mh: null },
+        6:  { w: 660, mh: null },
+        7:  { w: 740, mh: 'min(60vh, calc(100vh - 48px))' },
+        8:  { w: 540, mh: null },
+        9:  { w: 660, mh: null },
+        10: { w: 540, mh: null },
+        11: { w: 540, mh: null },
+    };
+
+    function applyStepSize(step) {
+        const wiz = $('#wizard');
+        const sz  = stepSizes[step] || { w: 768, mh: null };
+        wiz.style.width    = sz.w + 'px';
+        wiz.style.minHeight = sz.mh || 'auto';
+    }
+
     // ── Navigation ─────────────────────────────────
     window.goTo = function(step) {
         const wizard = $('#wizard');
@@ -1194,6 +1218,7 @@
             if (target) target.classList.add('active');
             state.currentStep = step;
             applyText();
+            applyStepSize(step);
             wizard.classList.remove('fade-out');
         }, 350);
     };
