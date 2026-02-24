@@ -1188,13 +1188,13 @@
             const brandify = s => s.replace(/talent\.yoga/g,
                 '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
             const closing = $('#s1-closing');
-            const body = t.welcome.slice(0, -2);
-            const tail = t.welcome.slice(-2);
+            const body = t.welcome.slice(0, -1);
+            const tail = t.welcome.slice(-1);
             w.innerHTML = body
                 .map(para => para === '' ? '<div style="height:0.6em;"></div>' : `<p style="margin:0 0 1em;">${brandify(para)}</p>`)
                 .join('');
             if (closing) closing.innerHTML = tail
-                .map((para, i) => `<p style="margin:${i === tail.length - 1 ? '1.2em' : '0'} 0 0.5em;">${brandify(para)}</p>`)
+                .map(para => `<p style="margin:0 0 0.5em;">${brandify(para)}</p>`)
                 .join('');
         }
     };
