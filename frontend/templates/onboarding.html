@@ -526,11 +526,13 @@
             <button class="btn btn-secondary btn-sm" onclick="goTo(2)" style="padding:0.3rem 0.8rem;font-size:0.85rem;">← <span class="back-label"></span></button>
         </div>
         <div class="formality-row">
-            <div class="formality-card" onclick="selectFormality('du')">
+            <div class="formality-card" onclick="selectFormality('du')"
+                 onmouseenter="previewFormality('du')" onmouseleave="previewFormality(null)">
                 <div class="big">Du</div>
                 <div class="desc" id="s3-du-desc">Lass uns locker und offen reden.</div>
             </div>
-            <div class="formality-card" onclick="selectFormality('sie')">
+            <div class="formality-card" onclick="selectFormality('sie')"
+                 onmouseenter="previewFormality('sie')" onmouseleave="previewFormality(null)">
                 <div class="big">Sie</div>
                 <div class="desc" id="s3-sie-desc">Wir bleiben beim respektvollen Sie.</div>
             </div>
@@ -1295,6 +1297,16 @@
     };
 
     // ── Step 3 — Du / Sie ──────────────────────────
+    window.previewFormality = function(f) {
+        // On hover: preview the tone; on leave (null): revert to current formality
+        const eff = f || state.formality || 'du';
+        const copy = (eff === 'sie') ? COPY.de_sie : COPY.de_du;
+        const title = $('#s3-title');
+        const sub   = $('#s3-subtitle');
+        if (title) title.textContent = copy.s3_title;
+        if (sub)   sub.textContent   = copy.s3_subtitle;
+    };
+
     window.selectFormality = function(f) {
         state.formality = f;
         $$('.formality-card').forEach((card, i) => {
