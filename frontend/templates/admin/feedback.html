@@ -139,7 +139,7 @@
                 <span class="fb-category cat-{{ r.category }}">{{ r.category }}</span>
             </span>
             <span class="fb-meta-item">
-                👤 {{ r.yogi_name or r.display_name or r.email or ('User #' ~ r.user_id) }}
+                👤 {{ r.yogi_name or r.display_name or ('User #' ~ r.user_id) }}
             </span>
             <span class="fb-meta-item timestamp">
                 🕐 {{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '?' }}

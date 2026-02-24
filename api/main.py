@@ -14,6 +14,7 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from api.config import FRONTEND_URL, DEBUG
 from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding, devlog
 from api.deps import get_current_user, get_db
+from lib.crypto import decrypt_email, mask_email
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
     SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE
@@ -341,15 +342,18 @@ def account_page(request: Request, conn=Depends(get_db)):
         return RedirectResponse(url="/onboarding", status_code=302)
     
     # Get notification/consent data
-    notification_email = user.get('notification_email')
+    # Decrypt notification_email only to produce a masked display string — never pass plaintext to template.
+    _notif_enc = user.get('notification_email')
+    masked_notification_email = mask_email(decrypt_email(_notif_enc)) if _notif_enc else None
     notification_consent_at = user.get('notification_consent_at')
     notification_preferences = user.get('notification_preferences') or {}
     gdpr_cv_consent_at = user.get('gdpr_cv_consent_at')
-    
+
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
-        "notification_email": notification_email,
+        "masked_notification_email": masked_notification_email,
+        "notification_email": bool(_notif_enc),  # boolean: is a notification email set?
         "notification_consent_at": notification_consent_at,
         "notification_preferences": notification_preferences,
         "gdpr_cv_consent_at": gdpr_cv_consent_at,

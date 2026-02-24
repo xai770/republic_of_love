@@ -91,9 +91,9 @@ def update_email_consent(
     """
     with conn.cursor() as cur:
         if data.consent:
-            # User consents — store their chosen notification email (encrypted)
-            # Falls back to auth email only if they didn't supply one
-            notification_addr = data.email or user.get('email')  # user.email is already decrypted by deps.py
+            # User consents — store their explicitly provided notification email (encrypted).
+            # We NEVER fall back to the login email: consent must be explicit.
+            notification_addr = data.email
             if not notification_addr:
                 raise HTTPException(status_code=400, detail="An email address is required to enable notifications")
             cur.execute("""

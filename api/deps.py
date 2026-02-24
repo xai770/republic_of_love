@@ -11,7 +11,9 @@ from datetime import datetime
 import atexit
 
 from api.config import DATABASE_URL, SECRET_KEY
-from lib.crypto import decrypt_email
+# NOTE: email fields are NOT decrypted here.
+# Use decrypt_email() + mask_email() only in the specific call sites that need them.
+# This prevents plaintext emails leaking into every route handler and template.
 
 # ── Connection pool ────────────────────────────────────────────────────────────
 # Reuse connections instead of opening a new socket per request.
@@ -104,9 +106,8 @@ def get_current_user(request: Request, conn=Depends(get_db)) -> Optional[dict]:
 
         if user:
             result = dict(user)
-            # Decrypt PII fields before returning to route handlers
-            result['email'] = decrypt_email(result.get('email'))
-            result['notification_email'] = decrypt_email(result.get('notification_email'))
+            # email and notification_email are returned as encrypted ciphertext.
+            # Callers that need plaintext must call decrypt_email() themselves.
             return result
         return None
     

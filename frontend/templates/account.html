@@ -62,8 +62,8 @@
                             <input type="radio" name="email_consent" value="yes"
                                    {{ 'checked' if notification_email else '' }}
                                    onchange="updateEmailConsent(true)">
-                            <span>{{ t('account.yes_email') if t('account.yes_email') else 'Email me at' }} 
-                                  <strong id="masked-email">{{ user.email[:3] }}***{{ user.email[user.email.find('@'):] if user.email else '' }}</strong>
+                            <span>{{ t('account.yes_email') if t('account.yes_email') else 'Email me at' }}
+                                  {% if masked_notification_email %}<strong id="masked-email">{{ masked_notification_email }}</strong>{% endif %}
                             </span>
                         </label>
                     </div>

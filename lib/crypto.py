@@ -99,3 +99,17 @@ def decrypt_email(ciphertext: Optional[str]) -> Optional[str]:
     except Exception as e:
         logger.error("decrypt_email failed: %s", e)
         return None
+
+
+def mask_email(plaintext: Optional[str]) -> Optional[str]:
+    """
+    Return a display-safe masked version of an email (e.g. ma***@gmail.com).
+
+    Always call decrypt_email() first — never pass ciphertext here.
+    Returns None if the value is None, empty, or lacks an '@'.
+    """
+    if not plaintext or '@' not in plaintext:
+        return None
+    local, domain = plaintext.split('@', 1)
+    visible = local[:2] if len(local) >= 2 else local[:1]
+    return f"{visible}***@{domain}"
