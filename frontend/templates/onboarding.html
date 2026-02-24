@@ -675,8 +675,9 @@
             </label>
         </div>
 
-        <!-- Skip link only -->
-        <div style="text-align:center;margin-top:16px;">
+        <!-- Back + Skip -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="goTo(8)">← <span class="back-label"></span></button>
             <a href="#" id="s9-skip" style="font-size:13px;color:#64748b;text-decoration:underline;cursor:pointer;"
                onclick="_obCVSkip(); return false;"></a>
         </div>
@@ -1045,20 +1046,14 @@
     function $$(sel) { return document.querySelectorAll(sel); }
 
     function effectiveSteps() {
-        // Numbered steps: 1-8 + 10 + 11 (step 9 CV upload is unnumbered)
-        return state.lang === 'en' ? 9 : 10;
+        // All steps numbered: 1-11 (EN skips step 3)
+        return state.lang === 'en' ? 10 : 11;
     }
 
     function visibleStepNumber(step) {
-        if (state.lang !== 'en') {
-            // DE: steps 1-8 map to 1-8, skip 9, 10→9, 11→10
-            if (step <= 8) return step;
-            if (step === 10) return 9;
-            if (step === 11) return 10;
-            return step;
-        }
-        // EN skips step 3 (Du/Sie): 1→1, 2→2, 4→3, 5→4, 6→5, 7→6, 8→7, 10→8, 11→9
-        const map = {1:1, 2:2, 4:3, 5:4, 6:5, 7:6, 8:7, 10:8, 11:9};
+        if (state.lang !== 'en') return step;
+        // EN skips step 3 (Du/Sie): 1→1, 2→2, 4→3, 5→4, 6→5, 7→6, 8→7, 9→8, 10→9, 11→10
+        const map = {1:1, 2:2, 4:3, 5:4, 6:5, 7:6, 8:7, 9:8, 10:9, 11:10};
         return map[step] || step;
     }
 
@@ -1080,7 +1075,7 @@
         // Step counter — show for steps 1-8
         const vis = visibleStepNumber(state.currentStep);
         const total = effectiveSteps();
-        if (state.currentStep >= 1 && state.currentStep !== 9) {
+        if (state.currentStep >= 1) {
             $('#step-counter').textContent = t.step_counter.replace('{a}', vis).replace('{b}', total);
         } else {
             $('#step-counter').textContent = '';
