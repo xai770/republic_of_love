@@ -450,7 +450,15 @@
 
     <!-- ════════ STEP 1 — Language ════════ -->
     <div class="step active" data-step="1">
-        <h2 id="s1-title">Choose your language</h2>
+        <div id="s1-welcome" style="
+            max-height:42vh;overflow-y:auto;
+            text-align:left;line-height:1.7;
+            font-size:0.92rem;color:#cbd5e1;
+            padding:0 2px 16px;
+            border-bottom:1px solid #1e293b;
+            margin-bottom:20px;
+        "></div>
+        <h2 id="s1-title" style="margin-top:4px;">Choose your language</h2>
         <p id="s1-subtitle">talent.yoga is available in German and English.</p>
         <div class="flag-row">
             <button class="flag-btn" data-lang="de" onclick="selectLanguage('de')"
@@ -1125,16 +1133,46 @@
 
     // ── Step 1 — Language select ───────────────────
     const s1Texts = {
-        de: { title: 'Wähle deine Sprache', subtitle: 'talent.yoga ist auf Deutsch und Englisch verfügbar.' },
-        en: { title: 'Choose your language', subtitle: 'talent.yoga is available in German and English.' },
+        de: {
+            title: 'Wähle deine Sprache',
+            subtitle: 'talent.yoga ist auf Deutsch und Englisch verfügbar.',
+            welcome: [
+                'talent.yoga ist ein ruhiger und privater Ort, um den eigenen Berufsweg zu gestalten.',
+                'Die Jobsuche kann anstrengend sein. Sie bringt oft Unsicherheit, Druck und das Gefühl, die Kontrolle zu verlieren. Dieser Raum wurde geschaffen, um den Prozess klarer, ruhiger und menschlicher zu machen.',
+                'talent.yoga wurde von Menschen entwickelt, die selbst auf Jobsuche waren. Wir wissen, wie sich das anfühlt.',
+                'Deshalb gilt: Wir tracken nicht. Wir verkaufen keine Daten. Wir erzeugen keinen Druck, sich schnell zu bewerben. Nutzer bleiben anonym — auch wenn sie uns ihre E-Mail-Adresse geben. Unsere KI arbeitet für den Menschen, nicht für die Plattform.',
+                'talent.yoga ist keine klassische Jobbörse, sondern ein Werkzeug zur beruflichen Orientierung — von der ersten Analyse bis zur fertigen Bewerbung. KI und echte Arbeitsmarktdaten helfen dabei, die eigenen Stärken zu verstehen, herauszufinden, wo sie gebraucht werden, und die nächsten Schritte zu planen. Das Werkzeug liegt in den eigenen Händen.',
+                '<strong>Die Jobsuche ist kein Wettbewerb — sie ist ein Prozess. Sie braucht Zeit und Geduld.</strong>',
+                '<strong>Willkommen bei talent.yoga.</strong>',
+            ],
+        },
+        en: {
+            title: 'Choose your language',
+            subtitle: 'talent.yoga is available in German and English.',
+            welcome: [
+                'talent.yoga is a calm and private space to navigate your career.',
+                'Looking for a job can be exhausting. It often brings uncertainty, pressure, and the feeling of losing control. This space was built to make the process clearer, calmer, and more human.',
+                'talent.yoga was built by people who were job seekers themselves. We know how it feels.',
+                'So here is what we stand for: We do not track. We do not sell data. We do not push you to apply faster. Users stay anonymous — even if they share their email address with us. Our AI works for you, not for the platform.',
+                'talent.yoga is not a traditional job board. It is a tool for career navigation — from the first analysis to the finished application. AI and real labour market data help to understand your strengths, discover where they are truly needed, and plan the next steps clearly. The tool is in your hands.',
+                '<strong>Looking for a job is not a competition — it is a process. It takes time and patience.</strong>',
+                '<strong>Welcome to talent.yoga.</strong>',
+            ],
+        },
     };
 
     window.previewLang = function(lang) {
-        const t = lang ? s1Texts[lang] : s1Texts.en;
+        const t = lang ? s1Texts[lang] : s1Texts[state.lang || 'de'];
         const h = $('#s1-title');
         const p = $('#s1-subtitle');
+        const w = $('#s1-welcome');
         if (h) h.textContent = t.title;
         if (p) p.textContent = t.subtitle;
+        if (w && t.welcome) {
+            w.innerHTML = t.welcome
+                .map(para => `<p style="margin:0 0 1em;">${para}</p>`)
+                .join('');
+        }
     };
 
     window.selectLanguage = function(lang) {
@@ -1544,6 +1582,7 @@
 
     // ── Init ───────────────────────────────────────
     applyText();
+    previewLang(null); // render welcome text in default language
 
 })();
 </script>
