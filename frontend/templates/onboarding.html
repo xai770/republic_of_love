@@ -730,26 +730,20 @@
     <!-- ════════ STEP 11 — Notification opt-in ════════ -->
     <div class="step" data-step="11">
         <h2 id="s11-title"></h2>
-        <p id="s11-subtitle" style="color:#94a3b8;font-size:0.95rem;"></p>
+        <div id="s11-body" style="color:#475569;font-size:0.95rem;line-height:1.65;display:flex;flex-direction:column;gap:12px;"></div>
 
-        <div style="margin-top:24px;">
+        <div style="margin-top:8px;">
             <input type="email" id="s11-email-input"
                    style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #334155;
                           background:#1e293b;color:#f1f5f9;font-size:1rem;box-sizing:border-box;"
-                   autocomplete="email"/>
+                   autocomplete="email"
+                   oninput="_obNotifEmailChanged()"/>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
-            <button class="btn btn-primary" id="s11-enable-btn"
-                    onclick="_obNotifSubmit()"></button>
-            <button class="btn btn-ghost" id="s11-skip-btn" style="color:#64748b;"
-                    onclick="_obNotifSkip()"></button>
+        <div class="btn-row" style="display:flex;gap:12px;margin-top:20px;">
+            <button class="btn btn-secondary" onclick="goTo(10)">← <span class="back-label">Zurück</span></button>
+            <button class="btn btn-primary" id="s11-continue-btn" onclick="_obNotifContinue()" style="flex:1;"></button>
         </div>
-
-        <!-- Privacy note -->
-        <p style="font-size:0.75rem;color:#475569;margin-top:16px;text-align:center;">
-            🔒 Stored encrypted. Used only for job match alerts. Deleted instantly if you opt&nbsp;out.
-        </p>
     </div>
 <script>
 (function() {
@@ -848,11 +842,16 @@
             s10_cover_note: "Cover letters will automatically match each job posting\u2019s language.",
             s10_confirm: "Confirm",
             s10_settings_note: "These can be changed anytime in Settings.",
-            s11_title: "Want to know when your dream job arrives?",
-            s11_subtitle: "We\u2019ll send a short email the moment Clara finds a great match. Nothing else, ever.",
+            s11_title: "Would you like us to let you know when we find an interesting position?",
+            s11_body: [
+                "Normally we don\u2019t store email addresses from our yogis.",
+                "If you\u2019d like, we\u2019re happy to send you a message when we find a particularly interesting position.",
+                "Your email is always stored encrypted \u2014 even we can\u2019t read it. So you can be sure your email won\u2019t fall into the wrong hands, even if talent.yoga were to suffer a cyber attack. It will be used exclusively for sending notifications about matching positions.",
+                "If you\u2019d like, you can enter an email for notifications here.",
+            ],
             s11_placeholder: "your@email.com (optional)",
-            s11_enable: "Yes, notify me",
-            s11_skip: "Skip for now",
+            s11_btn_yes: "Continue \u2014 I want to be notified",
+            s11_btn_no: "Continue \u2014 I don\u2019t want to be notified",
             s11_saving: "Saving\u2026",
             next: "Next",
             back: "Back",
@@ -936,11 +935,16 @@
             s10_cover_note: "Anschreiben werden automatisch in der Sprache der jeweiligen Stellenausschreibung erstellt.",
             s10_confirm: "Best\u00e4tigen",
             s10_settings_note: "Diese Einstellungen k\u00f6nnen jederzeit unter Einstellungen ge\u00e4ndert werden.",
-            s11_title: "Soll ich dir Bescheid geben, wenn dein Traumjob auftaucht?",
-            s11_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir dir eine kurze Mail. Nichts weiter, niemals.",
+            s11_title: "M\u00f6chtest Du von uns informiert werden, wenn wir eine interessante Stelle finden?",
+            s11_body: [
+                "Im Regelfall speichern wir keine Emailadressen von unseren Yogis.",
+                "Falls Du es w\u00fcnschst, sind wir aber gerne bereit, Dir eine Nachricht per Email zu senden, wenn wir eine besonders interessante Stelle finden.",
+                "Deine Email wird immer verschl\u00fcsselt gespeichert, so dass auch wir sie nicht lesen k\u00f6nnen. So kannst Du sicher sein, dass Deine Email nicht in die falschen H\u00e4nde gelangt \u2014 auch wenn talent.yoga einem Cyberangriff zum Opfer fallen w\u00fcrde. Sie wird ausschlie\u00dflich zum Versenden von Benachrichtigungen bei passenden Stellen genutzt.",
+                "Falls Du es w\u00fcnschst, kannst Du hier eine Email f\u00fcr Benachrichtigungen eingeben.",
+            ],
             s11_placeholder: "deine@mail.de (optional)",
-            s11_enable: "Ja, bitte benachrichtigen",
-            s11_skip: "Jetzt \u00fcberspringen",
+            s11_btn_yes: "Weiter, ich m\u00f6chte benachrichtigt werden",
+            s11_btn_no: "Weiter, ich m\u00f6chte nicht benachrichtigt werden",
             s11_saving: "Speichern\u2026",
             next: "Weiter",
             back: "Zurück",
@@ -1024,11 +1028,16 @@
             s10_cover_note: "Anschreiben werden automatisch in der Sprache der jeweiligen Stellenausschreibung erstellt.",
             s10_confirm: "Best\u00e4tigen",
             s10_settings_note: "Diese Einstellungen k\u00f6nnen jederzeit unter Einstellungen ge\u00e4ndert werden.",
-            s11_title: "Soll ich Ihnen Bescheid geben, wenn Ihr Traumjob auftaucht?",
-            s11_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir Ihnen eine kurze Mail. Nichts weiter, niemals.",
+            s11_title: "M\u00f6chten Sie von uns informiert werden, wenn wir eine interessante Stelle finden?",
+            s11_body: [
+                "Im Regelfall speichern wir keine Emailadressen von unseren Yogis.",
+                "Falls Sie es w\u00fcnschen sollten, sind wir aber gerne bereit, Ihnen eine Nachricht per Email zu senden, wenn wir eine besonders interessante Stelle finden.",
+                "Ihre Email wird immer verschl\u00fcsselt gespeichert, so dass auch wir sie nicht lesen k\u00f6nnen. So k\u00f6nnen Sie sicher sein, dass Ihre Email nicht in die falschen H\u00e4nde gelangt \u2014 auch wenn talent.yoga einem Cyberangriff zum Opfer fallen w\u00fcrde. Sie wird ausschlie\u00dflich zum Versenden von Benachrichtigungen bei passenden Stellen genutzt.",
+                "Falls Sie es w\u00fcnschen, k\u00f6nnen Sie hier eine Email f\u00fcr Benachrichtigungen eingeben.",
+            ],
             s11_placeholder: "Ihre@mail.de (optional)",
-            s11_enable: "Ja, bitte benachrichtigen",
-            s11_skip: "Jetzt \u00fcberspringen",
+            s11_btn_yes: "Weiter, ich m\u00f6chte benachrichtigt werden",
+            s11_btn_no: "Weiter, ich m\u00f6chte nicht benachrichtigt werden",
             s11_saving: "Speichern\u2026",
             next: "Weiter",
             back: "Zurück",
@@ -1176,10 +1185,12 @@
         }
         // Step 11 — Notification opt-in
         if ($('#s11-title'))       $('#s11-title').textContent       = t.s11_title || '';
-        if ($('#s11-subtitle'))    $('#s11-subtitle').textContent    = t.s11_subtitle || '';
+        if ($('#s11-body') && t.s11_body) {
+            $('#s11-body').innerHTML = t.s11_body
+                .map(p => '<p>' + brandify(p) + '</p>').join('');
+        }
         if ($('#s11-email-input')) $('#s11-email-input').placeholder = t.s11_placeholder || '';
-        if ($('#s11-enable-btn'))  $('#s11-enable-btn').textContent  = t.s11_enable || '';
-        if ($('#s11-skip-btn'))    $('#s11-skip-btn').textContent    = t.s11_skip || '';
+        _obNotifEmailChanged();  // sync dynamic button label
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
@@ -1202,7 +1213,7 @@
         8:  { w: 540, mh: null },
         9:  { w: 660, mh: null },
         10: { w: 540, mh: null },
-        11: { w: 540, mh: null },
+        11: { w: 660, mh: null },
     };
 
     function applyStepSize(step) {
@@ -1610,18 +1621,28 @@
         }
     }
 
-    // ── Notification opt-in (step 10) ───────────
-    window._obNotifSkip = function() {
-        window.location.href = '/dashboard';
+    // ── Notification opt-in (step 11) ───────────
+    function _isValidEmail(v) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    window._obNotifEmailChanged = function() {
+        const btn = $('#s11-continue-btn');
+        if (!btn) return;
+        const input = $('#s11-email-input');
+        const hasEmail = input && _isValidEmail(input.value.trim());
+        const t = c();
+        btn.textContent = hasEmail ? (t.s11_btn_yes || 'Continue') : (t.s11_btn_no || 'Continue');
     };
 
-    window._obNotifSubmit = async function() {
-        const input = $('#s10-email-input');
+    window._obNotifContinue = async function() {
+        const input = $('#s11-email-input');
         const email = input ? input.value.trim() : '';
-        const enableBtn = $('#s10-enable-btn');
-        if (enableBtn) { enableBtn.disabled = true; enableBtn.textContent = c().s11_saving || '...'; }
+        const btn = $('#s11-continue-btn');
+        const btnLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = c().s11_saving || '...'; }
 
-        if (email) {
+        if (_isValidEmail(email)) {
             try {
                 await fetch('/api/account/email-consent', {
                     method: 'POST',
