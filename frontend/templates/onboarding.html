@@ -1226,6 +1226,14 @@
     }
 
     // ── Navigation ─────────────────────────────────
+    function _resetConfirmButtons() {
+        const t = c();
+        const g = $('#btn-confirm-grid');
+        const m = $('#btn-confirm-manual');
+        if (g) { g.disabled = false; g.textContent = t.s8_confirm || 'Confirm'; }
+        if (m) { m.disabled = false; m.textContent = t.s8_confirm || 'Confirm'; }
+    }
+
     window.goTo = function(step) {
         const wizard = $('#wizard');
         wizard.classList.add('fade-out');
@@ -1234,6 +1242,7 @@
             const target = document.querySelector(`.step[data-step="${step}"]`);
             if (target) target.classList.add('active');
             state.currentStep = step;
+            if (step === 8) _resetConfirmButtons();
             applyText();
             applyStepSize(step);
             wizard.classList.remove('fade-out');
@@ -1609,6 +1618,8 @@
             if (data.ok) {
                 // Set language cookie so the app remembers
                 document.cookie = `lang=${state.lang};path=/;max-age=${365*86400};samesite=lax`;
+                // Restore button before navigating (user might come back)
+                if (btn) { btn.disabled = false; btn.textContent = btnLabel || c().s8_confirm || 'Confirm'; }
                 // Go to CV upload
                 goTo(9);
             } else {
