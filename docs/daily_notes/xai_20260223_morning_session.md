@@ -220,7 +220,88 @@ Shows courage concretely. Each bar is clickable → jumps to filtered `/matches`
 | `51e7694` | Track B — audit log, freeze flag, Han Solo button |
 | `71ee189` | GDPR consent checkbox for CV upload |
 | `a1c3672` | Plain-language GDPR consent copy |
+| `0ea5ae4` | Loose ends: `require_unfrozen_user`, DELETE /cv-consent, account privacy section |
+| `33c191c` | Deps and wiring cleanup |
+| `6120eac` | Dual-language profile architecture + Experience/Skills tab split |
 
-Five meaningful commits. Infrastructure that was deferred for months — immutable audit  
-trail, freeze controls, explicit consent before LLM sees user data — all landed in one  
-afternoon session. Not bad.
+Eight commits. A full day.
+
+---
+
+## Evening Session — Dual-Language Architecture `6120eac`
+
+### The Problem We Solved
+BGE-M3 is multilingual but not perfectly cross-lingual. "Projektmanagement" and
+"Project Management" don't sit at distance 0 in the vector space — they're close,
+but not as close as a monolingual comparison. A DE-profile yogi systematically
+undermatches EN job postings purely due to embedding geometry. Solution: embed
+both language versions and route by posting language at match time.
+
+### DB Migration (`migrations/profile_language_translations_20260223.sql`)
+- `profiles.language VARCHAR(10) DEFAULT 'de'` — canonical language, set automatically  
+  from CV text on import (langdetect, defaults to `'de'`).
+- `profile_translations (profile_id, language, profile_summary, translated_at, model)`  
+  — non-destructive summary cache. The canonical `profiles.profile_summary` is  
+  **never overwritten**. `UNIQUE (profile_id, language)`.
+- `profile_work_history_translations (work_history_id, language, job_description, ...)`  
+  — same pattern for work-history descriptions. `UNIQUE (work_history_id, language)`.
+
+### `api/routers/profiles.py`
+- `_detect_language(text)` — langdetect wrapper, maps to `'de'` or `'en'`, default `'de'`
+- `_run_translation` refactored — exclusively INSERTs/UPDATEs the cache tables;  
+  after all sections complete it fires `_schedule_profile_embedding_for_language()`  
+  for the target language automatically.
+- `_build_profile_text_for_language(user_id, conn, language)` — joins  
+  `profile_translations` for the requested language; falls back to canonical  
+  text transparently if no translation cached yet.
+- `_compute_profile_embedding_for_language_bg / _schedule_*` — same  
+  fire-and-forget thread pattern as canonical embedding.
+- `import_cv` — detects language from summary + work descriptions, persists  
+  to `profiles.language`, returns `"language"` in response.
+- `POST /me/translate` — rewritten: derives target as the *other* language  
+  (DE→EN automatically, or EN→DE), rejects if target == canonical, requires  
+  `require_unfrozen_user`, returns `canonical_lang` + `target_lang` + `had_existing_cache`.
+- `GET /me/translation-status` — new: returns `canonical_lang` +  
+  `translations[]` with `language`, `translated_at`, `has_summary` per cached version.
+
+### `actors/profile_posting_matches__report_C__clara.py`
+- `get_profile_data` now selects `user_id` + `profiles.language`.
+- `get_posting_data` now selects `source_language`.
+- `build_profile_text_for_language(conn, profile, language)` — loads translated  
+  summary from `profile_translations` cache; falls back to canonical text.
+- `compute_similarity` refactored — routes by `posting.source_language`:  
+  EN posting → EN profile text, DE posting → DE profile text. Cross-lingual  
+  penalty eliminated when translation exists.
+- `similarity_matrix` now records `posting_lang`, `profile_lang`, `used_translation`.
+
+### `frontend/templates/profile.html`
+- Form modal split into two inner tabs: **💼 Experience** | **🎯 Skills**
+  - Experience: Identity, Basics, Work history, Education, Projects, Preferences
+  - Skills: skill chips (extracted + implied), add-skill row
+- Translation status banner in the Skills tab:
+  - If EN version exists: "✓ English version ready · last updated Feb 23 · used to  
+    match English job postings" + **↻ Refresh** button
+  - If not: "Match English job postings better · …translate once to unlock equal  
+    matching." + **🌐 Generate** button
+- `switchFormTab(name)` — tab switching
+- `loadTranslationStatus()` — fetches `/me/translation-status`, renders banner;  
+  fires non-blocking on page load and again after any translation job completes.
+
+### Architecture Notes for Future Reference
+- The `embeddings` table is keyed on `text_hash` (SHA-256). Because the translated  
+  text hashes differently from the original, both embeddings coexist naturally — no  
+  schema changes needed to `embeddings`.
+- Clara always falls back to canonical text if no translation exists yet, so existing  
+  yogis are unaffected until they opt into translation.
+- `profiles.language` defaults to `'de'` for rows created before this migration.  
+  The first CV re-import or manual translate will set the correct value.
+- Cover letter language: still generated at match time by Clara (not stored);  
+  language-routing here only concerns the *matching* embeddings, not letter generation.
+
+---
+
+## Tomorrow's Starting Point
+- Test the translation banner UI end-to-end with a real account
+- Possibly: backfill `profiles.language` for existing users via a one-off script
+  (`langdetect` on `profile_summary` for those with text)
+- `/matches` Kanban view — carry forward from this morning's roadmap discussion
