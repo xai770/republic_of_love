@@ -12,6 +12,7 @@ import io
 import logging
 
 from api.deps import get_db, require_user
+from lib.crypto import encrypt_email
 
 router = APIRouter(prefix="/account", tags=["account"])
 log = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ class AvatarUpdate(BaseModel):
 
 class EmailConsentUpdate(BaseModel):
     consent: bool
+    email: Optional[str] = None  # notification address (free-form, optional)
 
 
 class MiraPreferencesUpdate(BaseModel):
@@ -89,13 +91,17 @@ def update_email_consent(
     """
     with conn.cursor() as cur:
         if data.consent:
-            # User consents — copy email from auth to notification_email
+            # User consents — store their chosen notification email (encrypted)
+            # Falls back to auth email only if they didn't supply one
+            notification_addr = data.email or user.get('email')  # user.email is already decrypted by deps.py
+            if not notification_addr:
+                raise HTTPException(status_code=400, detail="An email address is required to enable notifications")
             cur.execute("""
                 UPDATE users
-                SET notification_email = email,
+                SET notification_email = %s,
                     notification_consent_at = NOW()
                 WHERE user_id = %s
-            """, (user["user_id"],))
+            """, (encrypt_email(notification_addr), user["user_id"]))
             conn.commit()
             return {"ok": True, "consented": True, "message": "Dream job notifications enabled"}
         else:

@@ -113,7 +113,7 @@ def admin_feedback_list(
     with conn.cursor() as cur:
         if status_filter == "all":
             cur.execute("""
-                SELECT f.*, u.display_name, u.email, u.yogi_name
+                SELECT f.*, u.display_name, u.yogi_name
                 FROM feedback f
                 LEFT JOIN users u ON u.user_id = f.user_id
                 ORDER BY f.created_at DESC
@@ -121,7 +121,7 @@ def admin_feedback_list(
             """)
         else:
             cur.execute("""
-                SELECT f.*, u.display_name, u.email, u.yogi_name
+                SELECT f.*, u.display_name, u.yogi_name
                 FROM feedback f
                 LEFT JOIN users u ON u.user_id = f.user_id
                 WHERE f.status = %s

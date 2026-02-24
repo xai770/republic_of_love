@@ -33,8 +33,19 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8000')
 # App
 DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
 
+# Email encryption (Fernet symmetric — AES-128-CBC + HMAC-SHA256)
+# Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# WARNING: losing this key = permanent loss of all stored email addresses
+EMAIL_ENCRYPTION_KEY = os.getenv('EMAIL_ENCRYPTION_KEY', '')
+
 # Security guard: refuse to start with default SECRET_KEY in production
 if not DEBUG and SECRET_KEY == 'change-me-in-production-use-openssl-rand-hex-32':
     raise RuntimeError(
         "FATAL: SECRET_KEY is not set. Generate one with: openssl rand -hex 32"
+    )
+
+if not DEBUG and not EMAIL_ENCRYPTION_KEY:
+    raise RuntimeError(
+        "FATAL: EMAIL_ENCRYPTION_KEY is not set. "
+        "Generate with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
     )

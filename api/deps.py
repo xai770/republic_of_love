@@ -11,6 +11,7 @@ from datetime import datetime
 import atexit
 
 from api.config import DATABASE_URL, SECRET_KEY
+from lib.crypto import decrypt_email
 
 # ── Connection pool ────────────────────────────────────────────────────────────
 # Reuse connections instead of opening a new socket per request.
@@ -100,8 +101,14 @@ def get_current_user(request: Request, conn=Depends(get_db)) -> Optional[dict]:
                 WHERE user_id = %s AND enabled = TRUE
             """, (user_id,))
             user = cur.fetchone()
-        
-        return dict(user) if user else None
+
+        if user:
+            result = dict(user)
+            # Decrypt PII fields before returning to route handlers
+            result['email'] = decrypt_email(result.get('email'))
+            result['notification_email'] = decrypt_email(result.get('notification_email'))
+            return result
+        return None
     
     except jwt.InvalidTokenError:
         return None

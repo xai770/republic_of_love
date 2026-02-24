@@ -643,6 +643,31 @@
             <a href="/dashboard" id="s9-skip" style="font-size:13px;color:#64748b;text-decoration:underline;cursor:pointer;"></a>
         </div>
     </div>
+
+    <!-- ════════ STEP 10 — Notification opt-in ════════ -->
+    <div class="step" data-step="10">
+        <h2 id="s10-title"></h2>
+        <p id="s10-subtitle" style="color:#94a3b8;font-size:0.95rem;"></p>
+
+        <div style="margin-top:24px;">
+            <input type="email" id="s10-email-input"
+                   style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #334155;
+                          background:#1e293b;color:#f1f5f9;font-size:1rem;box-sizing:border-box;"
+                   autocomplete="email"/>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
+            <button class="btn btn-primary" id="s10-enable-btn"
+                    onclick="_obNotifSubmit()"></button>
+            <button class="btn btn-ghost" id="s10-skip-btn" style="color:#64748b;"
+                    onclick="_obNotifSkip()"></button>
+        </div>
+
+        <!-- Privacy note -->
+        <p style="font-size:0.75rem;color:#475569;margin-top:16px;text-align:center;">
+            🔒 Stored encrypted. Used only for job match alerts. Deleted instantly if you opt&nbsp;out.
+        </p>
+    </div>
 <script>
 (function() {
     "use strict";
@@ -723,6 +748,12 @@
             s9_skip: "Skip for now — I'll do this later →",
             s9_gdpr_label: "I allow talent.yoga\u2019s AI to read my CV to extract skills, work history and education. My name, email and employer names are anonymised before any job matching \u2014 my CV is never shown to employers directly.",
             s9_gdpr_required: "Please tick the box to confirm you\u2019re happy for the AI to read your CV before we can process it.",
+            s10_title: "Want to know when your dream job arrives?",
+            s10_subtitle: "We\u2019ll send a short email the moment Clara finds a great match. Nothing else, ever.",
+            s10_placeholder: "your@email.com (optional)",
+            s10_enable: "Yes, notify me",
+            s10_skip: "Skip for now",
+            s10_saving: "Saving\u2026",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -788,6 +819,12 @@
             s9_skip: "Jetzt überspringen — ich mache das später →",
             s9_gdpr_label: "Ich erlaube talent.yoga, meinen Lebenslauf mit KI zu analysieren, um Skills, Berufserfahrung und Ausbildung zu extrahieren. Name, E-Mail und Firmennamen werden vor dem Matching anonymisiert \u2014 mein Lebenslauf wird nie direkt an Arbeitgeber weitergegeben.",
             s9_gdpr_required: "Bitte best\u00e4tige zun\u00e4chst, dass die KI deinen Lebenslauf lesen darf.",
+            s10_title: "Soll ich dir Bescheid geben, wenn dein Traumjob auftaucht?",
+            s10_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir dir eine kurze Mail. Nichts weiter, niemals.",
+            s10_placeholder: "deine@mail.de (optional)",
+            s10_enable: "Ja, bitte benachrichtigen",
+            s10_skip: "Jetzt \u00fcberspringen",
+            s10_saving: "Speichern\u2026",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -853,6 +890,12 @@
             s9_skip: "Jetzt überspringen — ich mache das später →",
             s9_gdpr_label: "Ich erlaube talent.yoga, meinen Lebenslauf mit KI zu analysieren, um Skills, Berufserfahrung und Ausbildung zu extrahieren. Name, E-Mail und Firmennamen werden vor dem Matching anonymisiert \u2014 mein Lebenslauf wird nie direkt an Arbeitgeber weitergegeben.",
             s9_gdpr_required: "Bitte best\u00e4tigen Sie zun\u00e4chst, dass die KI Ihren Lebenslauf lesen darf.",
+            s10_title: "Soll ich Ihnen Bescheid geben, wenn Ihr Traumjob auftaucht?",
+            s10_subtitle: "Wenn Clara einen tollen Treffer findet, schicken wir Ihnen eine kurze Mail. Nichts weiter, niemals.",
+            s10_placeholder: "Ihre@mail.de (optional)",
+            s10_enable: "Ja, bitte benachrichtigen",
+            s10_skip: "Jetzt \u00fcberspringen",
+            s10_saving: "Speichern\u2026",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -970,6 +1013,13 @@
         if ($('#s9-cv-hint'))    $('#s9-cv-hint').textContent    = t.s9_cv_hint || '';
         if ($('#s9-skip'))       $('#s9-skip').textContent       = t.s9_skip;
         if ($('#ob-gdpr-label'))  $('#ob-gdpr-label').textContent  = t.s9_gdpr_label || '';
+
+        // Step 10 — Notification opt-in
+        if ($('#s10-title'))       $('#s10-title').textContent       = t.s10_title || '';
+        if ($('#s10-subtitle'))    $('#s10-subtitle').textContent    = t.s10_subtitle || '';
+        if ($('#s10-email-input')) $('#s10-email-input').placeholder = t.s10_placeholder || '';
+        if ($('#s10-enable-btn'))  $('#s10-enable-btn').textContent  = t.s10_enable || '';
+        if ($('#s10-skip-btn'))    $('#s10-skip-btn').textContent    = t.s10_skip || '';
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
@@ -1300,8 +1350,8 @@
             if (data.ok) {
                 // Set language cookie so the app remembers
                 document.cookie = `lang=${state.lang};path=/;max-age=${365*86400};samesite=lax`;
-                // Show profile kickstart instead of going straight to dashboard
-                goTo(9);
+                // Show notification opt-in before CV kickstart
+                goTo(10);
             } else {
                 alert(data.error || data.detail || 'Error');
                 if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
@@ -1311,6 +1361,31 @@
             if (btn) { btn.disabled = false; btn.innerHTML = c().s8_confirm || 'Confirm'; }
         }
     }
+
+    // ── Notification opt-in (step 10) ───────────
+    window._obNotifSkip = function() {
+        goTo(9); // proceed to CV upload without saving email
+    };
+
+    window._obNotifSubmit = async function() {
+        const input = $('#s10-email-input');
+        const email = input ? input.value.trim() : '';
+        const enableBtn = $('#s10-enable-btn');
+        if (enableBtn) { enableBtn.disabled = true; enableBtn.textContent = c().s10_saving || '...'; }
+
+        if (email) {
+            try {
+                await fetch('/api/account/email-consent', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ consent: true, email: email }),
+                });
+            } catch (e) {
+                // non-critical — proceed regardless
+            }
+        }
+        goTo(9); // proceed to CV upload
+    };
 
     // ── CV upload (step 9) ──────────────────────────
     window._obHandleDrop = function(e) {

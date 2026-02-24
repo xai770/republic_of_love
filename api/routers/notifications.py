@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 
 from api.deps import get_db, require_user
+from lib.crypto import encrypt_email, decrypt_email
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -196,7 +197,7 @@ def get_notification_consent(
         row = cur.fetchone()
         
         return NotificationConsentResponse(
-            notification_email=row['notification_email'],
+            notification_email=decrypt_email(row['notification_email']),
             notification_consent_at=row['notification_consent_at'],
             notification_preferences=row['notification_preferences'] or {}
         )
@@ -221,7 +222,7 @@ def update_notification_consent(
         
         if data.notification_email is not None:
             updates.append("notification_email = %s")
-            params.append(data.notification_email)
+            params.append(encrypt_email(data.notification_email))
         
         if data.grant_consent:
             # Granting consent - set timestamp
@@ -248,7 +249,7 @@ def update_notification_consent(
         
         return {
             "status": "ok",
-            "notification_email": row['notification_email'],
+            "notification_email": decrypt_email(row['notification_email']),
             "notification_consent_at": row['notification_consent_at'].isoformat() if row['notification_consent_at'] else None,
             "notification_preferences": row['notification_preferences'] or {}
         }

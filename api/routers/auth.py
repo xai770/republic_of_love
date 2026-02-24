@@ -27,6 +27,7 @@ from api.config import (
     DEBUG,
 )
 from api.deps import get_db
+from lib.crypto import encrypt_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -106,15 +107,20 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
     
     # Create or update user in database
     with conn.cursor() as cur:
-        # Try to find existing user by google_id or email
+        # Primary lookup by google_id (stable, unique, doesn't change)
+        # Fallback to encrypted email lookup is not possible (Fernet uses random IV);
+        # google_id is the sole auth identifier going forward.
         cur.execute("""
-            SELECT user_id FROM users 
-            WHERE google_id = %s OR email = %s
-        """, (google_id, email))
+            SELECT user_id FROM users
+            WHERE google_id = %s
+        """, (google_id,))
         existing = cur.fetchone()
-        
+
+        # Store email encrypted — DB admins see ciphertext only
+        email_enc = encrypt_email(email)
+
         if existing:
-            # Update existing user
+            # Update existing user (do NOT overwrite email — it's already encrypted)
             cur.execute("""
                 UPDATE users SET
                     google_id = %s,
@@ -126,20 +132,21 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
             """, (google_id, display_name, avatar_url, existing['user_id']))
             user_id = cur.fetchone()['user_id']
         else:
-            # Create new user
+            # Create new user with encrypted email
             cur.execute("""
                 INSERT INTO users (email, google_id, display_name, avatar_url, last_login_at)
                 VALUES (%s, %s, %s, %s, NOW())
                 RETURNING user_id
-            """, (email, google_id, display_name, avatar_url))
+            """, (email_enc, google_id, display_name, avatar_url))
             user_id = cur.fetchone()['user_id']
-            
-            # Try to link to existing profile with matching email
+
+            # Try to link to existing profile with matching email (profile.email is
+            # the CV-parsed email — still plaintext, different field from users.email)
             cur.execute("""
                 UPDATE profiles SET user_id = %s
                 WHERE email = %s AND user_id IS NULL
             """, (user_id, email))
-        
+
         conn.commit()
 
     # --- Record logon event in yogi_messages ---
@@ -156,8 +163,8 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
     # --- Audit log ---
     try:
         from lib.audit import log_audit_event
-        log_audit_event(conn, user_id, actor='system', event_type='login',
-                        detail={'email': email})
+        # Do not log the plaintext email — user_id is sufficient for tracing
+        log_audit_event(conn, user_id, actor='system', event_type='login')
     except Exception:
         pass
     
@@ -170,11 +177,11 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
         row = cur.fetchone()
         needs_onboarding = not row or not row.get("onboarding_completed_at")
 
-    # Create session token
+    # Create session token — email is NOT included; route handlers get it
+    # via require_user → deps.get_current_user which decrypts from DB.
     session_token = jwt.encode(
         {
             "user_id": user_id,
-            "email": email,
             "exp": datetime.utcnow() + timedelta(hours=SESSION_EXPIRE_HOURS),
         },
         SECRET_KEY,
@@ -261,7 +268,6 @@ if DEBUG:
         token = jwt.encode(
             {
                 "user_id": user['user_id'],
-                "email": user['email'],
                 "exp": datetime.utcnow() + timedelta(hours=SESSION_EXPIRE_HOURS),
             },
             SECRET_KEY,
