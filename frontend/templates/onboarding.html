@@ -51,6 +51,15 @@
             font-size: 24px; font-weight: 700; color: #1e293b;
             line-height: 1.25;
         }
+        /* ── talent.yoga brand name ───────────────────── */
+        .ty { font-weight: 700; }
+        .ty-yoga { color: #0d9488; font-weight: 700; }
+        /* ── Step 1 language label (not a headline) ───── */
+        #s1-title {
+            font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: #94a3b8; margin: 0;
+        }
         .step p {
             font-size: 15px; color: #475569; line-height: 1.65;
         }
@@ -461,7 +470,6 @@
             margin-bottom:20px;
         "></div>
         <h2 id="s1-title" style="margin-top:4px;">Choose your language</h2>
-        <p id="s1-subtitle">talent.yoga is available in German and English.</p>
         <div class="flag-row">
             <button class="flag-btn" data-lang="de" onclick="selectLanguage('de')"
                     onmouseenter="previewLang('de')" onmouseleave="previewLang(null)">
@@ -1171,8 +1179,10 @@
         if (h) h.textContent = t.title;
         if (p) p.textContent = t.subtitle;
         if (w && t.welcome) {
+            const brandify = s => s.replace(/talent\.yoga/g,
+                '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
             w.innerHTML = t.welcome
-                .map(para => `<p style="margin:0 0 1em;">${para}</p>`)
+                .map(para => `<p style="margin:0 0 1em;">${brandify(para)}</p>`)
                 .join('');
         }
     };
