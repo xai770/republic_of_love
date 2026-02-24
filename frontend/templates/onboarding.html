@@ -20,7 +20,7 @@
 
         /* ── Frosted-glass card ───────────────────────── */
         .wizard {
-            width: min(960px, 92vw);
+            width: min(768px, 92vw);
             min-height: min(80vh, calc(100vh - 48px));
             max-height: calc(100vh - 48px);
             overflow-y: auto;
@@ -66,19 +66,19 @@
 
         /* ── Flag buttons (step 1) ────────────────────── */
         .flag-row {
-            display: flex; gap: 32px; justify-content: center;
-            margin-top: 12px;
+            display: flex; gap: 20px; justify-content: center;
+            margin-top: 8px;
         }
         .flag-btn {
-            width: 130px; height: 130px;
-            border-radius: 20px;
+            width: 88px; height: 88px;
+            border-radius: 16px;
             border: 3px solid transparent;
             background: #f8fafc;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            gap: 10px; cursor: pointer;
+            gap: 6px; cursor: pointer;
             transition: all .2s;
-            font-size: 56px;
+            font-size: 38px;
             position: relative;
         }
         .flag-btn:hover { border-color: #0d9488; transform: translateY(-4px); box-shadow: 0 6px 20px rgba(13,148,136,.18); }
@@ -1147,6 +1147,7 @@
             title: 'Wähle deine Sprache',
             subtitle: 'talent.yoga ist auf Deutsch und Englisch verfügbar.',
             welcome: [
+                '<span style="font-size:1.2rem;font-weight:600;color:#1e293b;">Hallo,</span>',
                 'talent.yoga ist ein ruhiger und privater Ort, um den eigenen Berufsweg zu gestalten.',
                 'Die Jobsuche kann anstrengend sein. Sie bringt oft Unsicherheit, Druck und das Gefühl, die Kontrolle zu verlieren. Dieser Raum wurde geschaffen, um den Prozess klarer, ruhiger und menschlicher zu machen.',
                 'talent.yoga wurde von Menschen entwickelt, die selbst auf Jobsuche waren. Wir wissen, wie sich das anfühlt.',
@@ -1160,6 +1161,7 @@
             title: 'Choose your language',
             subtitle: 'talent.yoga is available in German and English.',
             welcome: [
+                '<span style="font-size:1.2rem;font-weight:600;color:#1e293b;">Hello,</span>',
                 'talent.yoga is a calm and private space to navigate your career.',
                 'Looking for a job can be exhausting. It often brings uncertainty, pressure, and the feeling of losing control. This space was built to make the process clearer, calmer, and more human.',
                 'talent.yoga was built by people who were job seekers themselves. We know how it feels.',
