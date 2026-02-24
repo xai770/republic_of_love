@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/generate_fetch_docs.py` — do not edit by hand.
 > Regenerated on every git commit via `.git/hooks/post-commit`.
 
-**Generated:** 2026-02-23 22:25:11
+**Generated:** 2026-02-24 06:48:49
 **Script:** `scripts/turing_fetch.sh` (608 lines)
 **Schedule:** `50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force`
 **Log:** `logs/turing_fetch.log`
@@ -13,16 +13,16 @@
 
 | Metric | Count |
 |--------|------:|
-| Total postings | 320,912 |
-| Active postings | 178,112 |
-| — Arbeitsagentur | 176,607 |
-| — Deutsche Bank | 1,505 |
-| With description (>150 chars) | 301,045 |
-| With extracted summary | 7,672 |
-| Embeddable (postings_for_matching) | 168,914 |
-| Total embeddings | 318,102 |
-| Berufenet classified | 172,332 |
-| OWL vocabulary (confirmed) | 109,591 |
+| Total postings | 335,183 |
+| Active postings | 188,983 |
+| — Arbeitsagentur | 187,450 |
+| — Deutsche Bank | 1,533 |
+| With description (>150 chars) | 314,545 |
+| With extracted summary | 7,697 |
+| Embeddable (postings_for_matching) | 179,408 |
+| Total embeddings | 328,907 |
+| Berufenet classified | 182,862 |
+| OWL vocabulary (confirmed) | 115,614 |
 | OWL pending triage | 0 |
 
 ---
@@ -998,7 +998,7 @@ D --> K[Release lock]
 
 ## Description Retry
 
-**File:** `scripts/berufenet_description_retry.py` (386 lines)
+**File:** `scripts/berufenet_description_retry.py` (409 lines)
 
 > berufenet_description_retry.py — Second-pass berufenet matching with job descriptions.
 
@@ -1055,20 +1055,29 @@ SELECT COUNT(*) as cnt FROM owl_pending
 ```
 
 ```sql
-UPDATE postings
-                            SET berufenet_id = %s,
-                                berufenet_verified = 'llm_description_retry',
-                                berufenet_score = %s
-                            WHERE (berufenet_verified = 'pending_owl' OR berufenet_verified = 'no_match')
-                              AND berufenet_id IS NULL
-                              AND LOWER(job_title) = LOWER(%s)
+SELECT on2.display_name,
+                                   o.metadata->>'kldb' AS kldb,
+                                   (o.metadata->>'qualification_level')::int AS qualification_level
+                            FROM owl o
+                            JOIN owl_names on2
+                                ON on2.owl_id = o.owl_id
+                               AND on2.is_primary = true
+                               AND on2.language = 'de'
+                            WHERE o.owl_type = 'berufene
+-- ... (truncated)
 ```
 
 ```sql
-SELECT owl_id FROM owl
-                                WHERE owl_type = 'berufenet'
-                                  AND metadata->>'berufenet_id' = %s
-                                LIMIT 1
+UPDATE postings
+                            SET berufenet_id         = %s,
+                                berufenet_verified   = 'llm_description_retry',
+                                berufenet_score      = %s,
+                                berufenet_name       = %s,
+                                berufenet_kldb       = %s,
+                                qualification_level  = %s
+                            WHERE (berufenet_verified = 'pending_owl' OR berufenet_verified = 'no_match')
+    
+-- ... (truncated)
 ```
 
 </details>
@@ -1582,4 +1591,4 @@ Auto-triggered on every `git commit` via `.git/hooks/post-commit`.
 
 ---
 
-_Generated 2026-02-23 22:25:11 by generate_fetch_docs.py_
+_Generated 2026-02-24 06:48:49 by generate_fetch_docs.py_
