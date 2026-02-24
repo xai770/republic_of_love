@@ -473,6 +473,7 @@
                 font-size:0.92rem;color:#334155;
                 margin-bottom:20px;
             "></div>
+            <p id="s1-label" style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;margin:0 0 10px;"></p>
             <div class="flag-row">
                 <button class="flag-btn" data-lang="de" onclick="selectLanguage('de')"
                         onmouseenter="previewLang('de')" onmouseleave="previewLang(null)">
@@ -1148,30 +1149,30 @@
     // ── Step 1 — Language select ───────────────────
     const s1Texts = {
         de: {
-            title: 'Wähle deine Sprache',
-            subtitle: 'talent.yoga ist auf Deutsch und Englisch verfügbar.',
+            label: 'Sprachauswahl',
             welcome: [
-                '<span style="font-size:1.2rem;font-weight:600;color:#1e293b;">Hallo,</span>',
+                '<span style="font-size:1.25rem;font-weight:600;color:#1e293b;">Hallo,</span>',
+                '',
                 'talent.yoga ist ein ruhiger und privater Ort, um den eigenen Berufsweg zu gestalten.',
-                'Die Jobsuche kann anstrengend sein. Sie bringt oft Unsicherheit, Druck und das Gefühl, die Kontrolle zu verlieren. Dieser Raum wurde geschaffen, um den Prozess klarer, ruhiger und menschlicher zu machen.',
-                'talent.yoga wurde von Menschen entwickelt, die selbst auf Jobsuche waren. Wir wissen, wie sich das anfühlt.',
-                'Deshalb gilt: Wir tracken nicht. Wir verkaufen keine Daten. Wir erzeugen keinen Druck, sich schnell zu bewerben. Nutzer bleiben anonym — auch wenn sie uns ihre E-Mail-Adresse geben. Unsere KI arbeitet für den Menschen, nicht für die Plattform.',
-                'talent.yoga ist keine klassische Jobbörse, sondern ein Werkzeug zur beruflichen Orientierung — von der ersten Analyse bis zur fertigen Bewerbung. KI und echte Arbeitsmarktdaten helfen dabei, die eigenen Stärken zu verstehen, herauszufinden, wo sie gebraucht werden, und die nächsten Schritte zu planen. Das Werkzeug liegt in den eigenen Händen.',
-                '<strong>Die Jobsuche ist kein Wettbewerb — sie ist ein Prozess. Sie braucht Zeit und Geduld.</strong>',
+                'Die Jobsuche kann anstrengend sein. Sie bringt oft Unsicherheit, Druck und das Gef\u00fchl, die Kontrolle zu verlieren. Dieser Raum wurde geschaffen, um den Prozess klarer, ruhiger und menschlicher zu machen.',
+                'talent.yoga wurde von Menschen entwickelt, die selbst auf Jobsuche waren. Wir wissen, wie sich das anf\u00fchlt.',
+                'Deshalb gilt: Wir tracken nicht. Wir verkaufen keine Daten. Wir erzeugen keinen Druck, sich schnell zu bewerben. Nutzer bleiben anonym \u2014 auch wenn sie uns ihre E-Mail-Adresse geben. Unsere KI arbeitet f\u00fcr den Menschen, nicht f\u00fcr die Plattform.',
+                'talent.yoga ist keine klassische Jobb\u00f6rse, sondern ein Werkzeug zur beruflichen Orientierung \u2014 von der ersten Analyse bis zur fertigen Bewerbung. KI und echte Arbeitsmarktdaten helfen dabei, die eigenen St\u00e4rken zu verstehen, herauszufinden, wo sie gebraucht werden, und die n\u00e4chsten Schritte zu planen.',
+                '<strong>Die Jobsuche ist kein Wettbewerb \u2014 sie ist ein Prozess. Sie braucht Zeit und Geduld.</strong>',
                 '<strong>Willkommen bei talent.yoga.</strong>',
             ],
         },
         en: {
-            title: 'Choose your language',
-            subtitle: 'talent.yoga is available in German and English.',
+            label: 'Language',
             welcome: [
-                '<span style="font-size:1.2rem;font-weight:600;color:#1e293b;">Hello,</span>',
+                '<span style="font-size:1.25rem;font-weight:600;color:#1e293b;">Hello,</span>',
+                '',
                 'talent.yoga is a calm and private space to navigate your career.',
                 'Looking for a job can be exhausting. It often brings uncertainty, pressure, and the feeling of losing control. This space was built to make the process clearer, calmer, and more human.',
                 'talent.yoga was built by people who were job seekers themselves. We know how it feels.',
-                'So here is what we stand for: We do not track. We do not sell data. We do not push you to apply faster. Users stay anonymous — even if they share their email address with us. Our AI works for you, not for the platform.',
-                'talent.yoga is not a traditional job board. It is a tool for career navigation — from the first analysis to the finished application. AI and real labour market data help to understand your strengths, discover where they are truly needed, and plan the next steps clearly. The tool is in your hands.',
-                '<strong>Looking for a job is not a competition — it is a process. It takes time and patience.</strong>',
+                'So here is what we stand for: We do not track. We do not sell data. We do not push you to apply faster. Users stay anonymous \u2014 even if they share their email address with us. Our AI works for you, not for the platform.',
+                'talent.yoga is not a traditional job board. It is a tool for career navigation \u2014 from the first analysis to the finished application. AI and real labour market data help to understand your strengths, discover where they are truly needed, and plan the next steps clearly.',
+                '<strong>Looking for a job is not a competition \u2014 it is a process. It takes time and patience.</strong>',
                 '<strong>Welcome to talent.yoga.</strong>',
             ],
         },
@@ -1179,11 +1180,9 @@
 
     window.previewLang = function(lang) {
         const t = lang ? s1Texts[lang] : s1Texts[state.lang || 'de'];
-        const h = $('#s1-title');
-        const p = $('#s1-subtitle');
         const w = $('#s1-welcome');
-        if (h) h.textContent = t.title;
-        if (p) p.textContent = t.subtitle;
+        const lbl = $('#s1-label');
+        if (lbl) lbl.textContent = t.label || '';
         if (w && t.welcome) {
             const brandify = s => s.replace(/talent\.yoga/g,
                 '<strong class="ty">talent<span class="ty-yoga">.yoga</span></strong>');
@@ -1191,13 +1190,14 @@
             const body = t.welcome.slice(0, -2);
             const tail = t.welcome.slice(-2);
             w.innerHTML = body
-                .map(para => `<p style="margin:0 0 1em;">${brandify(para)}</p>`)
+                .map(para => para === '' ? '<div style="height:0.6em;"></div>' : `<p style="margin:0 0 1em;">${brandify(para)}</p>`)
                 .join('');
             if (closing) closing.innerHTML = tail
                 .map(para => `<p style="margin:0 0 0.5em;">${brandify(para)}</p>`)
                 .join('');
         }
     };
+
 
     window.selectLanguage = function(lang) {
         state.lang = lang;
