@@ -97,6 +97,466 @@ Estimated remaining development: ~4–5 days.
 *Looking forward to your thoughts.*
 
 ---
+# Sandy replies...
+
+## Billing model review
+
+The memo is clear, fair, and well-structured. Here are my thoughts on the five questions:
+
+### 1. Price point — €9.90/month
+
+Too low for what we deliver. A personalised cover letter from a human costs €30–50. We're charging €0.30 and giving unlimited after subscription. The value proposition is strong.
+
+But: €9.90 is a good **launch price**. It removes friction. A yogi who's unemployed won't hesitate at €9.90. They will hesitate at €19.90. Start here, prove the value, raise later. The infrastructure supports price changes without code deployment — use that.
+
+**My recommendation:** Launch at €9.90. Revisit at 500 paying yogis.
+
+### 2. Trial budget — €5.00
+
+€5.00 = 250 Mira messages, or 10 CVs, or 16 cover letters. That's generous. Most yogis will use maybe 20–30 Mira messages and 1 CV upload during a trial. They won't hit €5.00 in 7 days unless they're power users.
+
+That's fine. A generous trial converts better than a stingy one. The meter showing "€1.20 used" is the right transparency — people don't feel tricked.
+
+**Keep €5.00.**
+
+### 3. Trial length — 7 days vs 14
+
+Job searching is not something people do every day. A yogi might sign up on Monday, upload a CV on Wednesday, search on Friday, and not come back until the following Tuesday. Seven days is too tight for that rhythm.
+
+**My recommendation:** 14 days. Or better: "7 days from your first AI interaction" — so the clock doesn't start until they actually engage with Mira or upload a CV. This way someone who signs up and gets distracted for 3 days doesn't lose half their trial to inactivity.
+
+### 4. Existing test accounts
+
+Keep them on `subscription_status = active` until after Mysti's test session. The onboarding reset endpoint already exists for clean re-testing. When we're ready for real trials, flip new signups to trial mode and leave test accounts as-is.
+
+### 5. What's missing
+
+Three things:
+
+**a. Employer-side revenue.** The memo is yogi-only. The other side of the marketplace — companies paying for visibility, featured listings, or access to anonymised candidate profiles — is where the real revenue lives long-term. Don't build it now, but name it. The architecture should not preclude it.
+
+**b. Annual pricing.** €9.90/month = €118.80/year. Offer €89/year (25% discount) for annual commitment. This isn't urgent but should be in the Stripe model from day one.
+
+**c. The "pause and resume" story is excellent.** "A yogi who pauses for two months and comes back finds everything exactly as they left it." That's a trust-builder. Put it in the marketing copy.
+
+### What's already built
+
+The technical foundation is solid — event logging, price schedule in DB, trial columns, API endpoint for live balance, access gate. The remaining work (meter, paywall screen, Stripe checkout, instrumentation) is well-scoped at 4–5 days. No surprises there.
+
+
+# Nate joins the discussion
+
+Hey Arden,
+
+we’ve been going deeper into the charging model for Talent Yoga, and I want to capture where the thinking has evolved. This is less about small pricing tweaks and more about aligning the system with our architecture and philosophy.
+
+---
+
+## 1. Core principle (unchanged, but now clearer)
+
+We are not charging for access.
+We are charging for **work done on the yogi’s behalf**.
+
+This remains the strongest and most defensible foundation:
+
+* It aligns cost and value.
+* It is transparent and explainable.
+* It fits the privacy-first architecture.
+* It supports trust and long-term retention.
+
+The current event-based logging and compute-cost awareness are exactly right.
+
+---
+
+## 2. The real risk is not free riders — it is unbounded compute
+
+We should stop thinking in terms of “free users vs paying users” and instead think in layers of cost:
+
+### Layer A – Zero-cost features (always free)
+
+These should never trigger expensive compute:
+
+* browsing, search
+* job postings
+* dashboard and demand indicators
+* viewing previously generated results
+
+Free users here are not a cost problem.
+
+### Layer B – Low-cost AI (rate limited)
+
+Examples:
+
+* lightweight chat
+* small refreshes
+* embedding queries
+
+After the trial, these remain available in limited quantity:
+
+* e.g. daily chat quota.
+
+This:
+
+* caps cost,
+* preserves engagement,
+* avoids hard paywalls.
+
+### Layer C – High-value AI (subscription)
+
+Examples:
+
+* CV analysis
+* deep match reports
+* cover letters
+* interview coaching
+* long memory and continuity.
+
+This is where subscription lives.
+
+The architecture should reflect this separation clearly.
+
+---
+
+## 3. Trial model refinement
+
+The current model (trial + budget + subscription) is strong.
+
+But psychologically, we should shift framing:
+
+* From “€5 trial budget” → to “full access for 14 days, with transparent cost tracking.”
+
+The cost meter remains, but the tone becomes:
+
+* transparency, not accounting.
+
+Also consider:
+
+* trial starts at first AI interaction, not signup.
+
+---
+
+## 4. After trial: do not block, limit
+
+Instead of stopping AI entirely:
+
+* Provide limited daily or monthly use.
+* Paid users get unlimited.
+
+This keeps users:
+
+* engaged,
+* learning,
+* connected to the system.
+
+It reduces churn and increases later conversion.
+
+---
+
+## 5. Transparency as a differentiator
+
+The finance screen we built is a major strategic asset.
+
+It allows us to:
+
+* explain why we charge,
+* demonstrate alignment,
+* show cost structure.
+
+We should consider exposing parts of this transparency:
+
+* cost per interaction,
+* average system cost per yogi.
+
+This reduces overuse and increases willingness to pay.
+
+This is not guilt or pressure. It is clarity.
+
+---
+
+## 6. Unlimited use risk (future)
+
+The current €9.90 unlimited model is fine for launch.
+
+However, the system should allow:
+
+* hidden fair-use thresholds,
+* rate adaptation if costs rise.
+
+No user-visible complexity now, but future-proofing.
+
+---
+
+## 7. The biggest long-term revenue driver
+
+The yogi subscription stabilizes cash flow.
+
+But the real economic leverage will come from:
+
+* labour intelligence,
+* institutional partnerships,
+* employer analytics.
+
+The current data architecture (facets, embeddings, demand) already supports this.
+
+We should ensure:
+
+* the billing system and data model do not block these future models.
+
+---
+
+## 8. Key positioning
+
+We should explicitly communicate:
+
+> “We charge because we do not sell your data.”
+
+This aligns:
+
+* ethics,
+* trust,
+* pricing.
+
+---
+
+## 9. Strategic shift in language
+
+We are not selling AI.
+
+We are selling:
+
+* orientation,
+* continuity,
+* dignity,
+* momentum.
+
+The billing UX should reflect this.
+
+---
+
+## 10. Next technical explorations
+
+Please think about:
+
+* Rate-limiting architecture for low-cost AI.
+* Cost tracking and exposure in UI.
+* Smooth degradation of AI access after trial.
+* Fair-use safeguards.
+* Integration of billing signals into coaching logic.
+* Cost forecasting per user cohort.
+
+This direction feels consistent with both our ethical and technical foundation.
+
+Looking forward to your thoughts.
+
+— Nate
+
+If you want, I can also prepare a shorter version for Sandy or a user-facing explanation of the model.
+
+---
+# Nates second reply
+Hey Arden,
+
+we’ve been stress-testing the current Talent Yoga billing model and found a few inconsistencies and opportunities to make it clearer, fairer, and more robust. This note captures the updated direction.
+
+The goal remains:
+We charge ethically, transparently, and sustainably, while aligning cost and value.
+
+---
+
+## 1. Trial model – make it unambiguous
+
+Right now we mix a time-based and credit-based trial without explaining the rule. This must be explicit.
+
+New rule:
+The trial ends when either the time or the credit runs out, whichever comes first.
+
+Example wording:
+“You get 14 days or €5 of AI assistance, whichever comes first.”
+
+Reason:
+
+* Time limit prevents inactive zombie accounts.
+* Credit limit prevents excessive compute cost.
+
+The UI and onboarding must communicate this clearly.
+
+---
+
+## 2. Charging model – users pay for outcomes, not infrastructure
+
+We should not charge for internal technical steps such as embeddings.
+
+The user mental model:
+They pay for meaningful AI work, not background processing.
+
+So:
+
+* CV upload + profile building → charged
+* Match reports → charged
+* Cover letters → charged
+* Deep coaching → charged
+
+But:
+
+* Embedding refresh → no direct charge
+* Indexing, clustering → invisible
+
+These costs should be included in the visible actions.
+
+This keeps the system simple and avoids cloud-style billing anxiety.
+
+---
+
+## 3. Subscription vs usage – current contradiction
+
+We currently say:
+“€9.50/month plus usage”
+
+But earlier we defined:
+“All-you-can-use after subscribing.”
+
+We must unify this.
+
+Recommended hybrid:
+Subscription includes a monthly AI allowance.
+
+Example:
+€9.50 includes €10 of AI usage per month.
+
+Why:
+
+* Most users will never exceed this.
+* Cost remains predictable.
+* Heavy users pay more.
+
+This preserves calm and fairness.
+
+Technical implications:
+
+* Monthly credit bucket per user.
+* Consumption logged as today.
+* Overages possible but transparent.
+
+Optional:
+
+* Rollover unused credit for 1–2 months.
+
+---
+
+## 4. Free mode after trial
+
+Instead of hard blocking AI after the trial, introduce limited free use.
+
+Example:
+
+* A small daily or monthly AI quota.
+* Browsing and dashboard always free.
+
+This:
+
+* caps compute cost,
+* maintains engagement,
+* improves long-term conversion.
+
+This requires:
+
+* Rate limiting infrastructure.
+* Clear UI messaging.
+
+---
+
+## 5. Flex mode (pay-as-you-go)
+
+Some users will prefer no subscription.
+
+We should offer:
+Pure usage-based billing.
+
+Characteristics:
+
+* No monthly fee.
+* Slightly higher per-action cost.
+* Transparent.
+
+This:
+
+* builds trust,
+* reduces onboarding friction,
+* provides a fallback path.
+
+Likely conversion path:
+Flex → subscription.
+
+---
+
+## 6. Transparency and cost awareness
+
+The finance screen is a major strategic asset.
+
+We should consider:
+
+* Showing approximate cost per AI interaction.
+* Showing average system cost per user.
+
+This reduces abuse and increases willingness to pay.
+
+This also aligns with our privacy-first positioning:
+“We charge because we do not sell your data.”
+
+---
+
+## 7. Risk management
+
+The current unlimited model is fine for launch.
+
+But the system must support:
+
+* Fair-use thresholds.
+* Dynamic limits if compute cost spikes.
+* Queue prioritization.
+
+These should not be visible to users but must exist.
+
+---
+
+## 8. Architecture questions to explore
+
+Please think about:
+
+* How to implement rate-limited free AI after trial.
+* Monthly credit buckets.
+* Overages and alerts.
+* Flex mode billing path.
+* Cost forecasting per cohort.
+* Smooth user experience for switching plans.
+* Stripe structure to support:
+
+  * subscription + credit,
+  * flex billing,
+  * annual plans later.
+
+We do not need all of this immediately, but the architecture should not block future evolution.
+
+---
+
+## 9. Strategic alignment
+
+This model:
+
+* preserves ethical charging,
+* prevents free rider cost explosions,
+* supports long-term sustainability,
+* aligns with our transparency and trust philosophy.
+
+Let’s discuss what is feasible in the current stack and what should come later.
+
+Looking forward to your thoughts.
+
+— Nate
+
+
+---
+#howtobrowse
 
 ## Appendix: How to browse the live site
 

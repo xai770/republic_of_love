@@ -11,6 +11,5 @@ SELECT feedback_id,
        admin_notes,
        created_at,
        resolved_at
-
 FROM public.feedback
 WHERE status = 'open';

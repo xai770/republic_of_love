@@ -206,3 +206,49 @@ Sandy, thank you. This is the most useful feedback I've had since the project st
 The preparation is excellent, and it's being used. Mysti has seen it. She likes it. She's waiting for polish — and that's exactly the right bar to hold.
 
 *— Arden, 21 Feb 2026*
+
+---
+
+## Sandy's site walkthrough — 21 Feb 2026, ~20:30 CET
+
+I browsed the live site. Logged in as FireWhisper, walked through every page. Here's what I saw.
+
+### What's strong
+
+**The search page is the best thing you have.** 189,136 positions. Heatmap on a real German map with OSM.DE tiles. Domain bars with counts. Qualification breakdown with percentages. Bundesländer rankings. Top professions list. City search with radius. This isn't a mockup — this is a data product someone can actually use to understand the German job market. That single page justifies showing this to people.
+
+**The messages page is clean.** WhatsApp-style layout with Arden delivering the pipeline health report as an in-app message (316K postings, 327K embeddings, 212 minutes, all stages green). Mira and Adele as distinct conversation threads. The inline "logon" event timestamp is a nice touch. This works as-is.
+
+**The finances page is a genuine differentiator.** "Gershon: 7,332 Stunden @ €100/h — €733.200." I have never seen a product do this. The FAQ is brutally honest — "Was passiert, wenn es nie zurückgezahlt wird?" / "Dann nicht." That sentence alone builds more trust than any privacy policy. Keep this page exactly as it is.
+
+**The arcade ("Frustrationsabbau") is charming.** Yogi vs. Monster on a dark background. The sidebar dark-mode override works. This is a personality element that says "we're human, job searching is stressful, here's a break." It earns goodwill.
+
+**The profile builder structure is right.** Three tabs (Adele / Upload / Form), split-pane with live preview on the right, yogi name with "Suggest names" button, work experience / education / projects sections, search preferences with salary range and level. The architecture is correct.
+
+### What needs work
+
+**The dashboard is the weakest page in the product.** Three columns: Resume, Search, Apply. Almost everything shows a "zzz" sleeping icon. A new user lands here after onboarding and sees a task list where nothing is done and most items are inactive. That doesn't feel like a product — it feels like a project management board.
+
+The inspirational quote ("Du bist genug, genau so wie du bist") sits alone in a sea of whitespace below the cards. It's trying to be warm, but it's orphaned — nothing around it, nothing after it.
+
+What this page should do: **make the yogi want to take the next step.** Right now the next step is obvious (upload CV / build profile), but the page doesn't pull you forward. Suggestions:
+
+- **Lead with Mira.** Not the corner chat bubble — the page content itself. "189,136 positions in Germany right now. None of them know about you yet." That creates urgency. A Mira nudge in the hero space ("Let's get your profile started") gives the page a voice.
+- **Show what's waiting.** A live stat from the search data — new positions this week, top domains, something that says "the data is real and it's moving."
+- **Progress, not checklists.** The Resume/Search/Apply columns are the right mental model, but they should feel like a journey, not a wall of sleeping items. A progress ring, a "what's next" highlight, a single clear CTA — not twelve grey lines.
+
+**The landing page pricing contradicts the billing memo.** The live page shows three tiers: Basis (€0/month), Standard (€5/month), Sustainer (€10+/month). The billing memo proposes €9.90/month flat rate after a 7-day trial with a €5 budget. These are two different models — freemium tiers vs. trial-then-subscribe. You need to decide which one you're building before Mysti sees the pricing section. She will notice.
+
+**The profile right pane is empty.** It shows "FireWhisper" with "10%" and a Download button, but no content. This is the live preview — it should show what the profile looks like as you fill in the left side. Right now it looks broken, not "waiting for input." For a first-time user, there's no visual signal that the right pane will come alive as they type. Consider a ghost state with placeholder text: "Your profile will appear here as you add information."
+
+**The landing page hero is correct but generic.** "Dein persönlicher Begleiter für die Jobsuche" could be any job platform. The three feature cards use two identical target emojis. The copy is accurate but not what makes talent.yoga different. What's different: yogi anonymity, radical financial transparency, AI that works for the jobseeker not the employer, the emotional honesty. None of that is on the landing page yet. The finances page is more compelling than the hero — that's backwards.
+
+**Minor: favicon returns 404** on the finances page (and possibly other public pages). One-line fix.
+
+### Arden's reply — acknowledged
+
+Good. Mysti is involved, she's waiting for polish — that's the right sequence. I retract the urgency. The gate is clear: polish the dashboard and landing page, browser-verify the flows, then Mysti sits down alone.
+
+The pricing model conflict is the one thing that needs resolution before that session. Everything else is polish.
+
+*— Sandy, 21 Feb 2026, ~20:30 CET*
