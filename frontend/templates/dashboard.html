@@ -441,10 +441,10 @@
             <section class="panel activity-log-panel" id="activity-log-panel">
                 <div class="panel-header">
                     <span class="panel-icon">📖</span>
-                    <h2 class="panel-title">Mein Verlauf</h2>
+                    <h2 class="panel-title">{{ t('home.activity_log_title') }}</h2>
                 </div>
                 <ul class="activity-list" id="activity-list">
-                    <li class="activity-loading">Wird geladen…</li>
+                    <li class="activity-loading">{{ t('home.activity_log_loading') }}</li>
                 </ul>
             </section>
 
@@ -452,11 +452,11 @@
             <section class="panel yogimeter-panel" id="yogimeter-panel">
                 <div class="panel-header">
                     <span class="panel-icon">📊</span>
-                    <h2 class="panel-title">Yogi-Meter</h2>
+                    <h2 class="panel-title">{{ t('home.yogimeter_title') }}</h2>
                     <span class="panel-subtitle" id="yogimeter-subtitle"></span>
                 </div>
                 <div class="yogimeter-funnel" id="yogimeter-funnel">
-                    <div class="yogimeter-loading">Wird geladen…</div>
+                    <div class="yogimeter-loading">{{ t('home.yogimeter_loading') }}</div>
                 </div>
             </section>
 
@@ -466,21 +466,21 @@
         <div class="protokoll-panel" id="protokoll-panel">
             <div class="protokoll-header">
                 <span class="panel-icon">📋</span>
-                <h2 class="protokoll-title">Bewerbungsprotokoll</h2>
-                <span class="protokoll-badge">Nachweisbar f&#252;r die Agentur f&#252;r Arbeit</span>
+                <h2 class="protokoll-title">{{ t('home.protokoll_title') }}</h2>
+                <span class="protokoll-badge">{{ t('home.protokoll_badge') }}</span>
                 <div class="protokoll-actions">
                     <button class="protokoll-filter-toggle active" id="protokoll-filter-btn"
                             onclick="toggleProtokollFilter()">
-                        Nur Entscheidungen
+                        {{ t('home.protokoll_filter_decisions') }}
                     </button>
                     <a class="protokoll-download-btn"
                        href="/api/home/protokoll/download" download>
-                        &#x2B07; Herunterladen (.txt)
+                        ⬇ {{ t('home.protokoll_download') }}
                     </a>
                 </div>
             </div>
             <div id="protokoll-content">
-                <div class="protokoll-loading">Wird geladen&#8230;</div>
+                <div class="protokoll-loading">{{ t('home.protokoll_loading') }}</div>
             </div>
             <div class="protokoll-footer" id="protokoll-footer" style="display:none">
                 <span id="protokoll-count-label"></span>
@@ -555,6 +555,27 @@ const I18N = {
         partial_match: '{{ t("dashboard.partial_match") }}',
         details: '{{ t("dashboard.details") }}',
         unknown_company: '{{ t("dashboard.unknown_company") }}'
+    },
+    home: {
+        activity_log_loading:    '{{ t("home.activity_log_loading") }}',
+        activity_log_empty:      '{{ t("home.activity_log_empty") }}',
+        yogimeter_loading:       '{{ t("home.yogimeter_loading") }}',
+        yogimeter_empty:         '{{ t("home.yogimeter_empty") }}',
+        protokoll_loading:       '{{ t("home.protokoll_loading") }}',
+        protokoll_empty:         '{{ t("home.protokoll_empty") }}',
+        protokoll_empty_filter:  '{{ t("home.protokoll_empty_filter") }}',
+        protokoll_col_date:      '{{ t("home.protokoll_col_date") }}',
+        protokoll_col_job:       '{{ t("home.protokoll_col_job") }}',
+        protokoll_col_action:    '{{ t("home.protokoll_col_action") }}',
+        protokoll_col_reason:    '{{ t("home.protokoll_col_reason") }}',
+        protokoll_show_all:      '{{ t("home.protokoll_show_all") }}',
+        action_viewed:           '{{ t("home.action_viewed") }}',
+        action_saved:            '{{ t("home.action_saved") }}',
+        action_dismissed:        '{{ t("home.action_dismissed") }}',
+        action_apply_intent:     '{{ t("home.action_apply_intent") }}',
+        action_applied:          '{{ t("home.action_applied") }}',
+        action_not_applied:      '{{ t("home.action_not_applied") }}',
+        action_outcome_received: '{{ t("home.action_outcome_received") }}'
     }
 };
 </script>
@@ -1255,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (!data.has_profile || !data.items || data.items.length === 0) {
-            list.innerHTML = '<li class="activity-empty">Noch keine Aktivitäten — schau dir deine ersten Stellen an!</li>';
+            list.innerHTML = `<li class="activity-empty">${I18N.home.activity_log_empty}</li>`;
             return;
         }
 
@@ -1270,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </li>`;
         }).join('');
     } catch (e) {
-        list.innerHTML = '<li class="activity-empty">Verlauf konnte nicht geladen werden.</li>';
+        list.innerHTML = `<li class="activity-empty">${I18N.common.error}</li>`;
     }
 })();
 
@@ -1292,7 +1313,7 @@ const ACTION_CHIP_CLASS = {
 
 function renderProtokollTable(entries) {
     if (!entries.length) {
-        return '<div class="protokoll-empty">Keine Eintr\u00e4ge gefunden.</div>';
+        return `<div class="protokoll-empty">${I18N.home.protokoll_empty}</div>`;
     }
     const rows = entries.map(e => {
         const chipCls   = ACTION_CHIP_CLASS[e.event_type] || 'chip-viewed';
@@ -1314,10 +1335,10 @@ function renderProtokollTable(entries) {
     }).join('');
     return `<table class="protokoll-table">
         <thead><tr>
-            <th>Datum</th>
-            <th>Stelle</th>
-            <th>Aktion</th>
-            <th>Begr\u00fcndung / Notiz</th>
+            <th>${I18N.home.protokoll_col_date}</th>
+            <th>${I18N.home.protokoll_col_job}</th>
+            <th>${I18N.home.protokoll_col_action}</th>
+            <th>${I18N.home.protokoll_col_reason}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
@@ -1336,7 +1357,7 @@ async function loadProtokoll(decisionsOnly) {
         _protokollData = data;
 
         if (!data.has_profile || !data.entries || !data.entries.length) {
-            content.innerHTML = '<div class="protokoll-empty">Noch keine Aktivit\u00e4ten aufgezeichnet.</div>';
+            content.innerHTML = `<div class="protokoll-empty">${I18N.home.protokoll_empty}</div>`;
             if (footer) footer.style.display = 'none';
             return;
         }
@@ -1353,13 +1374,13 @@ async function loadProtokoll(decisionsOnly) {
             countLbl.textContent = `${all.length} Eintr\u00e4ge${appStr}`;
             if (!_protokollAllLoaded && all.length > PROTOKOLL_PAGE) {
                 moreBtn.style.display  = 'inline';
-                moreBtn.textContent    = `Alle ${all.length} Eintr\u00e4ge anzeigen`;
+                moreBtn.textContent    = I18N.home.protokoll_show_all.replace('{n}', all.length);
             } else {
                 moreBtn.style.display = 'none';
             }
         }
     } catch (_) {
-        content.innerHTML = '<div class="protokoll-empty">Protokoll konnte nicht geladen werden.</div>';
+        content.innerHTML = `<div class="protokoll-empty">${I18N.common.error}</div>`;
     }
 }
 
@@ -1394,7 +1415,7 @@ loadProtokoll(true);  // default: decisions only
         const data = await res.json();
 
         if (!data.stages || data.stages.length === 0) {
-            funnel.innerHTML = '<div class="yogimeter-loading">Noch keine Daten.</div>';
+            funnel.innerHTML = `<div class="yogimeter-loading">${I18N.home.yogimeter_empty}</div>`;
             return;
         }
 
@@ -1422,7 +1443,7 @@ loadProtokoll(true);  // default: decisions only
                     </div>`;
             }).join('');
     } catch (e) {
-        funnel.innerHTML = '<div class="yogimeter-loading">Daten konnten nicht geladen werden.</div>';
+        funnel.innerHTML = `<div class="yogimeter-loading">${I18N.common.error}</div>`;
     }
 })();
 </script>

@@ -4,10 +4,21 @@ i18n — Internationalization support for talent.yoga
 Usage in templates:
     {{ t('nav.start') }}
     {{ t('dashboard.welcome', name=user.display_name) }}
+    {{ t('home.protokoll_title') }}
 
 Supported languages:
     - de (German) — default
     - en (English)
+
+Translation namespaces:
+    meta        — page metadata
+    common      — shared UI chrome (loading, error, date labels)
+    nav         — navigation items
+    dashboard   — match cards and profile prompts
+    home        — Activity Log, Yogi-meter, Bewerbungsprotokoll panels
+    footer      — footer links
+    feedback    — feedback widget
+    account     — account / settings page
 """
 import json
 from pathlib import Path
