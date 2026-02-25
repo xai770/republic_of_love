@@ -373,13 +373,22 @@ YOGI_FUNNEL_LABELS = {
 
 @router.get("/api/home/yogimeter")
 def get_yogimeter(
+    period: str = Query(default="week", regex="^(day|week|month|all)$"),
     user: dict = Depends(require_user),
     conn=Depends(get_db),
 ):
     """
     Return event counts by type for the Yogi-meter funnel chart.
-    Also returns total_matches (denominator) and days_active.
+    period: day=last 24h, week=last 7 days, month=last 30 days, all=lifetime.
     """
+    PERIOD_FILTER = {
+        "day":   "AND e.created_at >= NOW() - INTERVAL '1 day'",
+        "week":  "AND e.created_at >= NOW() - INTERVAL '7 days'",
+        "month": "AND e.created_at >= NOW() - INTERVAL '30 days'",
+        "all":   "",
+    }
+    time_filter = PERIOD_FILTER.get(period, "")
+
     with conn.cursor() as cur:
         user_id = user["user_id"]
 
@@ -389,27 +398,30 @@ def get_yogimeter(
         )
         profile_row = cur.fetchone()
         if not profile_row:
-            return {"stages": [], "total_matches": 0, "days_active": 0}
+            return {"stages": [], "total_matches": 0, "days_active": 0, "period": period}
 
         profile_id = profile_row["profile_id"]
 
-        # Event counts per type
-        cur.execute("""
+        # Event counts per type, filtered by time window
+        cur.execute(f"""
             SELECT event_type, COUNT(*) as cnt
-            FROM yogi_posting_events
-            WHERE profile_id = %s
+            FROM yogi_posting_events e
+            WHERE profile_id = %s {time_filter}
             GROUP BY event_type
         """, (profile_id,))
         counts = {row["event_type"]: row["cnt"] for row in cur.fetchall()}
 
-        # Total matches for this profile (denominator for the funnel)
+        # Total events in this period (for the subtitle counter)
+        total_period = sum(counts.values())
+
+        # Total matches for this profile (lifetime denominator)
         cur.execute(
             "SELECT COUNT(*) as cnt FROM profile_posting_matches WHERE profile_id = %s",
             (profile_id,),
         )
         total_matches = cur.fetchone()["cnt"] or 0
 
-        # Days active = days since first event
+        # Days active = days since first event (lifetime)
         cur.execute("""
             SELECT EXTRACT(DAY FROM NOW() - MIN(created_at))::int as days
             FROM yogi_posting_events WHERE profile_id = %s
@@ -429,7 +441,9 @@ def get_yogimeter(
         return {
             "stages":        stages,
             "total_matches": total_matches,
+            "total_period":  total_period,
             "days_active":   days_active,
+            "period":        period,
         }
 
 

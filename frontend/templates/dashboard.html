@@ -40,14 +40,35 @@
 #cv-job-bar-eta { font-size: 0.76rem; color: var(--text-muted, #888); flex-shrink: 0; }
 
 /* ── Lower panels: Activity Log + Yogi-meter ──────────────────────── */
-.lower-panels {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    padding: 1.25rem 1.5rem 0.5rem;
+.yogimeter-outer { margin: 0 1.5rem 1.25rem; }
+.yogimeter-body  { padding: 0.75rem 1.25rem 1.1rem; }
+.yogimeter-summary {
+    font-size: 0.78rem;
+    color: var(--text-muted, #888);
+    margin: 0 0 0.75rem;
 }
-@media (max-width: 768px) {
-    .lower-panels { grid-template-columns: 1fr; }
+.yogimeter-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
+}
+.yogi-tab {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 0.4rem;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.yogi-tab.active, .yogi-tab:hover {
+    background: rgba(108,111,228,0.15);
+    border-color: rgba(108,111,228,0.4);
+    color: var(--accent, #6c6fe4);
 }
 .panel {
     background: var(--surface2, #1e1e2e);
@@ -75,40 +96,7 @@
     margin-left: auto;
 }
 
-/* Activity list */
-.activity-list {
-    list-style: none;
-    margin: 0; padding: 0;
-    display: flex; flex-direction: column; gap: 0.65rem;
-}
-.activity-item {
-    display: flex; flex-direction: column; gap: 0.2rem;
-    padding: 0.55rem 0.75rem;
-    background: var(--surface3, rgba(255,255,255,0.03));
-    border-radius: 0.5rem;
-    border-left: 3px solid var(--accent, #6c6fe4);
-}
-.activity-item.viewed      { border-color: #6c6fe4; }
-.activity-item.saved       { border-color: #10b981; }
-.activity-item.dismissed   { border-color: #6b7280; }
-.activity-item.apply_intent{ border-color: #f59e0b; }
-.activity-item.applied     { border-color: #3b82f6; }
-.activity-item.not_applied { border-color: #ef4444; }
-.activity-item.outcome_received { border-color: #8b5cf6; }
-.activity-sentence {
-    font-size: 0.83rem;
-    color: var(--text, #e0e0f0);
-    line-height: 1.45;
-}
-.activity-date {
-    font-size: 0.72rem;
-    color: var(--text-muted, #888);
-}
-.activity-loading, .activity-empty {
-    font-size: 0.83rem;
-    color: var(--text-muted, #888);
-    padding: 0.5rem 0;
-}
+
 
 /* Yogi-meter funnel */
 .yogimeter-funnel {
@@ -435,31 +423,24 @@
         </section>
 
         <!-- ── Lower panels: Activity Log + Yogi-meter ───────────────── -->
-        <div class="lower-panels" id="lower-panels">
-
-            <!-- Activity Log -->
-            <section class="panel activity-log-panel" id="activity-log-panel">
-                <div class="panel-header">
-                    <span class="panel-icon">📖</span>
-                    <h2 class="panel-title">{{ t('home.activity_log_title') }}</h2>
+        <!-- Yogi-meter -->
+        <div class="protokoll-panel yogimeter-outer" id="yogimeter-panel">
+            <div class="protokoll-header">
+                <span class="panel-icon">📊</span>
+                <h2 class="protokoll-title">{{ t('home.yogimeter_title') }}</h2>
+                <div class="yogimeter-tabs" id="yogimeter-tabs">
+                    <button class="yogi-tab" data-period="day" onclick="switchYogiTab('day')">{{ t('home.yogimeter_tab_day') }}</button>
+                    <button class="yogi-tab active" data-period="week" onclick="switchYogiTab('week')">{{ t('home.yogimeter_tab_week') }}</button>
+                    <button class="yogi-tab" data-period="month" onclick="switchYogiTab('month')">{{ t('home.yogimeter_tab_month') }}</button>
+                    <button class="yogi-tab" data-period="all" onclick="switchYogiTab('all')">{{ t('home.yogimeter_tab_all') }}</button>
                 </div>
-                <ul class="activity-list" id="activity-list">
-                    <li class="activity-loading">{{ t('home.activity_log_loading') }}</li>
-                </ul>
-            </section>
-
-            <!-- Yogi-meter -->
-            <section class="panel yogimeter-panel" id="yogimeter-panel">
-                <div class="panel-header">
-                    <span class="panel-icon">📊</span>
-                    <h2 class="panel-title">{{ t('home.yogimeter_title') }}</h2>
-                    <span class="panel-subtitle" id="yogimeter-subtitle"></span>
-                </div>
+            </div>
+            <div class="yogimeter-body">
+                <p class="yogimeter-summary" id="yogimeter-subtitle"></p>
                 <div class="yogimeter-funnel" id="yogimeter-funnel">
                     <div class="yogimeter-loading">{{ t('home.yogimeter_loading') }}</div>
                 </div>
-            </section>
-
+            </div>
         </div>
 
         <!-- ── Bewerbungsprotokoll ──────────────────────────────────── -->
@@ -569,6 +550,10 @@ const I18N = {
         protokoll_col_action:    '{{ t("home.protokoll_col_action") }}',
         protokoll_col_reason:    '{{ t("home.protokoll_col_reason") }}',
         protokoll_show_all:      '{{ t("home.protokoll_show_all") }}',
+        yogimeter_tab_day:       '{{ t("home.yogimeter_tab_day") }}',
+        yogimeter_tab_week:      '{{ t("home.yogimeter_tab_week") }}',
+        yogimeter_tab_month:     '{{ t("home.yogimeter_tab_month") }}',
+        yogimeter_tab_all:       '{{ t("home.yogimeter_tab_all") }}',
         action_viewed:           '{{ t("home.action_viewed") }}',
         action_saved:            '{{ t("home.action_saved") }}',
         action_dismissed:        '{{ t("home.action_dismissed") }}',
@@ -1266,35 +1251,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-// ── Activity Log ──────────────────────────────────────────────────────────────
-(async function loadActivityLog() {
-    const list = document.getElementById('activity-list');
-    if (!list) return;
-
-    try {
-        const res  = await fetch('/api/home/activity?limit=6');
-        const data = await res.json();
-
-        if (!data.has_profile || !data.items || data.items.length === 0) {
-            list.innerHTML = `<li class="activity-empty">${I18N.home.activity_log_empty}</li>`;
-            return;
-        }
-
-        list.innerHTML = data.items.map(item => {
-            const dateStr = item.created_at
-                ? new Date(item.created_at).toLocaleDateString('de-DE', {day:'numeric', month:'short'})
-                : '';
-            return `
-                <li class="activity-item ${item.event_type}">
-                    <span class="activity-sentence">${item.sentence}</span>
-                    <span class="activity-date">${dateStr}</span>
-                </li>`;
-        }).join('');
-    } catch (e) {
-        list.innerHTML = `<li class="activity-empty">${I18N.common.error}</li>`;
-    }
-})();
-
 // ── Bewerbungsprotokoll ───────────────────────────────────────────────────────
 const PROTOKOLL_PAGE = 20;
 let _protokollDecisionsOnly = true;
@@ -1405,13 +1361,25 @@ function loadAllProtokoll() {
 loadProtokoll(true);  // default: decisions only
 
 // ── Yogi-meter ────────────────────────────────────────────────────────────────
-(async function loadYogimeter() {
+let _yogimeterPeriod = 'week';
+
+function switchYogiTab(period) {
+    _yogimeterPeriod = period;
+    document.querySelectorAll('.yogi-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+    });
+    loadYogimeter(period);
+}
+
+async function loadYogimeter(period) {
     const funnel   = document.getElementById('yogimeter-funnel');
     const subtitle = document.getElementById('yogimeter-subtitle');
     if (!funnel) return;
 
+    funnel.innerHTML = `<div class="yogimeter-loading">${I18N.home.yogimeter_loading || '…'}</div>`;
+
     try {
-        const res  = await fetch('/api/home/yogimeter');
+        const res  = await fetch(`/api/home/yogimeter?period=${period || _yogimeterPeriod}`);
         const data = await res.json();
 
         if (!data.stages || data.stages.length === 0) {
@@ -1421,30 +1389,34 @@ loadProtokoll(true);  // default: decisions only
 
         if (subtitle) {
             const parts = [];
-            if (data.total_matches) parts.push(`${data.total_matches} Stellen`);
-            if (data.days_active)   parts.push(`${data.days_active} Tage aktiv`);
+            if (data.total_period > 0) parts.push(`${data.total_period} Aktionen`);
+            if (data.total_matches)    parts.push(`${data.total_matches} Stellen gesamt`);
             subtitle.textContent = parts.join(' · ');
         }
 
-        // Max count drives bar widths (use viewed count or total_matches as denominator)
-        const maxBar = data.stages.reduce((m, s) => Math.max(m, s.count), 1);
+        const active = data.stages.filter(s => s.count > 0);
+        if (!active.length) {
+            funnel.innerHTML = `<div class="yogimeter-loading">${I18N.home.yogimeter_empty}</div>`;
+            return;
+        }
 
-        funnel.innerHTML = data.stages
-            .filter(s => s.count > 0 || s.key === 'viewed')
-            .map(s => {
-                const pct = Math.round((s.count / maxBar) * 100);
-                return `
-                    <div class="funnel-row">
-                        <span class="funnel-label">${s.label}</span>
-                        <div class="funnel-bar-wrap">
-                            <div class="funnel-bar ${s.key}" style="width:${pct}%"></div>
-                        </div>
-                        <span class="funnel-count">${s.count}</span>
-                    </div>`;
-            }).join('');
+        const maxBar = active.reduce((m, s) => Math.max(m, s.count), 1);
+        funnel.innerHTML = active.map(s => {
+            const pct = Math.round((s.count / maxBar) * 100);
+            return `
+                <div class="funnel-row">
+                    <span class="funnel-label">${s.label}</span>
+                    <div class="funnel-bar-wrap">
+                        <div class="funnel-bar ${s.key}" style="width:${pct}%"></div>
+                    </div>
+                    <span class="funnel-count">${s.count}</span>
+                </div>`;
+        }).join('');
     } catch (e) {
         funnel.innerHTML = `<div class="yogimeter-loading">${I18N.common.error}</div>`;
     }
-})();
+}
+
+loadYogimeter('week');
 </script>
 {% endblock %}
