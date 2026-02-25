@@ -244,7 +244,8 @@ def create_user(cur) -> int:
         INSERT INTO users (
             email, display_name, yogi_name, language, formality,
             subscription_status, onboarding_completed_at,
-            terms_accepted_at, trial_ends_at, trial_budget_cents, is_protected
+            terms_accepted_at, trial_ends_at, trial_budget_cents, is_protected,
+            avatar_url
         ) VALUES (
             %s, %s, %s, %s, %s,
             'active',
@@ -252,7 +253,8 @@ def create_user(cur) -> int:
             NOW() - INTERVAL '90 days',
             NOW() + INTERVAL '1 year',
             500,
-            FALSE
+            FALSE,
+            'https://api.dicebear.com/7.x/personas/svg?seed=susanne-mustermann'
         )
         RETURNING user_id
     """, (MARKER_EMAIL, DISPLAY_NAME, YOGI_NAME, LANGUAGE, FORMALITY))
@@ -268,6 +270,10 @@ def create_profile(cur, user_id: int) -> int:
             user_id, full_name, profile_summary, current_title,
             skills_extraction_status, experience_level, years_of_experience,
             location, language, skill_keywords,
+            desired_locations, desired_roles,
+            availability_status,
+            expected_salary_min, expected_salary_max, currency,
+            linkedin_url, email, phone,
             is_test_profile, matching_enabled, enabled
         ) VALUES (
             %s, %s, %s,
@@ -278,12 +284,31 @@ def create_profile(cur, user_id: int) -> int:
             'Berlin',
             'de',
             %s,
+            %s, %s,
+            'sofort',
+            38000, 48000, 'EUR',
+            'https://www.linkedin.com/in/susanne-mustermann-demo',
+            'susanne.mustermann@example.de',
+            '+49 30 12345678',
             TRUE,
             TRUE,
             TRUE
         )
         RETURNING profile_id
-    """, (user_id, "Susanne Mustermann", PROFILE_SUMMARY, json.dumps(SKILLS)))
+    """, (
+        user_id,
+        "Susanne Mustermann",
+        PROFILE_SUMMARY,
+        json.dumps(SKILLS),
+        ["Berlin", "Remote", "Potsdam", "Brandenburg"],
+        [
+            "Bürokauffrau",
+            "Verwaltungsassistentin",
+            "Office Managerin",
+            "Sachbearbeiterin",
+            "Assistentin der Geschäftsführung",
+        ],
+    ))
     profile_id = cur.fetchone()["profile_id"]
     print(f"   profile_id = {profile_id}")
     return profile_id
