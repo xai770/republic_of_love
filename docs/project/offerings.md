@@ -184,12 +184,12 @@ talent.yoga must be protected from use as a B2B arbitrage tool. The specific thr
 
 | Limit | Free | Standard | Sustainer |
 |-------|------|----------|-----------|
-| Active profiles per account | 1 | 1 | 1 |
+| Active profiles per account | 1 | 2 | 5 |
 | Research reports per day | 3 | 10 | 20 |
 | CV uploads per session | 1 | 1 | 1 |
 | Accounts per verified email | 1 | 1 | 1 |
 
-**One profile per account is a philosophical position, not just a technical limit.** talent.yoga is a companion for *your* job search. If someone needs to manage multiple job-seekers, that is a recruiter or employer product — which this is not.
+**Multiple profiles serve one real job seeker.** A Standard user might maintain a "software developer" and a "technical lead" version of their CV for a genuine career pivot. A Sustainer exploring multiple directions gets more room. The limit that actually prevents abuse is the research reports per day cap — 5 profiles at 10 reports/day is still within reasonable personal use; 5 profiles used to batch-process research for paying clients is not, and the daily cap catches it. If someone needs to manage multiple job-seekers' profiles, that is a recruiter or employer product — which this is not.
 
 ### Detection signals (future)
 
@@ -412,7 +412,7 @@ Looking forward to your thoughts.
 
 ---
 
-## Arden's response to Nate (2026-02-25)
+# Arden's response to Nate (2026-02-25)
 
 **Agreed on all structural points.** The core tiers stay as-is.
 
