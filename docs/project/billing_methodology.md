@@ -9,7 +9,7 @@
 
 ## What is a Yogi Bill?
 
-A per-yogi, per-month document that shows **everything it costs to serve them** — not just what they pay. Every yogi gets a bill, regardless of tier (trial, free, or full). The bill is the transparency instrument Nate described: clarity, not accounting.
+A per-yogi, per-month document that shows **everything it costs to serve them** — not just what they pay. Every yogi gets a bill, regardless of tier (Guest or Member). The bill is the transparency instrument Nate described: clarity, not accounting.
 
 The bill answers three questions:
 1. **What did you use?** (Direct AI actions)
@@ -25,7 +25,7 @@ The bill answers three questions:
 ║  talent.yoga — Deine Monatsübersicht / Your Monthly Summary      ║
 ║  Zeitraum: Februar 2026                                          ║
 ║  Yogi: Luna (user_id: 4)                                         ║
-║  Tier: Full (€9.90/Monat)                                        ║
+║  Tier: Mitglied (€5.00/Monat)                                     ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
 ║  A. DEINE KI-NUTZUNG / YOUR AI USAGE                             ║
@@ -53,12 +53,12 @@ The bill answers three questions:
 ║                                                                  ║
 ║  C. DEIN BEITRAG / YOUR CONTRIBUTION                             ║
 ║  ┌────────────────────────────────────────────┬──────────────┐   ║
-║  │ Du hast gezahlt                            │ €9.90        │   ║
+║  │ Du hast gezahlt                            │ €5.00        │   ║
 ║  │ − Betriebskosten (dein Anteil)             │ −€0.23       │   ║
-║  │ = Verbleibend                              │ €9.67        │   ║
-║  │   → Rücklage (10%)                         │ €0.97        │   ║
-║  │   → Gründer-Rückzahlung (70%)              │ €6.77        │   ║
-║  │   → Entwicklung (20%)                      │ €1.93        │   ║
+║  │ = Verbleibend                              │ €4.77        │   ║
+║  │   → Rücklage (10%)                         │ €0.48        │   ║
+║  │   → Gründer-Rückzahlung (70%)              │ €3.34        │   ║
+║  │   → Entwicklung (20%)                      │ €0.95        │   ║
 ║  └────────────────────────────────────────────┴──────────────┘   ║
 ║                                                                  ║
 ║  D. GEMEINSCHAFT / COMMUNITY                                     ║
@@ -112,9 +112,10 @@ ORDER BY total_cents DESC;
 
 | Tier | Events logged? | Events charged? |
 |------|---------------|-----------------|
-| Trial | Yes | Yes (against €5 trial budget) |
-| Free | Yes (within daily limits) | No (€0 — but shown on bill as "what it would cost") |
-| Full | Yes | No (flat €9.90/month — but shown on bill as transparency) |
+| Guest | Yes (within daily limits) | No (€0 — but shown on bill as "what it would cost") |
+| Member | Yes | No (flat €5.00/month — but shown on bill as transparency) |
+
+**New member start:** The first billing period is 2 weeks at €5. After that, billing is monthly at €5. No separate tier — it is still Member throughout.
 
 **Key point:** Every tier logs every event. The bill always shows the full picture. The difference is only whether money changes hands.
 
@@ -198,10 +199,10 @@ cost_to_serve = compute_cost + server_share + pipeline_share + services_share
 
 ### Revenue allocation waterfall
 
-For paying yogis (trial or full), show where the money goes:
+For paying yogis (Member and Sustainer), show where the money goes:
 
 ```
-payment = subscription_amount (or trial_spent for trial users)
+payment = subscription_amount
 operating_share = cost_to_serve                          # Already calculated in B
 remainder = payment - operating_share
 reserve = min(remainder × 10%, reserve_cap_remaining)
@@ -211,22 +212,22 @@ development = remainder × 20% (after reserve)
 
 ### Tier-specific display
 
-**Trial yogi:**
-```
-Du hast €1.20 von €5.00 deines Testbudgets verwendet.
-Verbleibend: €3.80 (noch 11 Tage)
-```
-
-**Free yogi:**
+**Guest yogi:**
 ```
 Diesen Monat hat es uns €0.23 gekostet, dich zu bedienen.
-Deine Nutzung wurde von zahlenden Yogis mitgetragen.
+Deine Nutzung wurde von zahlenden Mitgliedern mitgetragen.
 ```
 
-**Full yogi:**
+**Member yogi (new — first 2 weeks):**
 ```
-Du hast €9.90 gezahlt.
-€0.23 → Betrieb | €0.97 → Rücklage | €6.77 → Gründer | €1.93 → Entwicklung
+Du hast €5.00 für deine ersten zwei Wochen gezahlt.
+Verbleibend: N Tage bis zur ersten monatlichen Abrechnung.
+```
+
+**Member yogi (ongoing):**
+```
+Du hast €5.00 gezahlt.
+€0.23 → Betrieb | €0.48 → Rücklage | €3.34 → Gründer | €0.95 → Entwicklung
 ```
 
 ---
@@ -321,7 +322,7 @@ This mirrors the public `/finanzen` page but contextualized within the individua
 | `usage_event_prices` table | ✅ Exists | 5 event types with prices |
 | `founder_debt` table | ✅ Exists | Gershon + Mysti, correct amounts |
 | `ledger_monthly` table | ✅ Exists | Empty — no months closed yet |
-| `user_trial_balance` view | ✅ Exists | Per-user balance + trial status |
+| `user_trial_balance` view | ✅ Exists | Per-user balance + new-member start tracking (rename pending) |
 | `billing_assumptions.yaml` | ✅ NEW | Created this session — needs review |
 | Mira event logging | ⚠️ Instrumented | Needs `git add -f lib/usage_tracker.py` |
 | CV extraction logging | ❌ Not yet | One-line `log_event()` call in endpoint |
@@ -360,7 +361,7 @@ def generate_bill(user_id: int, period_start: date, period_end: date) -> YogiBil
 
 1. **Compute cost estimates** — The GPU-minute costs in Section D of `billing_assumptions.yaml` are based on NUC power draw. Do we want to measure actual Ollama inference times more precisely? We have the data in pipeline logs.
 
-2. **Free tier bill language** — "Deine Nutzung wurde von zahlenden Yogis mitgetragen" (your usage was carried by paying yogis). Is that the right tone? Nate said: transparency, not guilt.
+2. **Guest tier bill language** — "Deine Nutzung wurde von zahlenden Mitgliedern mitgetragen" (your usage was carried by paying members). Is that the right tone? Nate said: transparency, not guilt.
 
 3. **Bill delivery** — Monthly email, in-app page, or both? The finances page already exists. The bill could be a personal tab on that page.
 
