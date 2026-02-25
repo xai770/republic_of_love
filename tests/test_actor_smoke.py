@@ -26,6 +26,8 @@ ACTOR_MODULES = [
     "actors.doug__research_C",
     "actors.y2y__match_detector_C",
     "actors.profile_posting_matches__report_C__clara",
+    "actors.postings__geo_state_U",
+    "actors.profiles__embedding_backfill_U",
 ]
 
 

@@ -172,7 +172,7 @@ def get_balance(conn, user_id: int) -> dict:
                 trial_ends_at,
                 needs_payment,
                 subscription_status
-            FROM user_trial_balance
+            FROM user_usage_summary
             WHERE user_id = %s
             """,
             (user_id,),

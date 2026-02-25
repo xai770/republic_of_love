@@ -322,7 +322,7 @@ This mirrors the public `/finanzen` page but contextualized within the individua
 | `usage_event_prices` table | ✅ Exists | 5 event types with prices |
 | `founder_debt` table | ✅ Exists | Gershon + Mysti, correct amounts |
 | `ledger_monthly` table | ✅ Exists | Empty — no months closed yet |
-| `user_trial_balance` view | ✅ Exists | Per-user balance + new-member start tracking (rename pending) |
+| `user_usage_summary` view | ✅ Exists | Per-user usage, balance, subscription status, needs_payment flag |
 | `billing_assumptions.yaml` | ✅ NEW | Created this session — needs review |
 | Mira event logging | ⚠️ Instrumented | Needs `git add -f lib/usage_tracker.py` |
 | CV extraction logging | ❌ Not yet | One-line `log_event()` call in endpoint |
