@@ -394,6 +394,20 @@ Without it, the next session starts cold. The conversation summary helps but dec
 
 ---
 
+## Privacy by Design
+
+This applies to every .yoga project — talent, news, contract, novel.
+
+- **Never assume** a user has an email address. Most yogis are anonymous by choice.
+- **Never store** an email unencrypted. Both `users.email` and `users.notification_email` are always Fernet-encrypted at rest.
+- **Never return** plaintext email in an API response or template variable. Use `mask_email()` → `ma***@gmail.com`.
+- **`decrypt_email()` has exactly 3 authorised call sites.** Adding a fourth requires a documented reason in [docs/email_security.md](email_security.md).
+- The notification email is **explicit opt-in only** — no silent fallback to the Google login email.
+
+Full details: [docs/email_security.md](email_security.md)
+
+---
+
 ## Cross-References
 
 | Document | What It Covers |
@@ -405,6 +419,7 @@ Without it, the next session starts cold. The conversation summary helps but dec
 | [tools/turing/README.md](../tools/turing/README.md) | All turing-* tools |
 | [20260208_product_roadmap_reset.md](daily_notes/20260208_product_roadmap_reset.md) | UX roadmap, Mira memory architecture, sidebar features |
 | [2026-02-12_maintenance_forward.md](daily_notes/2026-02-12_maintenance_forward.md) | Pipeline fixes A/B/C, Search/Suche page design |
+| [email_security.md](email_security.md) | Email encryption, masking, authorised decrypt call sites, threat model |
 
 ---
 

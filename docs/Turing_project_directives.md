@@ -294,6 +294,8 @@ Quick reminders:
 
 11. **Timestamp daily notes** — Run `date` first to get actual system time.
 
+12. **Email privacy by design** — We never assume we have a user's email. We never store one unencrypted. We never return plaintext email in an API response or template. `decrypt_email()` has exactly three authorised call sites (see [docs/email_security.md](email_security.md)). Adding a fourth requires a documented reason. This applies to talent.yoga, news.yoga, contract.yoga, novel.yoga — every project, every time.
+
 ---
 
 ## Roadmap
@@ -402,8 +404,7 @@ token = generate_session_token(user_id=3)  # returns JWT string
 |----------|---------|
 | [docs/__sandy_cheat_sheet.md](__sandy_cheat_sheet.md) | **Start here** — current state, commands |
 | [actors/TEMPLATE_actor.py](../actors/TEMPLATE_actor.py) | Actor template with best practices |
-| [tools/turing/README.md](../tools/turing/README.md) | RAQ tools documentation |
-
+| [tools/turing/README.md](../tools/turing/README.md) | RAQ tools documentation || [docs/email_security.md](email_security.md) | Email encryption principles, authorised decrypt call sites, threat model |
 ---
 
 **Review these directives at task end. If we violated them, redo the work.**
