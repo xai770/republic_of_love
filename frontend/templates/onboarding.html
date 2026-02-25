@@ -404,32 +404,57 @@
 
         /* ── Legal overlay (step 4 inline T&C / PP) ──── */
         .legal-overlay {
-            display: none; position: absolute; inset: 0;
-            background: rgba(255,255,255,.97);
-            backdrop-filter: blur(6px);
-            border-radius: 24px;
-            z-index: 20;
-            flex-direction: column;
-            padding: 32px 36px 28px;
+            display: none; position: fixed; inset: 0;
+            background: rgba(15,23,42,.55);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
         }
         .legal-overlay.active { display: flex; }
+        .legal-overlay .legal-sheet {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%; max-width: 720px;
+            max-height: 90vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 24px 64px rgba(0,0,0,.25);
+            overflow: hidden;
+        }
+        .legal-overlay .legal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 28px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
         .legal-overlay h3 {
             font-size: 18px; font-weight: 700; color: #1e293b;
-            margin-bottom: 12px;
+            margin: 0;
         }
+        .legal-overlay .legal-x {
+            background: none; border: none; cursor: pointer;
+            font-size: 22px; color: #94a3b8; line-height: 1;
+            padding: 4px 8px; border-radius: 6px;
+        }
+        .legal-overlay .legal-x:hover { background: #f1f5f9; color: #1e293b; }
         .legal-overlay .legal-body {
             flex: 1; overflow-y: auto;
-            font-size: 13px; color: #334155; line-height: 1.7;
-            padding-right: 8px;
+            font-size: 14px; color: #334155; line-height: 1.75;
+            padding: 24px 28px;
         }
         .legal-overlay .legal-body h4 {
-            font-size: 14px; font-weight: 700; color: #0f172a;
-            margin: 14px 0 6px;
+            font-size: 15px; font-weight: 700; color: #0f172a;
+            margin: 20px 0 6px;
         }
-        .legal-overlay .legal-body p { margin-bottom: 8px; }
-        .legal-overlay .legal-close {
-            margin-top: 12px; align-self: flex-end;
+        .legal-overlay .legal-body h4:first-child { margin-top: 0; }
+        .legal-overlay .legal-body p { margin-bottom: 10px; }
+        .legal-overlay .legal-footer {
+            padding: 16px 28px;
+            border-top: 1px solid #e2e8f0;
+            flex-shrink: 0;
         }
+        .legal-overlay .legal-close { margin: 0; }
         .tc-link {
             color: #0d9488; text-decoration: underline; cursor: pointer;
             background: none; border: none; font: inherit; padding: 0;
@@ -454,10 +479,17 @@
     <span class="step-counter" id="step-counter"></span>
 
     <!-- Inline legal overlay (covers entire wizard card) -->
-    <div class="legal-overlay" id="legal-overlay">
-        <h3 id="legal-overlay-title"></h3>
-        <div class="legal-body" id="legal-overlay-body"></div>
-        <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
+    <div class="legal-overlay" id="legal-overlay" onclick="handleOverlayClick(event)">
+        <div class="legal-sheet">
+            <div class="legal-header">
+                <h3 id="legal-overlay-title"></h3>
+                <button class="legal-x" onclick="closeLegal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="legal-body" id="legal-overlay-body"></div>
+            <div class="legal-footer">
+                <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
+            </div>
+        </div>
     </div>
 
     <!-- ════════ STEP 1 — Language ════════ -->
@@ -1460,6 +1492,10 @@
     window.closeLegal = function() {
         $('#legal-overlay').classList.remove('active');
         updateCheckboxState();
+    };
+
+    window.handleOverlayClick = function(e) {
+        if (e.target === $('#legal-overlay')) closeLegal();
     };
 
     function updateCheckboxState() {
