@@ -455,6 +455,42 @@
             flex-shrink: 0;
         }
         .legal-overlay .legal-close { margin: 0; }
+
+        /* ── Confetti canvas (injected dynamically) ──── */
+        #confetti-canvas { position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999; }
+
+        /* ── Celebration step ─────────────────────────── */
+        .celebration-step {
+            align-items: center; justify-content: center; text-align: center;
+            padding: 56px 32px 48px;
+        }
+        .celebration-step .celeb-check {
+            font-size: 64px; line-height: 1; margin-bottom: 20px;
+            animation: popIn .55s cubic-bezier(.175,.885,.32,1.275) both;
+        }
+        .celebration-step .celeb-title {
+            font-size: 2.4rem; font-weight: 800; color: #0f172a;
+            letter-spacing: -.02em; margin-bottom: 8px;
+            animation: riseIn .5s .1s ease both;
+        }
+        .celebration-step .celeb-name {
+            font-size: 1.1rem; color: #0d9488; font-weight: 600;
+            margin-bottom: 24px;
+            animation: riseIn .5s .2s ease both;
+        }
+        .celebration-step .celeb-plan {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #f0fdf4; color: #16a34a;
+            border: 1.5px solid #bbf7d0;
+            border-radius: 999px; font-size: .85rem; font-weight: 600;
+            padding: 5px 16px; margin-bottom: 36px;
+            animation: riseIn .5s .3s ease both;
+        }
+        .celebration-step .celeb-btn {
+            animation: riseIn .5s .4s ease both;
+        }
+        @keyframes popIn  { 0%{opacity:0;transform:scale(.4)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes riseIn { 0%{opacity:0;transform:translateY(18px)} 100%{opacity:1;transform:translateY(0)} }
         .tc-link {
             color: #0d9488; text-decoration: underline; cursor: pointer;
             background: none; border: none; font: inherit; padding: 0;
@@ -783,6 +819,15 @@
             <button class="btn btn-primary" id="s11-continue-btn" onclick="_obNotifContinue()" style="flex:1;"></button>
         </div>
     </div>
+    <!-- ════════ STEP 12 — You're in! ════════ -->
+    <div class="step celebration-step" data-step="12">
+        <div class="celeb-check">🎉</div>
+        <h1 class="celeb-title" id="s12-title"></h1>
+        <p class="celeb-name" id="s12-subtitle"></p>
+        <div class="celeb-plan" id="s12-plan"></div>
+        <button class="btn btn-primary celeb-btn" id="s12-cta"
+                onclick="window.location.href='/dashboard'"></button>
+    </div>
 <script>
 (function() {
     "use strict";
@@ -887,6 +932,10 @@
             s11_btn_yes: "Continue \u2014 I want to be notified",
             s11_btn_no: "Continue \u2014 I don\u2019t want to be notified",
             s11_saving: "Saving\u2026",
+            s12_title: "You're in.",
+            s12_subtitle_prefix: "Welcome,",
+            s12_plan_label: "\ud83c\udf31 Free plan",
+            s12_cta: "Go to your dashboard \u2192",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -976,6 +1025,10 @@
             s11_btn_yes: "Weiter, ich m\u00f6chte benachrichtigt werden",
             s11_btn_no: "Weiter, ich m\u00f6chte nicht benachrichtigt werden",
             s11_saving: "Speichern\u2026",
+            s12_title: "Du bist dabei.",
+            s12_subtitle_prefix: "Willkommen,",
+            s12_plan_label: "\ud83c\udf31 Kostenlos",
+            s12_cta: "Zum Dashboard \u2192",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -1065,6 +1118,10 @@
             s11_btn_yes: "Weiter, ich m\u00f6chte benachrichtigt werden",
             s11_btn_no: "Weiter, ich m\u00f6chte nicht benachrichtigt werden",
             s11_saving: "Speichern\u2026",
+            s12_title: "Sie sind dabei.",
+            s12_subtitle_prefix: "Willkommen,",
+            s12_plan_label: "\ud83c\udf31 Kostenlos",
+            s12_cta: "Zum Dashboard \u2192",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -1114,7 +1171,7 @@
         // Step counter — show for steps 1-8
         const vis = visibleStepNumber(state.currentStep);
         const total = effectiveSteps();
-        if (state.currentStep >= 1) {
+        if (state.currentStep >= 1 && state.currentStep <= 11) {
             $('#step-counter').textContent = t.step_counter.replace('{a}', vis).replace('{b}', total);
         } else {
             $('#step-counter').textContent = '';
@@ -1215,6 +1272,12 @@
         if ($('#s11-email-input')) $('#s11-email-input').placeholder = t.s11_placeholder || '';
         _obNotifEmailChanged();  // sync dynamic button label
 
+        // Step 12 — Celebration
+        if ($('#s12-title'))    $('#s12-title').textContent    = t.s12_title;
+        if ($('#s12-subtitle')) $('#s12-subtitle').textContent = (t.s12_subtitle_prefix || '') + ' ' + (state.chosenName || '');
+        if ($('#s12-plan'))     $('#s12-plan').textContent     = t.s12_plan_label;
+        if ($('#s12-cta'))      $('#s12-cta').textContent      = t.s12_cta;
+
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
         $$('.back-label').forEach(el => el.textContent = t.back);
@@ -1237,6 +1300,7 @@
         9:  { w: 660, mh: null },
         10: { w: 540, mh: null },
         11: { w: 660, mh: null },
+        12: { w: 560, mh: null },
     };
 
     function applyStepSize(step) {
@@ -1263,7 +1327,8 @@
             const target = document.querySelector(`.step[data-step="${step}"]`);
             if (target) target.classList.add('active');
             state.currentStep = step;
-            if (step === 8) _resetConfirmButtons();
+            if (step === 8)  _resetConfirmButtons();
+            if (step === 12) launchConfetti();
             applyText();
             applyStepSize(step);
             wizard.classList.remove('fade-out');
@@ -1726,8 +1791,64 @@
                 // non-critical — proceed regardless
             }
         }
-        window.location.href = '/dashboard';
+        goTo(12);
     };
+
+    function launchConfetti() {
+        const old = document.getElementById('confetti-canvas');
+        if (old) old.remove();
+        const C = document.createElement('canvas');
+        C.id = 'confetti-canvas';
+        document.body.appendChild(C);
+        const W = C.width  = window.innerWidth;
+        const H = C.height = window.innerHeight;
+        const palette = ['#0d9488','#14b8a6','#f59e0b','#fbbf24','#f43f5e','#fb7185',
+                         '#38bdf8','#7dd3fc','#84cc16','#a3e635','#a78bfa','#c4b5fd','#ffffff'];
+        const pieces = Array.from({length: 180}, () => ({
+            x:  Math.random() * W,
+            y: -Math.random() * H * .6,
+            w:  5 + Math.random() * 9,
+            h:  3 + Math.random() * 5,
+            color: palette[Math.floor(Math.random() * palette.length)],
+            vx: (Math.random() - .5) * 3,
+            vy:  1.5 + Math.random() * 3.5,
+            angle: Math.random() * Math.PI * 2,
+            spin:  (Math.random() - .5) * .2,
+            shape: Math.random() < .3 ? 'circle' : 'rect',
+        }));
+        let start = null;
+        const DURATION = 5000;
+        function tick(ts) {
+            if (!start) start = ts;
+            const progress = Math.min((ts - start) / DURATION, 1);
+            const ctx = C.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+            const fade = progress > .75 ? 1 - (progress - .75) / .25 : 1;
+            pieces.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += .055;
+                p.angle += p.spin;
+                if (p.y > H + 20) { p.y = -10; p.x = Math.random() * W; p.vy = 1.5 + Math.random() * 2; }
+                ctx.save();
+                ctx.globalAlpha = fade;
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle);
+                ctx.fillStyle = p.color;
+                if (p.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                }
+                ctx.restore();
+            });
+            if (progress < 1) requestAnimationFrame(tick);
+            else C.remove();
+        }
+        requestAnimationFrame(tick);
+    }
 
     // ── CV skip (step 9) ────────────────────────
     window._obCVSkip = function() {
