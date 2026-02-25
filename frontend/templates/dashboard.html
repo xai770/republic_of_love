@@ -38,6 +38,129 @@
 }
 #cv-job-bar-msg { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #cv-job-bar-eta { font-size: 0.76rem; color: var(--text-muted, #888); flex-shrink: 0; }
+
+/* ── Lower panels: Activity Log + Yogi-meter ──────────────────────── */
+.lower-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem 0.5rem;
+}
+@media (max-width: 768px) {
+    .lower-panels { grid-template-columns: 1fr; }
+}
+.panel {
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.25rem 1.25rem;
+    min-height: 200px;
+}
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.9rem;
+}
+.panel-icon { font-size: 1.1rem; }
+.panel-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text, #e0e0f0);
+    margin: 0;
+}
+.panel-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted, #888);
+    margin-left: auto;
+}
+
+/* Activity list */
+.activity-list {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: 0.65rem;
+}
+.activity-item {
+    display: flex; flex-direction: column; gap: 0.2rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--surface3, rgba(255,255,255,0.03));
+    border-radius: 0.5rem;
+    border-left: 3px solid var(--accent, #6c6fe4);
+}
+.activity-item.viewed      { border-color: #6c6fe4; }
+.activity-item.saved       { border-color: #10b981; }
+.activity-item.dismissed   { border-color: #6b7280; }
+.activity-item.apply_intent{ border-color: #f59e0b; }
+.activity-item.applied     { border-color: #3b82f6; }
+.activity-item.not_applied { border-color: #ef4444; }
+.activity-item.outcome_received { border-color: #8b5cf6; }
+.activity-sentence {
+    font-size: 0.83rem;
+    color: var(--text, #e0e0f0);
+    line-height: 1.45;
+}
+.activity-date {
+    font-size: 0.72rem;
+    color: var(--text-muted, #888);
+}
+.activity-loading, .activity-empty {
+    font-size: 0.83rem;
+    color: var(--text-muted, #888);
+    padding: 0.5rem 0;
+}
+
+/* Yogi-meter funnel */
+.yogimeter-funnel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.yogimeter-loading {
+    font-size: 0.83rem;
+    color: var(--text-muted, #888);
+}
+.funnel-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+}
+.funnel-label {
+    width: 90px;
+    flex-shrink: 0;
+    color: var(--text-muted, #aaa);
+    text-align: right;
+    font-size: 0.78rem;
+}
+.funnel-bar-wrap {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 16px;
+    overflow: hidden;
+}
+.funnel-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent, #6c6fe4);
+    transition: width 0.6s cubic-bezier(0.22,0.61,0.36,1);
+    min-width: 2px;
+}
+.funnel-bar.viewed       { background: #6c6fe4; }
+.funnel-bar.saved        { background: #10b981; }
+.funnel-bar.dismissed    { background: #6b7280; }
+.funnel-bar.apply_intent { background: #f59e0b; }
+.funnel-bar.applied      { background: #3b82f6; }
+.funnel-bar.not_applied  { background: #ef4444; }
+.funnel-bar.outcome_received { background: #8b5cf6; }
+.funnel-count {
+    width: 28px;
+    text-align: right;
+    color: var(--text, #e0e0f0);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+}
 </style>
 {% endblock %}
 
@@ -45,7 +168,7 @@
 <div class="app-layout">
     {% include "partials/header.html" %}
     
-    {% set active_page = 'dashboard' %}
+    {% set active_page = 'home' %}
     {% include "partials/sidebar.html" %}
     
     <main class="main-content">
@@ -156,7 +279,35 @@
             </div>
 
         </section>
-        
+
+        <!-- ── Lower panels: Activity Log + Yogi-meter ───────────────── -->
+        <div class="lower-panels" id="lower-panels">
+
+            <!-- Activity Log -->
+            <section class="panel activity-log-panel" id="activity-log-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📖</span>
+                    <h2 class="panel-title">Mein Verlauf</h2>
+                </div>
+                <ul class="activity-list" id="activity-list">
+                    <li class="activity-loading">Wird geladen…</li>
+                </ul>
+            </section>
+
+            <!-- Yogi-meter -->
+            <section class="panel yogimeter-panel" id="yogimeter-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📊</span>
+                    <h2 class="panel-title">Yogi-Meter</h2>
+                    <span class="panel-subtitle" id="yogimeter-subtitle"></span>
+                </div>
+                <div class="yogimeter-funnel" id="yogimeter-funnel">
+                    <div class="yogimeter-loading">Wird geladen…</div>
+                </div>
+            </section>
+
+        </div>
+
         <!-- Sentence of the Day (Easter Egg) -->
         <footer class="daily-quote">
             <p id="daily-quote">„{{ t('dashboard.quote_default') }}"</p>
@@ -524,7 +675,7 @@ async function triggerMiraGreeting() {
     // If tour is active or about to start, defer — tour will call us when done
     if (window._tourActive) return;
     const tourCompleted = localStorage.getItem('mira_tour_completed');
-    if (!tourCompleted && window.location.pathname.includes('/dashboard')) {
+    if (!tourCompleted && window.location.pathname.includes('/home')) {
         // Tour hasn't run yet — it will trigger us after completion
         return;
     }
@@ -907,6 +1058,80 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (_) {}
     }, 3000);
+})();
+</script>
+
+<script>
+// ── Activity Log ──────────────────────────────────────────────────────────────
+(async function loadActivityLog() {
+    const list = document.getElementById('activity-list');
+    if (!list) return;
+
+    try {
+        const res  = await fetch('/api/home/activity?limit=6');
+        const data = await res.json();
+
+        if (!data.has_profile || !data.items || data.items.length === 0) {
+            list.innerHTML = '<li class="activity-empty">Noch keine Aktivitäten — schau dir deine ersten Stellen an!</li>';
+            return;
+        }
+
+        list.innerHTML = data.items.map(item => {
+            const dateStr = item.created_at
+                ? new Date(item.created_at).toLocaleDateString('de-DE', {day:'numeric', month:'short'})
+                : '';
+            return `
+                <li class="activity-item ${item.event_type}">
+                    <span class="activity-sentence">${item.sentence}</span>
+                    <span class="activity-date">${dateStr}</span>
+                </li>`;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = '<li class="activity-empty">Verlauf konnte nicht geladen werden.</li>';
+    }
+})();
+
+// ── Yogi-meter ────────────────────────────────────────────────────────────────
+(async function loadYogimeter() {
+    const funnel   = document.getElementById('yogimeter-funnel');
+    const subtitle = document.getElementById('yogimeter-subtitle');
+    if (!funnel) return;
+
+    try {
+        const res  = await fetch('/api/home/yogimeter');
+        const data = await res.json();
+
+        if (!data.stages || data.stages.length === 0) {
+            funnel.innerHTML = '<div class="yogimeter-loading">Noch keine Daten.</div>';
+            return;
+        }
+
+        if (subtitle) {
+            const parts = [];
+            if (data.total_matches) parts.push(`${data.total_matches} Stellen`);
+            if (data.days_active)   parts.push(`${data.days_active} Tage aktiv`);
+            subtitle.textContent = parts.join(' · ');
+        }
+
+        // Max count drives bar widths (use viewed count or total_matches as denominator)
+        const maxBar = data.stages.reduce((m, s) => Math.max(m, s.count), 1);
+
+        funnel.innerHTML = data.stages
+            .filter(s => s.count > 0 || s.key === 'viewed')
+            .map(s => {
+                const pct = Math.round((s.count / maxBar) * 100);
+                return `
+                    <div class="funnel-row">
+                        <span class="funnel-label">${s.label}</span>
+                        <div class="funnel-bar-wrap">
+                            <div class="funnel-bar ${s.key}" style="width:${pct}%"></div>
+                        </div>
+                        <span class="funnel-count">${s.count}</span>
+                    </div>`;
+            }).join('');
+    } catch (e) {
+        funnel.innerHTML = '<div class="yogimeter-loading">Daten konnten nicht geladen werden.</div>';
+    }
 })();
 </script>
 {% endblock %}

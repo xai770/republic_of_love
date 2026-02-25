@@ -148,7 +148,7 @@ def landing_page(request: Request, conn=Depends(get_db)):
     
     user = get_current_user(request, conn)
     if user:
-        return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/home", status_code=302)
     
     # Show lobby for unauthenticated users
     return templates.TemplateResponse("lobby.html", {
@@ -165,7 +165,7 @@ def login_page(request: Request, conn=Depends(get_db)):
     
     user = get_current_user(request, conn)
     if user:
-        return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/home", status_code=302)
     
     error = request.query_params.get("error")
     return templates.TemplateResponse("login.html", {
@@ -185,9 +185,9 @@ def onboarding_page(request: Request, conn=Depends(get_db)):
     if not user:
         return RedirectResponse(url="/", status_code=302)
 
-    # Already onboarded → skip to dashboard
+    # Already onboarded → skip to home
     if user.get("onboarding_completed_at"):
-        return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/home", status_code=302)
 
     resp = templates.TemplateResponse("onboarding.html", {
         "request": request,
@@ -197,9 +197,9 @@ def onboarding_page(request: Request, conn=Depends(get_db)):
     return resp
 
 
-@app.get("/dashboard")
-def dashboard_page(request: Request, conn=Depends(get_db)):
-    """Dashboard — requires authentication."""
+@app.get("/home")
+def home_page(request: Request, conn=Depends(get_db)):
+    """Home page — requires authentication."""
     if not templates:
         return {"error": "Frontend not configured"}
     
@@ -214,6 +214,12 @@ def dashboard_page(request: Request, conn=Depends(get_db)):
         "user": user,
         **get_i18n_context(request)
     })
+
+
+@app.get("/dashboard")
+def dashboard_redirect(request: Request):
+    """Legacy /dashboard — permanent redirect to /home."""
+    return RedirectResponse(url="/home", status_code=301)
 
 
 @app.get("/bi")
@@ -544,7 +550,7 @@ def lobby_page(request: Request, conn=Depends(get_db)):
     
     user = get_current_user(request, conn)
     if user:
-        return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/home", status_code=302)
     
     return templates.TemplateResponse("lobby.html", {
         "request": request,

@@ -263,13 +263,183 @@ def get_journey_stats(
         }
 
 
+# ============================================================
+# ACTIVITY LOG — first-person narrative of recent yogi events
+# ============================================================
+
+def _event_to_sentence(event_type: str, job_title: str, company: str, note: str | None) -> str:
+    """
+    Convert a yogi_posting_events row into a one-sentence first-person German sentence.
+    Falls back gracefully if no job_title/company.
+    """
+    role = job_title or "eine Stelle"
+    loc  = f" bei {company}" if company else ""
+
+    templates_map = {
+        "viewed":           f"Ich habe die Stelle {role}{loc} angesehen.",
+        "saved":            f"Ich habe {role}{loc} auf meine Merkliste gesetzt.",
+        "dismissed":        f"Ich habe {role}{loc} übersprungen.",
+        "apply_intent":     f"Ich plane, mich auf {role}{loc} zu bewerben.",
+        "applied":          f"Ich habe mich auf {role}{loc} beworben.",
+        "not_applied":      f"Ich habe mich gegen eine Bewerbung auf {role}{loc} entschieden.",
+        "outcome_received": f"Ich habe eine Rückmeldung zur Stelle {role}{loc} erhalten.",
+    }
+    base = templates_map.get(event_type, f"Aktivität: {event_type} — {role}{loc}.")
+    if note:
+        base = base.rstrip('.') + ': \u201e' + note + '\u201c'
+    return base
+
+
+@router.get("/api/home/activity")
+def get_activity_log(
+    limit: int = Query(default=6, ge=1, le=20),
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Return the last N yogi events as first-person narrative items.
+    Used by the Activity Log panel on /home.
+    """
+    with conn.cursor() as cur:
+        user_id = user["user_id"]
+
+        # Get the active profile for this user
+        cur.execute(
+            "SELECT profile_id FROM profiles WHERE user_id = %s AND enabled = TRUE LIMIT 1",
+            (user_id,),
+        )
+        profile_row = cur.fetchone()
+        if not profile_row:
+            return {"items": [], "has_profile": False}
+
+        profile_id = profile_row["profile_id"]
+
+        cur.execute("""
+            SELECT
+                e.event_type,
+                e.note,
+                e.created_at,
+                p.job_title,
+                p.location_city
+            FROM yogi_posting_events e
+            LEFT JOIN postings p ON p.posting_id = e.posting_id
+            WHERE e.profile_id = %s
+            ORDER BY e.created_at DESC
+            LIMIT %s
+        """, (profile_id, limit))
+
+        rows = cur.fetchall()
+        items = []
+        for row in rows:
+            items.append({
+                "sentence":   _event_to_sentence(
+                    row["event_type"],
+                    row["job_title"],
+                    row["location_city"],
+                    row["note"],
+                ),
+                "event_type": row["event_type"],
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+            })
+
+        return {"items": items, "has_profile": True}
+
+
+# ============================================================
+# YOGI-METER — funnel counts for the progress chart
+# ============================================================
+
+# Ordered funnel stages (top → bottom)
+YOGI_FUNNEL_STAGES = [
+    "viewed",
+    "saved",
+    "dismissed",
+    "apply_intent",
+    "applied",
+    "not_applied",
+    "outcome_received",
+]
+
+YOGI_FUNNEL_LABELS = {
+    "viewed":           "Angesehen",
+    "saved":            "Gemerkt",
+    "dismissed":        "Übersprungen",
+    "apply_intent":     "Geplant",
+    "applied":          "Beworben",
+    "not_applied":      "Abgesagt",
+    "outcome_received": "Feedback",
+}
+
+
+@router.get("/api/home/yogimeter")
+def get_yogimeter(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Return event counts by type for the Yogi-meter funnel chart.
+    Also returns total_matches (denominator) and days_active.
+    """
+    with conn.cursor() as cur:
+        user_id = user["user_id"]
+
+        cur.execute(
+            "SELECT profile_id FROM profiles WHERE user_id = %s AND enabled = TRUE LIMIT 1",
+            (user_id,),
+        )
+        profile_row = cur.fetchone()
+        if not profile_row:
+            return {"stages": [], "total_matches": 0, "days_active": 0}
+
+        profile_id = profile_row["profile_id"]
+
+        # Event counts per type
+        cur.execute("""
+            SELECT event_type, COUNT(*) as cnt
+            FROM yogi_posting_events
+            WHERE profile_id = %s
+            GROUP BY event_type
+        """, (profile_id,))
+        counts = {row["event_type"]: row["cnt"] for row in cur.fetchall()}
+
+        # Total matches for this profile (denominator for the funnel)
+        cur.execute(
+            "SELECT COUNT(*) as cnt FROM profile_posting_matches WHERE profile_id = %s",
+            (profile_id,),
+        )
+        total_matches = cur.fetchone()["cnt"] or 0
+
+        # Days active = days since first event
+        cur.execute("""
+            SELECT EXTRACT(DAY FROM NOW() - MIN(created_at))::int as days
+            FROM yogi_posting_events WHERE profile_id = %s
+        """, (profile_id,))
+        days_row = cur.fetchone()
+        days_active = days_row["days"] if days_row and days_row["days"] else 0
+
+        stages = [
+            {
+                "key":   stage,
+                "label": YOGI_FUNNEL_LABELS[stage],
+                "count": counts.get(stage, 0),
+            }
+            for stage in YOGI_FUNNEL_STAGES
+        ]
+
+        return {
+            "stages":        stages,
+            "total_matches": total_matches,
+            "days_active":   days_active,
+        }
+
+
 def render_base(content: str, user: dict = None) -> str:
     """Wrap content in base HTML template."""
     nav = ""
     if user:
         nav = f"""
         <nav style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
-            <a href="/dashboard" style="font-size: 1.5em; text-decoration: none;">🎯 talent.yoga</a>
+            <a href="/home" style="font-size: 1.5em; text-decoration: none;">🎯 talent.yoga</a>
             <div>
                 <span style="margin-right: 15px;">👤 {user['display_name']}</span>
                 <a href="/auth/logout">Logout</a>
@@ -505,9 +675,9 @@ def dashboard_legacy(
     # Build filter tabs
     filter_html = f"""
     <div class="filters">
-        <a href="/dashboard?filter=all" class="{'active' if filter == 'all' else ''}">All</a>
-        <a href="/dashboard?filter=apply" class="{'active' if filter == 'apply' else ''}">✅ Apply</a>
-        <a href="/dashboard?filter=skip" class="{'active' if filter == 'skip' else ''}">⏭️ Skip</a>
+        <a href="/home?filter=all" class="{'active' if filter == 'all' else ''}">All</a>
+        <a href="/home?filter=apply" class="{'active' if filter == 'apply' else ''}">✅ Apply</a>
+        <a href="/home?filter=skip" class="{'active' if filter == 'skip' else ''}">⏭️ Skip</a>
     </div>
     """
     
@@ -638,7 +808,7 @@ def match_detail(match_id: int, request: Request, conn=Depends(get_db)):
     skills_html += "</ul>"
     
     content = f"""
-        <a href="/dashboard" style="display: inline-block; margin-bottom: 20px;">← Back to matches</a>
+        <a href="/home" style="display: inline-block; margin-bottom: 20px;">← Back to matches</a>
         
         <div class="card">
             <div class="card-header">

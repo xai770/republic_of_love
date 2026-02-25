@@ -338,7 +338,7 @@ def get_billing_portal(
     try:
         session = stripe.billing_portal.Session.create(
             customer=row['stripe_customer_id'],
-            return_url=f"{BASE_URL}/dashboard"
+            return_url=f"{BASE_URL}/home"
         )
         
         return PortalResponse(portal_url=session.url)

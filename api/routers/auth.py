@@ -189,8 +189,8 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
         algorithm="HS256",
     )
     
-    # Redirect to onboarding (first-time) or dashboard (returning)
-    dest = f"{FRONTEND_URL}/onboarding" if needs_onboarding else f"{FRONTEND_URL}/dashboard"
+    # Redirect to onboarding (first-time) or home (returning)
+    dest = f"{FRONTEND_URL}/onboarding" if needs_onboarding else f"{FRONTEND_URL}/home"
     response = RedirectResponse(url=dest)
     response.set_cookie(
         key="session",
@@ -282,7 +282,7 @@ if DEBUG:
             algorithm="HS256",
         )
         
-        dest = "/onboarding" if not user.get("onboarding_completed_at") else "/dashboard"
+        dest = "/onboarding" if not user.get("onboarding_completed_at") else "/home"
         response = RedirectResponse(url=dest)
         response.set_cookie(
             key="session",
