@@ -161,6 +161,160 @@
     font-variant-numeric: tabular-nums;
     font-size: 0.8rem;
 }
+
+/* ── Bewerbungsprotokoll panel ─────────────────────────────────── */
+.protokoll-panel {
+    margin: 0 1.5rem 1.5rem;
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.protokoll-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.25rem 0.85rem;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.07));
+    flex-wrap: wrap;
+}
+.protokoll-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text, #e0e0f0);
+    margin: 0;
+}
+.protokoll-badge {
+    font-size: 0.7rem;
+    color: #10b981;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 0.9rem;
+    padding: 0.15rem 0.65rem;
+    white-space: nowrap;
+}
+.protokoll-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.protokoll-filter-toggle {
+    font-size: 0.74rem;
+    color: var(--text-muted, #888);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.protokoll-filter-toggle.active,
+.protokoll-filter-toggle:hover {
+    color: var(--accent, #6c6fe4);
+    border-color: var(--accent, #6c6fe4);
+    background: rgba(108,111,228,0.08);
+}
+.protokoll-download-btn {
+    font-size: 0.74rem;
+    color: var(--text-muted, #888);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 0.4rem;
+    padding: 0.25rem 0.7rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.protokoll-download-btn:hover {
+    color: #10b981;
+    border-color: #10b981;
+    background: rgba(16,185,129,0.08);
+}
+.protokoll-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+.protokoll-table th {
+    text-align: left;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.73rem;
+    font-weight: 500;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.protokoll-table td {
+    padding: 0.65rem 1.25rem;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text, #e0e0f0);
+}
+.protokoll-table tr:last-child td { border-bottom: none; }
+.protokoll-table tr:hover td { background: rgba(255,255,255,0.02); }
+.protokoll-date {
+    white-space: nowrap;
+    color: var(--text-muted, #aaa);
+    font-size: 0.78rem;
+    width: 90px;
+}
+.protokoll-stelle { font-weight: 500; }
+.protokoll-stelle a { color: inherit; text-decoration: none; }
+.protokoll-stelle a:hover { text-decoration: underline; }
+.protokoll-city { font-size: 0.75rem; color: var(--text-muted, #888); margin-top: 0.1rem; }
+.protokoll-action-chip {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 0.9rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.chip-applied          { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+.chip-dismissed        { background: rgba(107,114,128,0.15); color: #9ca3af; }
+.chip-not_applied      { background: rgba(239,68,68,0.12);   color: #f87171; }
+.chip-apply_intent     { background: rgba(245,158,11,0.12);  color: #fbbf24; }
+.chip-outcome_received { background: rgba(139,92,246,0.15);  color: #a78bfa; }
+.chip-saved            { background: rgba(16,185,129,0.12);  color: #34d399; }
+.chip-viewed           { background: rgba(108,111,228,0.12); color: #818cf8; }
+.protokoll-reason {
+    font-size: 0.78rem;
+    color: var(--text-muted, #bbb);
+    margin-top: 0.2rem;
+    font-style: italic;
+    line-height: 1.4;
+}
+.protokoll-empty, .protokoll-loading {
+    text-align: center;
+    padding: 2rem 1.25rem;
+    color: var(--text-muted, #888);
+    font-size: 0.85rem;
+}
+.protokoll-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.25rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.75rem;
+    color: var(--text-muted, #888);
+}
+.protokoll-load-more {
+    background: none;
+    border: none;
+    color: var(--accent, #6c6fe4);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0;
+    text-decoration: underline;
+}
+.protokoll-load-more:hover { opacity: 0.8; }
 </style>
 {% endblock %}
 
@@ -306,6 +460,35 @@
                 </div>
             </section>
 
+        </div>
+
+        <!-- ── Bewerbungsprotokoll ──────────────────────────────────── -->
+        <div class="protokoll-panel" id="protokoll-panel">
+            <div class="protokoll-header">
+                <span class="panel-icon">📋</span>
+                <h2 class="protokoll-title">Bewerbungsprotokoll</h2>
+                <span class="protokoll-badge">Nachweisbar f&#252;r die Agentur f&#252;r Arbeit</span>
+                <div class="protokoll-actions">
+                    <button class="protokoll-filter-toggle active" id="protokoll-filter-btn"
+                            onclick="toggleProtokollFilter()">
+                        Nur Entscheidungen
+                    </button>
+                    <a class="protokoll-download-btn"
+                       href="/api/home/protokoll/download" download>
+                        &#x2B07; Herunterladen (.txt)
+                    </a>
+                </div>
+            </div>
+            <div id="protokoll-content">
+                <div class="protokoll-loading">Wird geladen&#8230;</div>
+            </div>
+            <div class="protokoll-footer" id="protokoll-footer" style="display:none">
+                <span id="protokoll-count-label"></span>
+                <button class="protokoll-load-more" id="protokoll-load-more"
+                        onclick="loadAllProtokoll()" style="display:none">
+                    Alle Eintr&#228;ge anzeigen
+                </button>
+            </div>
         </div>
 
         <!-- Sentence of the Day (Easter Egg) -->
@@ -1090,6 +1273,115 @@ document.addEventListener('DOMContentLoaded', () => {
         list.innerHTML = '<li class="activity-empty">Verlauf konnte nicht geladen werden.</li>';
     }
 })();
+
+// ── Bewerbungsprotokoll ───────────────────────────────────────────────────────
+const PROTOKOLL_PAGE = 20;
+let _protokollDecisionsOnly = true;
+let _protokollAllLoaded     = false;
+let _protokollData          = null;
+
+const ACTION_CHIP_CLASS = {
+    applied:          'chip-applied',
+    dismissed:        'chip-dismissed',
+    not_applied:      'chip-not_applied',
+    apply_intent:     'chip-apply_intent',
+    outcome_received: 'chip-outcome_received',
+    saved:            'chip-saved',
+    viewed:           'chip-viewed',
+};
+
+function renderProtokollTable(entries) {
+    if (!entries.length) {
+        return '<div class="protokoll-empty">Keine Eintr\u00e4ge gefunden.</div>';
+    }
+    const rows = entries.map(e => {
+        const chipCls   = ACTION_CHIP_CLASS[e.event_type] || 'chip-viewed';
+        const titleCell = e.external_url
+            ? `<a href="${e.external_url}" target="_blank" rel="noopener">${e.job_title}</a>`
+            : e.job_title;
+        const cityHtml  = e.location_city
+            ? `<div class="protokoll-city">${e.location_city}</div>` : '';
+        const reasonHtml = e.rationale
+            ? `<div class="protokoll-reason">\u201e${e.rationale}\u201c</div>` : '';
+        return `<tr>
+            <td class="protokoll-date">${e.created_date}<br>
+                <span style="font-size:0.7rem;color:var(--text-muted)">${e.created_time}</span>
+            </td>
+            <td class="protokoll-stelle">${titleCell}${cityHtml}</td>
+            <td><span class="protokoll-action-chip ${chipCls}">${e.action_label}</span></td>
+            <td>${reasonHtml}</td>
+        </tr>`;
+    }).join('');
+    return `<table class="protokoll-table">
+        <thead><tr>
+            <th>Datum</th>
+            <th>Stelle</th>
+            <th>Aktion</th>
+            <th>Begr\u00fcndung / Notiz</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function loadProtokoll(decisionsOnly) {
+    const content  = document.getElementById('protokoll-content');
+    const footer   = document.getElementById('protokoll-footer');
+    const countLbl = document.getElementById('protokoll-count-label');
+    const moreBtn  = document.getElementById('protokoll-load-more');
+    if (!content) return;
+
+    try {
+        const res  = await fetch(`/api/home/protokoll?decisions_only=${decisionsOnly}`);
+        const data = await res.json();
+        _protokollData = data;
+
+        if (!data.has_profile || !data.entries || !data.entries.length) {
+            content.innerHTML = '<div class="protokoll-empty">Noch keine Aktivit\u00e4ten aufgezeichnet.</div>';
+            if (footer) footer.style.display = 'none';
+            return;
+        }
+
+        const all     = data.entries;
+        const showing = _protokollAllLoaded ? all : all.slice(0, PROTOKOLL_PAGE);
+        content.innerHTML = renderProtokollTable(showing);
+
+        if (footer) {
+            footer.style.display = 'flex';
+            const appStr = data.total_applications
+                ? ` \u00b7 ${data.total_applications} Bewerbung${data.total_applications !== 1 ? 'en' : ''}`
+                : '';
+            countLbl.textContent = `${all.length} Eintr\u00e4ge${appStr}`;
+            if (!_protokollAllLoaded && all.length > PROTOKOLL_PAGE) {
+                moreBtn.style.display  = 'inline';
+                moreBtn.textContent    = `Alle ${all.length} Eintr\u00e4ge anzeigen`;
+            } else {
+                moreBtn.style.display = 'none';
+            }
+        }
+    } catch (_) {
+        content.innerHTML = '<div class="protokoll-empty">Protokoll konnte nicht geladen werden.</div>';
+    }
+}
+
+function toggleProtokollFilter() {
+    _protokollDecisionsOnly = !_protokollDecisionsOnly;
+    _protokollAllLoaded     = false;
+    const btn = document.getElementById('protokoll-filter-btn');
+    if (btn) btn.classList.toggle('active', _protokollDecisionsOnly);
+    loadProtokoll(_protokollDecisionsOnly);
+}
+
+function loadAllProtokoll() {
+    _protokollAllLoaded = true;
+    if (_protokollData) {
+        document.getElementById('protokoll-content').innerHTML =
+            renderProtokollTable(_protokollData.entries);
+        const btn = document.getElementById('protokoll-load-more');
+        if (btn) btn.style.display = 'none';
+    }
+}
+
+loadProtokoll(true);  // default: decisions only
 
 // ── Yogi-meter ────────────────────────────────────────────────────────────────
 (async function loadYogimeter() {

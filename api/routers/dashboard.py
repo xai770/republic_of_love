@@ -433,6 +433,241 @@ def get_yogimeter(
         }
 
 
+# ============================================================
+# BEWERBUNGSPROTOKOLL — full job-search log for employment agency
+# ============================================================
+
+# Human-readable German labels for the protocol
+_PROTOKOLL_ACTION = {
+    "viewed":           "Stelle angesehen",
+    "saved":            "Stelle vorgemerkt",
+    "dismissed":        "Stelle abgelehnt",
+    "apply_intent":     "Bewerbung geplant",
+    "applied":          "Beworben",
+    "not_applied":      "Nicht beworben (Entscheidung)",
+    "outcome_received": "Rückmeldung erhalten",
+}
+
+# Which event types count as "documented decisions" for the agency
+_ENTSCHEIDUNG_TYPES = {
+    "dismissed", "apply_intent", "applied", "not_applied", "outcome_received"
+}
+
+
+def _build_protokoll_rows(cur, profile_id: int, decisions_only: bool = False) -> list[dict]:
+    """
+    Fetch all protocol rows for a profile, optionally filtered to decisions only.
+    Returns dicts with all fields needed for both JSON and text export.
+    """
+    type_filter = (
+        "AND e.event_type IN ('dismissed','apply_intent','applied','not_applied','outcome_received')"
+        if decisions_only else ""
+    )
+    cur.execute(f"""
+        SELECT
+            e.event_id,
+            e.event_type,
+            e.note,
+            e.reason,
+            e.created_at,
+            p.job_title,
+            p.location_city,
+            p.external_url,
+            m.recommendation,
+            m.go_reasons,
+            m.nogo_reasons,
+            m.user_decision,
+            m.application_status,
+            m.application_outcome
+        FROM yogi_posting_events e
+        LEFT JOIN postings p ON p.posting_id = e.posting_id
+        LEFT JOIN profile_posting_matches m ON m.match_id = e.match_id
+        WHERE e.profile_id = %s
+        {type_filter}
+        ORDER BY e.created_at DESC
+    """, (profile_id,))
+
+    rows = []
+    for row in cur.fetchall():
+        # Flatten nogo / go reasons from JSONB
+        nogo = row["nogo_reasons"] or []
+        go   = row["go_reasons"]   or []
+        if isinstance(nogo, str):
+            import json as _json
+            nogo = _json.loads(nogo)
+        if isinstance(go, str):
+            import json as _json
+            go = _json.loads(go)
+
+        # Build rationale string from note + nogo_reasons (for dismissed/not_applied)
+        rationale = row["note"] or ""
+        if row["event_type"] in ("dismissed", "not_applied") and not rationale and nogo:
+            rationale = "; ".join(nogo)
+
+        rows.append({
+            "event_id":          row["event_id"],
+            "event_type":        row["event_type"],
+            "action_label":      _PROTOKOLL_ACTION.get(row["event_type"], row["event_type"]),
+            "is_decision":       row["event_type"] in _ENTSCHEIDUNG_TYPES,
+            "created_at":        row["created_at"].isoformat() if row["created_at"] else None,
+            "created_date":      row["created_at"].strftime("%d.%m.%Y") if row["created_at"] else "",
+            "created_time":      row["created_at"].strftime("%H:%M") if row["created_at"] else "",
+            "job_title":         row["job_title"] or "Unbekannte Stelle",
+            "location_city":     row["location_city"] or "",
+            "external_url":      row["external_url"] or "",
+            "rationale":         rationale,
+            "nogo_reasons":      nogo,
+            "go_reasons":        go,
+            "recommendation":    row["recommendation"] or "",
+            "user_decision":     row["user_decision"] or "",
+            "application_status": row["application_status"] or "",
+            "application_outcome": row["application_outcome"] or "",
+        })
+    return rows
+
+
+@router.get("/api/home/protokoll")
+def get_protokoll(
+    decisions_only: bool = Query(default=False, description="Return only decision events (not 'viewed')"),
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Full Bewerbungsprotokoll — all job-search events with rationales.
+    Designed for employment agency documentation (Agentur für Arbeit / Jobcenter).
+    """
+    with conn.cursor() as cur:
+        user_id = user["user_id"]
+        cur.execute(
+            "SELECT profile_id FROM profiles WHERE user_id = %s AND enabled = TRUE LIMIT 1",
+            (user_id,),
+        )
+        profile_row = cur.fetchone()
+        if not profile_row:
+            return {"entries": [], "total": 0, "has_profile": False}
+
+        profile_id = profile_row["profile_id"]
+        rows = _build_protokoll_rows(cur, profile_id, decisions_only=decisions_only)
+
+        # Summary counts for the header
+        total_applications = sum(1 for r in rows if r["event_type"] == "applied")
+        total_decisions    = sum(1 for r in rows if r["is_decision"])
+
+        return {
+            "entries":           rows,
+            "total":             len(rows),
+            "total_applications": total_applications,
+            "total_decisions":   total_decisions,
+            "has_profile":       True,
+        }
+
+
+@router.get("/api/home/protokoll/download")
+def download_protokoll(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Plain-text Bewerbungsprotokoll suitable for printing and handing to
+    the Agentur für Arbeit or Jobcenter as proof of active job search.
+    """
+    from fastapi.responses import PlainTextResponse
+    from datetime import date
+
+    with conn.cursor() as cur:
+        user_id = user["user_id"]
+
+        # Get user display info
+        cur.execute(
+            "SELECT display_name, yogi_name FROM users WHERE user_id = %s",
+            (user_id,),
+        )
+        u = cur.fetchone()
+        name = u["display_name"] or u["yogi_name"] or "Nutzer/in"
+
+        cur.execute(
+            "SELECT profile_id, full_name, location FROM profiles WHERE user_id = %s AND enabled = TRUE LIMIT 1",
+            (user_id,),
+        )
+        profile_row = cur.fetchone()
+        if not profile_row:
+            return PlainTextResponse("Kein Profil gefunden.", status_code=404)
+
+        profile_id = profile_row["profile_id"]
+        profile_name = profile_row["full_name"] or name
+        profile_location = profile_row["location"] or ""
+
+        rows = _build_protokoll_rows(cur, profile_id, decisions_only=False)
+
+    today = date.today().strftime("%d.%m.%Y")
+    lines = [
+        "=" * 70,
+        "BEWERBUNGSPROTOKOLL",
+        "Nachweisdokument für die Agentur für Arbeit / das Jobcenter",
+        "=" * 70,
+        f"Name:     {profile_name}",
+        f"Wohnort:  {profile_location}",
+        f"Erstellt: {today}",
+        f"Quelle:   talent.yoga (automatisch protokolliert)",
+        "",
+        f"Gesamteinträge:     {len(rows)}",
+        f"Bewerbungen:        {sum(1 for r in rows if r['event_type'] == 'applied')}",
+        f"Entscheidungen:     {sum(1 for r in rows if r['is_decision'])}",
+        "",
+        "-" * 70,
+        "",
+    ]
+
+    current_month = None
+    for row in reversed(rows):  # chronological order for the document
+        # Month separator
+        month = row["created_at"][:7] if row["created_at"] else ""
+        if month != current_month:
+            if current_month is not None:
+                lines.append("")
+            try:
+                from datetime import datetime as _dt
+                mo = _dt.fromisoformat(row["created_at"])
+                lines.append(f"── {mo.strftime('%B %Y')} {'─' * 50}")
+            except Exception:
+                lines.append(f"── {month} {'─' * 50}")
+            lines.append("")
+            current_month = month
+
+        action = row["action_label"]
+        title  = row["job_title"]
+        loc    = f" ({row['location_city']})" if row["location_city"] else ""
+        dt     = f"{row['created_date']} {row['created_time']}"
+
+        lines.append(f"{dt}  [{action}]")
+        lines.append(f"  Stelle: {title}{loc}")
+
+        if row["external_url"]:
+            lines.append(f"  URL:    {row['external_url']}")
+
+        if row["rationale"]:
+            lines.append(f"  Begründung: {row['rationale']}")
+        elif row["nogo_reasons"]:
+            lines.append(f"  Begründung: {'; '.join(row['nogo_reasons'])}")
+
+        lines.append("")
+
+    lines += [
+        "-" * 70,
+        f"Dieses Dokument wurde am {today} automatisch von talent.yoga erstellt.",
+        "talent.yoga protokolliert alle Stellenaktivitäten automatisch und",
+        "datumssicher. Das Dokument kann als Nachweis bei der Agentur für Arbeit",
+        "oder beim Jobcenter eingereicht werden.",
+        "=" * 70,
+    ]
+
+    filename = f"bewerbungsprotokoll_{date.today().strftime('%Y%m%d')}.txt"
+    return PlainTextResponse(
+        content="\n".join(lines),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 def render_base(content: str, user: dict = None) -> str:
     """Wrap content in base HTML template."""
     nav = ""
