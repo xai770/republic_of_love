@@ -486,8 +486,83 @@
             animation: riseIn .5s .3s ease both;
         }
         .celebration-step .celeb-btn {
+            animation: riseIn .5s .6s ease both;
+        }
+        .celeb-credit-intro {
+            font-size: .95rem; color: #475569; max-width: 360px; margin: 0 auto 28px;
+            animation: riseIn .5s .2s ease both;
+        }
+        .celeb-tier-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; margin-bottom: 16px;
+            animation: riseIn .5s .3s ease both;
+        }
+        .tier-member-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: #fff; font-size: 1rem; font-weight: 700;
+            padding: 9px 22px; border-radius: 999px; letter-spacing: .01em;
+            box-shadow: 0 2px 8px rgba(21,128,61,.25);
+        }
+        .tier-trial-tag {
+            display: inline-flex; align-items: center;
+            background: #fef9c3; color: #92400e;
+            border: 1px solid #fde68a;
+            font-size: .78rem; font-weight: 600;
+            padding: 5px 12px; border-radius: 999px;
+        }
+        .celeb-trial-note {
+            font-size: .82rem; color: #94a3b8; max-width: 340px;
+            margin: 0 auto 36px; line-height: 1.5;
             animation: riseIn .5s .4s ease both;
         }
+        /* ── Tier comparison table ── */
+        .tier-table-wrap {
+            width: 100%; margin: 0 0 32px;
+            animation: riseIn .5s .4s ease both;
+            overflow-x: auto;
+        }
+        .tier-table {
+            width: 100%; border-collapse: collapse;
+            font-size: .82rem; text-align: center;
+        }
+        .tier-table thead th {
+            padding: 10px 8px 6px;
+            font-weight: 700; font-size: .84rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tier-table thead th:first-child { text-align: left; }
+        .tier-table thead th .t-price {
+            display: block; font-size: .73rem; font-weight: 500;
+            color: #64748b; margin-top: 2px;
+        }
+        .tier-table thead th.col-member {
+            background: #f0fdf4; border-radius: 8px 8px 0 0;
+            border-top: 2px solid #16a34a; color: #15803d;
+        }
+        .tier-table thead th.col-sustainer {
+            background: #eff6ff; border-radius: 8px 8px 0 0;
+            border-top: 2px solid #2563eb; color: #1d4ed8;
+        }
+        .tier-table tbody td {
+            padding: 7px 8px; border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .tier-table tbody td:first-child {
+            text-align: left; color: #64748b; font-size: .80rem;
+        }
+        .tier-table tbody td.col-member { background: #f0fdf4; }
+        .tier-table tbody td.col-sustainer { background: #eff6ff; }
+        .tier-table tfoot td { padding: 8px; border: none; }
+        .tier-table tfoot td.col-member {
+            background: #f0fdf4; border-radius: 0 0 8px 8px;
+        }
+        .tier-table tfoot td.col-sustainer {
+            background: #eff6ff; border-radius: 0 0 8px 8px;
+        }
+        .t-check { color: #16a34a; font-weight: 700; }
+        .t-dash  { color: #cbd5e1; }
+        .t-opt   { color: #94a3b8; font-size: .75rem; }
         @keyframes popIn  { 0%{opacity:0;transform:scale(.4)} 100%{opacity:1;transform:scale(1)} }
         @keyframes riseIn { 0%{opacity:0;transform:translateY(18px)} 100%{opacity:1;transform:translateY(0)} }
         .tc-link {
@@ -809,10 +884,14 @@
     <div class="step celebration-step" data-step="12">
         <div class="celeb-check">🎉</div>
         <h1 class="celeb-title" id="s12-title"></h1>
-        <p class="celeb-name" id="s12-subtitle"></p>
-        <div class="celeb-plan" id="s12-plan"></div>
+        <p class="celeb-credit-intro" id="s12-credit-intro"></p>
+        <div class="celeb-tier-row">
+            <span class="tier-member-badge" id="s12-tier-badge"></span>
+            <span class="tier-trial-tag" id="s12-trial-tag"></span>
+        </div>
+        <p class="celeb-trial-note" id="s12-trial-note"></p>
         <button class="btn btn-primary celeb-btn" id="s12-cta"
-                onclick="window.location.href='/dashboard'"></button>
+                onclick="window.location.href='/'"></button>
     </div>
 </div><!-- /wizard -->
 
@@ -934,10 +1013,12 @@
             s11_btn_yes: "Continue \u2014 I want to be notified",
             s11_btn_no: "Continue \u2014 I don\u2019t want to be notified",
             s11_saving: "Saving\u2026",
-            s12_title: "You're in.",
-            s12_subtitle_prefix: "Welcome,",
-            s12_plan_label: "\ud83c\udf31 Guest",
-            s12_cta: "Go to your dashboard \u2192",
+            s12_title: "Welcome to the team!",
+            s12_credit_intro: "As a new yogi, you have been granted \u20ac5 in credits.",
+            s12_tier_badge: "\ud83c\udf3f Member",
+            s12_trial_tag: "on trial",
+            s12_trial_note: "Your trial will expire once you have consumed your credits.",
+            s12_cta: "Continue to the Home page \u2192",
             next: "Next",
             back: "Back",
             dismissed: "You can close this window now.",
@@ -1027,10 +1108,12 @@
             s11_btn_yes: "Weiter, ich m\u00f6chte benachrichtigt werden",
             s11_btn_no: "Weiter, ich m\u00f6chte nicht benachrichtigt werden",
             s11_saving: "Speichern\u2026",
-            s12_title: "Du bist dabei.",
-            s12_subtitle_prefix: "Willkommen,",
-            s12_plan_label: "\ud83c\udf31 Gast",
-            s12_cta: "Zum Dashboard \u2192",
+            s12_title: "Willkommen im Team!",
+            s12_credit_intro: "Als neuer Yogi erh\u00e4ltst du 5\u20ac Startguthaben.",
+            s12_tier_badge: "\ud83c\udf3f Mitglied",
+            s12_trial_tag: "auf Probe",
+            s12_trial_note: "Dein Testaccount endet, sobald du dein Guthaben aufgebraucht hast.",
+            s12_cta: "Weiter zur Startseite \u2192",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Du kannst dieses Fenster jetzt schließen.",
@@ -1120,10 +1203,12 @@
             s11_btn_yes: "Weiter, ich m\u00f6chte benachrichtigt werden",
             s11_btn_no: "Weiter, ich m\u00f6chte nicht benachrichtigt werden",
             s11_saving: "Speichern\u2026",
-            s12_title: "Sie sind dabei.",
-            s12_subtitle_prefix: "Willkommen,",
-            s12_plan_label: "\ud83c\udf31 Gast",
-            s12_cta: "Zum Dashboard \u2192",
+            s12_title: "Willkommen im Team!",
+            s12_credit_intro: "Als neuer Yogi erhalten Sie 5\u20ac Startguthaben.",
+            s12_tier_badge: "\ud83c\udf3f Mitglied",
+            s12_trial_tag: "auf Probe",
+            s12_trial_note: "Ihr Testaccount endet, sobald Sie Ihr Guthaben aufgebraucht haben.",
+            s12_cta: "Weiter zur Startseite \u2192",
             next: "Weiter",
             back: "Zurück",
             dismissed: "Sie können dieses Fenster jetzt schließen.",
@@ -1274,11 +1359,13 @@
         if ($('#s11-email-input')) $('#s11-email-input').placeholder = t.s11_placeholder || '';
         _obNotifEmailChanged();  // sync dynamic button label
 
-        // Step 12 — Celebration
-        if ($('#s12-title'))    $('#s12-title').textContent    = t.s12_title;
-        if ($('#s12-subtitle')) $('#s12-subtitle').textContent = (t.s12_subtitle_prefix || '') + ' ' + (state.chosenName || '');
-        if ($('#s12-plan'))     $('#s12-plan').textContent     = t.s12_plan_label;
-        if ($('#s12-cta'))      $('#s12-cta').textContent      = t.s12_cta;
+        // Step 12 — Celebration / Member-on-trial
+        if ($('#s12-title'))        $('#s12-title').textContent        = t.s12_title;
+        if ($('#s12-credit-intro')) $('#s12-credit-intro').textContent = t.s12_credit_intro;
+        if ($('#s12-tier-badge'))   $('#s12-tier-badge').textContent   = t.s12_tier_badge;
+        if ($('#s12-trial-tag'))    $('#s12-trial-tag').textContent    = t.s12_trial_tag;
+        if ($('#s12-trial-note'))   $('#s12-trial-note').textContent   = t.s12_trial_note;
+        if ($('#s12-cta'))          $('#s12-cta').textContent          = t.s12_cta;
 
         // Generic labels
         $$('.next-label').forEach(el => el.textContent = t.next);
@@ -1302,7 +1389,7 @@
         9:  { w: 660, mh: null },
         10: { w: 540, mh: null },
         11: { w: 660, mh: null },
-        12: { w: 560, mh: null },
+        12: { w: 720, mh: null },
     };
 
     function applyStepSize(step) {
