@@ -514,19 +514,6 @@
 <div class="wizard" id="wizard">
     <span class="step-counter" id="step-counter"></span>
 
-    <!-- Inline legal overlay (covers entire wizard card) -->
-    <div class="legal-overlay" id="legal-overlay" onclick="handleOverlayClick(event)">
-        <div class="legal-sheet">
-            <div class="legal-header">
-                <h3 id="legal-overlay-title"></h3>
-                <button class="legal-x" onclick="closeLegal()" aria-label="Close">&times;</button>
-            </div>
-            <div class="legal-body" id="legal-overlay-body"></div>
-            <div class="legal-footer">
-                <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
-            </div>
-        </div>
-    </div>
 
     <!-- ════════ STEP 1 — Language ════════ -->
     <div class="step active" data-step="1" style="gap:0;">
@@ -828,6 +815,22 @@
         <button class="btn btn-primary celeb-btn" id="s12-cta"
                 onclick="window.location.href='/dashboard'"></button>
     </div>
+</div><!-- /wizard -->
+
+<!-- Legal overlay — must be OUTSIDE wizard (overflow:auto would trap position:fixed) -->
+<div class="legal-overlay" id="legal-overlay" onclick="handleOverlayClick(event)">
+    <div class="legal-sheet">
+        <div class="legal-header">
+            <h3 id="legal-overlay-title"></h3>
+            <button class="legal-x" onclick="closeLegal()" aria-label="Close">&times;</button>
+        </div>
+        <div class="legal-body" id="legal-overlay-body"></div>
+        <div class="legal-footer">
+            <button class="btn btn-secondary legal-close" onclick="closeLegal()">← <span class="back-label"></span></button>
+        </div>
+    </div>
+</div>
+
 <script>
 (function() {
     "use strict";
