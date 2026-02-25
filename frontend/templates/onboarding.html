@@ -571,11 +571,17 @@
         </div>
     </div>
 
-    <!-- ════════ STEP 5 — How billing works ════════ -->
+    <!-- ════════ STEP 5 — Our Commitment ════════ -->
     <div class="step" data-step="5">
         <h2 id="s5-title"></h2>
         <p id="s5-subtitle"></p>
-        <div class="billing-cards" id="s5-cards"></div>
+        <!-- Read button -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <div class="tc-read-row" id="btn-read-commitment" onclick="showLegal('commitment')" role="button" tabindex="0">
+                <span class="tc-read-status" id="icon-commitment">🤝</span>
+                <span id="s5-commitment-btn"></span>
+            </div>
+        </div>
         <div class="btn-row">
             <button class="btn btn-secondary" onclick="goTo(4)">← <span class="back-label"></span></button>
             <button class="btn btn-primary" onclick="goTo(6)">
@@ -795,14 +801,10 @@
             s4_privacy_read: 'Privacy Policy – read ✓',
             s4_accept: "I accept",
             s4_reject: "I decline",
-            s5_title: "How billing works",
-            s5_subtitle: "Transparency is important to us — here\u2019s the deal.",
-            s5_cards: [
-                { icon: "\uD83C\uDF81", text: "<strong>14 days or \u20AC5 of AI credit</strong> — whichever comes first. Plenty to explore everything." },
-                { icon: "\uD83E\uDD16", text: "<strong>We only charge for AI work</strong> — browsing jobs, reading profiles, and managing your account is always free." },
-                { icon: "\uD83D\uDCB0", text: "<strong>After your trial</strong> — \u20AC9.90/month, all-you-can-use. No surprises." },
-                { icon: "\uD83D\uDCCA", text: "<strong>Full transparency</strong> — see exactly what you\u2019ve used anytime under Finances." },
-            ],
+            s5_title: "Our commitment to you",
+            s5_subtitle: "This is not a terms document. It is a description of how we intend to treat you — and why.",
+            s5_commitment_btn: "Our Commitment",
+            s5_commitment_read: "Our Commitment – read ✓",
             s6_title: "One more thing — your Yogi Name",
             s6_subtitle: "To keep your identity private from employers, you\'ll go by a Yogi Name here. Share a few words that describe you and we\'ll craft one.",
             s6_placeholder: "e.g. forest, calm, tech, moon",
@@ -888,14 +890,10 @@
             s4_privacy_read: 'Datenschutzerklärung – gelesen ✓',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
-            s5_title: "So funktioniert die Abrechnung",
-            s5_subtitle: "Transparenz ist uns wichtig — hier die Fakten.",
-            s5_cards: [
-                { icon: "\uD83C\uDF81", text: "<strong>14 Tage oder \u20AC5 KI-Guthaben</strong> — was zuerst aufgebraucht ist. Genug, um alles auszuprobieren." },
-                { icon: "\uD83E\uDD16", text: "<strong>Wir berechnen nur KI-Arbeit</strong> — Stellen durchstöbern, Profile lesen und dein Konto verwalten ist immer kostenlos." },
-                { icon: "\uD83D\uDCB0", text: "<strong>Nach dem Probezeitraum</strong> — \u20AC9,90/Monat, alles inklusive. Keine Überraschungen." },
-                { icon: "\uD83D\uDCCA", text: "<strong>Volle Transparenz</strong> — sieh jederzeit genau, was du verbraucht hast, unter Finanzen." },
-            ],
+            s5_title: "Unser Versprechen",
+            s5_subtitle: "Ein internes Dokument — offen geteilt.",
+            s5_commitment_btn: "Unser Versprechen",
+            s5_commitment_read: "Unser Versprechen – gelesen ✓",
             s6_title: "Noch kurz — dein Yogi-Name",
             s6_subtitle: "Damit Arbeitgeber dich nicht identifizieren können, trittst du hier unter einem Yogi-Namen auf. Schreib ein paar Wörter, die dich beschreiben — wir erfinden daraus deinen Namen.",
             s6_placeholder: "z.B. Wald, ruhig, Technik, Mond",
@@ -981,14 +979,10 @@
             s4_privacy_read: 'Datenschutzerklärung – gelesen ✓',
             s4_accept: "Einverstanden",
             s4_reject: "Ablehnen",
-            s5_title: "So funktioniert die Abrechnung",
-            s5_subtitle: "Transparenz ist uns wichtig — hier die Fakten.",
-            s5_cards: [
-                { icon: "\uD83C\uDF81", text: "<strong>14 Tage oder \u20AC5 KI-Guthaben</strong> — was zuerst aufgebraucht ist. Genug, um alles auszuprobieren." },
-                { icon: "\uD83E\uDD16", text: "<strong>Wir berechnen nur KI-Arbeit</strong> — Stellen durchstöbern, Profile lesen und Ihr Konto verwalten ist immer kostenlos." },
-                { icon: "\uD83D\uDCB0", text: "<strong>Nach dem Probezeitraum</strong> — \u20AC9,90/Monat, alles inklusive. Keine Überraschungen." },
-                { icon: "\uD83D\uDCCA", text: "<strong>Volle Transparenz</strong> — sehen Sie jederzeit genau, was Sie verbraucht haben, unter Finanzen." },
-            ],
+            s5_title: "Unser Versprechen",
+            s5_subtitle: "Ein internes Dokument — offen geteilt.",
+            s5_commitment_btn: "Unser Versprechen",
+            s5_commitment_read: "Unser Versprechen – gelesen ✓",
             s6_title: "Noch kurz — Ihr Yogi-Name",
             s6_subtitle: "Damit Arbeitgeber Sie nicht identifizieren können, treten Sie hier unter einem Yogi-Namen auf. Schreiben Sie ein paar Wörter, die Sie beschreiben — wir erfinden daraus Ihren Namen.",
             s6_placeholder: "z.B. Wald, ruhig, Technik, Mond",
@@ -1124,15 +1118,10 @@
         if ($('#s4-reject')) $('#s4-reject').textContent = t.s4_reject;
         updateCheckboxState();
 
-        // Step 5 — Billing
-        if ($('#s5-title'))    $('#s5-title').textContent = t.s5_title;
-        if ($('#s5-subtitle')) $('#s5-subtitle').textContent = t.s5_subtitle;
-        if ($('#s5-cards')) {
-            const cards = t.s5_cards || [];
-            $('#s5-cards').innerHTML = cards.map(cd =>
-                '<div class="billing-card"><div class="bc-icon">' + cd.icon + '</div><div class="bc-text">' + cd.text + '</div></div>'
-            ).join('');
-        }
+        // Step 5 — Commitment
+        if ($('#s5-title'))           $('#s5-title').textContent = t.s5_title;
+        if ($('#s5-subtitle'))        $('#s5-subtitle').textContent = t.s5_subtitle;
+        if ($('#s5-commitment-btn'))  $('#s5-commitment-btn').textContent = t.s5_commitment_btn;
 
         // Step 6 — Keywords
         if ($('#s6-title'))            $('#s6-title').textContent = t.s6_title;
@@ -1400,6 +1389,36 @@
                     + '<h4>Cookies</h4><p>Wir verwenden ein minimales Session-Cookie zur Authentifizierung und ein Cookie für die Spracheinstellung. Es werden keine Tracking-Cookies von Drittanbietern eingesetzt.</p>'
                     + '<h4>Datenspeicherung</h4><p>Kontodaten werden aufbewahrt, solange das Konto aktiv ist. Nach Löschung werden alle Daten innerhalb von 30 Tagen endgültig entfernt.</p>'
             }
+        },
+        commitment: {
+            en: {
+                title: 'Our Commitment',
+                body: '<p><em>Internal operating document, shared openly.</em></p>'
+                    + '<h4>What talent.yoga does</h4><p>A job-search companion. Matches people to real postings, explains why a match is good and why it might not be, and provides employer intelligence unavailable elsewhere. Everything is shaped by one constraint: the dignity of the person searching.</p>'
+                    + '<h4>How we make money</h4><p>We do not sell data. No advertising. No behaviour optimisation for third parties. A modest monthly contribution from those who can afford it keeps the system independent and aligned with its members. This is a cooperative model, not charity.</p>'
+                    + '<h4>Free</h4><p>Up to 10 job matches per month and 5 Mira conversations per day. Free because opportunity should not depend on money.</p>'
+                    + '<h4>Standard — €5/month</h4><p>Unlimited matching. Mira fully unlocked: CV feedback, interview preparation, application review, honest assessment of chances. Full employer intelligence. Full dashboard. Can be paused at any time — job searches have phases.</p>'
+                    + '<h4>Sustainer — €10+/month</h4><p>Everything in Standard. The surplus funds free memberships for people who cannot pay. Sustainers are listed on a public supporters page if they choose. This does not buy better results — it is solidarity.</p>'
+                    + '<h4>Mira</h4><p>Not a chatbot. Trained to give honest, specific answers. Free members can ask what the platform does or what a match score means. Full interview preparation and application review require Standard or Sustainer.</p>'
+                    + '<h4>The journey</h4><p>Every step in a job search is named: Novice Yogi → Self-Aware → Matched → Active → Advancing → Resilient → Patient → Victorious. Not gamification — acknowledgement that the steps are real and hard.</p>'
+                    + '<h4>What we will never do</h4><p>Guarantee outcomes. Sell data. Show your email to anyone including ourselves. Use urgency, scarcity, or dark patterns. Profit from anxiety.</p>'
+                    + '<h4>Transparency</h4><p>Members can see the actual AI cost invested in their support. Not a billing mechanism — shared responsibility.</p>'
+                    + '<h4>A final principle</h4><p>talent.yoga does not charge for hope. It charges for intelligence, clarity, and support.</p>'
+            },
+            de: {
+                title: 'Unser Versprechen',
+                body: '<p><em>Internes Dokument, offen geteilt.</em></p>'
+                    + '<h4>Was talent.yoga tut</h4><p>Eine Begleitung bei der Jobsuche. Passende Stellen werden gefunden, ehrlich erklärt warum ein Match gut ist und warum auch nicht, und Arbeitgeber-Informationen bereitgestellt, die es anderswo nicht gibt. Alles wird durch einen Grundsatz geprägt: die Würde der suchenden Person.</p>'
+                    + '<h4>Wie talent.yoga Geld verdient</h4><p>Keine Datenweitergabe. Keine Werbung. Keine Verhaltensoptimierung für Dritte. Ein moderater monatlicher Beitrag derjenigen, die es sich leisten können, hält das System unabhängig. Kooperatives Modell, keine Wohltätigkeit.</p>'
+                    + '<h4>Kostenlos</h4><p>Bis zu 10 Job-Matches pro Monat und 5 Mira-Gespräche pro Tag. Kostenlos, weil Chancen nicht vom Geld abhängen sollten.</p>'
+                    + '<h4>Standard — 5 €/Monat</h4><p>Unbegrenzte Matches. Mira in vollem Umfang: Lebenslauf-Feedback, Interviewvorbereitung, Bewerbungscheck, ehrliche Einschätzung der Chancen. Vollständige Arbeitgeber-Informationen. Jederzeit pausierbar — Jobsuche hat Phasen.</p>'
+                    + '<h4>Unterstützer — ab 10 €/Monat</h4><p>Alles aus Standard. Der Überschuss finanziert kostenlose Mitgliedschaften für Menschen, die nicht zahlen können. Unterstützer können auf einer öffentlichen Seite sichtbar sein. Das bringt keine besseren Ergebnisse — es ist Solidarität.</p>'
+                    + '<h4>Mira</h4><p>Kein Chatbot. Ehrliche, konkrete Antworten. Kostenlose Mitglieder können fragen, was die Plattform tut oder was ein Match-Score bedeutet. Vollständige Interviewvorbereitung erfordert Standard oder Unterstützer.</p>'
+                    + '<h4>Die Reise</h4><p>Jeder Schritt in der Jobsuche ist benannt: Novizen-Yogi → Selbstbewusst → Gematcht → Aktiv → Fortschreitend → Resilient → Geduldig → Siegreich. Kein Gamification — Anerkennung, dass die Schritte real und anspruchsvoll sind.</p>'
+                    + '<h4>Was wir niemals tun</h4><p>Ergebnisse garantieren. Daten verkaufen. Eine E-Mail-Adresse zeigen. Druck, künstliche Verknappung oder manipulative Muster. Von Unsicherheit profitieren.</p>'
+                    + '<h4>Transparenz</h4><p>Mitglieder können sehen, wie viel KI-Arbeit in ihre Unterstützung geflossen ist. Kein Abrechnungsmechanismus — gemeinsame Verantwortung.</p>'
+                    + '<h4>Ein letzter Grundsatz</h4><p>talent.yoga verkauft keine Hoffnung. Es steht für Klarheit, Orientierung und Unterstützung.</p>'
+            }
         }
     };
 
@@ -1421,12 +1440,19 @@
             if (row) row.classList.add('read');
             if (lbl) lbl.textContent = t.s4_terms_read   || 'Terms & Conditions – read ✓';
             if (ico) ico.textContent = '✓';
-        } else {
+        } else if (type === 'privacy') {
             const row = $('#btn-read-privacy');
             const lbl = $('#s4-privacy-btn');
             const ico = $('#icon-privacy');
             if (row) row.classList.add('read');
             if (lbl) lbl.textContent = t.s4_privacy_read || 'Privacy Policy – read ✓';
+            if (ico) ico.textContent = '✓';
+        } else if (type === 'commitment') {
+            const row = $('#btn-read-commitment');
+            const lbl = $('#s5-commitment-btn');
+            const ico = $('#icon-commitment');
+            if (row) row.classList.add('read');
+            if (lbl) lbl.textContent = t.s5_commitment_read || 'Our Commitment – read ✓';
             if (ico) ico.textContent = '✓';
         }
     };
