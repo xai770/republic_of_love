@@ -221,7 +221,7 @@ Berufenet matches on `Technology` → domain 43 (Informatik) → 6,848 candidate
 | `bfe9a8d` | chore: fix stale comment (7 days → 30 days) |
 | `7d54c9e` | chore: daily note + schema users.is_protected |
 | `4a67808` | fix(gdpr): stop storing Google OAuth display_name |
-| TBD       | feat: profession-first candidate pool in runtime mode |
+| `c24cd6e` | feat: profession-first candidate pool in runtime mode |
 
 ---
 
