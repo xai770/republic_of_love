@@ -990,7 +990,7 @@ def search_profile(
             FROM profiles pr
             JOIN profile_posting_matches ppm ON ppm.profile_id = pr.profile_id
             WHERE pr.user_id = %s
-              AND ppm.computed_at > NOW() - INTERVAL '7 days'
+              AND ppm.computed_at > NOW() - INTERVAL '30 days'
             ORDER BY ppm.computed_at DESC
             LIMIT 2000
         """, (user['user_id'],))
