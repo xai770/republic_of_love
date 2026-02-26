@@ -1315,6 +1315,7 @@ window.SEARCH_TOUR_I18N = {
     async function refreshProfileResults() {
         try {
             const params = new URLSearchParams();
+            params.set('limit', '500');
             if (state.geoLocations.length > 0) {
                 params.set('lat', state.geoLocations[0].lat);
                 params.set('lon', state.geoLocations[0].lon);

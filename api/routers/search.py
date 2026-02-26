@@ -946,7 +946,7 @@ def get_posting_detail(
 def search_profile(
     user: dict = Depends(require_user),
     conn=Depends(get_db),
-    limit: int = 20,
+    limit: int = 500,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
     radius_km: Optional[int] = None,
@@ -1069,7 +1069,7 @@ def search_profile(
               AND p.berufenet_id IS NOT NULL
               {geo_clause}
             ORDER BY p.first_seen_at DESC NULLS LAST
-            LIMIT 1000
+            LIMIT 5000
         """, geo_params)
         candidates = list(cur.fetchall())
 
