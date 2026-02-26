@@ -6047,11 +6047,6 @@ body {
    SEARCH PAGE - DARK MODE
    ============================================================ */
 
-/* Hide the global header search bar on the search page — it's a duplicate there */
-.app-layout:has(.search-page-active) .header-search {
-    display: none;
-}
-
 [data-theme="dark"] .search-title {
     color: #e2e8f0;
 }
