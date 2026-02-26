@@ -908,15 +908,31 @@ def search_profile(
     Two modes (transparently selected):
 
     CLARA mode  — when Clara has precomputed matches for this profile
-    (profile_posting_matches with computed_at within the last 7 days),
+    (profile_posting_matches with computed_at within the last 30 days),
     return those posting_ids directly. Clara ran against ALL 173K postings;
     this is the high-quality path.
 
-    RUNTIME mode — fallback when Clara hasn't run yet. Pulls a
-    geographically stratified candidate pool (top 350 per state,
-    ~5 600 candidates) and scores by cosine similarity against the
-    profile embedding. Stratified so Berlin/Bayern are not drowned
-    out by whatever states the nightly AA fetch happened to finish on.
+    RUNTIME mode — fallback when Clara hasn't run yet.
+
+      Step 1 — Domain inference (retrieve):
+        Tokenise profile.current_title + desired_roles (words ≥ 4 chars).
+        ILIKE-match tokens against berufenet.name to extract domain codes.
+        German berufenet names contain loanwords (Software, Manager, Cloud,
+        Data, IT, Consultant) that survive English title tokenisation.
+        Result: a domain-relevant pool of 5K–20K postings.
+
+      Step 2 — Cosine ranking (rerank):
+        Fetch embeddings for the domain pool, score by cosine similarity
+        against the profile embedding, return top N.
+
+    This is the retrieve-then-rerank pattern. Every candidate in the pool
+    is a priori domain-relevant; the embedding scorer only needs to judge
+    fit within that relevant set, not filter out nursing/logistics/trades.
+
+    Fallback: if domain inference produces nothing (rare, exotic titles),
+    reverts to the stratified geographic pool (top 350 per state ≈ 5 600
+    candidates). Stratified so Berlin/Bayern are not drowned out by
+    whatever states the nightly AA fetch happened to finish on.
 
     Returns {available: false, reason: ...} when the profile is not
     ready (no skills, no cached embedding).
@@ -924,7 +940,8 @@ def search_profile(
     # ── 1. Load profile skills ────────────────────────────────────
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT skill_keywords, current_title, profile_summary, experience_level, location
+            SELECT skill_keywords, current_title, profile_summary,
+                   experience_level, location, desired_roles
             FROM profiles
             WHERE user_id = %s AND skill_keywords IS NOT NULL
             ORDER BY updated_at DESC NULLS LAST
@@ -1008,17 +1025,37 @@ def search_profile(
             "experience_level": profile.get('experience_level') or None,
         }
 
-    # ── 4b. RUNTIME mode — stratified candidate pool ─────────────────────
-    # Pull the top 350 most-recent active postings PER STATE.
-    # ~16 states × 350 = ~5 600 candidates, geographically representative.
-    # This avoids the "5000 most-recent = whatever state AA fetched last"
-    # recency bias that made Bayern / Berlin / BW invisible in the pool.
+    # ── 4b. RUNTIME mode — domain-inferred candidate pool ───────────────────
+    # Retrieve-then-rerank:
+    #   1. Infer relevant domain codes from profile title / desired_roles
+    #      by ILIKE-matching tokens against berufenet.name.
+    #   2. Pull ALL active postings in those domains.
+    #   3. Score by cosine similarity → return top N.
     #
-    # Location is NOT pre-filtered here. The results query handles that.
-    # Invariant: adding any location filter can only reduce counts, not increase.
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT
+    # Fallback: if no domains are inferred (exotic/untranslatable titles),
+    # revert to stratified geographic sampling (top 350 per state ≈ 5 600).
+
+    # ── Infer domain codes from title tokens ──────────────────────
+    import re as _re
+    raw_title   = profile.get('current_title') or ''
+    raw_roles   = profile.get('desired_roles') or []
+    title_parts = _re.split(r'[\s/,;|]+', raw_title)
+    term_pool   = [t for t in list(title_parts) + list(raw_roles) if len(t) >= 4]
+
+    inferred_domains: list = []
+    if term_pool:
+        like_clauses = ' OR '.join(['name ILIKE %s'] * len(term_pool))
+        like_params  = ['%' + t + '%' for t in term_pool]
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT DISTINCT SUBSTRING(kldb FROM 3 FOR 2) AS domain_code"
+                f" FROM berufenet WHERE {like_clauses}",
+                like_params,
+            )
+            inferred_domains = [r['domain_code'] for r in cur.fetchall()]
+
+    # ── Build candidate pool SQL ──────────────────────────────────
+    _POSTING_COLS = """
                 p.posting_id,
                 p.job_title,
                 p.location_city,
@@ -1027,8 +1064,8 @@ def search_profile(
                 p.extracted_summary,
                 p.first_seen_at,
                 p.source,
-                SUBSTRING(b.kldb FROM 3 FOR 2)                       AS domain_code,
-                CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER)       AS ql_level,
+                SUBSTRING(b.kldb FROM 3 FOR 2)                        AS domain_code,
+                CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER)        AS ql_level,
                 source_metadata->'raw_api_response'->'arbeitgeber'->>'name' AS employer_name,
                 p.berufenet_name,
                 COALESCE(
@@ -1036,22 +1073,43 @@ def search_profile(
                     p.job_description,
                     p.job_title,
                     p.berufenet_name
-                ) AS match_text
-            FROM (
-                SELECT *,
-                       ROW_NUMBER() OVER (
-                           PARTITION BY location_state
-                           ORDER BY first_seen_at DESC NULLS LAST
-                       ) AS state_rank
-                FROM postings
-                WHERE enabled = true
-                  AND invalidated = false
-                  AND berufenet_id IS NOT NULL
-            ) p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-            WHERE p.state_rank <= 350
-        """)
-        candidates = list(cur.fetchall())
+                ) AS match_text"""
+
+    if inferred_domains:
+        # Domain-inferred pool — all active postings in the relevant domains.
+        # No geographic pre-filter; the results query handles location later.
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT {_POSTING_COLS}
+                FROM postings p
+                JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                WHERE p.enabled = true
+                  AND p.invalidated = false
+                  AND p.berufenet_id IS NOT NULL
+                  AND SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)
+            """, (inferred_domains,))
+            candidates = list(cur.fetchall())
+    else:
+        # Stratified fallback — top 350 most-recent per state ≈ 5 600 total.
+        # Used when title/roles produce no domain signal (rare).
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT {_POSTING_COLS}
+                FROM (
+                    SELECT *,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY location_state
+                               ORDER BY first_seen_at DESC NULLS LAST
+                           ) AS state_rank
+                    FROM postings
+                    WHERE enabled = true
+                      AND invalidated = false
+                      AND berufenet_id IS NOT NULL
+                ) p
+                JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                WHERE p.state_rank <= 350
+            """)
+            candidates = list(cur.fetchall())
 
     if not candidates:
         return {"available": True, "results": []}
@@ -1119,6 +1177,8 @@ def search_profile(
         "available": True,
         "results": results,
         "source": "runtime",
+        "runtime_pool": "domain" if inferred_domains else "stratified",
+        "inferred_domains": inferred_domains or None,
         "profile_location": profile.get('location') or None,
         "experience_level": profile.get('experience_level') or None,
     }

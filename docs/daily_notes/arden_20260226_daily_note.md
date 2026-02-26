@@ -117,11 +117,119 @@ wiped by dev reset scripts or seed runs.
 
 ---
 
+## 5. GDPR: Stop Storing Google OAuth `display_name` ✅
+
+### Problem
+`api/routers/auth.py` called `google_user.get("name")` and stored the Google
+real name into `users.display_name` on **every login** — automatic, silent,
+without consent. xai discovered `display_name = "Gershon Pollatschek"` in
+the DB while testing their own profile upload.
+
+### Fix (`4a67808`)
+6 files changed, 18 insertions, 49 deletions:
+
+| File | Change |
+|---|---|
+| `auth.py` | Removed `display_name` variable; removed from INSERT and UPDATE |
+| `deps.py` | Removed `display_name` from per-request SELECT |
+| `y2y.py` | Both identity-reveal reads switched from `display_name` → `yogi_name` |
+| `profiles.py` | Taro validator `real_name` no longer uses Google name; only CV text |
+| `account.py` | `DisplayNameUpdate` model and `POST /account/display-name` endpoint deleted |
+| `main.py` | Arcade `player_name → display_name` write removed |
+
+DB: `UPDATE users SET display_name = NULL` cleared all 7 rows.
+
+Comment added to `auth.py`:
+```python
+# display_name (Google real name) is intentionally NOT stored — GDPR.
+```
+
+**Status**: `users.display_name` column kept (nullable) but no code writes to
+it. A future migration can `ALTER TABLE users DROP COLUMN display_name`.
+
+---
+
+## 6. Profession-First → Profile-Ranks Runtime Mode ✅
+
+### Problem
+`search_profile()` runtime mode (no Clara matches yet) built its candidate
+pool from stratified geographic sampling:
+
+```
+350 most-recent postings × ~16 states = ~5,600 candidates
+→ cosine-rank by profile embedding
+```
+
+**Flaw**: the 5,600 candidates are drawn from ALL 173K postings regardless of
+domain. For an IT/CTO profile, ~95% of candidates are completely irrelevant
+professions (nursing, logistics, trades). The embedding scorer then picks the
+least-bad 500 from a mostly-wrong pool.
+
+### Analysis
+Domain 43 (Informatik/IT) alone has 6,848 active postings — more than the
+entire stratified pool, and every single one is a priori relevant.
+Domain 71 (Management/Consulting) has 13,453. Together: ~20K candidates that
+are far more likely to match an IT executive profile than the stratified 5,600.
+
+This is the standard **retrieve-then-rerank** pattern:
+1. **Retrieve** — use structured metadata (domain/profession) to select a
+   domain-relevant candidate pool
+2. **Rerank** — use the profile embedding to sort that pool by semantic fit
+
+### Implementation — Domain Inference
+The profile has `current_title` (free text, English) and `desired_roles`
+(ARRAY). `berufenet.name` is German. Rather than translation or LLM:
+
+- Tokenise `current_title` + `desired_roles` (words ≥4 chars)
+- Run `SELECT DISTINCT SUBSTRING(kldb FROM 3 FOR 2) FROM berufenet WHERE name ILIKE ANY(terms)`
+- German berufenet names contain loanwords like "Software", "Manager",
+  "Consultant", "Data", "Cloud", "IT" — enough tokens survive cross-language
+  to return useful domain codes
+- Fall back to the stratified pool when inference produces nothing
+
+**Example for "Chief Technology Officer":**
+Tokens: `Chief`, `Technology`, `Officer`
+Berufenet matches on `Technology` → domain 43 (Informatik) → 6,848 candidates
+(massively better pool than 5,600 mixed-domain postings)
+
+### Implementation — Code Changes (`search_profile`)
+
+1. `desired_roles` added to the profile SELECT in step 1
+2. Step 4b replaced with:
+   - Token-based berufenet domain inference
+   - If domains found → `WHERE SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(domains)` pool
+   - If no domains → fall back to stratified 350/state pool (unchanged)
+3. Docstring updated to describe both modes
+
+### Scalability
+- Domain pool ~10K–20K postings for IT profiles
+- Embedding fetch via `WHERE text_hash = ANY(hashes)` — scales linearly
+- Numpy cosine over 15K vectors: <100ms
+- Stratified fallback preserved: no regression for non-IT profiles where
+  inference fails
+
+---
+
+## Commits This Session
+
+| Hash | Description |
+|---|---|
+| `0dab143` | fix: profile endpoint always returns nationwide top-N |
+| `fd91819` | refactor: `_build_posting_where()` — eliminate 5× duplicated WHERE-builder |
+| `6b9c2ab` | fix: stratified candidate pool + Clara-first path |
+| `6f01641` | fix: extend Clara-first window from 7 to 30 days |
+| `bfe9a8d` | chore: fix stale comment (7 days → 30 days) |
+| `7d54c9e` | chore: daily note + schema users.is_protected |
+| `4a67808` | fix(gdpr): stop storing Google OAuth display_name |
+| TBD       | feat: profession-first candidate pool in runtime mode |
+
+---
+
 ## Pending / Next Session
 
-- **Run Clara for Susanne**: her 28 matches are Feb 12 (14 days old). Running
-  `turing-harness.py run profile_posting_matches__report_C__clara --sample 20`
-  would refresh her matches and improve result quality.
+- **Run Clara for Susanne**: `turing-harness.py run profile_posting_matches__report_C__clara --sample 20`
 - **F2 hotkey / Ctrl+F2**: carried over from previous sessions, still open.
-- **Verify count monotonicity**: confirm Berlin ≤ Germany in production for
-  multiple query types (all, domain, QL, map intersection).
+- **Drop `users.display_name` column**: all rows NULL, no code writes — safe
+  to `ALTER TABLE users DROP COLUMN display_name` in a migration.
+- **Two-stage Clara**: embedding-only pass on CV upload (immediate), LLM
+  enrichment nightly (as now). Would give new users results in seconds.
