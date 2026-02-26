@@ -3,8 +3,8 @@
 > **Auto-generated** by `scripts/generate_fetch_docs.py` — do not edit by hand.
 > Regenerated on every git commit via `.git/hooks/post-commit`.
 
-**Generated:** 2026-02-24 06:48:49
-**Script:** `scripts/turing_fetch.sh` (608 lines)
+**Generated:** 2026-02-26 10:37:59
+**Script:** `scripts/turing_fetch.sh` (620 lines)
 **Schedule:** `50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force`
 **Log:** `logs/turing_fetch.log`
 
@@ -13,16 +13,16 @@
 
 | Metric | Count |
 |--------|------:|
-| Total postings | 335,183 |
-| Active postings | 188,983 |
-| — Arbeitsagentur | 187,450 |
+| Total postings | 364,663 |
+| Active postings | 179,238 |
+| — Arbeitsagentur | 177,705 |
 | — Deutsche Bank | 1,533 |
-| With description (>150 chars) | 314,545 |
-| With extracted summary | 7,697 |
-| Embeddable (postings_for_matching) | 179,408 |
-| Total embeddings | 328,907 |
-| Berufenet classified | 182,862 |
-| OWL vocabulary (confirmed) | 115,614 |
+| With description (>150 chars) | 343,842 |
+| With extracted summary | 7,766 |
+| Embeddable (postings_for_matching) | 177,553 |
+| Total embeddings | 352,876 |
+| Berufenet classified | 173,606 |
+| OWL vocabulary (confirmed) | 128,566 |
 | OWL pending triage | 0 |
 
 ---
@@ -158,6 +158,7 @@ Extracted from `scripts/turing_fetch.sh` step markers:
 | `[1/5]` | Fetching Arbeitsagentur (16 states, metadata only) |
 | `[2/5]` | Fetching Deutsche Bank |
 | `[3/5]` | Running Berufenet classification (OWL-first) |
+| `[3e/5]` | Translating new profession names DE→EN (limit 200) |
 | `[3b/5]` | Domain gate cascade (patterns + LLM) |
 | `[3c/5]` | Geo state resolution (city → OWL → Bundesland) |
 | `[3d/5]` | Qualification level backfill |
@@ -1591,4 +1592,4 @@ Auto-triggered on every `git commit` via `.git/hooks/post-commit`.
 
 ---
 
-_Generated 2026-02-24 06:48:49 by generate_fetch_docs.py_
+_Generated 2026-02-26 10:37:59 by generate_fetch_docs.py_
