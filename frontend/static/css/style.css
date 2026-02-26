@@ -5493,6 +5493,12 @@ body {
     color: #2d3748;
 }
 
+.total-of {
+    font-size: 0.85rem;
+    color: #a0aec0;
+    margin-left: 0.25rem;
+}
+
 .total-label {
     font-size: 0.8rem;
     color: #718096;
@@ -6218,6 +6224,10 @@ body {
 
 [data-theme="dark"] .total-number {
     color: #f7fafc;
+}
+
+[data-theme="dark"] .total-of {
+    color: #718096;
 }
 
 [data-theme="dark"] .total-label {

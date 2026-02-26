@@ -45,6 +45,7 @@
                 <div class="map-stats" id="map-stats">
                     <div class="search-total" id="search-total">
                         <span class="total-number">—</span>
+                        <span class="total-of" id="total-of" style="display:none;"></span>
                         <span class="total-label">{{ t('search.positions_found') }}</span>
                     </div>
                     <div class="map-freshness" id="freshness-badge" style="display:none;">
@@ -783,10 +784,18 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     // TOTAL + FRESHNESS
     // ============================================================
-    function renderTotal(total) {
+    function renderTotal(total, landscapeTotal) {
         const el = document.getElementById('search-total');
+        const ofEl = document.getElementById('total-of');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
         el.querySelector('.total-number').textContent = total.toLocaleString(locale);
+        if (landscapeTotal && landscapeTotal !== total) {
+            const ofWord = LANG === 'de' ? 'von' : 'of';
+            ofEl.textContent = `${ofWord} ${landscapeTotal.toLocaleString(locale)}`;
+            ofEl.style.display = '';
+        } else {
+            ofEl.style.display = 'none';
+        }
     }
 
     function renderFreshness(count) {
@@ -1076,7 +1085,7 @@ window.SEARCH_TOUR_I18N = {
             renderQL(data.by_ql);
             renderHeatmap(data.heatmap);
             renderMarkers(data.markers);
-            renderTotal(data.total);
+            renderTotal(data.total, data.landscape_total);
             renderFreshness(data.fresh_count);
             renderFilterPills();
 

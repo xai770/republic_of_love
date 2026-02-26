@@ -289,7 +289,7 @@ def search_preview(
 
         where_sql = " AND ".join(wheres)
 
-        # --- Total count ---
+        # --- Total count (all active filters including professions) ---
         cur.execute(f"""
             SELECT COUNT(*) as total
             FROM postings p
@@ -297,6 +297,33 @@ def search_preview(
             WHERE {where_sql}
         """, params)
         total = cur.fetchone()['total']
+
+        # --- Landscape total (same filters but WITHOUT profession clause) ---
+        # When professions are active, we return both numbers so the UI can show
+        # "374 of 10,652 positions found" — the "of N" is the domain+QL+location pool.
+        landscape_total = None
+        if req.professions:
+            ls_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
+            ls_params = []
+            if req.domains:
+                ls_wheres.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+                ls_params.append(req.domains)
+            if req.ql:
+                ls_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
+                ls_params.append(req.ql)
+            if req.states:
+                ls_wheres.append("p.location_state = ANY(%s)")
+                ls_params.append(req.states)
+            if geo_sql:
+                ls_wheres.append(geo_sql)
+                ls_params.extend(geo_params)
+            cur.execute(f"""
+                SELECT COUNT(*) as total
+                FROM postings p
+                JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                WHERE {" AND ".join(ls_wheres)}
+            """, ls_params)
+            landscape_total = cur.fetchone()['total']
 
         # --- By domain: unfiltered by domain AND profession; filtered by QL + location only ---
         # Cross-filter principle: domain bars show how many jobs exist in each sector
@@ -433,6 +460,7 @@ def search_preview(
 
         return {
             "total": total,
+            "landscape_total": landscape_total,
             "by_domain": by_domain,
             "by_ql": by_ql,
             "heatmap": heatmap,
