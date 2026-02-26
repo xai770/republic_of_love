@@ -803,7 +803,7 @@ def search_profile(
     # ── 1. Load profile skills ────────────────────────────────────
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT skill_keywords, current_title, profile_summary, experience_level
+            SELECT skill_keywords, current_title, profile_summary, experience_level, location
             FROM profiles
             WHERE user_id = %s AND skill_keywords IS NOT NULL
             ORDER BY updated_at DESC NULLS LAST
@@ -954,5 +954,5 @@ def search_profile(
             "score": round(score, 3),
         })
 
-    return {"available": True, "results": results}
+    return {"available": True, "results": results, "profile_location": profile.get('location') or None}
 

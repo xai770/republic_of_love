@@ -1049,12 +1049,8 @@ window.SEARCH_TOUR_I18N = {
             // immediately changes what is visible at the top of the grid.
             let allResults;
             if (reset && state.profileActive && state.profileResults) {
-                const profileIds = new Set(state.profileResults.map(r => r.posting_id));
-                // Tag all profile results with ❆
-                const profileTagged = state.profileResults.map(r => ({ ...r, _profileMatch: true }));
-                // Filter results that are NOT already in the profile set
-                const filterOnly = data.results.filter(p => !profileIds.has(p.posting_id));
-                allResults = [...profileTagged, ...filterOnly];
+                // Profile active: show ONLY profile-matched results
+                allResults = state.profileResults.map(r => ({ ...r, _profileMatch: true }));
             } else {
                 allResults = data.results;
             }
@@ -1145,10 +1141,34 @@ window.SEARCH_TOUR_I18N = {
             if (data.available && data.results && data.results.length > 0) {
                 state.profileAvailable = true;
                 state.profileResults = data.results;
-                renderFilterPills(); // reveal the ✦ Mein Profil chip
+                // Pre-apply profile location as geo filter (if none set yet)
+                if (data.profile_location && !state.lat) {
+                    await applyProfileLocation(data.profile_location);
+                } else {
+                    renderFilterPills();
+                }
             }
         } catch(e) {
             console.warn('Profile filter init failed:', e);
+        }
+    }
+
+    async function applyProfileLocation(cityName) {
+        try {
+            const res = await fetch(`/api/geo/search?q=${encodeURIComponent(cityName)}`);
+            const results = await res.json();
+            if (!results.length) { renderFilterPills(); return; }
+            const r = results[0];
+            state.lat = parseFloat(r.lat);
+            state.lon = parseFloat(r.lon);
+            state.radius_km = parseInt(document.getElementById('radius-select').value) || 50;
+            cityInput.value = cityName;
+            map.setView([state.lat, state.lon], 10);
+            updateRadiusCircle();
+            doSearch();  // re-runs with geo filter applied; doSearch calls renderFilterPills
+        } catch(e) {
+            console.warn('Profile location geocode failed:', e);
+            renderFilterPills();
         }
     }
 
