@@ -4937,6 +4937,12 @@ body {
     border-color: #bac8ff;
 }
 
+.filter-pill.profession-pill {
+    background: #fdf4ff;
+    color: #9C27B0;
+    border-color: #e1bee7;
+}
+
 /* Clickable radius text inside geo pill */
 .pill-radius-cycle {
     background: none;
@@ -6064,6 +6070,12 @@ body {
     background: #1e2a4a;
     color: #748ffc;
     border-color: #364fc7;
+}
+
+[data-theme="dark"] .filter-pill.profession-pill {
+    background: #2a1a2e;
+    color: #ce93d8;
+    border-color: #7b1fa2;
 }
 
 [data-theme="dark"] .filter-pill.profile-pill-active {

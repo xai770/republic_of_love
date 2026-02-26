@@ -292,6 +292,7 @@ window.SEARCH_TOUR_I18N = {
         domains: [],     // selected KLDB 2-digit codes
         ql: [],          // selected QL levels [1-4]
         geoLocations: [],   // [{lat, lon, radius_km, label}] — supports multiple cities
+        professions: [],     // berufenet_name strings clicked from intel panel
         // data from last response
         data: null,
         // profile filter chip
@@ -646,6 +647,9 @@ window.SEARCH_TOUR_I18N = {
     function getOp(typeA, typeB) {
         const key = typeA + '|' + typeB;
         if (state.operators[key] !== undefined) return state.operators[key];
+        // Location-type filters (state + geo) default to OR between themselves
+        const locTypes = new Set(['state', 'geo']);
+        if (locTypes.has(typeA) && locTypes.has(typeB)) return 'OR';
         return typeA === typeB ? 'OR' : 'AND';
     }
 
@@ -658,7 +662,8 @@ window.SEARCH_TOUR_I18N = {
     function renderFilterPills() {
         const container = document.getElementById('active-filters');
 
-        // Build ordered list: profile first, then domains, ql, geo
+        // Build ordered list:
+        // profile → domains → ql → professions → states + geo (all location at end: OR between them)
         const items = [];  // {html, type}
 
         // 1. Profile pill — always first, no × (toggle by clicking)
@@ -697,16 +702,7 @@ window.SEARCH_TOUR_I18N = {
             });
         }
 
-        // 3. State pills (Bundesland)
-        state.states.forEach(stateName => {
-            items.push({ type: 'state', html:
-                `<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
-                    🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
-                </span>`
-            });
-        });
-
-        // 4. QL pills
+        // 3. QL pills
         state.ql.forEach(level => {
             items.push({ type: 'ql', html:
                 `<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
@@ -715,7 +711,26 @@ window.SEARCH_TOUR_I18N = {
             });
         });
 
-        // 5. Geo pills — one per geo location (multi-location supported)
+        // 4. Profession pills (clicked from intel panel) — shown together, before location
+        state.professions.forEach(name => {
+            const displayName = (state._profDisplayNames && state._profDisplayNames[name]) || name;
+            items.push({ type: 'profession', html:
+                `<span class="filter-pill profession-pill" data-type="profession" data-name="${name}">
+                    💼 ${displayName} <button class="pill-remove" data-type="profession" data-name="${name}">×</button>
+                </span>`
+            });
+        });
+
+        // 5. State pills (Bundesland) — location group, OR between all location types
+        state.states.forEach(stateName => {
+            items.push({ type: 'state', html:
+                `<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
+                    🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
+                </span>`
+            });
+        });
+
+        // 6. Geo pills — location group (OR between state+geo)
         state.geoLocations.forEach((g, idx) => {
             const rPart = g.radius_km
                 ? ` <button class="pill-radius-cycle" data-idx="${idx}" title="Click to change radius">(${g.radius_km} km)</button>`
@@ -793,6 +808,9 @@ window.SEARCH_TOUR_I18N = {
         } else if (type === 'state') {
             const name = btn.dataset.name;
             state.states = state.states.filter(s => s !== name);
+        } else if (type === 'profession') {
+            const name = btn.dataset.name;
+            state.professions = state.professions.filter(p => p !== name);
         } else if (type === 'geo') {
             const gIdx = parseInt(btn.dataset.idx);
             state.geoLocations.splice(gIdx, 1);
@@ -1010,7 +1028,7 @@ window.SEARCH_TOUR_I18N = {
             }
             const rowClass = filterType ? 'intel-row intel-row-clickable' : 'intel-row';
             const extraAttrs = filterType
-                ? ` data-filter-type="${filterType}" data-filter-value="${name}"`
+                ? ` data-filter-type="${filterType}" data-filter-value="${name}" data-filter-display="${displayName}"`
                 : '';
             return `<div class="${rowClass}"${extraAttrs} title="${displayName}: ${item.fresh}">
                 <span class="intel-rank">${i + 1}.</span>
@@ -1052,8 +1070,14 @@ window.SEARCH_TOUR_I18N = {
                 state.states.push(value);
                 doSearch();
             }
+        } else if (type === 'profession') {
+            if (!state.professions.includes(value)) {
+                state.professions.push(value);
+                state._profDisplayNames = state._profDisplayNames || {};
+                state._profDisplayNames[value] = row.dataset.filterDisplay || value;
+                doSearch();
+            }
         }
-        // 'profession' type: berufenet_name filter reserved for a future commit
     });
 
     // ============================================================
@@ -1070,6 +1094,7 @@ window.SEARCH_TOUR_I18N = {
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
         if (state.states.length > 0) body.states = state.states;
+        if (state.professions.length > 0) body.professions = state.professions;
         if (state.geoLocations.length > 0)
             body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
 
@@ -1138,6 +1163,7 @@ window.SEARCH_TOUR_I18N = {
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
         if (state.states.length > 0) body.states = state.states;
+        if (state.professions.length > 0) body.professions = state.professions;
         if (state.geoLocations.length > 0)
             body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
         return body;

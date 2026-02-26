@@ -226,6 +226,7 @@ class SearchRequest(BaseModel):
     radius_km: Optional[int] = None
     states: Optional[List[str]] = None    # Bundesland filter (location_state)
     geo_locations: Optional[List[GeoLocation]] = None  # multi-location (OR-joined)
+    professions: Optional[List[str]] = None  # berufenet_name filter (clicked from intel)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -268,6 +269,10 @@ def search_preview(
             wheres.append("p.location_state = ANY(%s)")
             params.append(req.states)
 
+        if req.professions:
+            wheres.append("p.berufenet_name = ANY(%s)")
+            params.append(req.professions)
+
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
         )
@@ -293,6 +298,8 @@ def search_preview(
             domain_params.append(req.ql)
         if req.states:
             domain_params.append(req.states)
+        if req.professions:
+            domain_params.append(req.professions)
         if geo_sql:
             domain_params.extend(geo_params)
 
@@ -333,6 +340,8 @@ def search_preview(
             ql_params.append(req.domains)
         if req.states:
             ql_params.append(req.states)
+        if req.professions:
+            ql_params.append(req.professions)
         if geo_sql:
             ql_params.extend(geo_params)
 
@@ -526,6 +535,7 @@ class SearchResultsRequest(BaseModel):
     radius_km: Optional[int] = None
     states: Optional[List[str]] = None    # Bundesland filter
     geo_locations: Optional[List[GeoLocation]] = None  # multi-location (OR-joined)
+    professions: Optional[List[str]] = None  # berufenet_name filter
     offset: int = 0
     limit: int = 20
 
@@ -556,6 +566,10 @@ def search_results(
         if req.states:
             wheres.append("p.location_state = ANY(%s)")
             params.append(req.states)
+
+        if req.professions:
+            wheres.append("p.berufenet_name = ANY(%s)")
+            params.append(req.professions)
 
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
