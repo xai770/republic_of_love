@@ -4932,23 +4932,25 @@ body {
 }
 
 .filter-pill.profile-pill-active {
-    background: #f0e8fd;
-    color: #6c3fc5;
-    border-color: #d8b4fe;
+    background: #ebf8f1;
+    color: #1a9c55;
+    border-color: #6ee09a;
 }
 
 .filter-pill.profile-pill-inactive {
-    background: transparent;
-    color: #6c3fc5;
-    border-color: #d8b4fe;
+    background: #f4f5f7;
+    color: #8898aa;
+    border-color: #c8d1db;
     border-style: dashed;
     cursor: pointer;
-    opacity: 0.75;
+    opacity: 0.8;
 }
 
 .filter-pill.profile-pill-inactive:hover {
     opacity: 1;
-    background: #f0e8fd;
+    background: #ebf8f1;
+    color: #1a9c55;
+    border-color: #6ee09a;
 }
 
 .pill-remove {
@@ -5563,8 +5565,8 @@ body {
 .profile-match-tag {
     font-size: 0.65rem;
     font-weight: 700;
-    background: #ebf4ff;
-    color: #2b6cb0;
+    background: #ebf8f1;
+    color: #1a9c55;
     padding: 0.15rem 0.5rem;
     border-radius: 999px;
     margin-left: auto;
@@ -6004,19 +6006,21 @@ body {
 }
 
 [data-theme="dark"] .filter-pill.profile-pill-active {
-    background: #3b1e6e;
-    color: #d8b4fe;
-    border-color: #6c3fc5;
+    background: #1a4a30;
+    color: #68d391;
+    border-color: #276749;
 }
 
 [data-theme="dark"] .filter-pill.profile-pill-inactive {
     background: transparent;
-    color: #d8b4fe;
-    border-color: #6c3fc5;
+    color: #718096;
+    border-color: #4a5568;
 }
 
 [data-theme="dark"] .filter-pill.profile-pill-inactive:hover {
-    background: #3b1e6e;
+    background: #1a4a30;
+    color: #68d391;
+    border-color: #276749;
 }
 
 [data-theme="dark"] .search-panel {

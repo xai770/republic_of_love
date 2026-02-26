@@ -1045,29 +1045,28 @@ window.SEARCH_TOUR_I18N = {
             // Title
             document.getElementById('results-title').textContent = I18N.results_title;
 
-            // Merge profile results on first page when profile filter is active
-            let profileOnlyResults = [];
+            // Merge profile results — profile tiles appear FIRST so activating the chip
+            // immediately changes what is visible at the top of the grid.
+            let allResults;
             if (reset && state.profileActive && state.profileResults) {
-                const filterIds = new Set(data.results.map(p => p.posting_id));
-                data.results.forEach(p => {
-                    if (state.profileResults.some(r => r.posting_id === p.posting_id)) {
-                        p._profileMatch = true;
-                    }
-                });
-                profileOnlyResults = state.profileResults.filter(p => !filterIds.has(p.posting_id));
-                profileOnlyResults.forEach(p => { p._profileMatch = true; });
+                const profileIds = new Set(state.profileResults.map(r => r.posting_id));
+                // Tag all profile results with ❆
+                const profileTagged = state.profileResults.map(r => ({ ...r, _profileMatch: true }));
+                // Filter results that are NOT already in the profile set
+                const filterOnly = data.results.filter(p => !profileIds.has(p.posting_id));
+                allResults = [...profileTagged, ...filterOnly];
+            } else {
+                allResults = data.results;
             }
 
-            if (data.results.length === 0 && profileOnlyResults.length === 0 && resultsOffset === 0) {
+            if (allResults.length === 0 && resultsOffset === 0) {
                 grid.innerHTML = `<div class="results-empty">${I18N.results_none}</div>`;
                 showMore.style.display = 'none';
                 resultsLoading = false;
                 return;
             }
 
-            // Render tiles (filter results + profile-only results merged)
             const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-            const allResults = reset ? [...data.results, ...profileOnlyResults] : data.results;
             allResults.forEach(p => {
                 const tile = document.createElement('div');
                 tile.className = 'result-tile';
