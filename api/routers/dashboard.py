@@ -452,8 +452,9 @@ def get_yogimeter(
 # ============================================================
 
 # Human-readable German labels for the protocol
+# 'viewed' is intentionally absent — viewing is not a state change and does not
+# belong in the Bewerbungsprotokoll. It is tracked only for the Yogi-Meter funnel.
 _PROTOKOLL_ACTION = {
-    "viewed":           "Stelle angesehen",
     "saved":            "Stelle vorgemerkt",
     "dismissed":        "Stelle abgelehnt",
     "apply_intent":     "Bewerbung geplant",
@@ -473,9 +474,12 @@ def _build_protokoll_rows(cur, profile_id: int, decisions_only: bool = False) ->
     Fetch all protocol rows for a profile, optionally filtered to decisions only.
     Returns dicts with all fields needed for both JSON and text export.
     """
+    # 'viewed' is never shown in the Protokoll — it is not a state change.
+    # decisions_only further narrows to the 5 documented decision types (excludes 'saved').
     type_filter = (
         "AND e.event_type IN ('dismissed','apply_intent','applied','not_applied','outcome_received')"
-        if decisions_only else ""
+        if decisions_only else
+        "AND e.event_type != 'viewed'"
     )
     cur.execute(f"""
         SELECT
@@ -542,7 +546,7 @@ def _build_protokoll_rows(cur, profile_id: int, decisions_only: bool = False) ->
 
 @router.get("/api/home/protokoll")
 def get_protokoll(
-    decisions_only: bool = Query(default=False, description="Return only decision events (not 'viewed')"),
+    decisions_only: bool = Query(default=False, description="True = only the 5 documented decision types; False = all state changes (viewed is always excluded)"),
     user: dict = Depends(require_user),
     conn=Depends(get_db),
 ):
