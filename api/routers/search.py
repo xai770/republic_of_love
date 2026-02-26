@@ -227,6 +227,7 @@ class SearchRequest(BaseModel):
     states: Optional[List[str]] = None    # Bundesland filter (location_state)
     geo_locations: Optional[List[GeoLocation]] = None  # multi-location (OR-joined)
     professions: Optional[List[str]] = None  # berufenet_name filter (clicked from intel)
+    profile_ids: Optional[List[int]] = None   # posting_id list from profile match (OR'd with professions)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -266,6 +267,9 @@ def search_preview(
         if req.professions:
             subj_clauses.append("p.berufenet_name = ANY(%s)")
             subj_params.append(req.professions)
+        if req.profile_ids:
+            subj_clauses.append("p.posting_id = ANY(%s)")
+            subj_params.append(req.profile_ids)
         if subj_clauses:
             wheres.append(f"({ ' OR '.join(subj_clauses) })")
             params.extend(subj_params)
@@ -302,7 +306,7 @@ def search_preview(
         # When professions are active, we return both numbers so the UI can show
         # "374 of 10,652 positions found" — the "of N" is the domain+QL+location pool.
         landscape_total = None
-        if req.professions:
+        if req.professions and not req.profile_ids:
             ls_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
             ls_params = []
             if req.domains:
@@ -577,6 +581,7 @@ class SearchResultsRequest(BaseModel):
     states: Optional[List[str]] = None    # Bundesland filter
     geo_locations: Optional[List[GeoLocation]] = None  # multi-location (OR-joined)
     professions: Optional[List[str]] = None  # berufenet_name filter
+    profile_ids: Optional[List[int]] = None   # posting_id list from profile match (OR'd with professions)
     offset: int = 0
     limit: int = 20
 
@@ -596,7 +601,7 @@ def search_results(
         wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         params = []
 
-        # Group 1 (subject): domains OR professions
+        # Group 1 (subject): domains OR professions OR profile_ids
         subj_clauses = []
         if req.domains:
             subj_clauses.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
@@ -604,6 +609,9 @@ def search_results(
         if req.professions:
             subj_clauses.append("p.berufenet_name = ANY(%s)")
             params.append(req.professions)
+        if req.profile_ids:
+            subj_clauses.append("p.posting_id = ANY(%s)")
+            params.append(req.profile_ids)
         if subj_clauses:
             wheres.append(f"({ ' OR '.join(subj_clauses) })")
 
@@ -653,6 +661,8 @@ def search_results(
         """, query_params)
         postings = cur.fetchall()
 
+        profile_id_set = set(req.profile_ids) if req.profile_ids else set()
+
         results = []
         for row in postings:
             domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Sonstige')
@@ -673,6 +683,7 @@ def search_results(
                 "source": row['source'] or '',
                 "first_seen": row['first_seen_at'].isoformat() if row['first_seen_at'] else None,
                 "interested": row['interested'],  # None, True, or False
+                "profile_match": row['posting_id'] in profile_id_set,
             })
 
         # Lazy verification: queue stale postings for background checking.
