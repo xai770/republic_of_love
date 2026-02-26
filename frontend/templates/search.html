@@ -1284,7 +1284,8 @@ window.SEARCH_TOUR_I18N = {
                     await applyProfileLocation(data.profile_location);
                 } else {
                     renderFilterPills();
-                    loadResults(true);
+                    // Don't call loadResults directly — let doSearch() drive both
+                    // preview (count) and results together so they always match.
                 }
             }
         } catch(e) {
@@ -1839,9 +1840,9 @@ window.SEARCH_TOUR_I18N = {
             window.history.replaceState({}, '', '/search');
         }
         
+        // Load profile first so profile_ids are in state before the first doSearch()
+        await initProfileFilter();
         doSearch();
-        // Check profile availability → show ✦ Mein Profil chip if ready
-        initProfileFilter();
         // Fix Leaflet tile rendering — force recalculation after layout resolves
         // The grid now has explicit height (calc(100vh-220px)) so this should work reliably
         setTimeout(() => { map.invalidateSize(); map.setView(map.getCenter()); }, 200);
