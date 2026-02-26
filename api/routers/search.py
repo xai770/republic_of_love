@@ -151,6 +151,7 @@ class SearchRequest(BaseModel):
     lat: Optional[float] = None
     lon: Optional[float] = None
     radius_km: Optional[int] = None
+    states: Optional[List[str]] = None    # Bundesland filter (location_state)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -188,6 +189,10 @@ def search_preview(
         if req.ql:
             wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             params.append(req.ql)
+
+        if req.states:
+            wheres.append("p.location_state = ANY(%s)")
+            params.append(req.states)
 
         if req.lat is not None and req.lon is not None and req.radius_km:
             # Haversine approximation in SQL (km)
@@ -451,6 +456,7 @@ class SearchResultsRequest(BaseModel):
     lat: Optional[float] = None
     lon: Optional[float] = None
     radius_km: Optional[int] = None
+    states: Optional[List[str]] = None    # Bundesland filter
     offset: int = 0
     limit: int = 20
 
@@ -477,6 +483,10 @@ def search_results(
         if req.ql:
             wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             params.append(req.ql)
+
+        if req.states:
+            wheres.append("p.location_state = ANY(%s)")
+            params.append(req.states)
 
         if req.lat is not None and req.lon is not None and req.radius_km:
             wheres.append("""
@@ -977,5 +987,10 @@ def search_profile(
             "score": round(score, 3),
         })
 
-    return {"available": True, "results": results, "profile_location": profile.get('location') or None}
+    return {
+        "available": True,
+        "results": results,
+        "profile_location": profile.get('location') or None,
+        "experience_level": profile.get('experience_level') or None,
+    }
 

@@ -263,6 +263,27 @@ window.SEARCH_TOUR_I18N = {
     function tDomain(name) { return I18N.domains[name] || name; }
     // Translate a QL level to current language
     function tQL(level) { return I18N.ql[level] || ('Level ' + level); }
+    // Translate a Bundesland name to current language
+    const BUNDESLAND_EN = {
+        'Baden-Württemberg': 'Baden-Württemberg',
+        'Bayern': 'Bavaria',
+        'Berlin': 'Berlin',
+        'Brandenburg': 'Brandenburg',
+        'Bremen': 'Bremen',
+        'Hamburg': 'Hamburg',
+        'Hessen': 'Hesse',
+        'Mecklenburg-Vorpommern': 'Mecklenburg-Vorpommern',
+        'Niedersachsen': 'Lower Saxony',
+        'Nordrhein-Westfalen': 'North Rhine-Westphalia',
+        'Rheinland-Pfalz': 'Rhineland-Palatinate',
+        'Saarland': 'Saarland',
+        'Sachsen': 'Saxony',
+        'Sachsen-Anhalt': 'Saxony-Anhalt',
+        'Schleswig-Holstein': 'Schleswig-Holstein',
+        'Thüringen': 'Thuringia',
+        'Sonstiges': 'Other',
+    };
+    function tState(name) { return LANG === 'en' ? (BUNDESLAND_EN[name] || name) : name; }
 
     // ============================================================
     // STATE
@@ -279,6 +300,8 @@ window.SEARCH_TOUR_I18N = {
         profileActive:    false,
         profileResults:   null,   // cached from /api/search/profile
         profileAvailable: false,  // true once endpoint confirms availability
+        // Bundesland filter
+        states: [],
         // AND/OR operators between consecutive pill groups
         // key: "type1|type2", value: "AND"|"OR"
         // defaults: same type → "OR", different type → "AND"
@@ -669,7 +692,16 @@ window.SEARCH_TOUR_I18N = {
             });
         }
 
-        // 3. QL pills
+        // 3. State pills (Bundesland)
+        state.states.forEach(stateName => {
+            items.push({ type: 'state', html:
+                `<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
+                    🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
+                </span>`
+            });
+        });
+
+        // 4. QL pills
         state.ql.forEach(level => {
             items.push({ type: 'ql', html:
                 `<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
@@ -678,13 +710,15 @@ window.SEARCH_TOUR_I18N = {
             });
         });
 
-        // 4. Geo pill
+        // 5. Geo pill (radius label is a clickable cycle button: 10→25→50→100→10)
         if (state.lat && state.lon) {
             const geoLabel = cityInput.value || `${state.lat}, ${state.lon}`;
-            const rLabel = state.radius_km ? ` (${state.radius_km} km)` : '';
+            const rPart = state.radius_km
+                ? ` <button class="pill-radius-cycle" title="Klicken um Radius zu ändern / Click to change radius">(${state.radius_km} km)</button>`
+                : '';
             items.push({ type: 'geo', html:
                 `<span class="filter-pill geo-pill" data-type="geo">
-                    📍 ${geoLabel}${rLabel} <button class="pill-remove" data-type="geo">×</button>
+                    📍 ${geoLabel}${rPart} <button class="pill-remove" data-type="geo">×</button>
                 </span>`
             });
         }
@@ -703,7 +737,7 @@ window.SEARCH_TOUR_I18N = {
         container.innerHTML = parts.join('');
     }
 
-    document.getElementById('active-filters').addEventListener('click', function(e) {
+    document.getElementById('active-filters').addEventListener('click', async function(e) {
         // Operator badge toggle (AND ↔ OR) — visual only; backend wiring is a follow-up
         const opBadge = e.target.closest('.filter-op');
         if (opBadge) {
@@ -713,6 +747,19 @@ window.SEARCH_TOUR_I18N = {
                 : (key.split('|')[0] === key.split('|')[1] ? 'OR' : 'AND');
             state.operators[key] = current === 'AND' ? 'OR' : 'AND';
             renderFilterPills();
+            return;
+        }
+
+        // Radius cycling — click (n km) in geo pill to cycle 10→25→50→100
+        if (e.target.closest('.pill-radius-cycle')) {
+            const RADIUS_STEPS = [10, 25, 50, 100];
+            const idx = RADIUS_STEPS.indexOf(state.radius_km);
+            state.radius_km = RADIUS_STEPS[(idx + 1) % RADIUS_STEPS.length];
+            document.getElementById('radius-select').value = state.radius_km;
+            updateRadiusCircle();
+            if (state.profileActive) await refreshProfileResults();
+            renderFilterPills();
+            doSearch();
             return;
         }
 
@@ -734,6 +781,9 @@ window.SEARCH_TOUR_I18N = {
         } else if (type === 'ql') {
             const level = parseInt(btn.dataset.level);
             state.ql = state.ql.filter(l => l !== level);
+        } else if (type === 'state') {
+            const name = btn.dataset.name;
+            state.states = state.states.filter(s => s !== name);
         } else if (type === 'geo') {
             state.lat = null;
             state.lon = null;
@@ -938,7 +988,7 @@ window.SEARCH_TOUR_I18N = {
         };
     }
 
-    function renderIntelList(containerId, items, labelKey) {
+    function renderIntelList(containerId, items, labelKey, filterType = null) {
         const el = document.getElementById(containerId);
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
         if (!items || items.length === 0) {
@@ -947,10 +997,14 @@ window.SEARCH_TOUR_I18N = {
         }
         el.innerHTML = items.map((item, i) => {
             const name = item[labelKey] || '—';
-            const abbr = name;
-            return `<div class="intel-row" title="${name}: ${item.fresh}">
+            const displayName = filterType === 'state' ? tState(name) : name;
+            const rowClass = filterType ? 'intel-row intel-row-clickable' : 'intel-row';
+            const extraAttrs = filterType
+                ? ` data-filter-type="${filterType}" data-filter-value="${name}"`
+                : '';
+            return `<div class="${rowClass}"${extraAttrs} title="${displayName}: ${item.fresh}">
                 <span class="intel-rank">${i + 1}.</span>
-                <span class="intel-name">${abbr}</span>
+                <span class="intel-name">${displayName}</span>
                 <span class="intel-count">${item.fresh.toLocaleString(locale)}</span>
             </div>`;
         }).join('');
@@ -969,12 +1023,28 @@ window.SEARCH_TOUR_I18N = {
             const data = await res.json();
             renderSparkline(data.activity);
             document.getElementById('intel-split').style.display = '';
-            renderIntelList('intel-states', data.states, 'state');
-            renderIntelList('intel-professions', data.professions, 'name');
+            renderIntelList('intel-states', data.states, 'state', 'state');
+            renderIntelList('intel-professions', data.professions, 'name', 'profession');
         } catch(e) {
             console.warn('Intelligence load failed:', e);
         }
     }
+
+    // Click-to-filter on Bundesland rows in intelligence panel
+    document.getElementById('intel-split').addEventListener('click', function(e) {
+        const row = e.target.closest('.intel-row-clickable');
+        if (!row) return;
+        const type = row.dataset.filterType;
+        const value = row.dataset.filterValue;
+        if (!value || value === '—') return;
+        if (type === 'state') {
+            if (!state.states.includes(value)) {
+                state.states.push(value);
+                doSearch();
+            }
+        }
+        // 'profession' type: berufenet_name filter reserved for a future commit
+    });
 
     // ============================================================
     // MAIN SEARCH
@@ -989,6 +1059,7 @@ window.SEARCH_TOUR_I18N = {
         const body = {};
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
+        if (state.states.length > 0) body.states = state.states;
         if (state.lat != null) body.lat = state.lat;
         if (state.lon != null) body.lon = state.lon;
         if (state.radius_km) body.radius_km = state.radius_km;
@@ -1057,6 +1128,7 @@ window.SEARCH_TOUR_I18N = {
         const body = {};
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
+        if (state.states.length > 0) body.states = state.states;
         if (state.lat != null) body.lat = state.lat;
         if (state.lon != null) body.lon = state.lon;
         if (state.radius_km) body.radius_km = state.radius_km;
@@ -1193,6 +1265,16 @@ window.SEARCH_TOUR_I18N = {
                 state.profileAvailable = true;
                 state.profileActive = true;   // start with profile filter on
                 state.profileResults = data.results;
+                // Auto-apply qualification level from profile (one below and all the way up)
+                // e.g. mid→QL3 → auto-select [2,3,4]; senior→QL4 → [3,4]
+                if (data.experience_level && state.ql.length === 0) {
+                    const EXP_TO_QL = { junior: 2, mid: 3, senior: 4, lead: 4, executive: 4 };
+                    const profQL = EXP_TO_QL[(data.experience_level || '').toLowerCase()];
+                    if (profQL) {
+                        const minQL = Math.max(1, profQL - 1);
+                        for (let q = minQL; q <= 4; q++) state.ql.push(q);
+                    }
+                }
                 // Pre-apply profile location as geo filter (if none set yet)
                 if (data.profile_location && !state.lat) {
                     await applyProfileLocation(data.profile_location);

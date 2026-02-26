@@ -4931,6 +4931,26 @@ body {
     border-color: #b2f5d4;
 }
 
+.filter-pill.state-pill {
+    background: #eff4ff;
+    color: #3b5bdb;
+    border-color: #bac8ff;
+}
+
+/* Clickable radius text inside geo pill */
+.pill-radius-cycle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: inherit;
+    color: inherit;
+    padding: 0 0.1rem;
+    text-decoration: underline dotted;
+    font-weight: 600;
+    line-height: inherit;
+}
+.pill-radius-cycle:hover { color: #1a9c55; }
+
 .filter-pill.profile-pill-active {
     background: #ebf8f1;
     color: #1a9c55;
@@ -5387,6 +5407,14 @@ body {
     border-radius: 4px;
     transition: background 0.1s;
     cursor: default;
+}
+
+.intel-row-clickable {
+    cursor: pointer;
+}
+.intel-row-clickable:hover {
+    background: #ebf8f1 !important;
+    color: #1a9c55;
 }
 
 .intel-row:hover {
@@ -6030,6 +6058,12 @@ body {
     background: #1a4a2e;
     color: #9ae6b4;
     border-color: #276749;
+}
+
+[data-theme="dark"] .filter-pill.state-pill {
+    background: #1e2a4a;
+    color: #748ffc;
+    border-color: #364fc7;
 }
 
 [data-theme="dark"] .filter-pill.profile-pill-active {
