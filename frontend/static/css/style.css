@@ -4931,6 +4931,26 @@ body {
     border-color: #b2f5d4;
 }
 
+.filter-pill.profile-pill-active {
+    background: #f0e8fd;
+    color: #6c3fc5;
+    border-color: #d8b4fe;
+}
+
+.filter-pill.profile-pill-inactive {
+    background: transparent;
+    color: #6c3fc5;
+    border-color: #d8b4fe;
+    border-style: dashed;
+    cursor: pointer;
+    opacity: 0.75;
+}
+
+.filter-pill.profile-pill-inactive:hover {
+    opacity: 1;
+    background: #f0e8fd;
+}
+
 .pill-remove {
     background: none;
     border: none;
@@ -5981,6 +6001,22 @@ body {
     background: #1a4a2e;
     color: #9ae6b4;
     border-color: #276749;
+}
+
+[data-theme="dark"] .filter-pill.profile-pill-active {
+    background: #3b1e6e;
+    color: #d8b4fe;
+    border-color: #6c3fc5;
+}
+
+[data-theme="dark"] .filter-pill.profile-pill-inactive {
+    background: transparent;
+    color: #d8b4fe;
+    border-color: #6c3fc5;
+}
+
+[data-theme="dark"] .filter-pill.profile-pill-inactive:hover {
+    background: #3b1e6e;
 }
 
 [data-theme="dark"] .search-panel {

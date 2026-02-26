@@ -372,7 +372,8 @@
         "profile_row_tag": "❆ passt zu deinem Profil",
         "profile_row_loading": "Suche Profil-Treffer…",
         "profile_row_empty": "Noch keine Profil-Treffer.",
-        "profile_row_pending": "Dein Profil-Matching wird vorbereitet…"
+        "profile_row_pending": "Dein Profil-Matching wird vorbereitet…",
+        "profile_filter_btn": "Mein Profil"
     },
     "footer": {
         "impressum": "Impressum",

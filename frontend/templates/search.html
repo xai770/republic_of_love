@@ -101,13 +101,7 @@
             </div>
         </div>
 
-        <!-- Stream B: Profile matches -->
-        <div class="search-results-section profile-results-section" id="profile-results-section" style="display:none;">
-            <h2 class="results-section-title">{{ t("search.profile_row_title") }}</h2>
-            <div class="search-results-grid" id="profile-results-grid">
-                <!-- Tiles rendered by JS -->
-            </div>
-        </div>
+
 
         <!-- Posting detail modal -->
         <div class="posting-modal-overlay" id="posting-modal-overlay">
@@ -263,6 +257,7 @@ window.SEARCH_TOUR_I18N = {
         profile_row_loading: '{{ t("search.profile_row_loading") }}',
         profile_row_empty:   '{{ t("search.profile_row_empty") }}',
         profile_row_pending: '{{ t("search.profile_row_pending") }}',
+        profile_filter_btn:  '{{ t("search.profile_filter_btn") }}',
     };
     // Translate a domain name from API (German) to current language
     function tDomain(name) { return I18N.domains[name] || name; }
@@ -280,6 +275,10 @@ window.SEARCH_TOUR_I18N = {
         radius_km: null,
         // data from last response
         data: null,
+        // profile filter chip
+        profileActive:    false,
+        profileResults:   null,   // cached from /api/search/profile
+        profileAvailable: false,  // true once endpoint confirms availability
     };
 
     // ============================================================
@@ -644,13 +643,39 @@ window.SEARCH_TOUR_I18N = {
             </span>`);
         }
 
+        // Profile filter chip
+        if (state.profileAvailable) {
+            if (state.profileActive) {
+                pills.push(`<span class="filter-pill profile-pill profile-pill-active" data-type="profile">
+                    ✦ ${I18N.profile_filter_btn} <button class="pill-remove" data-type="profile">×</button>
+                </span>`);
+            } else {
+                pills.push(`<span class="filter-pill profile-pill profile-pill-inactive" role="button" tabindex="0">
+                    ✦ ${I18N.profile_filter_btn} +
+                </span>`);
+            }
+        }
+
         container.innerHTML = pills.join('');
     }
 
     document.getElementById('active-filters').addEventListener('click', function(e) {
+        // Inactive profile chip: click anywhere to activate
+        if (e.target.closest('.profile-pill-inactive')) {
+            state.profileActive = true;
+            renderFilterPills();
+            loadResults(true);
+            return;
+        }
         const btn = e.target.closest('.pill-remove');
         if (!btn) return;
         const type = btn.dataset.type;
+        if (type === 'profile') {
+            state.profileActive = false;
+            renderFilterPills();
+            loadResults(true);
+            return;
+        }
         if (type === 'domain') {
             const name = btn.dataset.name;
             const codes = (window._domainMap || {})[name] || [];
@@ -1020,16 +1045,30 @@ window.SEARCH_TOUR_I18N = {
             // Title
             document.getElementById('results-title').textContent = I18N.results_title;
 
-            if (data.results.length === 0 && resultsOffset === 0) {
+            // Merge profile results on first page when profile filter is active
+            let profileOnlyResults = [];
+            if (reset && state.profileActive && state.profileResults) {
+                const filterIds = new Set(data.results.map(p => p.posting_id));
+                data.results.forEach(p => {
+                    if (state.profileResults.some(r => r.posting_id === p.posting_id)) {
+                        p._profileMatch = true;
+                    }
+                });
+                profileOnlyResults = state.profileResults.filter(p => !filterIds.has(p.posting_id));
+                profileOnlyResults.forEach(p => { p._profileMatch = true; });
+            }
+
+            if (data.results.length === 0 && profileOnlyResults.length === 0 && resultsOffset === 0) {
                 grid.innerHTML = `<div class="results-empty">${I18N.results_none}</div>`;
                 showMore.style.display = 'none';
                 resultsLoading = false;
                 return;
             }
 
-            // Render tiles
+            // Render tiles (filter results + profile-only results merged)
             const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-            data.results.forEach(p => {
+            const allResults = reset ? [...data.results, ...profileOnlyResults] : data.results;
+            allResults.forEach(p => {
                 const tile = document.createElement('div');
                 tile.className = 'result-tile';
                 tile.dataset.postingId = p.posting_id;
@@ -1046,6 +1085,7 @@ window.SEARCH_TOUR_I18N = {
                         ${isNew ? `<span class="tile-new-badge">${I18N.results_new}</span>` : ''}
                         ${p.interested === true ? '<span class="tile-interest-icon" title="' + I18N.interest_already_yes + '">👍</span>' : ''}
                         ${p.interested === false ? '<span class="tile-interest-icon" title="' + I18N.interest_already_no + '">👎</span>' : ''}
+                        ${p._profileMatch ? `<span class="profile-match-tag">${I18N.profile_row_tag}</span>` : ''}
                     </div>
                     <h3 class="tile-title">${escHtml(p.job_title)}</h3>
                     ${p.employer ? `<div class="tile-employer">${escHtml(p.employer)}</div>` : ''}
@@ -1095,66 +1135,21 @@ window.SEARCH_TOUR_I18N = {
     });
 
     // ============================================================
-    // STREAM B — PROFILE ROW
+    // PROFILE FILTER — check availability on load, populate chip
     // ============================================================
-    async function loadProfileRow() {
-        const section = document.getElementById('profile-results-section');
-        const grid = document.getElementById('profile-results-grid');
-        if (!section || !grid) return;
-
-        grid.innerHTML = `<div class="results-loading">${I18N.profile_row_loading}</div>`;
+    async function initProfileFilter() {
 
         try {
             const res = await fetch('/api/search/profile');
-            if (!res.ok) { section.style.display = 'none'; return; }
+            if (!res.ok) return;
             const data = await res.json();
-
-            if (!data.available || !data.results || data.results.length === 0) {
-                section.style.display = 'none';
-                return;
+            if (data.available && data.results && data.results.length > 0) {
+                state.profileAvailable = true;
+                state.profileResults = data.results;
+                renderFilterPills(); // reveal the ✦ Mein Profil chip
             }
-
-            section.style.display = '';
-            grid.innerHTML = '';
-
-            const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-            data.results.forEach(p => {
-                const tile = document.createElement('div');
-                tile.className = 'result-tile profile-tile';
-                tile.dataset.postingId = p.posting_id;
-
-                const isNew = p.first_seen && (Date.now() - new Date(p.first_seen).getTime()) < 7 * 86400000;
-                const dateStr = p.first_seen ? new Date(p.first_seen).toLocaleDateString(locale) : '';
-
-                tile.innerHTML = `
-                    <div class="tile-header">
-                        <span class="tile-domain-dot" style="background:${p.domain_color};" title="${tDomain(p.domain)}"></span>
-                        <span class="tile-ql-badge">${tQL(p.ql_level)}</span>
-                        ${isNew ? `<span class="tile-new-badge">${I18N.results_new}</span>` : ''}
-                        <span class="profile-match-tag">${I18N.profile_row_tag}</span>
-                    </div>
-                    <h3 class="tile-title">${escHtml(p.job_title)}</h3>
-                    ${p.employer ? `<div class="tile-employer">${escHtml(p.employer)}</div>` : ''}
-                    ${p.location ? `<div class="tile-location">\uD83D\uDCCD ${escHtml(p.location)}</div>` : ''}
-                    ${p.summary ? `<div class="tile-summary">${escHtml(p.summary).substring(0, 150)}${p.summary.length > 150 ? '\u2026' : ''}</div>` : ''}
-                    <div class="tile-footer">
-                        <span class="tile-date">${dateStr}</span>
-                        <button class="tile-details-btn">${I18N.results_view_details}</button>
-                    </div>
-                `;
-                grid.appendChild(tile);
-            });
-
-            // Wire up detail view
-            grid.addEventListener('click', function(e) {
-                const btn = e.target.closest('.tile-details-btn');
-                const tile = e.target.closest('.result-tile');
-                if (btn && tile) openPostingDetail(parseInt(tile.dataset.postingId));
-            });
-
         } catch(e) {
-            console.warn('Profile row load failed:', e);
-            section.style.display = 'none';
+            console.warn('Profile filter init failed:', e);
         }
     }
 
@@ -1660,8 +1655,8 @@ window.SEARCH_TOUR_I18N = {
         }
         
         doSearch();
-        // Stream B — profile row (fires once on load, independent of filter state)
-        loadProfileRow();
+        // Check profile availability → show ✦ Mein Profil chip if ready
+        initProfileFilter();
         // Fix Leaflet tile rendering — force recalculation after layout resolves
         // The grid now has explicit height (calc(100vh-220px)) so this should work reliably
         setTimeout(() => { map.invalidateSize(); map.setView(map.getCenter()); }, 200);

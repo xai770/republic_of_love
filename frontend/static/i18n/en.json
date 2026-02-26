@@ -367,7 +367,8 @@
         "profile_row_tag": "❆ matches your profile",
         "profile_row_loading": "Finding profile matches…",
         "profile_row_empty": "No profile matches yet.",
-        "profile_row_pending": "Your profile match is being computed…"
+        "profile_row_pending": "Your profile match is being computed…",
+        "profile_filter_btn": "My Profile"
     },
     "footer": {
         "impressum": "Legal Notice",
