@@ -1140,12 +1140,14 @@ window.SEARCH_TOUR_I18N = {
             const data = await res.json();
             if (data.available && data.results && data.results.length > 0) {
                 state.profileAvailable = true;
+                state.profileActive = true;   // start with profile filter on
                 state.profileResults = data.results;
                 // Pre-apply profile location as geo filter (if none set yet)
                 if (data.profile_location && !state.lat) {
                     await applyProfileLocation(data.profile_location);
                 } else {
                     renderFilterPills();
+                    loadResults(true);
                 }
             }
         } catch(e) {
