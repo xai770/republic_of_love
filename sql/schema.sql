@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Jxz6bHNlYKrKqZbmYPPR9R4LOem41PUegTgHLOSasCudWW7pxebAYvbeQs11rnn
+\restrict 4iwDb3O98M76FAcG7cSIUM8XhrnjMARIZ7RKA3Yc45qUAvossGk18dOazfBmJEF
 
 -- Dumped from database version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
@@ -5411,7 +5411,8 @@ CREATE TABLE public.users (
     trial_budget_cents integer DEFAULT 500 NOT NULL,
     terms_accepted_at timestamp with time zone,
     freeze_flag boolean DEFAULT false NOT NULL,
-    gdpr_cv_consent_at timestamp with time zone
+    gdpr_cv_consent_at timestamp with time zone,
+    is_protected boolean DEFAULT false NOT NULL
 );
 
 
@@ -5536,6 +5537,13 @@ COMMENT ON COLUMN public.users.freeze_flag IS 'When TRUE, the user is frozen (Ha
 --
 
 COMMENT ON COLUMN public.users.gdpr_cv_consent_at IS 'Timestamp of the most recent explicit GDPR consent for CV processing by AI services.';
+
+
+--
+-- Name: COLUMN users.is_protected; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.users.is_protected IS 'If true, reset/seed scripts refuse to touch this user. Set manually on real personal accounts.';
 
 
 --
@@ -8100,5 +8108,5 @@ ALTER EVENT TRIGGER schema_change_trigger OWNER TO base_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Jxz6bHNlYKrKqZbmYPPR9R4LOem41PUegTgHLOSasCudWW7pxebAYvbeQs11rnn
+\unrestrict 4iwDb3O98M76FAcG7cSIUM8XhrnjMARIZ7RKA3Yc45qUAvossGk18dOazfBmJEF
 
