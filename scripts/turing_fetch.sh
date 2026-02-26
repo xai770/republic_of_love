@@ -320,6 +320,7 @@ from core.database import get_connection, get_connection_raw; print('  ✅ core.
 import ast
 ast.parse(open('scripts/berufenet_description_retry.py').read()); print('  ✅ berufenet_description_retry')
 ast.parse(open('scripts/bulk_auto_triage.py').read()); print('  ✅ bulk_auto_triage')
+ast.parse(open('actors/postings__profession_translate_U.py').read()); print('  ✅ postings__profession_translate_U')
 print('All imports OK')
 "
 if [ $? -ne 0 ]; then
@@ -393,6 +394,17 @@ rm -f "$OUTPUT_FILE"
 ts "Berufenet Phase 3 (auto-triage owl_pending)..."
 python3 scripts/bulk_auto_triage.py 2>&1
 ts "✅ Berufenet Phase 3 (auto-triage) complete"
+
+# ============================================================================
+# STEP 3e: PROFESSION TRANSLATIONS (DE→EN, incremental)
+# ============================================================================
+# Translates newly-seen berufenet_name values to English via Ollama.
+# --limit 200 caps each pipeline run to ~5 minutes.
+# Untranslated names carry over to the next run automatically.
+# The search API hot-reloads config/profession_translations_en.json — no restart needed.
+ts "[3e/5] Translating new profession names DE→EN (limit 200)..."
+python3 actors/postings__profession_translate_U.py --limit 200
+ts "✅ Profession translations done"
 
 # ============================================================================
 # STEP 3b: DOMAIN GATE CASCADE (keyword patterns + LLM for non-KldB postings)
