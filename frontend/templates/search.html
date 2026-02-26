@@ -309,11 +309,12 @@ window.SEARCH_TOUR_I18N = {
     let markerLayer = null;
 
     // Click on map = set center + radius
-    map.on('click', function(e) {
+    map.on('click', async function(e) {
         state.lat = Math.round(e.latlng.lat * 100) / 100;
         state.lon = Math.round(e.latlng.lng * 100) / 100;
         state.radius_km = parseInt(document.getElementById('radius-select').value) || null;
         updateRadiusCircle();
+        if (state.profileActive) await refreshProfileResults();
         doSearch();
     });
 
@@ -337,10 +338,13 @@ window.SEARCH_TOUR_I18N = {
     }
 
     // Radius dropdown change
-    document.getElementById('radius-select').addEventListener('change', function() {
+    document.getElementById('radius-select').addEventListener('change', async function() {
         state.radius_km = parseInt(this.value) || null;
         updateRadiusCircle();
-        if (state.lat && state.lon) doSearch();
+        if (state.lat && state.lon) {
+            if (state.profileActive) await refreshProfileResults();
+            doSearch();
+        }
     });
 
     // ============================================================
@@ -371,7 +375,7 @@ window.SEARCH_TOUR_I18N = {
         }
     }
 
-    cityDropdown.addEventListener('click', function(e) {
+    cityDropdown.addEventListener('click', async function(e) {
         const opt = e.target.closest('.city-option');
         if (!opt) return;
         state.lat = parseFloat(opt.dataset.lat);
@@ -381,6 +385,7 @@ window.SEARCH_TOUR_I18N = {
         cityDropdown.innerHTML = '';
         map.setView([state.lat, state.lon], 10);
         updateRadiusCircle();
+        if (state.profileActive) await refreshProfileResults();
         doSearch();
     });
 
@@ -1167,10 +1172,29 @@ window.SEARCH_TOUR_I18N = {
             cityInput.value = cityName;
             map.setView([state.lat, state.lon], 10);
             updateRadiusCircle();
+            await refreshProfileResults();  // re-fetch profile results filtered to this city
             doSearch();  // re-runs with geo filter applied; doSearch calls renderFilterPills
         } catch(e) {
             console.warn('Profile location geocode failed:', e);
             renderFilterPills();
+        }
+    }
+
+    async function refreshProfileResults() {
+        try {
+            const params = new URLSearchParams();
+            if (state.lat != null) params.set('lat', state.lat);
+            if (state.lon != null) params.set('lon', state.lon);
+            if (state.radius_km) params.set('radius_km', state.radius_km);
+            const url = '/api/search/profile' + (params.toString() ? '?' + params.toString() : '');
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.available && data.results) {
+                state.profileResults = data.results;
+            }
+        } catch(e) {
+            console.warn('Profile results refresh failed:', e);
         }
     }
 

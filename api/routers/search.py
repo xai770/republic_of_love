@@ -789,6 +789,9 @@ def search_profile(
     user: dict = Depends(require_user),
     conn=Depends(get_db),
     limit: int = 20,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    radius_km: Optional[int] = None,
 ):
     """
     Stream B: semantic search based on the yogi's skill profile.
@@ -861,8 +864,27 @@ def search_profile(
         return {"available": False, "results": [], "reason": "zero_embedding"}
 
     # ── 4. Candidate postings (1000 most recent with text) ───────
+    geo_clause = ""
+    geo_params: list = []
+    if lat is not None and lon is not None and radius_km:
+        geo_clause = """
+              AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
+              AND (6371 * acos(
+                    cos(radians(%s)) * cos(radians(
+                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+                    )) *
+                    cos(radians(
+                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
+                    ) - radians(%s)) +
+                    sin(radians(%s)) * sin(radians(
+                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+                    ))
+              )) <= %s
+        """
+        geo_params = [lat, lon, lat, radius_km]
+
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(f"""
             SELECT
                 p.posting_id,
                 p.job_title,
@@ -887,9 +909,10 @@ def search_profile(
             WHERE p.enabled = true
               AND p.invalidated = false
               AND p.berufenet_id IS NOT NULL
+              {geo_clause}
             ORDER BY p.first_seen_at DESC NULLS LAST
             LIMIT 1000
-        """)
+        """, geo_params)
         candidates = list(cur.fetchall())
 
     if not candidates:
