@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 import json
+import os
 import threading
 import logging
 import hashlib
@@ -22,6 +23,26 @@ from lib.posting_verifier import queue_stale_verification, find_stale_posting_id
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["search"])
+
+# ─── Profession translations (DE → EN) ───────────────────────────────────────
+_PROF_TRANS: dict = {}
+_PROF_TRANS_MTIME: float = 0.0
+_PROF_TRANS_PATH = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'profession_translations_en.json')
+)
+
+def _get_prof_trans() -> dict:
+    """Load / hot-reload profession translations; caches per file mtime."""
+    global _PROF_TRANS, _PROF_TRANS_MTIME
+    try:
+        mtime = os.path.getmtime(_PROF_TRANS_PATH)
+        if mtime > _PROF_TRANS_MTIME:
+            with open(_PROF_TRANS_PATH, 'r', encoding='utf-8') as f:
+                _PROF_TRANS = json.load(f)
+            _PROF_TRANS_MTIME = mtime
+    except (OSError, json.JSONDecodeError):
+        pass
+    return _PROF_TRANS
 
 # ─── Nominatim proxy ──────────────────────────────────────────────────────────
 _GEO_CACHE: dict = {}  # simple in-process cache to respect Nominatim's rate limit
@@ -708,7 +729,8 @@ def search_intelligence(
                 LIMIT 15
             """)
         professions = [
-            {"name": r['name'], "fresh": r['fresh'], "total": r['total']}
+            {"name": r['name'], "fresh": r['fresh'], "total": r['total'],
+             "name_en": _get_prof_trans().get(r['name'])}
             for r in cur.fetchall()
         ]
 
