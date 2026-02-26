@@ -769,6 +769,7 @@ window.SEARCH_TOUR_I18N = {
         } else if (type === 'state') {
             const name = btn.dataset.name;
             state.states = state.states.filter(s => s !== name);
+            if (state.profileActive) await refreshProfileResults();
         } else if (type === 'profession') {
             const name = btn.dataset.name;
             state.professions = state.professions.filter(p => p !== name);
@@ -777,6 +778,7 @@ window.SEARCH_TOUR_I18N = {
             state.geoLocations.splice(gIdx, 1);
             updateGeoLayers();
             if (state.geoLocations.length === 0) cityInput.value = '';
+            if (state.profileActive) await refreshProfileResults();
         }
         doSearch();
     });
