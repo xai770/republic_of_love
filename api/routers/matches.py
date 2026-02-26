@@ -838,3 +838,199 @@ def get_suppressed_categories(
             "message": f"{len(rows)} job categories suppressed based on your ratings"
         }
 
+
+# ============================================================================
+# On-demand enrichment (cover letter / no-go narrative via Clara)
+# ============================================================================
+
+def _run_clara_in_background(user_id: int, profile_id: int, posting_id: int):
+    """
+    Background thread: call Clara's process_match() for a single pair, then
+    deliver the result as a yogi_message so the UI can surface it.
+
+    This is intentionally fire-and-forget — the endpoint returns immediately
+    and the yogi polls their inbox (or the match row) for the result.
+    """
+    import json as _json
+    from core.database import get_connection as _get_conn
+    from actors.profile_posting_matches__report_C__clara import process_match
+
+    try:
+        with _get_conn() as conn:
+            result = process_match(conn, profile_id, posting_id)
+
+            if not result.get('success'):
+                _deliver_error_message(conn, user_id, posting_id,
+                                       result.get('error', 'Unknown error'))
+                return
+
+            match_id = result['match_id']
+
+            # Fetch the freshly-written match row so we can compose the message
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT m.recommendation, m.cover_letter, m.nogo_narrative,
+                       m.skill_match_score, m.go_reasons, m.nogo_reasons,
+                       m.gate_reason, m.domain_gate_passed,
+                       p.job_title, p.posting_name AS company, p.location_city
+                FROM profile_posting_matches m
+                JOIN postings p ON m.posting_id = p.posting_id
+                WHERE m.match_id = %s
+            """, (match_id,))
+            row = cur.fetchone()
+            if not row:
+                return
+
+            rec = (row['recommendation'] or 'skip').upper()
+            title = row['job_title'] or 'this posting'
+            company = row['company'] or ''
+            location = row['location_city'] or ''
+            score = row['skill_match_score'] or 0.0
+            where = f" — {location}" if location else ""
+
+            if result.get('gated'):
+                # Domain/qualification gate stopped us before any LLM call
+                subject = f"Match analysis: {title}{where}"
+                body = (
+                    f"I looked at **{title}**{' at ' + company if company else ''}{where} "
+                    f"and unfortunately it did not pass the eligibility check.\n\n"
+                    f"**Reason:** {row['gate_reason'] or 'Qualification or domain mismatch'}\n\n"
+                    f"This type of posting typically requires credentials or a professional "
+                    f"background outside your current profile."
+                )
+            elif rec == 'APPLY':
+                go_reasons = row['go_reasons'] or []
+                if isinstance(go_reasons, str):
+                    go_reasons = _json.loads(go_reasons)
+                reasons_text = '\n'.join(f"- {r}" for r in go_reasons[:3]) if go_reasons else ''
+                subject = f"Cover letter ready: {title}{where}"
+                body = (
+                    f"Great news! I analysed **{title}**"
+                    f"{' at ' + company if company else ''}{where} "
+                    f"(match score: {score:.0%}) and recommend you **apply**.\n\n"
+                    + (f"**Why this fits:**\n{reasons_text}\n\n" if reasons_text else '')
+                    + f"**Cover letter:**\n\n{row['cover_letter']}"
+                )
+            else:
+                nogo_reasons = row['nogo_reasons'] or []
+                if isinstance(nogo_reasons, str):
+                    nogo_reasons = _json.loads(nogo_reasons)
+                reasons_text = '\n'.join(f"- {r}" for r in nogo_reasons[:3]) if nogo_reasons else ''
+                subject = f"Why not: {title}{where}"
+                body = (
+                    f"I reviewed **{title}**"
+                    f"{' at ' + company if company else ''}{where} "
+                    f"(match score: {score:.0%}) and recommend you **skip** it.\n\n"
+                    + (f"**Concerns:**\n{reasons_text}\n\n" if reasons_text else '')
+                    + f"**Summary:** {row['nogo_narrative'] or 'Not a strong match for your profile.'}"
+                )
+
+            cur.execute("""
+                INSERT INTO yogi_messages
+                    (user_id, sender_type, posting_id, message_type, subject, body)
+                VALUES (%s, 'arden', %s, 'match_enrichment', %s, %s)
+            """, (user_id, posting_id, subject, body))
+            conn.commit()
+
+    except Exception as exc:
+        # Log but never crash the background thread
+        import logging
+        logging.getLogger(__name__).error(
+            "Clara background task failed (profile=%s posting=%s): %s",
+            profile_id, posting_id, exc
+        )
+
+
+def _deliver_error_message(conn, user_id: int, posting_id: int, error: str):
+    """Send a brief error message so the yogi knows something went wrong."""
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO yogi_messages
+                (user_id, sender_type, posting_id, message_type, subject, body)
+            VALUES (%s, 'arden', %s, 'match_enrichment',
+                    'Match analysis failed',
+                    %s)
+        """, (user_id, posting_id,
+              f"I tried to analyse this posting but ran into a problem: {error}. "
+              f"Please try again in a moment."))
+        conn.commit()
+    except Exception:
+        pass
+
+
+@router.post("/{profile_id}/{posting_id}/enrich")
+def enrich_match(
+    profile_id: int,
+    posting_id: int,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    On-demand Clara enrichment for a single profile↔posting pair.
+
+    If the match already has a cover letter or no-go narrative, returns it
+    immediately (idempotent — safe to call multiple times).
+
+    Otherwise fires a background task that:
+    1. Calls Clara's process_match() (gates → embedding → LLM, ~5–30 s)
+    2. Writes result to profile_posting_matches (upsert)
+    3. Delivers a yogi_message so the UI can surface the result
+
+    Returns:
+        {"status": "ready",  ...match fields...}  — already enriched
+        {"status": "queued", "message": "..."}    — background task started
+    """
+    with conn.cursor() as cur:
+        # Ownership check: profile must belong to this user
+        cur.execute(
+            "SELECT profile_id FROM profiles WHERE profile_id = %s AND user_id = %s",
+            (profile_id, user['user_id'])
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=403, detail="Profile not found or access denied")
+
+        # Posting must exist
+        cur.execute(
+            "SELECT posting_id, job_title FROM postings WHERE posting_id = %s AND COALESCE(invalidated, false) = false",
+            (posting_id,)
+        )
+        posting_row = cur.fetchone()
+        if not posting_row:
+            raise HTTPException(status_code=404, detail="Posting not found or invalidated")
+
+        # Already enriched?
+        cur.execute("""
+            SELECT match_id, recommendation, skill_match_score,
+                   cover_letter, nogo_narrative, computed_at
+            FROM profile_posting_matches
+            WHERE profile_id = %s AND posting_id = %s
+        """, (profile_id, posting_id))
+        existing = cur.fetchone()
+
+        if existing and (existing['cover_letter'] or existing['nogo_narrative']):
+            return {
+                "status": "ready",
+                "match_id": existing['match_id'],
+                "recommendation": existing['recommendation'],
+                "skill_match_score": existing['skill_match_score'],
+                "cover_letter": existing['cover_letter'],
+                "nogo_narrative": existing['nogo_narrative'],
+                "computed_at": existing['computed_at'],
+            }
+
+    # Not yet enriched — fire background task and return immediately
+    threading.Thread(
+        target=_run_clara_in_background,
+        args=(user['user_id'], profile_id, posting_id),
+        daemon=True,
+    ).start()
+
+    return {
+        "status": "queued",
+        "message": (
+            f"Clara is analysing '{posting_row['job_title']}' against your profile. "
+            "This takes 5–30 seconds. The result will appear in your inbox."
+        ),
+    }
+
