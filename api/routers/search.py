@@ -875,12 +875,12 @@ def search_profile(
                 SUBSTRING(b.kldb FROM 3 FOR 2)                       AS domain_code,
                 CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER)       AS ql_level,
                 source_metadata->'raw_api_response'->'arbeitgeber'->>'name' AS employer_name,
-                b.berufenet_name,
+                p.berufenet_name,
                 COALESCE(
                     p.extracted_summary,
                     p.job_description,
                     p.job_title,
-                    b.berufenet_name
+                    p.berufenet_name
                 ) AS match_text
             FROM postings p
             JOIN berufenet b ON b.berufenet_id = p.berufenet_id
