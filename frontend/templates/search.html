@@ -1054,7 +1054,8 @@ window.SEARCH_TOUR_I18N = {
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
         if (state.states.length > 0) body.states = state.states;
-        if (state.professions.length > 0) body.professions = state.professions;
+        // Professions are NOT sent to preview — they're a results drill-down only.
+        // The map/counts/domain bars always reflect the full QL+location landscape.
         if (state.geoLocations.length > 0)
             body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
 
