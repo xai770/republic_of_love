@@ -1039,6 +1039,7 @@ window.SEARCH_TOUR_I18N = {
         if (type === 'state') {
             if (!state.states.includes(value)) {
                 state.states.push(value);
+                if (state.profileActive) await refreshProfileResults();
                 doSearch();
             }
         } else if (type === 'profession') {
@@ -1320,6 +1321,9 @@ window.SEARCH_TOUR_I18N = {
                 params.set('lat', state.geoLocations[0].lat);
                 params.set('lon', state.geoLocations[0].lon);
                 if (state.geoLocations[0].radius_km) params.set('radius_km', state.geoLocations[0].radius_km);
+            }
+            if (state.states && state.states.length > 0) {
+                state.states.forEach(s => params.append('states', s));
             }
             const url = '/api/search/profile' + (params.toString() ? '?' + params.toString() : '');
             const res = await fetch(url);

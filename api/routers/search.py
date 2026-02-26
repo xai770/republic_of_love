@@ -950,6 +950,7 @@ def search_profile(
     lat: Optional[float] = None,
     lon: Optional[float] = None,
     radius_km: Optional[int] = None,
+    states: Optional[List[str]] = Query(default=None),
 ):
     """
     Stream B: semantic search based on the yogi's skill profile.
@@ -1021,25 +1022,33 @@ def search_profile(
     if profile_norm == 0:
         return {"available": False, "results": [], "reason": "zero_embedding"}
 
-    # ── 4. Candidate postings (1000 most recent with text) ───────
-    geo_clause = ""
+    # ── 4. Candidate postings (5000 most recent with text) ───────
+    loc_clauses_profile: list = []
+    loc_params_profile: list = []
+    if states:
+        loc_clauses_profile.append("p.location_state = ANY(%s)")
+        loc_params_profile.append(states)
     geo_params: list = []
     if lat is not None and lon is not None and radius_km:
-        geo_clause = """
-              AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
-              AND (6371 * acos(
-                    cos(radians(%s)) * cos(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                    )) *
-                    cos(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
-                    ) - radians(%s)) +
-                    sin(radians(%s)) * sin(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                    ))
-              )) <= %s
-        """
+        loc_clauses_profile.append("""(
+                source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
+                AND (6371 * acos(
+                      cos(radians(%s)) * cos(radians(
+                          CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+                      )) *
+                      cos(radians(
+                          CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
+                      ) - radians(%s)) +
+                      sin(radians(%s)) * sin(radians(
+                          CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+                      ))
+                )) <= %s
+              )""")
         geo_params = [lat, lon, lat, radius_km]
+
+    state_clause_profile = (
+        f"AND ({ ' OR '.join(loc_clauses_profile) })" if loc_clauses_profile else ""
+    )
 
     with conn.cursor() as cur:
         cur.execute(f"""
@@ -1067,10 +1076,10 @@ def search_profile(
             WHERE p.enabled = true
               AND p.invalidated = false
               AND p.berufenet_id IS NOT NULL
-              {geo_clause}
+              {state_clause_profile}
             ORDER BY p.first_seen_at DESC NULLS LAST
             LIMIT 5000
-        """, geo_params)
+        """, loc_params_profile + geo_params)
         candidates = list(cur.fetchall())
 
     if not candidates:
