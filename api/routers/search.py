@@ -214,6 +214,73 @@ def _build_geo_where(
     return '(' + ' OR '.join(clauses) + ')', geo_params
 
 
+# ─── Posting WHERE builder ───────────────────────────────────────────────────
+
+def _build_posting_where(
+    *,
+    domains:     Optional[List[str]]  = None,
+    professions: Optional[List[str]]  = None,
+    profile_ids: Optional[List[int]]  = None,
+    ql:          Optional[List[int]]  = None,
+    states:      Optional[List[str]]  = None,
+    geo_sql:     Optional[str]        = None,
+    geo_params:  Optional[list]       = None,
+) -> tuple[str, list]:
+    """
+    Build (WHERE sql, params) for any postings query.
+
+    Three logical groups — omit a group by passing None for all its args:
+      Subject  — domains OR professions OR profile_ids
+      QL       — qualification level
+      Location — states OR radius circle(s)
+
+    All queries must alias:  postings AS p  JOIN berufenet AS b ON b.berufenet_id = p.berufenet_id
+
+    Cross-filter pattern (used in preview):
+      • Domain bars  — omit subject             → pass domains/professions/profile_ids=None
+      • QL bars      — omit ql                  → pass ql=None
+      • Landscape    — omit professions/profile → pass professions/profile_ids=None
+    """
+    wheres: list[str] = [
+        "p.berufenet_id IS NOT NULL",
+        "p.enabled = true",
+        "p.invalidated = false",
+    ]
+    params: list = []
+
+    # ── Subject group (domains OR professions OR profile_ids) ─────────────────
+    subj: list[str] = []
+    if domains:
+        subj.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+        params.append(domains)
+    if professions:
+        subj.append("p.berufenet_name = ANY(%s)")
+        params.append(professions)
+    if profile_ids:
+        subj.append("p.posting_id = ANY(%s)")
+        params.append(profile_ids)
+    if subj:
+        wheres.append("(" + " OR ".join(subj) + ")")
+
+    # ── Qualification level ───────────────────────────────────────────────────
+    if ql:
+        wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
+        params.append(ql)
+
+    # ── Location group (states OR geo circles) ────────────────────────────────
+    loc: list[str] = []
+    if states:
+        loc.append("p.location_state = ANY(%s)")
+        params.append(states)
+    if geo_sql:
+        loc.append(geo_sql)
+        params.extend(geo_params or [])
+    if loc:
+        wheres.append("(" + " OR ".join(loc) + ")")
+
+    return " AND ".join(wheres), params
+
+
 # ============================================================
 # Search preview endpoint
 # ============================================================
@@ -250,206 +317,120 @@ def search_preview(
 ):
     """
     Cross-filter search preview.
-    Returns: total, by_domain, by_ql, heatmap, fresh_count.
+    Returns: total, by_domain, by_ql, heatmap, markers, fresh_count.
     All filters optional — no filters = everything.
+
+    Cross-filter principle:
+      • Domain bars  show counts for QL + location only  (subject excluded)
+      • QL bars      show counts for subject + location   (ql excluded)
+      • Total        uses all filters
     """
     with conn.cursor() as cur:
-        # Build WHERE clauses — always exclude invalidated/disabled postings
-        wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
-        params = []
-
-        # Group 1 (subject): domains OR professions — selecting a profession expands,
-        # not restricts, the result set within the same logical role group.
-        subj_clauses, subj_params = [], []
-        if req.domains:
-            subj_clauses.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
-            subj_params.append(req.domains)
-        if req.professions:
-            subj_clauses.append("p.berufenet_name = ANY(%s)")
-            subj_params.append(req.professions)
-        if req.profile_ids:
-            subj_clauses.append("p.posting_id = ANY(%s)")
-            subj_params.append(req.profile_ids)
-        if subj_clauses:
-            wheres.append(f"({ ' OR '.join(subj_clauses) })")
-            params.extend(subj_params)
-
-        # Group 2 (qualification)
-        if req.ql:
-            wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
-            params.append(req.ql)
-
-        # Group 3 (location): states OR geo — OR'd so adding a state/circle expands, not narrows
+        # Resolve location once — shared by all sub-queries
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
         )
-        loc_clauses, loc_params = [], []
-        if req.states:
-            loc_clauses.append("p.location_state = ANY(%s)")
-            loc_params.append(req.states)
-        if geo_sql:
-            loc_clauses.append(geo_sql)
-            loc_params.extend(geo_params)
-        if loc_clauses:
-            wheres.append(f"({ ' OR '.join(loc_clauses) })")
-            params.extend(loc_params)
+        loc = dict(states=req.states, geo_sql=geo_sql, geo_params=geo_params)
 
-        where_sql = " AND ".join(wheres)
-
-        # --- Total count (all active filters including professions) ---
+        # ── 1. Total (all filters) ────────────────────────────────────────────
+        where_sql, params = _build_posting_where(
+            domains=req.domains, professions=req.professions, profile_ids=req.profile_ids,
+            ql=req.ql, **loc
+        )
         cur.execute(f"""
-            SELECT COUNT(*) as total
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            SELECT COUNT(*) AS total
+            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
         """, params)
         total = cur.fetchone()['total']
 
-        # --- Landscape total (same filters but WITHOUT profession clause) ---
-        # When professions are active, we return both numbers so the UI can show
-        # "374 of 10,652 positions found" — the "of N" is the domain+QL+location pool.
+        # ── 2. Landscape total (no profession/profile; used for "374 of 10,652") ─
+        # Only computed when a profession is active but no profile — so the UI
+        # can show "N of M" where M is the broader domain+QL+location pool.
         landscape_total = None
         if req.professions and not req.profile_ids:
-            ls_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
-            ls_params = []
-            if req.domains:
-                ls_wheres.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
-                ls_params.append(req.domains)
-            if req.ql:
-                ls_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
-                ls_params.append(req.ql)
-            ls_loc_clauses, ls_loc_params = [], []
-            if req.states:
-                ls_loc_clauses.append("p.location_state = ANY(%s)")
-                ls_loc_params.append(req.states)
-            if geo_sql:
-                ls_loc_clauses.append(geo_sql)
-                ls_loc_params.extend(geo_params)
-            if ls_loc_clauses:
-                ls_wheres.append(f"({ ' OR '.join(ls_loc_clauses) })")
-                ls_params.extend(ls_loc_params)
+            ls_where, ls_params = _build_posting_where(
+                domains=req.domains, ql=req.ql, **loc
+            )
             cur.execute(f"""
-                SELECT COUNT(*) as total
-                FROM postings p
-                JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-                WHERE {" AND ".join(ls_wheres)}
+                SELECT COUNT(*) AS total
+                FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                WHERE {ls_where}
             """, ls_params)
             landscape_total = cur.fetchone()['total']
 
-        # --- By domain: unfiltered by domain AND profession; filtered by QL + location only ---
-        # Cross-filter principle: domain bars show how many jobs exist in each sector
-        # under the current QL + location constraints (so clicking a bar makes sense).
-        # Professions are a sub-filter WITHIN domains, not a domain gate themselves.
-        domain_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
-        domain_params = []
-        if req.ql:
-            domain_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
-            domain_params.append(req.ql)
-        dom_loc_clauses, dom_loc_params = [], []
-        if req.states:
-            dom_loc_clauses.append("p.location_state = ANY(%s)")
-            dom_loc_params.append(req.states)
-        if geo_sql:
-            dom_loc_clauses.append(geo_sql)
-            dom_loc_params.extend(geo_params)
-        if dom_loc_clauses:
-            domain_wheres.append(f"({ ' OR '.join(dom_loc_clauses) })")
-            domain_params.extend(dom_loc_params)
-
-        domain_where_sql = " AND ".join(domain_wheres) if domain_wheres else "TRUE"
+        # ── 3. Domain bars (cross-filter: QL + location only, no subject) ─────
+        dom_where, dom_params = _build_posting_where(ql=req.ql, **loc)
         cur.execute(f"""
-            SELECT SUBSTRING(b.kldb FROM 3 FOR 2) as code,
-                   COUNT(*) as count
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-            WHERE {domain_where_sql}
-            GROUP BY code
-            ORDER BY count DESC
-        """, domain_params)
-        by_domain_raw = cur.fetchall()
-
-        # Map codes to domain names, aggregate
-        domain_agg = {}
-        for row in by_domain_raw:
-            code = row['code']
-            name = KLDB_DOMAINS.get(code, f'Sonstige ({code})')
+            SELECT SUBSTRING(b.kldb FROM 3 FOR 2) AS code, COUNT(*) AS count
+            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE {dom_where}
+            GROUP BY code ORDER BY count DESC
+        """, dom_params)
+        domain_agg: dict = {}
+        for row in cur.fetchall():
+            name = KLDB_DOMAINS.get(row['code'], f'Sonstige ({row["code"]})')
             domain_agg[name] = domain_agg.get(name, 0) + row['count']
-
         by_domain = [
             {
                 "name": name,
                 "count": count,
                 "color": DOMAIN_COLORS.get(name, '#cccccc'),
                 "codes": DOMAIN_NAMES.get(name, []),
-                "selected": bool(req.domains and any(c in req.domains for c in DOMAIN_NAMES.get(name, [])))
+                "selected": bool(
+                    req.domains and
+                    any(c in req.domains for c in DOMAIN_NAMES.get(name, []))
+                ),
             }
             for name, count in sorted(domain_agg.items(), key=lambda x: x[0])
         ]
 
-        # --- By QL: unfiltered by QL, but filtered by domains+professions (OR'd) + location ---
-        # Rebuilt fresh for correct param order.
-        ql_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
-        ql_params = []
-        if subj_clauses:
-            ql_wheres.append(f"({ ' OR '.join(subj_clauses) })")
-            ql_params.extend(subj_params)
-        ql_loc_clauses, ql_loc_params = [], []
-        if req.states:
-            ql_loc_clauses.append("p.location_state = ANY(%s)")
-            ql_loc_params.append(req.states)
-        if geo_sql:
-            ql_loc_clauses.append(geo_sql)
-            ql_loc_params.extend(geo_params)
-        if ql_loc_clauses:
-            ql_wheres.append(f"({ ' OR '.join(ql_loc_clauses) })")
-            ql_params.extend(ql_loc_params)
-
-        ql_where_sql = " AND ".join(ql_wheres) if ql_wheres else "TRUE"
+        # ── 4. QL bars (cross-filter: subject + location only, no ql filter) ──
+        ql_where, ql_params = _build_posting_where(
+            domains=req.domains, professions=req.professions, profile_ids=req.profile_ids,
+            **loc
+        )
         cur.execute(f"""
-            SELECT CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) as level,
-                   COUNT(*) as count
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-            WHERE {ql_where_sql}
+            SELECT CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) AS level,
+                   COUNT(*) AS count
+            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE {ql_where}
               AND SUBSTRING(b.kldb FROM 7 FOR 1) ~ '^[1-4]$'
-            GROUP BY level
-            ORDER BY level
+            GROUP BY level ORDER BY level
         """, ql_params)
         by_ql = [
             {
                 "level": row['level'],
                 "label": QL_LABELS.get(row['level'], f"Level {row['level']}"),
                 "count": row['count'],
-                "selected": bool(req.ql and row['level'] in req.ql)
+                "selected": bool(req.ql and row['level'] in req.ql),
             }
             for row in cur.fetchall()
         ]
 
-        # --- Heatmap (uses ALL filters) ---
+        # ── 5. Heatmap (all filters) ──────────────────────────────────────────
         cur.execute(f"""
             SELECT
-                ROUND(CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS NUMERIC), 2) as lat,
-                ROUND(CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS NUMERIC), 2) as lon,
-                COUNT(*) as weight
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                ROUND(CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS NUMERIC), 2) AS lat,
+                ROUND(CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS NUMERIC), 2) AS lon,
+                COUNT(*) AS weight
+            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
               AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
             GROUP BY lat, lon
         """, params)
         heatmap = [[float(r['lat']), float(r['lon']), r['weight']] for r in cur.fetchall()]
 
-        # --- Map markers (individual postings with lat/lon, max 500) ---
+        # ── 6. Map markers (all filters, most recent 500 with coords) ─────────
         cur.execute(f"""
             SELECT
                 p.posting_id,
                 p.job_title,
                 p.location_city,
-                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' as employer,
-                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT) as lat,
-                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT) as lon
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' AS employer,
+                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT) AS lat,
+                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT) AS lon
+            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
               AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
             ORDER BY p.first_seen_at DESC NULLS LAST
@@ -467,11 +448,10 @@ def search_preview(
             for r in cur.fetchall()
         ]
 
-        # --- Freshness (postings in last 7 days within current filters) ---
+        # ── 7. Freshness (all filters, last 7 days) ───────────────────────────
         cur.execute(f"""
-            SELECT COUNT(*) as fresh
-            FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            SELECT COUNT(*) AS fresh
+            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
               AND (source_metadata->>'published_date')::date >= CURRENT_DATE - INTERVAL '7 days'
         """, params)
@@ -612,43 +592,13 @@ def search_results(
     Paginated with offset/limit. Returns posting details + user interest status.
     """
     with conn.cursor() as cur:
-        # Always exclude invalidated/disabled postings
-        wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
-        params = []
-
-        # Group 1 (subject): domains OR professions OR profile_ids
-        subj_clauses = []
-        if req.domains:
-            subj_clauses.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
-            params.append(req.domains)
-        if req.professions:
-            subj_clauses.append("p.berufenet_name = ANY(%s)")
-            params.append(req.professions)
-        if req.profile_ids:
-            subj_clauses.append("p.posting_id = ANY(%s)")
-            params.append(req.profile_ids)
-        if subj_clauses:
-            wheres.append(f"({ ' OR '.join(subj_clauses) })")
-
-        if req.ql:
-            wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
-            params.append(req.ql)
-
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
         )
-        res_loc_clauses, res_loc_params = [], []
-        if req.states:
-            res_loc_clauses.append("p.location_state = ANY(%s)")
-            res_loc_params.append(req.states)
-        if geo_sql:
-            res_loc_clauses.append(geo_sql)
-            res_loc_params.extend(geo_params)
-        if res_loc_clauses:
-            wheres.append(f"({ ' OR '.join(res_loc_clauses) })")
-            params.extend(res_loc_params)
-
-        where_sql = " AND ".join(wheres)
+        where_sql, params = _build_posting_where(
+            domains=req.domains, professions=req.professions, profile_ids=req.profile_ids,
+            ql=req.ql, states=req.states, geo_sql=geo_sql, geo_params=geo_params,
+        )
 
         # Fetch postings with LEFT JOIN to interest table for this user
         # user_id must come first — it's used in the JOIN before WHERE params
