@@ -1023,35 +1023,14 @@ def search_profile(
         return {"available": False, "results": [], "reason": "zero_embedding"}
 
     # ── 4. Candidate postings (5000 most recent with text) ───────
-    loc_clauses_profile: list = []
-    loc_params_profile: list = []
-    if states:
-        loc_clauses_profile.append("p.location_state = ANY(%s)")
-        loc_params_profile.append(states)
-    geo_params: list = []
-    if lat is not None and lon is not None and radius_km:
-        loc_clauses_profile.append("""(
-                source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
-                AND (6371 * acos(
-                      cos(radians(%s)) * cos(radians(
-                          CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                      )) *
-                      cos(radians(
-                          CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
-                      ) - radians(%s)) +
-                      sin(radians(%s)) * sin(radians(
-                          CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                      ))
-                )) <= %s
-              )""")
-        geo_params = [lat, lon, lat, radius_km]
-
-    state_clause_profile = (
-        f"AND ({ ' OR '.join(loc_clauses_profile) })" if loc_clauses_profile else ""
-    )
-
+    # NOTE: We intentionally do NOT filter candidates by location here.
+    # The profile endpoint always returns the nationwide top-N semantic matches.
+    # Location filtering then restricts *within* that set on the results query side.
+    # This ensures adding a location filter can only reduce results, never increase them.
+    # (Filtering here produced a different candidate pool per location, causing
+    # counter-intuitive results like "Bavaria = 480 > Germany = 478".)
     with conn.cursor() as cur:
-        cur.execute(f"""
+        cur.execute("""
             SELECT
                 p.posting_id,
                 p.job_title,
@@ -1076,10 +1055,9 @@ def search_profile(
             WHERE p.enabled = true
               AND p.invalidated = false
               AND p.berufenet_id IS NOT NULL
-              {state_clause_profile}
             ORDER BY p.first_seen_at DESC NULLS LAST
             LIMIT 5000
-        """, loc_params_profile + geo_params)
+        """)
         candidates = list(cur.fetchall())
 
     if not candidates:
