@@ -279,6 +279,10 @@ window.SEARCH_TOUR_I18N = {
         profileActive:    false,
         profileResults:   null,   // cached from /api/search/profile
         profileAvailable: false,  // true once endpoint confirms availability
+        // AND/OR operators between consecutive pill groups
+        // key: "type1|type2", value: "AND"|"OR"
+        // defaults: same type → "OR", different type → "AND"
+        operators: {},
     };
 
     // ============================================================
@@ -611,13 +615,45 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     // ACTIVE FILTER PILLS
     // ============================================================
+    function getOp(typeA, typeB) {
+        const key = typeA + '|' + typeB;
+        if (state.operators[key] !== undefined) return state.operators[key];
+        return typeA === typeB ? 'OR' : 'AND';
+    }
+
+    function opLabel(op) {
+        return op === 'OR'
+            ? (LANG === 'de' ? 'ODER' : 'OR')
+            : (LANG === 'de' ? 'UND' : 'AND');
+    }
+
     function renderFilterPills() {
         const container = document.getElementById('active-filters');
-        let pills = [];
 
-        // Domain pills
+        // Build ordered list: profile first, then domains, ql, geo
+        const items = [];  // {html, type}
+
+        // 1. Profile pill — always first, no × (toggle by clicking)
+        if (state.profileAvailable) {
+            if (state.profileActive) {
+                items.push({ type: 'profile', html:
+                    `<span class="filter-pill profile-pill profile-pill-active" role="button" tabindex="0"
+                        title="${LANG === 'de' ? 'Klicken zum Deaktivieren' : 'Click to deactivate'}">
+                        ◈ ${I18N.profile_filter_btn}
+                    </span>`
+                });
+            } else {
+                items.push({ type: 'profile', html:
+                    `<span class="filter-pill profile-pill profile-pill-inactive" role="button" tabindex="0"
+                        title="${LANG === 'de' ? 'Klicken zum Aktivieren' : 'Click to activate'}">
+                        ◈ ${I18N.profile_filter_btn} +
+                    </span>`
+                });
+            }
+        }
+
+        // 2. Domain pills
         if (state.domains.length > 0) {
-            // Group by domain name
             const names = new Set();
             for (const code of state.domains) {
                 for (const [name, codes] of Object.entries(window._domainMap || {})) {
@@ -625,62 +661,72 @@ window.SEARCH_TOUR_I18N = {
                 }
             }
             names.forEach(name => {
-                pills.push(`<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
-                    ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
-                </span>`);
+                items.push({ type: 'domain', html:
+                    `<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
+                        ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
+                    </span>`
+                });
             });
         }
 
-        // QL pills
+        // 3. QL pills
         state.ql.forEach(level => {
-            const label = tQL(level);
-            pills.push(`<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
-                ${label} <button class="pill-remove" data-type="ql" data-level="${level}">×</button>
-            </span>`);
+            items.push({ type: 'ql', html:
+                `<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
+                    ${tQL(level)} <button class="pill-remove" data-type="ql" data-level="${level}">×</button>
+                </span>`
+            });
         });
 
-        // Geo pill
+        // 4. Geo pill
         if (state.lat && state.lon) {
             const geoLabel = cityInput.value || `${state.lat}, ${state.lon}`;
             const rLabel = state.radius_km ? ` (${state.radius_km} km)` : '';
-            pills.push(`<span class="filter-pill geo-pill" data-type="geo">
-                📍 ${geoLabel}${rLabel} <button class="pill-remove" data-type="geo">×</button>
-            </span>`);
+            items.push({ type: 'geo', html:
+                `<span class="filter-pill geo-pill" data-type="geo">
+                    📍 ${geoLabel}${rLabel} <button class="pill-remove" data-type="geo">×</button>
+                </span>`
+            });
         }
 
-        // Profile filter chip
-        if (state.profileAvailable) {
-            if (state.profileActive) {
-                pills.push(`<span class="filter-pill profile-pill profile-pill-active" data-type="profile">
-                    ✦ ${I18N.profile_filter_btn} <button class="pill-remove" data-type="profile">×</button>
-                </span>`);
-            } else {
-                pills.push(`<span class="filter-pill profile-pill profile-pill-inactive" role="button" tabindex="0">
-                    ✦ ${I18N.profile_filter_btn} +
-                </span>`);
+        // Interleave operator badges between pills
+        const parts = [];
+        for (let i = 0; i < items.length; i++) {
+            parts.push(items[i].html);
+            if (i < items.length - 1) {
+                const key = items[i].type + '|' + items[i+1].type;
+                const op = getOp(items[i].type, items[i+1].type);
+                parts.push(`<span class="filter-op" data-key="${key}">${opLabel(op)}</span>`);
             }
         }
 
-        container.innerHTML = pills.join('');
+        container.innerHTML = parts.join('');
     }
 
     document.getElementById('active-filters').addEventListener('click', function(e) {
-        // Inactive profile chip: click anywhere to activate
-        if (e.target.closest('.profile-pill-inactive')) {
-            state.profileActive = true;
+        // Operator badge toggle (AND ↔ OR) — visual only; backend wiring is a follow-up
+        const opBadge = e.target.closest('.filter-op');
+        if (opBadge) {
+            const key = opBadge.dataset.key;
+            const current = state.operators[key] !== undefined
+                ? state.operators[key]
+                : (key.split('|')[0] === key.split('|')[1] ? 'OR' : 'AND');
+            state.operators[key] = current === 'AND' ? 'OR' : 'AND';
+            renderFilterPills();
+            return;
+        }
+
+        // Profile pill — whole pill is a toggle (no × button)
+        if (e.target.closest('.profile-pill-active') || e.target.closest('.profile-pill-inactive')) {
+            state.profileActive = !state.profileActive;
             renderFilterPills();
             loadResults(true);
             return;
         }
+
         const btn = e.target.closest('.pill-remove');
         if (!btn) return;
         const type = btn.dataset.type;
-        if (type === 'profile') {
-            state.profileActive = false;
-            renderFilterPills();
-            loadResults(true);
-            return;
-        }
         if (type === 'domain') {
             const name = btn.dataset.name;
             const codes = (window._domainMap || {})[name] || [];

@@ -4935,6 +4935,11 @@ body {
     background: #ebf8f1;
     color: #1a9c55;
     border-color: #6ee09a;
+    cursor: pointer;
+}
+.filter-pill.profile-pill-active:hover {
+    background: #d4f5e6;
+    border-color: #39c077;
 }
 
 .filter-pill.profile-pill-inactive {
@@ -4951,6 +4956,28 @@ body {
     background: #ebf8f1;
     color: #1a9c55;
     border-color: #6ee09a;
+}
+
+/* AND / OR operator badges between filter pills */
+.filter-op {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #a0aec0;
+    background: #edf2f7;
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s;
+    align-self: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.filter-op:hover {
+    background: #cbd5e0;
+    color: #2d3748;
 }
 
 .pill-remove {
@@ -6021,6 +6048,15 @@ body {
     background: #1a4a30;
     color: #68d391;
     border-color: #276749;
+}
+
+[data-theme="dark"] .filter-op {
+    background: #2d3748;
+    color: #718096;
+}
+[data-theme="dark"] .filter-op:hover {
+    background: #4a5568;
+    color: #e2e8f0;
 }
 
 [data-theme="dark"] .search-panel {
