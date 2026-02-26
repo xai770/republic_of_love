@@ -981,7 +981,7 @@ def search_profile(
     if profile_norm == 0:
         return {"available": False, "results": [], "reason": "zero_embedding"}
 
-    # ── 4a. CLARA mode — use precomputed matches if fresh (< 7 days old) ─
+    # ── 4a. CLARA mode — use precomputed matches if recent (< 30 days old) ─
     # Clara runs nightly across ALL postings; her results are higher quality
     # and geographically unbiased. Use them when available.
     with conn.cursor() as cur:
