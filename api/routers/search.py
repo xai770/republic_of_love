@@ -298,13 +298,12 @@ def search_preview(
         """, params)
         total = cur.fetchone()['total']
 
-        # --- By domain: unfiltered by domain, but filtered by professions + QL + location ---
-        # Rebuilt fresh (avoids param-order bugs from clause removal).
+        # --- By domain: unfiltered by domain AND profession; filtered by QL + location only ---
+        # Cross-filter principle: domain bars show how many jobs exist in each sector
+        # under the current QL + location constraints (so clicking a bar makes sense).
+        # Professions are a sub-filter WITHIN domains, not a domain gate themselves.
         domain_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         domain_params = []
-        if req.professions:
-            domain_wheres.append("p.berufenet_name = ANY(%s)")
-            domain_params.append(req.professions)
         if req.ql:
             domain_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             domain_params.append(req.ql)
