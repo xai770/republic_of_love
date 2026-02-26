@@ -467,12 +467,6 @@ async def submit_arcade_score(request: Request, conn=Depends(get_db)):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     body = await request.json()
     with conn.cursor() as cur:
-        # Update display_name if player provided a name
-        player_name = body.get("player_name", "").strip()
-        if player_name:
-            cur.execute("UPDATE users SET display_name = %s WHERE user_id = %s",
-                        (player_name, user["user_id"]))
-
         cur.execute("""
             INSERT INTO arcade_scores (user_id, score, level, monsters_killed,
                                        fruits_collected, friendly_fire, duration_seconds)

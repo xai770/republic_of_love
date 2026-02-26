@@ -785,12 +785,11 @@ def update_yogi_name(
         empty_msg = {"de": "Yogi-Name darf nicht leer sein.", "en": "Yogi name cannot be empty."}
         raise HTTPException(status_code=400, detail=empty_msg.get(lang, empty_msg["de"]))
 
-    # ── Gather transient identity fragments (NEVER stored) ────
-    # Google OAuth display_name — read from session, not persisted
-    display_name = user.get("display_name") or ""
+    # ── Gather transient identity fragments for Taro's name validator ────
+    # Google real name is never stored (GDPR). Only use CV-extracted full_name.
     email = user.get("email") or ""
 
-    # profiles.full_name may hold OAuth name from initial import
+    # profiles.full_name may hold a CV-extracted name
     with conn.cursor() as cur:
         cur.execute(
             "SELECT full_name FROM profiles WHERE user_id = %s",
@@ -801,8 +800,8 @@ def update_yogi_name(
         if row and row["full_name"] and row["full_name"] not in ("New Yogi",):
             profile_name = row["full_name"]
 
-    # Combine all transient identity data for Taro
-    real_name = display_name or profile_name or None
+    # real_name is used by Taro to reject yogi names that look like real names
+    real_name = profile_name or None
 
     # ── Validate via Taro ────────────────────────────────
     ok, msg, severity = validate_yogi_name(

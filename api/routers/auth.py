@@ -102,7 +102,8 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
     google_user = userinfo_response.json()
     google_id = google_user.get("id")
     email = google_user.get("email")
-    display_name = google_user.get("name")
+    # display_name (Google real name) is intentionally NOT stored — GDPR.
+    # avatar_url is a Google-hosted image URL, not PII.
     avatar_url = google_user.get("picture")
     
     # Create or update user in database
@@ -124,20 +125,19 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
             cur.execute("""
                 UPDATE users SET
                     google_id = %s,
-                    display_name = %s,
                     avatar_url = %s,
                     last_login_at = NOW()
                 WHERE user_id = %s
                 RETURNING user_id
-            """, (google_id, display_name, avatar_url, existing['user_id']))
+            """, (google_id, avatar_url, existing['user_id']))
             user_id = cur.fetchone()['user_id']
         else:
             # Create new user with encrypted email
             cur.execute("""
-                INSERT INTO users (email, google_id, display_name, avatar_url, last_login_at)
-                VALUES (%s, %s, %s, %s, NOW())
+                INSERT INTO users (email, google_id, avatar_url, last_login_at)
+                VALUES (%s, %s, %s, NOW())
                 RETURNING user_id
-            """, (email_enc, google_id, display_name, avatar_url))
+            """, (email_enc, google_id, avatar_url))
             user_id = cur.fetchone()['user_id']
 
             # Try to link to existing profile with matching email (profile.email is

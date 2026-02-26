@@ -143,13 +143,13 @@ def list_connections(
         if status == 'active' and not is_active:
             continue
         
-        # Get their revealed name if applicable
+        # Get their revealed name if applicable (yogi_name — user-chosen, not Google name)
         their_revealed_name = None
         if their_revealed:
-            cur.execute("SELECT display_name FROM users WHERE user_id = %s", (their_id,))
+            cur.execute("SELECT yogi_name FROM users WHERE user_id = %s", (their_id,))
             name_row = cur.fetchone()
             if name_row:
-                their_revealed_name = name_row['display_name']
+                their_revealed_name = name_row['yogi_name']
         
         connections.append(Connection(
             connection_id=row['connection_id'],
@@ -375,10 +375,10 @@ def reveal_identity(
     
     row = cur.fetchone()
     
-    # Get user's display name
-    cur.execute("SELECT display_name FROM users WHERE user_id = %s", (user_id,))
+    # Get user's yogi_name (user-chosen alias — not the Google real name)
+    cur.execute("SELECT yogi_name FROM users WHERE user_id = %s", (user_id,))
     user_row = cur.fetchone()
-    display_name = user_row['display_name'] if user_row else 'A fellow yogi'
+    display_name = (user_row['yogi_name'] if user_row else None) or 'A fellow yogi'
     
     # Notify the other yogi
     other_id = row['yogi_b_id'] if role == 'a' else row['yogi_a_id']

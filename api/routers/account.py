@@ -18,10 +18,6 @@ router = APIRouter(prefix="/account", tags=["account"])
 log = logging.getLogger(__name__)
 
 
-class DisplayNameUpdate(BaseModel):
-    display_name: str
-
-
 class AvatarUpdate(BaseModel):
     avatar: str
 
@@ -35,26 +31,6 @@ class MiraPreferencesUpdate(BaseModel):
     language: Optional[str] = None  # 'de' or 'en'
     formality: Optional[str] = None  # 'du' or 'sie'
     tone: Optional[str] = None  # 'friendly', 'concise', 'professional'
-
-
-@router.post("/display-name")
-def update_display_name(
-    data: DisplayNameUpdate,
-    user: dict = Depends(require_user),
-    conn=Depends(get_db)
-):
-    """Update user's display name."""
-    display_name = data.display_name.strip()[:30]  # Max 30 chars
-    if not display_name:
-        raise HTTPException(400, "Display name cannot be empty")
-
-    with conn.cursor() as cur:
-        cur.execute(
-            "UPDATE users SET display_name = %s WHERE user_id = %s",
-            (display_name, user["user_id"])
-        )
-    conn.commit()
-    return {"ok": True, "display_name": display_name}
 
 
 @router.post("/avatar")
