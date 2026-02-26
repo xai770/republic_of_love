@@ -291,9 +291,7 @@ window.SEARCH_TOUR_I18N = {
     const state = {
         domains: [],     // selected KLDB 2-digit codes
         ql: [],          // selected QL levels [1-4]
-        lat: null,
-        lon: null,
-        radius_km: null,
+        geoLocations: [],   // [{lat, lon, radius_km, label}] — supports multiple cities
         // data from last response
         data: null,
         // profile filter chip
@@ -331,44 +329,49 @@ window.SEARCH_TOUR_I18N = {
     map.getPane('heatPane').style.opacity = '0.45';
 
     let heatLayer = null;
-    let radiusCircle = null;
-    let searchMarker = null;
+    let geoLayers = [];   // [{marker, circle}] parallel to state.geoLocations
     let markerLayer = null;
 
-    // Click on map = set center + radius
+    // Click on map = ADD a new geo location (multi-location support)
     map.on('click', async function(e) {
-        state.lat = Math.round(e.latlng.lat * 100) / 100;
-        state.lon = Math.round(e.latlng.lng * 100) / 100;
-        state.radius_km = parseInt(document.getElementById('radius-select').value) || null;
-        updateRadiusCircle();
+        const lat = Math.round(e.latlng.lat * 100) / 100;
+        const lon = Math.round(e.latlng.lng * 100) / 100;
+        const radius_km = parseInt(document.getElementById('radius-select').value) || null;
+        state.geoLocations.push({lat, lon, radius_km, label: `${lat}, ${lon}`});
+        updateGeoLayers();
         if (state.profileActive) await refreshProfileResults();
         doSearch();
     });
 
-    function updateRadiusCircle() {
-        if (radiusCircle) map.removeLayer(radiusCircle);
-        if (searchMarker) map.removeLayer(searchMarker);
-
-        if (state.lat && state.lon) {
-            searchMarker = L.circleMarker([state.lat, state.lon], {
+    function updateGeoLayers() {
+        // Remove all existing geo layers from the map
+        geoLayers.forEach(({marker, circle}) => {
+            if (marker) map.removeLayer(marker);
+            if (circle) map.removeLayer(circle);
+        });
+        geoLayers = [];
+        state.geoLocations.forEach(g => {
+            const marker = L.circleMarker([g.lat, g.lon], {
                 radius: 6, color: '#e74c3c', fillColor: '#e74c3c', fillOpacity: 0.8, weight: 2
             }).addTo(map);
-
-            if (state.radius_km) {
-                radiusCircle = L.circle([state.lat, state.lon], {
-                    radius: state.radius_km * 1000,
+            let circle = null;
+            if (g.radius_km) {
+                circle = L.circle([g.lat, g.lon], {
+                    radius: g.radius_km * 1000,
                     color: '#3498db', fillColor: '#3498db', fillOpacity: 0.08,
                     weight: 2, dashArray: '5,5'
                 }).addTo(map);
             }
-        }
+            geoLayers.push({marker, circle});
+        });
     }
 
-    // Radius dropdown change
+    // Radius dropdown change — applies to all active geo locations
     document.getElementById('radius-select').addEventListener('change', async function() {
-        state.radius_km = parseInt(this.value) || null;
-        updateRadiusCircle();
-        if (state.lat && state.lon) {
+        const radius_km = parseInt(this.value) || null;
+        state.geoLocations = state.geoLocations.map(g => ({...g, radius_km}));
+        updateGeoLayers();
+        if (state.geoLocations.length > 0) {
             if (state.profileActive) await refreshProfileResults();
             doSearch();
         }
@@ -405,13 +408,15 @@ window.SEARCH_TOUR_I18N = {
     cityDropdown.addEventListener('click', async function(e) {
         const opt = e.target.closest('.city-option');
         if (!opt) return;
-        state.lat = parseFloat(opt.dataset.lat);
-        state.lon = parseFloat(opt.dataset.lon);
-        state.radius_km = parseInt(document.getElementById('radius-select').value) || 50;
-        cityInput.value = opt.textContent;
+        const lat   = parseFloat(opt.dataset.lat);
+        const lon   = parseFloat(opt.dataset.lon);
+        const radius_km = parseInt(document.getElementById('radius-select').value) || 50;
+        const label = opt.textContent.trim();
+        state.geoLocations.push({lat, lon, radius_km, label});
+        cityInput.value = '';    // clear input — ready for a second city
         cityDropdown.innerHTML = '';
-        map.setView([state.lat, state.lon], 10);
-        updateRadiusCircle();
+        map.setView([lat, lon], 10);
+        updateGeoLayers();
         if (state.profileActive) await refreshProfileResults();
         doSearch();
     });
@@ -710,18 +715,17 @@ window.SEARCH_TOUR_I18N = {
             });
         });
 
-        // 5. Geo pill (radius label is a clickable cycle button: 10→25→50→100→10)
-        if (state.lat && state.lon) {
-            const geoLabel = cityInput.value || `${state.lat}, ${state.lon}`;
-            const rPart = state.radius_km
-                ? ` <button class="pill-radius-cycle" title="Klicken um Radius zu ändern / Click to change radius">(${state.radius_km} km)</button>`
+        // 5. Geo pills — one per geo location (multi-location supported)
+        state.geoLocations.forEach((g, idx) => {
+            const rPart = g.radius_km
+                ? ` <button class="pill-radius-cycle" data-idx="${idx}" title="Click to change radius">(${g.radius_km} km)</button>`
                 : '';
             items.push({ type: 'geo', html:
-                `<span class="filter-pill geo-pill" data-type="geo">
-                    📍 ${geoLabel}${rPart} <button class="pill-remove" data-type="geo">×</button>
+                `<span class="filter-pill geo-pill" data-type="geo" data-idx="${idx}">
+                    📍 ${g.label || g.lat + ', ' + g.lon}${rPart} <button class="pill-remove" data-type="geo" data-idx="${idx}">×</button>
                 </span>`
             });
-        }
+        });
 
         // Interleave operator badges between pills
         const parts = [];
@@ -750,16 +754,21 @@ window.SEARCH_TOUR_I18N = {
             return;
         }
 
-        // Radius cycling — click (n km) in geo pill to cycle 10→25→50→100
+        // Radius cycling — click (n km) in geo pill to cycle 10→25→50→100 (per location)
         if (e.target.closest('.pill-radius-cycle')) {
             const RADIUS_STEPS = [10, 25, 50, 100];
-            const idx = RADIUS_STEPS.indexOf(state.radius_km);
-            state.radius_km = RADIUS_STEPS[(idx + 1) % RADIUS_STEPS.length];
-            document.getElementById('radius-select').value = state.radius_km;
-            updateRadiusCircle();
-            if (state.profileActive) await refreshProfileResults();
-            renderFilterPills();
-            doSearch();
+            const btn = e.target.closest('.pill-radius-cycle');
+            const gIdx = parseInt(btn.dataset.idx) || 0;
+            const g = state.geoLocations[gIdx];
+            if (g) {
+                const stepIdx = RADIUS_STEPS.indexOf(g.radius_km);
+                g.radius_km = RADIUS_STEPS[(stepIdx + 1) % RADIUS_STEPS.length];
+                document.getElementById('radius-select').value = g.radius_km;
+                updateGeoLayers();
+                if (state.profileActive) await refreshProfileResults();
+                renderFilterPills();
+                doSearch();
+            }
             return;
         }
 
@@ -785,14 +794,10 @@ window.SEARCH_TOUR_I18N = {
             const name = btn.dataset.name;
             state.states = state.states.filter(s => s !== name);
         } else if (type === 'geo') {
-            state.lat = null;
-            state.lon = null;
-            state.radius_km = null;
-            cityInput.value = '';
-            if (radiusCircle) map.removeLayer(radiusCircle);
-            if (searchMarker) map.removeLayer(searchMarker);
-            radiusCircle = null;
-            searchMarker = null;
+            const gIdx = parseInt(btn.dataset.idx);
+            state.geoLocations.splice(gIdx, 1);
+            updateGeoLayers();
+            if (state.geoLocations.length === 0) cityInput.value = '';
         }
         doSearch();
     });
@@ -1065,9 +1070,8 @@ window.SEARCH_TOUR_I18N = {
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
         if (state.states.length > 0) body.states = state.states;
-        if (state.lat != null) body.lat = state.lat;
-        if (state.lon != null) body.lon = state.lon;
-        if (state.radius_km) body.radius_km = state.radius_km;
+        if (state.geoLocations.length > 0)
+            body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
 
         try {
             const res = await fetch('/api/search/preview', {
@@ -1105,8 +1109,8 @@ window.SEARCH_TOUR_I18N = {
                 trackEvent('search_filter', {
                     domains: state.domains,
                     ql: state.ql,
-                    city: state.city || null,
-                    radius: state.radius_km,
+                    city: state.geoLocations.length > 0 ? state.geoLocations[0].label : null,
+                    radius: state.geoLocations.length > 0 ? state.geoLocations[0].radius_km : null,
                     results: data.total
                 });
             }
@@ -1134,9 +1138,8 @@ window.SEARCH_TOUR_I18N = {
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
         if (state.states.length > 0) body.states = state.states;
-        if (state.lat != null) body.lat = state.lat;
-        if (state.lon != null) body.lon = state.lon;
-        if (state.radius_km) body.radius_km = state.radius_km;
+        if (state.geoLocations.length > 0)
+            body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
         return body;
     }
 
@@ -1281,7 +1284,7 @@ window.SEARCH_TOUR_I18N = {
                     }
                 }
                 // Pre-apply profile location as geo filter (if none set yet)
-                if (data.profile_location && !state.lat) {
+                if (data.profile_location && state.geoLocations.length === 0) {
                     await applyProfileLocation(data.profile_location);
                 } else {
                     renderFilterPills();
@@ -1299,14 +1302,15 @@ window.SEARCH_TOUR_I18N = {
             const results = await res.json();
             if (!results.length) { renderFilterPills(); return; }
             const r = results[0];
-            state.lat = parseFloat(r.lat);
-            state.lon = parseFloat(r.lon);
-            state.radius_km = parseInt(document.getElementById('radius-select').value) || 50;
-            cityInput.value = cityName;
-            map.setView([state.lat, state.lon], 10);
-            updateRadiusCircle();
-            await refreshProfileResults();  // re-fetch profile results filtered to this city
-            doSearch();  // re-runs with geo filter applied; doSearch calls renderFilterPills
+            const lat      = parseFloat(r.lat);
+            const lon      = parseFloat(r.lon);
+            const radius_km = parseInt(document.getElementById('radius-select').value) || 50;
+            state.geoLocations.push({lat, lon, radius_km, label: cityName});
+            cityInput.value = '';
+            map.setView([lat, lon], 10);
+            updateGeoLayers();
+            await refreshProfileResults();
+            doSearch();
         } catch(e) {
             console.warn('Profile location geocode failed:', e);
             renderFilterPills();
@@ -1316,9 +1320,11 @@ window.SEARCH_TOUR_I18N = {
     async function refreshProfileResults() {
         try {
             const params = new URLSearchParams();
-            if (state.lat != null) params.set('lat', state.lat);
-            if (state.lon != null) params.set('lon', state.lon);
-            if (state.radius_km) params.set('radius_km', state.radius_km);
+            if (state.geoLocations.length > 0) {
+                params.set('lat', state.geoLocations[0].lat);
+                params.set('lon', state.geoLocations[0].lon);
+                if (state.geoLocations[0].radius_km) params.set('radius_km', state.geoLocations[0].radius_km);
+            }
             const url = '/api/search/profile' + (params.toString() ? '?' + params.toString() : '');
             const res = await fetch(url);
             if (!res.ok) return;
@@ -1524,9 +1530,12 @@ window.SEARCH_TOUR_I18N = {
         const body = {};
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
-        if (state.lat != null) body.lat = state.lat;
-        if (state.lon != null) body.lon = state.lon;
-        if (state.radius_km) body.radius_km = state.radius_km;
+        // Save first geo location for backward compat with SaveSearch backend
+        if (state.geoLocations.length > 0) {
+            body.lat      = state.geoLocations[0].lat;
+            body.lon      = state.geoLocations[0].lon;
+            body.radius_km = state.geoLocations[0].radius_km;
+        }
 
         const feedback = document.getElementById('save-feedback');
         try {
@@ -1562,14 +1571,12 @@ window.SEARCH_TOUR_I18N = {
                 const sp = data.search_params;
                 if (sp.domains) state.domains = sp.domains;
                 if (sp.ql) state.ql = sp.ql;
-                if (sp.lat != null) { state.lat = sp.lat; state.lon = sp.lon; }
-                if (sp.radius_km) {
-                    state.radius_km = sp.radius_km;
-                    document.getElementById('radius-select').value = sp.radius_km;
-                }
-                if (state.lat && state.lon) {
-                    map.setView([state.lat, state.lon], 10);
-                    updateRadiusCircle();
+                if (sp.lat != null && sp.lon != null) {
+                    const radius_km = sp.radius_km || 50;
+                    state.geoLocations.push({lat: sp.lat, lon: sp.lon, radius_km, label: ''});
+                    document.getElementById('radius-select').value = radius_km;
+                    map.setView([sp.lat, sp.lon], 10);
+                    updateGeoLayers();
                 }
             }
         } catch(e) {
@@ -1897,25 +1904,25 @@ window.SEARCH_TOUR_I18N = {
 
         // Set city/location
         if (filters.lat != null && filters.lon != null) {
-            state.lat = filters.lat;
-            state.lon = filters.lon;
-            state.radius_km = filters.radius_km || 50;
+            const radius_km = filters.radius_km || 50;
+            const label = filters.city || '';
+            state.geoLocations.push({lat: filters.lat, lon: filters.lon, radius_km, label});
 
             // Update city input display
             const cityInput = document.getElementById('city-search');
             if (cityInput && filters.city) {
-                cityInput.value = filters.city;
+                cityInput.value = '';
             }
 
             // Update radius dropdown
             const radiusSelect = document.getElementById('radius-select');
             if (radiusSelect) {
-                radiusSelect.value = String(state.radius_km);
+                radiusSelect.value = String(radius_km);
             }
 
-            // Pan map and draw circle
-            map.setView([state.lat, state.lon], 10);
-            updateRadiusCircle();
+            // Pan map and draw circles
+            map.setView([filters.lat, filters.lon], 10);
+            updateGeoLayers();
             changed = true;
         }
 

@@ -163,16 +163,69 @@ QL_LABELS = {
 
 
 # ============================================================
+# Geo helpers — support single and multi-location radius search
+# ============================================================
+
+class GeoLocation(BaseModel):
+    """A single lat/lon + radius circle for geo filtering."""
+    lat: float
+    lon: float
+    radius_km: Optional[int] = None
+
+
+_HAVERSINE_TMPL = """
+    (6371 * acos(
+        cos(radians(%s)) * cos(radians(
+            CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+        )) *
+        cos(radians(
+            CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
+        ) - radians(%s)) +
+        sin(radians(%s)) * sin(radians(
+            CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+        ))
+    )) <= %s"""
+
+
+def _build_geo_where(
+    geo_locations: Optional[List[GeoLocation]],
+    legacy_lat: Optional[float],
+    legacy_lon: Optional[float],
+    legacy_radius: Optional[int],
+) -> tuple[Optional[str], list]:
+    """
+    Build an OR-joined haversine WHERE fragment for one or more location circles.
+    Accepts both geo_locations array (new) and legacy lat/lon/radius_km (backward compat).
+    Returns (sql_fragment_or_None, params_list).
+    """
+    locs: list[tuple[float, float, int]] = []
+    if geo_locations:
+        for g in geo_locations:
+            if g.lat is not None and g.lon is not None and g.radius_km:
+                locs.append((g.lat, g.lon, g.radius_km))
+    if not locs and legacy_lat is not None and legacy_lon is not None and legacy_radius:
+        locs.append((legacy_lat, legacy_lon, legacy_radius))
+    if not locs:
+        return None, []
+    clauses = [_HAVERSINE_TMPL for _ in locs]
+    geo_params: list = []
+    for lat, lon, radius_km in locs:
+        geo_params.extend([lat, lon, lat, radius_km])
+    return '(' + ' OR '.join(clauses) + ')', geo_params
+
+
+# ============================================================
 # Search preview endpoint
 # ============================================================
 
 class SearchRequest(BaseModel):
     domains: Optional[List[str]] = None   # KLDB 2-digit codes
     ql: Optional[List[int]] = None        # qualification levels 1-4
-    lat: Optional[float] = None
+    lat: Optional[float] = None           # legacy single-location (kept for compat)
     lon: Optional[float] = None
     radius_km: Optional[int] = None
     states: Optional[List[str]] = None    # Bundesland filter (location_state)
+    geo_locations: Optional[List[GeoLocation]] = None  # multi-location (OR-joined)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -215,22 +268,12 @@ def search_preview(
             wheres.append("p.location_state = ANY(%s)")
             params.append(req.states)
 
-        if req.lat is not None and req.lon is not None and req.radius_km:
-            # Haversine approximation in SQL (km)
-            wheres.append("""
-                (6371 * acos(
-                    cos(radians(%s)) * cos(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                    )) *
-                    cos(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
-                    ) - radians(%s)) +
-                    sin(radians(%s)) * sin(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                    ))
-                )) <= %s
-            """)
-            params.extend([req.lat, req.lon, req.lat, req.radius_km])
+        geo_sql, geo_params = _build_geo_where(
+            req.geo_locations, req.lat, req.lon, req.radius_km
+        )
+        if geo_sql:
+            wheres.append(geo_sql)
+            params.extend(geo_params)
 
         where_sql = " AND ".join(wheres)
 
@@ -248,8 +291,10 @@ def search_preview(
         domain_params = []
         if req.ql:
             domain_params.append(req.ql)
-        if req.lat is not None and req.lon is not None and req.radius_km:
-            domain_params.extend([req.lat, req.lon, req.lat, req.radius_km])
+        if req.states:
+            domain_params.append(req.states)
+        if geo_sql:
+            domain_params.extend(geo_params)
 
         domain_where_sql = " AND ".join(domain_wheres) if domain_wheres else "TRUE"
         cur.execute(f"""
@@ -286,8 +331,10 @@ def search_preview(
         ql_params = []
         if req.domains:
             ql_params.append(req.domains)
-        if req.lat is not None and req.lon is not None and req.radius_km:
-            ql_params.extend([req.lat, req.lon, req.lat, req.radius_km])
+        if req.states:
+            ql_params.append(req.states)
+        if geo_sql:
+            ql_params.extend(geo_params)
 
         ql_where_sql = " AND ".join(ql_wheres) if ql_wheres else "TRUE"
         cur.execute(f"""
@@ -474,10 +521,11 @@ def get_saved_search(
 class SearchResultsRequest(BaseModel):
     domains: Optional[List[str]] = None
     ql: Optional[List[int]] = None
-    lat: Optional[float] = None
+    lat: Optional[float] = None           # legacy single-location (kept for compat)
     lon: Optional[float] = None
     radius_km: Optional[int] = None
     states: Optional[List[str]] = None    # Bundesland filter
+    geo_locations: Optional[List[GeoLocation]] = None  # multi-location (OR-joined)
     offset: int = 0
     limit: int = 20
 
@@ -509,21 +557,12 @@ def search_results(
             wheres.append("p.location_state = ANY(%s)")
             params.append(req.states)
 
-        if req.lat is not None and req.lon is not None and req.radius_km:
-            wheres.append("""
-                (6371 * acos(
-                    cos(radians(%s)) * cos(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                    )) *
-                    cos(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
-                    ) - radians(%s)) +
-                    sin(radians(%s)) * sin(radians(
-                        CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
-                    ))
-                )) <= %s
-            """)
-            params.extend([req.lat, req.lon, req.lat, req.radius_km])
+        geo_sql, geo_params = _build_geo_where(
+            req.geo_locations, req.lat, req.lon, req.radius_km
+        )
+        if geo_sql:
+            wheres.append(geo_sql)
+            params.extend(geo_params)
 
         where_sql = " AND ".join(wheres)
 
