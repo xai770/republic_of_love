@@ -905,9 +905,18 @@ def search_profile(
     """
     Stream B: semantic search based on the yogi's skill profile.
 
-    Fires automatically on the search page when has_skills = true.
-    Two-phase: pull 1000 recent postings → Python cosine similarity
-    against the profile embedding → return top N.
+    Two modes (transparently selected):
+
+    CLARA mode  — when Clara has precomputed matches for this profile
+    (profile_posting_matches with computed_at within the last 7 days),
+    return those posting_ids directly. Clara ran against ALL 173K postings;
+    this is the high-quality path.
+
+    RUNTIME mode — fallback when Clara hasn't run yet. Pulls a
+    geographically stratified candidate pool (top 350 per state,
+    ~5 600 candidates) and scores by cosine similarity against the
+    profile embedding. Stratified so Berlin/Bayern are not drowned
+    out by whatever states the nightly AA fetch happened to finish on.
 
     Returns {available: false, reason: ...} when the profile is not
     ready (no skills, no cached embedding).
@@ -972,13 +981,41 @@ def search_profile(
     if profile_norm == 0:
         return {"available": False, "results": [], "reason": "zero_embedding"}
 
-    # ── 4. Candidate postings (5000 most recent with text) ───────
-    # NOTE: We intentionally do NOT filter candidates by location here.
-    # The profile endpoint always returns the nationwide top-N semantic matches.
-    # Location filtering then restricts *within* that set on the results query side.
-    # This ensures adding a location filter can only reduce results, never increase them.
-    # (Filtering here produced a different candidate pool per location, causing
-    # counter-intuitive results like "Bavaria = 480 > Germany = 478".)
+    # ── 4a. CLARA mode — use precomputed matches if fresh (< 7 days old) ─
+    # Clara runs nightly across ALL postings; her results are higher quality
+    # and geographically unbiased. Use them when available.
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT ppm.posting_id
+            FROM profiles pr
+            JOIN profile_posting_matches ppm ON ppm.profile_id = pr.profile_id
+            WHERE pr.user_id = %s
+              AND ppm.computed_at > NOW() - INTERVAL '7 days'
+            ORDER BY ppm.computed_at DESC
+            LIMIT 2000
+        """, (user['user_id'],))
+        clara_rows = cur.fetchall()
+
+    if clara_rows:
+        # Return Clara's results in the same shape the frontend expects:
+        # [{posting_id: x}, ...] — the frontend only reads r.posting_id.
+        # The results query will filter by location/ql/domain on top of these.
+        return {
+            "available": True,
+            "results": [{"posting_id": r['posting_id']} for r in clara_rows],
+            "source": "clara",
+            "profile_location": profile.get('location') or None,
+            "experience_level": profile.get('experience_level') or None,
+        }
+
+    # ── 4b. RUNTIME mode — stratified candidate pool ─────────────────────
+    # Pull the top 350 most-recent active postings PER STATE.
+    # ~16 states × 350 = ~5 600 candidates, geographically representative.
+    # This avoids the "5000 most-recent = whatever state AA fetched last"
+    # recency bias that made Bayern / Berlin / BW invisible in the pool.
+    #
+    # Location is NOT pre-filtered here. The results query handles that.
+    # Invariant: adding any location filter can only reduce counts, not increase.
     with conn.cursor() as cur:
         cur.execute("""
             SELECT
@@ -1000,13 +1037,19 @@ def search_profile(
                     p.job_title,
                     p.berufenet_name
                 ) AS match_text
-            FROM postings p
+            FROM (
+                SELECT *,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY location_state
+                           ORDER BY first_seen_at DESC NULLS LAST
+                       ) AS state_rank
+                FROM postings
+                WHERE enabled = true
+                  AND invalidated = false
+                  AND berufenet_id IS NOT NULL
+            ) p
             JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-            WHERE p.enabled = true
-              AND p.invalidated = false
-              AND p.berufenet_id IS NOT NULL
-            ORDER BY p.first_seen_at DESC NULLS LAST
-            LIMIT 5000
+            WHERE p.state_rank <= 350
         """)
         candidates = list(cur.fetchall())
 
@@ -1075,6 +1118,7 @@ def search_profile(
     return {
         "available": True,
         "results": results,
+        "source": "runtime",
         "profile_location": profile.get('location') or None,
         "experience_level": profile.get('experience_level') or None,
     }
