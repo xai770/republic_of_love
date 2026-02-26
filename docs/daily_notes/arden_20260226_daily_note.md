@@ -225,11 +225,115 @@ Berufenet matches on `Technology` → domain 43 (Informatik) → 6,848 candidate
 
 ---
 
+## 7. On-Demand Cover Letters via `POST /matches/{profile_id}/{posting_id}/enrich` ✅
+
+### Problem
+Clara runs the full LLM pipeline on every profile×posting pair. With 173K
+active postings per profile, that's ~35K LLM calls × 3s = **~30 hours per
+profile**. Running Clara nightly in batch is neither viable nor necessary —
+most postings will never interest a given yogi.
+
+### Architecture Decision
+**Never pre-compute cover letters.** Instead:
+
+```
+Profile upload
+  → cosine pre-filter (runtime mode, domain-inferred pool)
+  → top 200 rows stored in profile_posting_matches (score only, no LLM)
+  → search page shows all 200 instantly
+
+Yogi clicks "Get cover letter" or "Why not?"
+  → POST /api/matches/{profile_id}/{posting_id}/enrich
+  → Background thread calls Clara.process_match() for that single pair
+  → 5–30 s: gates → embedding → LLM
+  → Result written to profile_posting_matches (upsert)
+  → yogi_message delivered to inbox: "Cover letter ready: <title>"
+```
+
+**Benefits:**
+- Zero wasted LLM calls (only yogis who click get an LLM call)
+- Results in under 30 seconds per pair (not 30 hours overnight)
+- Existing messages inbox surfaces the result — no new UI infrastructure
+- Idempotent: repeat clicks return cached result immediately
+
+### Implementation — `POST /matches/{profile_id}/{posting_id}/enrich`
+
+New endpoint in `api/routers/matches.py`:
+
+1. **Ownership check** — profile must belong to the requesting user (403 otherwise)
+2. **Idempotent fast-path** — if `cover_letter` or `nogo_narrative` already
+   present in `profile_posting_matches`, return them immediately with
+   `{"status": "ready", ...}`
+3. **Background task** — `threading.Thread(target=_run_clara_in_background)`
+   is started; endpoint returns `{"status": "queued", "message": "Clara is
+   analysing ..."}`
+4. **Background thread** (`_run_clara_in_background`):
+   - Opens its own DB connection
+   - Calls `Clara.process_match(conn, profile_id, posting_id)` (full pipeline)
+   - Composes a human-readable `yogi_message`:
+     - APPLY → "Cover letter ready: {title}" + go_reasons + full cover letter
+     - SKIP  → "Why not: {title}" + nogo_reasons + nogo narrative
+     - GATED → "Match analysis: {title}" + gate explanation
+     - ERROR → brief error message
+   - Inserts into `yogi_messages` (`sender_type='arden'`,
+     `message_type='match_enrichment'`, `posting_id` linked)
+5. **Error safety** — background thread catches all exceptions, logs them,
+   and sends a user-facing error message rather than silently failing
+
+### Message format
+```
+Subject: "Cover letter ready: Senior Developer — Berlin"
+Body:
+  Great news! I analysed **Senior Developer** at Acme GmbH — Berlin
+  (match score: 87%) and recommend you **apply**.
+
+  **Why this fits:**
+  - 8 years Python experience matches required 5+
+  - Previous team lead role aligns with the management responsibility
+  - Cloud/AWS stack is an exact match
+
+  **Cover letter:**
+  Dear Hiring Manager, ...
+```
+
+### What's still pending
+- **UI buttons** — "Get cover letter" and "Why not?" buttons on the search
+  page need to call `POST /api/matches/{profile_id}/{posting_id}/enrich`.
+  Nothing blocks this; the backend is ready.
+- **Inbox polling** — the messages inbox already exists; yogis can find the
+  result there. A small UI indicator ("Clara is working…") would improve UX.
+- **Cosine pre-filter on upload** — store top 200 scores on CV save so new
+  users see results without waiting for a nightly run. Architecture agreed;
+  not yet wired into `profiles.py`.
+
+---
+
+## Commits This Session (updated)
+
+| Hash | Description |
+|---|---|
+| `0dab143` | fix: profile endpoint always returns nationwide top-N |
+| `fd91819` | refactor: `_build_posting_where()` — eliminate 5× duplicated WHERE-builder |
+| `6b9c2ab` | fix: stratified candidate pool + Clara-first path |
+| `6f01641` | fix: extend Clara-first window from 7 to 30 days |
+| `bfe9a8d` | chore: fix stale comment (7 days → 30 days) |
+| `7d54c9e` | chore: daily note + schema users.is_protected |
+| `4a67808` | fix(gdpr): stop storing Google OAuth display_name |
+| `c24cd6e` | feat: profession-first candidate pool in runtime mode |
+| `58efd8d` | chore: daily note — architecture sections |
+| `3951a32` | feat: on-demand Clara enrichment endpoint |
+
+---
+
 ## Pending / Next Session
 
-- **Run Clara for Susanne**: `turing-harness.py run profile_posting_matches__report_C__clara --sample 20`
-- **F2 hotkey / Ctrl+F2**: carried over from previous sessions, still open.
+- **UI buttons**: wire "Get cover letter" / "Why not?" on search page to
+  `POST /api/matches/{profile_id}/{posting_id}/enrich`
+- **Inbox UX**: show "Clara is working…" indicator while queued; auto-refresh
+  or link to inbox when done
+- **Cosine pre-filter on upload**: hook into `_schedule_profile_embedding()`
+  in `profiles.py` — after embedding computed, run cosine vs all postings,
+  store top 200 score-only rows in `profile_posting_matches`
+- **F2 hotkey / Ctrl+F2**: carried over from previous sessions, still open
 - **Drop `users.display_name` column**: all rows NULL, no code writes — safe
-  to `ALTER TABLE users DROP COLUMN display_name` in a migration.
-- **Two-stage Clara**: embedding-only pass on CV upload (immediate), LLM
-  enrichment nightly (as now). Would give new users results in seconds.
+  to `ALTER TABLE users DROP COLUMN display_name` in a migration
