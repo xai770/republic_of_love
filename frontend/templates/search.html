@@ -1030,7 +1030,7 @@ window.SEARCH_TOUR_I18N = {
     }
 
     // Click-to-filter on Bundesland rows in intelligence panel
-    document.getElementById('intel-split').addEventListener('click', function(e) {
+    document.getElementById('intel-split').addEventListener('click', async function(e) {
         const row = e.target.closest('.intel-row-clickable');
         if (!row) return;
         const type = row.dataset.filterType;
