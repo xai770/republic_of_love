@@ -279,17 +279,20 @@ def search_preview(
             wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             params.append(req.ql)
 
-        # Group 3 (location): states OR geo already handled by _build_geo_where OR-join
-        if req.states:
-            wheres.append("p.location_state = ANY(%s)")
-            params.append(req.states)
-
+        # Group 3 (location): states OR geo — OR'd so adding a state/circle expands, not narrows
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
         )
+        loc_clauses, loc_params = [], []
+        if req.states:
+            loc_clauses.append("p.location_state = ANY(%s)")
+            loc_params.append(req.states)
         if geo_sql:
-            wheres.append(geo_sql)
-            params.extend(geo_params)
+            loc_clauses.append(geo_sql)
+            loc_params.extend(geo_params)
+        if loc_clauses:
+            wheres.append(f"({ ' OR '.join(loc_clauses) })")
+            params.extend(loc_params)
 
         where_sql = " AND ".join(wheres)
 
@@ -315,12 +318,16 @@ def search_preview(
             if req.ql:
                 ls_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
                 ls_params.append(req.ql)
+            ls_loc_clauses, ls_loc_params = [], []
             if req.states:
-                ls_wheres.append("p.location_state = ANY(%s)")
-                ls_params.append(req.states)
+                ls_loc_clauses.append("p.location_state = ANY(%s)")
+                ls_loc_params.append(req.states)
             if geo_sql:
-                ls_wheres.append(geo_sql)
-                ls_params.extend(geo_params)
+                ls_loc_clauses.append(geo_sql)
+                ls_loc_params.extend(geo_params)
+            if ls_loc_clauses:
+                ls_wheres.append(f"({ ' OR '.join(ls_loc_clauses) })")
+                ls_params.extend(ls_loc_params)
             cur.execute(f"""
                 SELECT COUNT(*) as total
                 FROM postings p
@@ -338,12 +345,16 @@ def search_preview(
         if req.ql:
             domain_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             domain_params.append(req.ql)
+        dom_loc_clauses, dom_loc_params = [], []
         if req.states:
-            domain_wheres.append("p.location_state = ANY(%s)")
-            domain_params.append(req.states)
+            dom_loc_clauses.append("p.location_state = ANY(%s)")
+            dom_loc_params.append(req.states)
         if geo_sql:
-            domain_wheres.append(geo_sql)
-            domain_params.extend(geo_params)
+            dom_loc_clauses.append(geo_sql)
+            dom_loc_params.extend(geo_params)
+        if dom_loc_clauses:
+            domain_wheres.append(f"({ ' OR '.join(dom_loc_clauses) })")
+            domain_params.extend(dom_loc_params)
 
         domain_where_sql = " AND ".join(domain_wheres) if domain_wheres else "TRUE"
         cur.execute(f"""
@@ -382,12 +393,16 @@ def search_preview(
         if subj_clauses:
             ql_wheres.append(f"({ ' OR '.join(subj_clauses) })")
             ql_params.extend(subj_params)
+        ql_loc_clauses, ql_loc_params = [], []
         if req.states:
-            ql_wheres.append("p.location_state = ANY(%s)")
-            ql_params.append(req.states)
+            ql_loc_clauses.append("p.location_state = ANY(%s)")
+            ql_loc_params.append(req.states)
         if geo_sql:
-            ql_wheres.append(geo_sql)
-            ql_params.extend(geo_params)
+            ql_loc_clauses.append(geo_sql)
+            ql_loc_params.extend(geo_params)
+        if ql_loc_clauses:
+            ql_wheres.append(f"({ ' OR '.join(ql_loc_clauses) })")
+            ql_params.extend(ql_loc_params)
 
         ql_where_sql = " AND ".join(ql_wheres) if ql_wheres else "TRUE"
         cur.execute(f"""
@@ -619,16 +634,19 @@ def search_results(
             wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             params.append(req.ql)
 
-        if req.states:
-            wheres.append("p.location_state = ANY(%s)")
-            params.append(req.states)
-
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
         )
+        res_loc_clauses, res_loc_params = [], []
+        if req.states:
+            res_loc_clauses.append("p.location_state = ANY(%s)")
+            res_loc_params.append(req.states)
         if geo_sql:
-            wheres.append(geo_sql)
-            params.extend(geo_params)
+            res_loc_clauses.append(geo_sql)
+            res_loc_params.extend(geo_params)
+        if res_loc_clauses:
+            wheres.append(f"({ ' OR '.join(res_loc_clauses) })")
+            params.extend(res_loc_params)
 
         where_sql = " AND ".join(wheres)
 
