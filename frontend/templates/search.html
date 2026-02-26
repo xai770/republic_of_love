@@ -301,10 +301,6 @@ window.SEARCH_TOUR_I18N = {
         profileAvailable: false,  // true once endpoint confirms availability
         // Bundesland filter
         states: [],
-        // AND/OR operators between consecutive pill groups
-        // key: "type1|type2", value: "AND"|"OR"
-        // defaults: same type → "OR", different type → "AND"
-        operators: {},
     };
 
     // ============================================================
@@ -642,50 +638,42 @@ window.SEARCH_TOUR_I18N = {
     function updateZoomHint(z) { zoomHint.style.opacity = (z < MARKER_MIN_ZOOM && markerLayer) ? '1' : '0'; }
 
     // ============================================================
-    // ACTIVE FILTER PILLS
+    // ACTIVE FILTER PILLS — three grouped frames
+    // Group 1: Role & Profile (profile + domains + professions) — all OR
+    // Group 2: Qualification — all OR
+    // Group 3: Location (states + geo) — all OR
+    // Between groups: AND (implicit — separate frames make this clear visually)
     // ============================================================
-    function getOp(typeA, typeB) {
-        const key = typeA + '|' + typeB;
-        if (state.operators[key] !== undefined) return state.operators[key];
-        // Location-type filters (state + geo) default to OR between themselves
-        const locTypes = new Set(['state', 'geo']);
-        if (locTypes.has(typeA) && locTypes.has(typeB)) return 'OR';
-        return typeA === typeB ? 'OR' : 'AND';
-    }
-
-    function opLabel(op) {
-        return op === 'OR'
-            ? (LANG === 'de' ? 'ODER' : 'OR')
-            : (LANG === 'de' ? 'UND' : 'AND');
-    }
 
     function renderFilterPills() {
         const container = document.getElementById('active-filters');
+        const orLabel = LANG === 'de' ? 'oder' : 'or';
 
-        // Build ordered list:
-        // profile → domains → ql → professions → states + geo (all location at end: OR between them)
-        const items = [];  // {html, type}
-
-        // 1. Profile pill — always first, no × (toggle by clicking)
-        if (state.profileAvailable) {
-            if (state.profileActive) {
-                items.push({ type: 'profile', html:
-                    `<span class="filter-pill profile-pill profile-pill-active" role="button" tabindex="0"
-                        title="${LANG === 'de' ? 'Klicken zum Deaktivieren' : 'Click to deactivate'}">
-                        ◈ ${I18N.profile_filter_btn}
-                    </span>`
-                });
-            } else {
-                items.push({ type: 'profile', html:
-                    `<span class="filter-pill profile-pill profile-pill-inactive" role="button" tabindex="0"
-                        title="${LANG === 'de' ? 'Klicken zum Aktivieren' : 'Click to activate'}">
-                        ◈ ${I18N.profile_filter_btn} +
-                    </span>`
-                });
-            }
+        function renderGroup(groupClass, label, pills) {
+            if (pills.length === 0) return '';
+            const inner = pills.reduce((acc, pill, i) =>
+                i === 0 ? [pill] : [...acc, `<span class="filter-op-or">${orLabel}</span>`, pill], []);
+            return `<div class="filter-group ${groupClass}">
+                <span class="filter-group-label">${label}</span>
+                ${inner.join('')}
+            </div>`;
         }
 
-        // 2. Domain pills
+        // Group 1: Role & Profile
+        const g1 = [];
+        if (state.profileAvailable) {
+            if (state.profileActive) {
+                g1.push(`<span class="filter-pill profile-pill profile-pill-active" role="button" tabindex="0"
+                    title="${LANG === 'de' ? 'Klicken zum Deaktivieren' : 'Click to deactivate'}">
+                    ◈ ${I18N.profile_filter_btn}
+                </span>`);
+            } else {
+                g1.push(`<span class="filter-pill profile-pill profile-pill-inactive" role="button" tabindex="0"
+                    title="${LANG === 'de' ? 'Klicken zum Aktivieren' : 'Click to activate'}">
+                    ◈ ${I18N.profile_filter_btn} +
+                </span>`);
+            }
+        }
         if (state.domains.length > 0) {
             const names = new Set();
             for (const code of state.domains) {
@@ -694,81 +682,54 @@ window.SEARCH_TOUR_I18N = {
                 }
             }
             names.forEach(name => {
-                items.push({ type: 'domain', html:
-                    `<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
-                        ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
-                    </span>`
-                });
+                g1.push(`<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
+                    ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
+                </span>`);
             });
         }
-
-        // 3. QL pills
-        state.ql.forEach(level => {
-            items.push({ type: 'ql', html:
-                `<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
-                    ${tQL(level)} <button class="pill-remove" data-type="ql" data-level="${level}">×</button>
-                </span>`
-            });
-        });
-
-        // 4. Profession pills (clicked from intel panel) — shown together, before location
         state.professions.forEach(name => {
             const displayName = (state._profDisplayNames && state._profDisplayNames[name]) || name;
-            items.push({ type: 'profession', html:
-                `<span class="filter-pill profession-pill" data-type="profession" data-name="${name}">
-                    💼 ${displayName} <button class="pill-remove" data-type="profession" data-name="${name}">×</button>
-                </span>`
-            });
+            g1.push(`<span class="filter-pill profession-pill" data-type="profession" data-name="${name}">
+                💼 ${displayName} <button class="pill-remove" data-type="profession" data-name="${name}">×</button>
+            </span>`);
         });
 
-        // 5. State pills (Bundesland) — location group, OR between all location types
+        // Group 2: Qualification
+        const g2 = [];
+        state.ql.forEach(level => {
+            g2.push(`<span class="filter-pill ql-pill" data-type="ql" data-level="${level}">
+                ${tQL(level)} <button class="pill-remove" data-type="ql" data-level="${level}">×</button>
+            </span>`);
+        });
+
+        // Group 3: Location
+        const g3 = [];
         state.states.forEach(stateName => {
-            items.push({ type: 'state', html:
-                `<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
-                    🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
-                </span>`
-            });
+            g3.push(`<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
+                🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
+            </span>`);
         });
-
-        // 6. Geo pills — location group (OR between state+geo)
         state.geoLocations.forEach((g, idx) => {
             const rPart = g.radius_km
                 ? ` <button class="pill-radius-cycle" data-idx="${idx}" title="Click to change radius">(${g.radius_km} km)</button>`
                 : '';
-            items.push({ type: 'geo', html:
-                `<span class="filter-pill geo-pill" data-type="geo" data-idx="${idx}">
-                    📍 ${g.label || g.lat + ', ' + g.lon}${rPart} <button class="pill-remove" data-type="geo" data-idx="${idx}">×</button>
-                </span>`
-            });
+            g3.push(`<span class="filter-pill geo-pill" data-type="geo" data-idx="${idx}">
+                📍 ${g.label || g.lat + ', ' + g.lon}${rPart} <button class="pill-remove" data-type="geo" data-idx="${idx}">×</button>
+            </span>`);
         });
 
-        // Interleave operator badges between pills
-        const parts = [];
-        for (let i = 0; i < items.length; i++) {
-            parts.push(items[i].html);
-            if (i < items.length - 1) {
-                const key = items[i].type + '|' + items[i+1].type;
-                const op = getOp(items[i].type, items[i+1].type);
-                parts.push(`<span class="filter-op" data-key="${key}">${opLabel(op)}</span>`);
-            }
-        }
+        const g1label = LANG === 'de' ? '💼 Beruf & Profil' : '💼 Role & Profile';
+        const g2label = LANG === 'de' ? '⭐ Qualifikation' : '⭐ Qualification';
+        const g3label = LANG === 'de' ? '📍 Ort' : '📍 Location';
 
-        container.innerHTML = parts.join('');
+        container.innerHTML = [
+            renderGroup('fg-subject', g1label, g1),
+            renderGroup('fg-ql', g2label, g2),
+            renderGroup('fg-location', g3label, g3),
+        ].filter(Boolean).join('');
     }
 
     document.getElementById('active-filters').addEventListener('click', async function(e) {
-        // Operator badge toggle (AND ↔ OR) — visual only; backend wiring is a follow-up
-        const opBadge = e.target.closest('.filter-op');
-        if (opBadge) {
-            const key = opBadge.dataset.key;
-            const current = state.operators[key] !== undefined
-                ? state.operators[key]
-                : (key.split('|')[0] === key.split('|')[1] ? 'OR' : 'AND');
-            state.operators[key] = current === 'AND' ? 'OR' : 'AND';
-            renderFilterPills();
-            return;
-        }
-
         // Radius cycling — click (n km) in geo pill to cycle 10→25→50→100 (per location)
         if (e.target.closest('.pill-radius-cycle')) {
             const RADIUS_STEPS = [10, 25, 50, 100];

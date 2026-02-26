@@ -257,21 +257,28 @@ def search_preview(
         wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         params = []
 
+        # Group 1 (subject): domains OR professions — selecting a profession expands,
+        # not restricts, the result set within the same logical role group.
+        subj_clauses, subj_params = [], []
         if req.domains:
-            wheres.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
-            params.append(req.domains)
+            subj_clauses.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+            subj_params.append(req.domains)
+        if req.professions:
+            subj_clauses.append("p.berufenet_name = ANY(%s)")
+            subj_params.append(req.professions)
+        if subj_clauses:
+            wheres.append(f"({ ' OR '.join(subj_clauses) })")
+            params.extend(subj_params)
 
+        # Group 2 (qualification)
         if req.ql:
             wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             params.append(req.ql)
 
+        # Group 3 (location): states OR geo already handled by _build_geo_where OR-join
         if req.states:
             wheres.append("p.location_state = ANY(%s)")
             params.append(req.states)
-
-        if req.professions:
-            wheres.append("p.berufenet_name = ANY(%s)")
-            params.append(req.professions)
 
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
@@ -291,16 +298,21 @@ def search_preview(
         """, params)
         total = cur.fetchone()['total']
 
-        # --- By domain (always unfiltered by domain, but filtered by QL + geo) ---
-        domain_wheres = [w for i, w in enumerate(wheres) if not (req.domains and 'SUBSTRING(b.kldb FROM 3 FOR 2)' in w)]
+        # --- By domain: unfiltered by domain, but filtered by professions + QL + location ---
+        # Rebuilt fresh (avoids param-order bugs from clause removal).
+        domain_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         domain_params = []
+        if req.professions:
+            domain_wheres.append("p.berufenet_name = ANY(%s)")
+            domain_params.append(req.professions)
         if req.ql:
+            domain_wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
             domain_params.append(req.ql)
         if req.states:
+            domain_wheres.append("p.location_state = ANY(%s)")
             domain_params.append(req.states)
-        if req.professions:
-            domain_params.append(req.professions)
         if geo_sql:
+            domain_wheres.append(geo_sql)
             domain_params.extend(geo_params)
 
         domain_where_sql = " AND ".join(domain_wheres) if domain_wheres else "TRUE"
@@ -333,16 +345,18 @@ def search_preview(
             for name, count in sorted(domain_agg.items(), key=lambda x: x[0])
         ]
 
-        # --- By QL (always unfiltered by QL, but filtered by domain + geo) ---
-        ql_wheres = [w for i, w in enumerate(wheres) if not (req.ql and 'CAST(SUBSTRING(b.kldb FROM 7 FOR 1)' in w)]
+        # --- By QL: unfiltered by QL, but filtered by domains+professions (OR'd) + location ---
+        # Rebuilt fresh for correct param order.
+        ql_wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         ql_params = []
-        if req.domains:
-            ql_params.append(req.domains)
+        if subj_clauses:
+            ql_wheres.append(f"({ ' OR '.join(subj_clauses) })")
+            ql_params.extend(subj_params)
         if req.states:
+            ql_wheres.append("p.location_state = ANY(%s)")
             ql_params.append(req.states)
-        if req.professions:
-            ql_params.append(req.professions)
         if geo_sql:
+            ql_wheres.append(geo_sql)
             ql_params.extend(geo_params)
 
         ql_where_sql = " AND ".join(ql_wheres) if ql_wheres else "TRUE"
@@ -555,9 +569,16 @@ def search_results(
         wheres = ["p.berufenet_id IS NOT NULL", "p.enabled = true", "p.invalidated = false"]
         params = []
 
+        # Group 1 (subject): domains OR professions
+        subj_clauses = []
         if req.domains:
-            wheres.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+            subj_clauses.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
             params.append(req.domains)
+        if req.professions:
+            subj_clauses.append("p.berufenet_name = ANY(%s)")
+            params.append(req.professions)
+        if subj_clauses:
+            wheres.append(f"({ ' OR '.join(subj_clauses) })")
 
         if req.ql:
             wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
@@ -566,10 +587,6 @@ def search_results(
         if req.states:
             wheres.append("p.location_state = ANY(%s)")
             params.append(req.states)
-
-        if req.professions:
-            wheres.append("p.berufenet_name = ANY(%s)")
-            params.append(req.professions)
 
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km

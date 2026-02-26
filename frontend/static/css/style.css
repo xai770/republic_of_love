@@ -4898,12 +4898,45 @@ body {
     background: #2980b9;
 }
 
-/* Active filter pills */
+/* Active filter pills — three grouped frames */
 .search-active-filters {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 5px;
     min-height: 28px;
+}
+
+.filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.filter-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.filter-op-or {
+    font-size: 10px;
+    font-weight: 500;
+    color: #bbb;
+    padding: 0 1px;
+    font-style: italic;
+    align-self: center;
+    flex-shrink: 0;
+    user-select: none;
 }
 
 .filter-pill {
@@ -4984,27 +5017,7 @@ body {
     border-color: #6ee09a;
 }
 
-/* AND / OR operator badges between filter pills */
-.filter-op {
-    font-size: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #a0aec0;
-    background: #edf2f7;
-    border-radius: 999px;
-    padding: 0.1rem 0.45rem;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.15s, color 0.15s;
-    align-self: center;
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-.filter-op:hover {
-    background: #cbd5e0;
-    color: #2d3748;
-}
+/* .filter-op removed — replaced by .filter-group frames */
 
 .pill-remove {
     background: none;
@@ -6094,6 +6107,19 @@ body {
     background: #1a4a30;
     color: #68d391;
     border-color: #276749;
+}
+
+[data-theme="dark"] .filter-group {
+    border-color: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .filter-group-label {
+    color: #555;
+}
+
+[data-theme="dark"] .filter-op-or {
+    color: #444;
 }
 
 [data-theme="dark"] .filter-op {
