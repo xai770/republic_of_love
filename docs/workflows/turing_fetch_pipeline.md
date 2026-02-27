@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/generate_fetch_docs.py` — do not edit by hand.
 > Regenerated on every git commit via `.git/hooks/post-commit`.
 
-**Generated:** 2026-02-27 05:04:35
+**Generated:** 2026-02-27 05:21:51
 **Script:** `scripts/turing_fetch.sh` (620 lines)
 **Schedule:** `50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force`
 **Log:** `logs/turing_fetch.log`
@@ -13,15 +13,15 @@
 
 | Metric | Count |
 |--------|------:|
-| Total postings | 380,183 |
-| Active postings | 179,068 |
-| — Arbeitsagentur | 177,504 |
-| — Deutsche Bank | 1,564 |
-| With description (>150 chars) | 343,862 |
+| Total postings | 380,476 |
+| Active postings | 179,316 |
+| — Arbeitsagentur | 177,757 |
+| — Deutsche Bank | 1,559 |
+| With description (>150 chars) | 343,902 |
 | With extracted summary | 7,766 |
-| Embeddable (postings_for_matching) | 161,918 |
+| Embeddable (postings_for_matching) | 161,913 |
 | Total embeddings | 352,877 |
-| Berufenet classified | 158,456 |
+| Berufenet classified | 162,404 |
 | OWL vocabulary (confirmed) | 128,566 |
 | OWL pending triage | 0 |
 
@@ -402,7 +402,7 @@ UPDATE tickets
 
 ## DB Fetch
 
-**File:** `actors/postings__deutsche_bank_CU.py` (708 lines)
+**File:** `actors/postings__deutsche_bank_CU.py` (771 lines)
 
 > Deutsche Bank Job Fetcher - Fetches job postings from Deutsche Bank API
 
@@ -1592,4 +1592,4 @@ Auto-triggered on every `git commit` via `.git/hooks/post-commit`.
 
 ---
 
-_Generated 2026-02-27 05:04:35 by generate_fetch_docs.py_
+_Generated 2026-02-27 05:21:51 by generate_fetch_docs.py_
