@@ -93,6 +93,7 @@
         <!-- Search results -->
         <div class="search-results-section" id="search-results-section" style="display:none;">
             <h2 class="results-section-title" id="results-title"></h2>
+            <span class="results-sort-indicator" id="results-sort-indicator"></span>
             <div class="search-results-grid" id="search-results-grid">
                 <!-- Tiles rendered by JS -->
             </div>
@@ -200,7 +201,7 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     const LANG = '{{ lang }}';
     const I18N = {
-        ql: { 1: '{{ t("search.ql_helfer") }}', 2: '{{ t("search.ql_fachkraft") }}', 3: '{{ t("search.ql_spezialist") }}', 4: '{{ t("search.ql_experte") }}' },
+        ql: { 0: '{{ t("search.ql_nicht_klass") }}', 1: '{{ t("search.ql_helfer") }}', 2: '{{ t("search.ql_fachkraft") }}', 3: '{{ t("search.ql_spezialist") }}', 4: '{{ t("search.ql_experte") }}' },
         domains: {
             'Gesundheit & Medizin': '{{ t("search.domain_gesundheit") }}',
             'IT & Technologie': '{{ t("search.domain_it") }}',
@@ -219,6 +220,7 @@ window.SEARCH_TOUR_I18N = {
             'Land- & Forstwirtschaft': '{{ t("search.domain_landwirtschaft") }}',
             'Sicherheit & Verteidigung': '{{ t("search.domain_sicherheit") }}',
             'Kultur & Medien': '{{ t("search.domain_kultur") }}',
+            'Nicht klassifiziert': '{{ t("search.domain_nicht_klassifiziert") }}',
         },
         save_success: '{{ t("search.save_success") }}',
         save_error: '{{ t("search.save_error") }}',
@@ -227,6 +229,8 @@ window.SEARCH_TOUR_I18N = {
         mira_error: '{{ t("search.mira_error") }}',
         mira_offline: '{{ t("search.mira_offline") }}',
         results_title: '{{ t("search.results_title") }}',
+        results_sort_score: '{{ t("search.results_sort_score") }}',
+        results_sort_recency: '{{ t("search.results_sort_recency") }}',
         results_loading: '{{ t("search.results_loading") }}',
         results_none: '{{ t("search.results_none") }}',
         results_show_more: '{{ t("search.results_show_more") }}',
@@ -1185,8 +1189,18 @@ window.SEARCH_TOUR_I18N = {
 
             if (reset) grid.innerHTML = '';
 
-            // Title
+            // Title + sort indicator
             document.getElementById('results-title').textContent = I18N.results_title;
+            const sortEl = document.getElementById('results-sort-indicator');
+            if (data.sort === 'score') {
+                sortEl.textContent = '🎯 ' + I18N.results_sort_score;
+                sortEl.style.display = '';
+            } else if (state.profileId) {
+                sortEl.textContent = '🕐 ' + I18N.results_sort_recency;
+                sortEl.style.display = '';
+            } else {
+                sortEl.style.display = 'none';
+            }
 
             // Profile results are now OR'd server-side via profile_ids.
             // Just use whatever the server returned.
@@ -1211,17 +1225,17 @@ window.SEARCH_TOUR_I18N = {
                 const dateStr = p.first_seen ? new Date(p.first_seen).toLocaleDateString(locale) : '';
                 const scorePct = (p.score != null) ? Math.round(p.score * 100) : null;
                 const scoreBadge = scorePct != null
-                    ? `<span class="tile-score-badge" title="Match ${scorePct}%">${scorePct}%</span>`
+                    ? `<span class="tile-score-badge" title="Match ${scorePct}%">🎯 ${scorePct}%</span>`
                     : '';
 
                 tile.innerHTML = `
                     <div class="tile-header">
+                        ${scoreBadge}
                         <span class="tile-domain-dot" style="background:${p.domain_color};" title="${tDomain(p.domain)}"></span>
                         <span class="tile-ql-badge">${tQL(p.ql_level)}</span>
                         ${isNew ? `<span class="tile-new-badge">${I18N.results_new}</span>` : ''}
                         ${p.interested === true ? '<span class="tile-interest-icon" title="' + I18N.interest_already_yes + '">👍</span>' : ''}
                         ${p.interested === false ? '<span class="tile-interest-icon" title="' + I18N.interest_already_no + '">👎</span>' : ''}
-                        ${scoreBadge}
                     </div>
                     <h3 class="tile-title">${escHtml(p.job_title)}</h3>
                     ${p.employer ? `<div class="tile-employer">${escHtml(p.employer)}</div>` : ''}

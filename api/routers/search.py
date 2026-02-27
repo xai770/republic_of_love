@@ -153,9 +153,11 @@ DOMAIN_COLORS = {
     'Land- & Forstwirtschaft': '#ffffb3',
     'Sicherheit & Verteidigung': '#bebada',
     'Kultur & Medien': '#fb8072',
+    'Nicht klassifiziert': '#999999',
 }
 
 QL_LABELS = {
+    0: 'Nicht klass.',
     1: 'Helfer',
     2: 'Fachkraft',
     3: 'Spezialist',
@@ -177,13 +179,13 @@ class GeoLocation(BaseModel):
 _HAVERSINE_TMPL = """
     (6371 * acos(
         cos(radians(%s)) * cos(radians(
-            CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+            CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
         )) *
         cos(radians(
-            CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
+            CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT)
         ) - radians(%s)) +
         sin(radians(%s)) * sin(radians(
-            CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
+            CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)
         ))
     )) <= %s"""
 
@@ -226,6 +228,7 @@ def _build_posting_where(
     states:      Optional[List[str]]  = None,
     geo_sql:     Optional[str]        = None,
     geo_params:  Optional[list]       = None,
+    require_berufenet: bool           = False,
 ) -> tuple[str, list]:
     """
     Build (WHERE sql, params) for any postings query.
@@ -235,7 +238,11 @@ def _build_posting_where(
       QL       — qualification level
       Location — states OR radius circle(s)
 
-    All queries must alias:  postings AS p  JOIN berufenet AS b ON b.berufenet_id = p.berufenet_id
+    All queries must alias:  postings AS p  LEFT JOIN berufenet AS b ON ...
+
+    Unclassified postings (berufenet_id IS NULL) pass through domain/QL
+    filters so banking/IT roles without Berufenet mappings remain visible.
+    Set require_berufenet=True to restore the hard gate where needed.
 
     Cross-filter pattern (used in preview):
       • Domain bars  — omit subject             → pass domains/professions/profile_ids=None
@@ -243,16 +250,18 @@ def _build_posting_where(
       • Landscape    — omit professions/profile → pass professions/profile_ids=None
     """
     wheres: list[str] = [
-        "p.berufenet_id IS NOT NULL",
         "p.enabled = true",
         "p.invalidated = false",
     ]
+    if require_berufenet:
+        wheres.append("p.berufenet_id IS NOT NULL")
     params: list = []
 
     # ── Subject group (domains OR professions OR profile_ids) ─────────────────
+    # Unclassified postings (no berufenet_id) pass through domain filters.
     subj: list[str] = []
     if domains:
-        subj.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+        subj.append("(SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s) OR b.berufenet_id IS NULL)")
         params.append(domains)
     if professions:
         subj.append("p.berufenet_name = ANY(%s)")
@@ -264,8 +273,9 @@ def _build_posting_where(
         wheres.append("(" + " OR ".join(subj) + ")")
 
     # ── Qualification level ───────────────────────────────────────────────────
+    # Unclassified postings pass through QL filters (assumed Spezialist/Experte).
     if ql:
-        wheres.append("CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s)")
+        wheres.append("(CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s) OR b.berufenet_id IS NULL)")
         params.append(ql)
 
     # ── Location group (states OR geo circles) ────────────────────────────────
@@ -340,7 +350,7 @@ def search_preview(
         )
         cur.execute(f"""
             SELECT COUNT(*) AS total
-            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
         """, params)
         total = cur.fetchone()['total']
@@ -355,7 +365,7 @@ def search_preview(
             )
             cur.execute(f"""
                 SELECT COUNT(*) AS total
-                FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
                 WHERE {ls_where}
             """, ls_params)
             landscape_total = cur.fetchone()['total']
@@ -364,14 +374,25 @@ def search_preview(
         dom_where, dom_params = _build_posting_where(ql=req.ql, **loc)
         cur.execute(f"""
             SELECT SUBSTRING(b.kldb FROM 3 FOR 2) AS code, COUNT(*) AS count
-            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {dom_where}
+              AND b.berufenet_id IS NOT NULL
             GROUP BY code ORDER BY count DESC
         """, dom_params)
         domain_agg: dict = {}
         for row in cur.fetchall():
             name = KLDB_DOMAINS.get(row['code'], f'Sonstige ({row["code"]})')
             domain_agg[name] = domain_agg.get(name, 0) + row['count']
+        # Count unclassified postings for a virtual "Unclassified" domain bar
+        cur.execute(f"""
+            SELECT COUNT(*) AS count
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE {dom_where}
+              AND b.berufenet_id IS NULL
+        """, dom_params)
+        unclassified_count = cur.fetchone()['count']
+        if unclassified_count > 0:
+            domain_agg['Nicht klassifiziert'] = unclassified_count
         by_domain = [
             {
                 "name": name,
@@ -394,8 +415,9 @@ def search_preview(
         cur.execute(f"""
             SELECT CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) AS level,
                    COUNT(*) AS count
-            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {ql_where}
+              AND b.berufenet_id IS NOT NULL
               AND SUBSTRING(b.kldb FROM 7 FOR 1) ~ '^[1-4]$'
             GROUP BY level ORDER BY level
         """, ql_params)
@@ -408,16 +430,31 @@ def search_preview(
             }
             for row in cur.fetchall()
         ]
+        # Add an "Unclassified" bucket so the user sees the gap
+        cur.execute(f"""
+            SELECT COUNT(*) AS count
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            WHERE {ql_where}
+              AND b.berufenet_id IS NULL
+        """, ql_params)
+        unclass_ql = cur.fetchone()['count']
+        if unclass_ql > 0:
+            by_ql.append({
+                "level": 0,
+                "label": "Nicht klass.",
+                "count": unclass_ql,
+                "selected": bool(req.ql and 0 in req.ql),
+            })
 
         # ── 5. Heatmap (all filters) ──────────────────────────────────────────
         cur.execute(f"""
             SELECT
-                ROUND(CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS NUMERIC), 2) AS lat,
-                ROUND(CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS NUMERIC), 2) AS lon,
+                ROUND(CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS NUMERIC), 2) AS lat,
+                ROUND(CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS NUMERIC), 2) AS lon,
                 COUNT(*) AS weight
-            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
-              AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
+              AND p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
             GROUP BY lat, lon
         """, params)
         heatmap = [[float(r['lat']), float(r['lon']), r['weight']] for r in cur.fetchall()]
@@ -428,12 +465,12 @@ def search_preview(
                 p.posting_id,
                 p.job_title,
                 p.location_city,
-                source_metadata->'raw_api_response'->'arbeitgeber'->>'name' AS employer,
-                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT) AS lat,
-                CAST(source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT) AS lon
-            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+                p.source_metadata->'raw_api_response'->'arbeitgeber'->>'name' AS employer,
+                CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT) AS lat,
+                CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT) AS lon
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
-              AND source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
+              AND p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
             ORDER BY p.first_seen_at DESC NULLS LAST
             LIMIT 500
         """, params)
@@ -452,9 +489,9 @@ def search_preview(
         # ── 7. Freshness (all filters, last 7 days) ───────────────────────────
         cur.execute(f"""
             SELECT COUNT(*) AS fresh
-            FROM postings p JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            FROM postings p LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             WHERE {where_sql}
-              AND (source_metadata->>'published_date')::date >= CURRENT_DATE - INTERVAL '7 days'
+              AND (p.source_metadata->>'published_date')::date >= CURRENT_DATE - INTERVAL '7 days'
         """, params)
         fresh_count = cur.fetchone()['fresh']
 
@@ -767,6 +804,11 @@ def search_results(
     """
     Return actual posting records matching the current filters.
     Paginated with offset/limit. Returns posting details + user interest status.
+
+    When score=true, results are ranked by cosine similarity (profile → posting
+    embedding) instead of recency. The server scores ALL matching postings in
+    a single pass and paginates by score rank — so page 2 truly shows the
+    next-best matches, not the next-newest.
     """
     with conn.cursor() as cur:
         geo_sql, geo_params = _build_geo_where(
@@ -777,6 +819,14 @@ def search_results(
             ql=req.ql, states=req.states, geo_sql=geo_sql, geo_params=geo_params,
         )
 
+        # ── Score-ranked mode ─────────────────────────────────────────────
+        # When score=true, load ALL matching postings, batch-score via cosine
+        # similarity against the user's profile embedding, then paginate the
+        # scored list. This is the "show me what's relevant" path.
+        if req.score:
+            return _score_ranked_results(req, user, conn, where_sql, params)
+
+        # ── Recency-ranked mode (default) ─────────────────────────────────
         # Fetch postings with LEFT JOIN to interest table for this user
         # user_id must come first — it's used in the JOIN before WHERE params
         query_params = [user['user_id']] + params + [req.limit, req.offset]
@@ -798,7 +848,7 @@ def search_results(
                 pi.interested,
                 pi.reason as interest_reason
             FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             LEFT JOIN posting_interest pi ON pi.posting_id = p.posting_id AND pi.user_id = %s
             WHERE {where_sql}
             ORDER BY p.first_seen_at DESC NULLS LAST
@@ -810,8 +860,8 @@ def search_results(
 
         results = []
         for row in postings:
-            domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Sonstige')
-            ql_label = QL_LABELS.get(row['ql_level'], f"Level {row['ql_level']}")
+            domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Nicht klassifiziert') if row['domain_code'] else 'Nicht klassifiziert'
+            ql_label = QL_LABELS.get(row['ql_level'], '') if row['ql_level'] else ''
             results.append({
                 "posting_id": row['posting_id'],
                 "job_title": row['job_title'] or row['berufenet_name'] or 'Untitled',
@@ -819,7 +869,7 @@ def search_results(
                 "location": row['location_city'] or row['location_state'] or '',
                 "employer": row['employer_name'] or '',
                 "domain": domain_name,
-                "domain_code": row['domain_code'],
+                "domain_code": row['domain_code'] or '',
                 "domain_color": DOMAIN_COLORS.get(domain_name, '#cccccc'),
                 "ql_level": row['ql_level'],
                 "ql_label": ql_label,
@@ -831,16 +881,7 @@ def search_results(
                 "profile_match": row['posting_id'] in profile_id_set,
             })
 
-        # ── Optional cosine scoring (profile → posting similarity) ──
-        # When score=true, we decorate each result with a match percentage.
-        # This only scores the current page — match % is a decoration, not
-        # a filter or sort criterion.  Order remains first_seen DESC.
-        if req.score and results:
-            _attach_cosine_scores(postings, results, user['user_id'], conn)
-
         # Lazy verification: queue stale postings for background checking.
-        # This runs AFTER we return results — user sees immediate response,
-        # stale postings get verified in background for next search.
         result_ids = [r['posting_id'] for r in results]
         stale_ids = find_stale_posting_ids(result_ids, conn)
         if stale_ids:
@@ -851,7 +892,175 @@ def search_results(
             "offset": req.offset,
             "limit": req.limit,
             "has_more": len(results) == req.limit,
+            "sort": "recency",
         }
+
+
+def _score_ranked_results(
+    req: 'SearchResultsRequest',
+    user: dict,
+    conn,
+    where_sql: str,
+    params: list,
+) -> dict:
+    """
+    Score-ranked search: fetch all matching postings, compute cosine similarity
+    against the user's profile embedding, sort by score DESC, then paginate.
+    """
+    import hashlib as _hl
+
+    # ── 1. Load profile embedding ────────────────────────────────
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT skill_keywords, current_title, profile_summary,
+                   experience_level
+            FROM profiles
+            WHERE user_id = %s AND skill_keywords IS NOT NULL
+            ORDER BY updated_at DESC NULLS LAST LIMIT 1
+        """, (user['user_id'],))
+        profile = cur.fetchone()
+
+    if not profile:
+        # No profile → fall back to recency sort
+        req_copy = SearchResultsRequest(**req.model_dump())
+        req_copy.score = False
+        return search_results(req_copy, user, conn)
+
+    raw_skills = profile['skill_keywords']
+    if isinstance(raw_skills, list):
+        skills = raw_skills
+    elif isinstance(raw_skills, dict):
+        skills = raw_skills.get('keywords', [])
+    else:
+        skills = []
+
+    parts = []
+    if profile['current_title']:
+        parts.append(profile['current_title'])
+    if skills:
+        parts.append(' '.join(str(s) for s in skills))
+    if profile['profile_summary']:
+        parts.append(profile['profile_summary'][:500])
+    if profile['experience_level']:
+        parts.append(profile['experience_level'])
+    profile_text = ' | '.join(filter(None, parts)).strip()
+    if not profile_text:
+        req_copy = SearchResultsRequest(**req.model_dump())
+        req_copy.score = False
+        return search_results(req_copy, user, conn)
+
+    profile_hash = _hl.sha256(profile_text.lower().strip().encode()).hexdigest()[:32]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT embedding FROM embeddings WHERE text_hash = %s",
+            (profile_hash,),
+        )
+        row = cur.fetchone()
+
+    if not row:
+        req_copy = SearchResultsRequest(**req.model_dump())
+        req_copy.score = False
+        return search_results(req_copy, user, conn)
+
+    profile_emb = np.array(row['embedding'], dtype=np.float32)
+    profile_norm = float(np.linalg.norm(profile_emb))
+    if profile_norm == 0:
+        req_copy = SearchResultsRequest(**req.model_dump())
+        req_copy.score = False
+        return search_results(req_copy, user, conn)
+
+    # ── 2. Fetch all matching postings + their embeddings in one query ─
+    with conn.cursor() as cur:
+        query_params = [user['user_id']] + params
+        cur.execute(f"""
+            SELECT
+                p.posting_id,
+                p.job_title,
+                p.berufenet_name,
+                p.location_city,
+                p.location_state,
+                p.qualification_level,
+                p.external_url,
+                p.extracted_summary,
+                p.first_seen_at,
+                p.source,
+                SUBSTRING(b.kldb FROM 3 FOR 2) as domain_code,
+                CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) as ql_level,
+                p.source_metadata->'raw_api_response'->'arbeitgeber'->>'name' as employer_name,
+                pi.interested,
+                pi.reason as interest_reason,
+                e.embedding
+            FROM postings p
+            LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            LEFT JOIN posting_interest pi ON pi.posting_id = p.posting_id AND pi.user_id = %s
+            LEFT JOIN postings_for_matching pfm ON pfm.posting_id = p.posting_id
+            LEFT JOIN embeddings e ON e.text_hash = LEFT(ENCODE(SHA256(
+                CONVERT_TO(normalize_text_python(pfm.match_text), 'UTF8')
+            ), 'hex'), 32)
+            WHERE {where_sql}
+        """, query_params)
+        all_postings = cur.fetchall()
+
+    # ── 3. Score and sort ────────────────────────────────────────
+    profile_id_set = set(req.profile_ids) if req.profile_ids else set()
+    scored_results = []
+
+    for row in all_postings:
+        emb_data = row['embedding']
+        score = None
+        if emb_data is not None:
+            posting_emb = np.array(emb_data, dtype=np.float32)
+            posting_norm = float(np.linalg.norm(posting_emb))
+            if posting_norm > 0:
+                score = float(np.dot(profile_emb, posting_emb) / (profile_norm * posting_norm))
+                score = round(score, 3)
+
+        domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Nicht klassifiziert') if row['domain_code'] else 'Nicht klassifiziert'
+        ql_label = QL_LABELS.get(row['ql_level'], '') if row['ql_level'] else ''
+        scored_results.append({
+            "posting_id": row['posting_id'],
+            "job_title": row['job_title'] or row['berufenet_name'] or 'Untitled',
+            "berufenet_name": row['berufenet_name'],
+            "location": row['location_city'] or row['location_state'] or '',
+            "employer": row['employer_name'] or '',
+            "domain": domain_name,
+            "domain_code": row['domain_code'] or '',
+            "domain_color": DOMAIN_COLORS.get(domain_name, '#cccccc'),
+            "ql_level": row['ql_level'],
+            "ql_label": ql_label,
+            "external_url": row['external_url'],
+            "summary": row['extracted_summary'] or '',
+            "source": row['source'] or '',
+            "first_seen": row['first_seen_at'].isoformat() if row['first_seen_at'] else None,
+            "interested": row['interested'],
+            "profile_match": row['posting_id'] in profile_id_set,
+            "score": score,
+        })
+
+    # Sort: scored postings first (by score DESC), then unscored by recency
+    scored_results.sort(
+        key=lambda r: (r['score'] is not None, r['score'] or 0),
+        reverse=True,
+    )
+
+    # ── 4. Paginate ──────────────────────────────────────────────
+    page = scored_results[req.offset : req.offset + req.limit]
+
+    # Lazy verification
+    result_ids = [r['posting_id'] for r in page]
+    stale_ids = find_stale_posting_ids(result_ids, conn)
+    if stale_ids:
+        queue_stale_verification(stale_ids)
+
+    return {
+        "results": page,
+        "offset": req.offset,
+        "limit": req.limit,
+        "has_more": (req.offset + req.limit) < len(scored_results),
+        "total_scored": len(scored_results),
+        "sort": "score",
+    }
 
 
 # ============================================================
@@ -1038,7 +1247,7 @@ def get_posting_detail(
                 pi.interested,
                 pi.reason as interest_reason
             FROM postings p
-            JOIN berufenet b ON b.berufenet_id = p.berufenet_id
+            LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id
             LEFT JOIN posting_interest pi ON pi.posting_id = p.posting_id AND pi.user_id = %s
             WHERE p.posting_id = %s
         """, (user['user_id'], posting_id))
@@ -1047,7 +1256,8 @@ def get_posting_detail(
         if not row:
             return JSONResponse(status_code=404, content={"error": "Posting not found"})
 
-        domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Sonstige')
+        domain_name = KLDB_DOMAINS.get(row['domain_code'], 'Nicht klassifiziert') if row['domain_code'] else 'Nicht klassifiziert'
+        ql_level = row['ql_level'] if row['ql_level'] else 0
         return {
             "posting_id": row['posting_id'],
             "job_title": row['job_title'] or row['berufenet_name'] or 'Untitled',
@@ -1058,8 +1268,8 @@ def get_posting_detail(
             "employer_industry": row['employer_industry'] or '',
             "domain": domain_name,
             "domain_color": DOMAIN_COLORS.get(domain_name, '#cccccc'),
-            "ql_level": row['ql_level'],
-            "ql_label": QL_LABELS.get(row['ql_level'], ''),
+            "ql_level": ql_level,
+            "ql_label": QL_LABELS.get(ql_level, ''),
             "external_url": row['external_url'],
             "summary": row['extracted_summary'] or '',
             "source": row['source'] or '',

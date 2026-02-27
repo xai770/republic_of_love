@@ -5643,14 +5643,23 @@ body {
 
 /* Cosine match score badge (profile-as-scorer) */
 .tile-score-badge {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 700;
     background: #e0e7ff;
     color: #3730a3;
-    padding: 0.15rem 0.5rem;
+    padding: 0.2rem 0.55rem;
     border-radius: 999px;
-    margin-left: auto;
     white-space: nowrap;
+}
+
+/* Sort indicator below results title */
+.results-sort-indicator {
+    display: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #718096;
+    margin-top: -0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 /* Stream B — profile match tag (legacy, kept for compat) */
@@ -6336,6 +6345,10 @@ body {
 [data-theme="dark"] .tile-score-badge {
     background: #312e81;
     color: #c7d2fe;
+}
+
+[data-theme="dark"] .results-sort-indicator {
+    color: #a0aec0;
 }
 
 [data-theme="dark"] .profile-match-tag {
