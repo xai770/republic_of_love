@@ -115,6 +115,31 @@ class BeesiteDBJobFetcher:
         self.conn = db_conn or get_connection()
         self.max_jobs = max_jobs
         self.input_data: Dict[str, Any] = {}
+
+    def _reconnect(self) -> bool:
+        """Re-establish DB connection after an SSL drop or unexpected close.
+
+        Returns True if reconnection succeeded, False otherwise.
+        """
+        try:
+            # Try to close cleanly first (may already be dead)
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+            self.conn = get_connection()
+            logger.warning("DB connection lost — reconnected successfully")
+            return True
+        except Exception as exc:
+            logger.error("DB reconnection failed: %s", exc)
+            return False
+
+    def _safe_rollback(self):
+        """Rollback if connection is alive; reconnect if it's dead."""
+        try:
+            self.conn.rollback()
+        except (psycopg2.InterfaceError, psycopg2.OperationalError):
+            self._reconnect()
     
     def process(self) -> Dict[str, Any]:
         """
@@ -174,7 +199,7 @@ class BeesiteDBJobFetcher:
             }
             
         except Exception as e:
-            self.conn.rollback()
+            self._safe_rollback()
             return {
                 'success': False,
                 'error': str(e),
@@ -472,13 +497,24 @@ class BeesiteDBJobFetcher:
                         logger.info("[%s/%s new] %s postings inserted...",
                                     i, len(new_jobs), stats['new'])
                 
+            except (psycopg2.InterfaceError, psycopg2.OperationalError) as e:
+                # Connection died (SSL drop, server restart, etc.)
+                logger.error("DB connection lost at job %s: %s", job['external_id'], e)
+                if not self._reconnect():
+                    logger.error("Cannot reconnect — aborting save loop")
+                    break
+                cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                stats['errors'] += 1
             except Exception as e:
-                self.conn.rollback()
+                self._safe_rollback()
                 stats['errors'] += 1
                 logger.error("Error inserting job %s: %s: %s",
                              job['external_id'], type(e).__name__, e)
-        
-        self.conn.commit()
+
+        try:
+            self.conn.commit()
+        except (psycopg2.InterfaceError, psycopg2.OperationalError):
+            logger.warning("Final commit failed (connection lost) — partial data already committed in batches")
         return stats
     
     def _fetch_description_from_workday(self, url: str) -> Optional[str]:
