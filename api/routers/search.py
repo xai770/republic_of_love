@@ -1001,6 +1001,10 @@ def search_profile(
     # ── 4a. CLARA mode — use precomputed matches if recent (< 30 days old) ─
     # Clara runs nightly across ALL postings; her results are higher quality
     # and geographically unbiased. Use them when available.
+    # Minimum threshold: if Clara has fewer than 50 matches, the pipeline
+    # likely hasn't finished a full cycle yet — fall through to runtime mode
+    # which returns hundreds of cosine-ranked candidates immediately.
+    CLARA_MIN_MATCHES = 50
     with conn.cursor() as cur:
         cur.execute("""
             SELECT ppm.posting_id
@@ -1013,7 +1017,7 @@ def search_profile(
         """, (user['user_id'],))
         clara_rows = cur.fetchall()
 
-    if clara_rows:
+    if len(clara_rows) >= CLARA_MIN_MATCHES:
         # Return Clara's results in the same shape the frontend expects:
         # [{posting_id: x}, ...] — the frontend only reads r.posting_id.
         # The results query will filter by location/ql/domain on top of these.
