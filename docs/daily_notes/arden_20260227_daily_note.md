@@ -125,6 +125,9 @@ process (Ollama reachable, model loaded, DB write succeeds, message delivered).
 |---|---|
 | `2d8cb71` | **fix: reconnect on SSL drop in Deutsche Bank actor** — added `_reconnect()` and `_safe_rollback()` methods so overnight SSL drops don't crash the entire pipeline |
 | `1a827ab` | **fix: use Workday REST API for DB job descriptions** — replaced flaky `og:description` scraper with Workday's JSON API (`/wday/cxs/db/DBWebsite/`), instant-skip Cornerstone URLs |
+| `05f5e58` | **fix: parse Deutsche Bank location from Workday URL slug** — extracted city/state from URL paths like `/job/Frankfurt-Taunusanlage-12/...` via `_GERMAN_CITY_MAP`; backfilled all 1,559 active DB postings (zero `'Unknown'` remaining) |
+| `b9e705a` | **fix: remove geonames contamination from owl_names + add guard trigger** — deleted 13,218 geonames rows, restored 155 corrupted Berufenet names, nulled 22,701 garbage classifications, added write-once trigger |
+| `0170229` | **feat: drop berufenet gate, rank search by embedding similarity** — removed `berufenet_id IS NOT NULL` filter, LEFT JOIN everywhere, new `_score_ranked_results()` with global cosine pagination, sort indicator in frontend |
 
 ---
 
@@ -180,6 +183,130 @@ and some Workday URLs too.
 Note: a small number of geo-restricted US/APAC jobs return 403 from the
 REST API — these are correctly handled as unfetchable (not relevant to
 German job seekers anyway).
+
+### Deutsche Bank location fix (`05f5e58`)
+
+All 1,559 active Deutsche Bank postings had `location_city = 'Unknown'`.
+The Beesite API `PositionLocation` array comes back empty — no `CityName`.
+The real location is embedded in the Workday URL slug:
+`/job/Frankfurt-Taunusanlage-12/...`
+
+**Fix:** Added `_parse_location_from_url()` with two lookup maps:
+- `_GERMAN_CITY_MAP` — 15 German cities → canonical name + Bundesland
+- `_MULTIWORD_CITY_MAP` — international multi-word cities (New York, Hong
+  Kong, Zürich, etc.)
+
+INSERT persists `location_state` and `location_country`. The revalidation
+loop also backfills existing `'Unknown'` rows when it re-sees them.
+
+**Backfill result:** 50 in Frankfurt am Main, 38 in Berlin, 102 German
+total. Zero `'Unknown'` remaining across all 1,559 rows.
+
+### Geonames contamination fix (`b9e705a`)
+
+While investigating why only 9/50 Frankfurt DB postings were classified,
+discovered absurd Berufenet mappings:
+
+| Job title | Assigned Berufenet | Should be |
+|---|---|---|
+| Client Service Analyst Wertpapiere | Zytologieassistent/in | Bankkaufmann/frau |
+| Senior Legal Counsel M&A | Verkehrsbetriebswirtschaft | Jurist/in |
+
+The top Berufenet ID across all DB postings (`28331`) was mapped in
+`owl_names` to "Steingaden" — a Bavarian village. The real profession is
+"Sales-Manager/in".
+
+**Root cause:** A `geonames_import` run (2026-02-13) wrote 13,218 German
+place names into `owl_names`. 155 of those collided with existing Berufenet
+IDs and overwrote primary display names. The embedding classifier was
+matching job titles against town names.
+
+**Fix:**
+1. Deleted all 13,218 geonames rows from `owl_names`
+2. Restored 155 corrupted primary names from `berufenet.name`
+3. NULLed `berufenet_id` + `berufenet_verified` for 22,701 affected postings
+4. Added a write-once guard trigger on `owl_names` to prevent overwriting
+   `is_primary = true` rows from a different `confidence_source`
+
+### Berufenet gate removal + score-ranked search (`0170229`)
+
+**The big one.** With geonames fixed, the Berufenet classifier is now clean
+— but thousands of postings still have no classification yet. The search
+page previously hard-filtered on `berufenet_id IS NOT NULL`, hiding 5,766
+postings that haven't been classified.
+
+User's exact ask: "All postings in Frankfurt for my qualification levels.
+Rank them by embedding similarity. That's all I need."
+
+#### Backend changes (`api/routers/search.py`)
+
+**`_build_posting_where()` refactored:**
+- Removed `p.berufenet_id IS NOT NULL` hard gate
+- Added `require_berufenet: bool = False` parameter
+- Domain/QL filters use `OR b.berufenet_id IS NULL` pass-through so
+  unclassified postings appear regardless of which domain bars are selected
+
+**All 7 preview sub-queries:**
+- `JOIN berufenet` → `LEFT JOIN berufenet` everywhere
+- Domain bars: new "Nicht klassifiziert" bucket for NULL berufenet_id
+- QL bars: new level-0 bucket "Nicht klass." for unclassified postings
+
+**New `_score_ranked_results()` function:**
+- Loads profile embedding via SHA256 text hash lookup
+- Fetches ALL matching postings (LEFT JOINs to berufenet, posting_interest,
+  postings_for_matching, embeddings)
+- Computes cosine similarity in Python (numpy dot product)
+- Sorts globally by score DESC, paginates server-side
+- Falls back to recency sort if no profile embedding exists
+
+**Results endpoint split:**
+- `score=true` → `_score_ranked_results()`, returns `"sort": "score"`
+- Default → recency mode, returns `"sort": "recency"`
+
+**Detail endpoint:** `JOIN` → `LEFT JOIN`, NULL-safe domain_name/ql_level.
+
+**Constants:** `DOMAIN_COLORS['Nicht klassifiziert'] = '#999999'`,
+`QL_LABELS[0] = 'Nicht klass.'`
+
+#### Frontend changes
+
+- **Score badge** moved to first position in tile header (before domain dot),
+  🎯 emoji prefix, slightly larger (0.72rem)
+- **Sort indicator** — new `<span class="results-sort-indicator">` shows
+  "🎯 Ranked by relevance" or "🕐 Sorted by date" based on `data.sort`
+- **I18N** — 4 new keys in `de.json` and `en.json`: `ql_nicht_klass`,
+  `domain_nicht_klassifiziert`, `results_sort_score`, `results_sort_recency`
+- **CSS** — `.results-sort-indicator` styling + dark mode variant
+
+#### Bug fix during testing
+
+First test returned 500: `psycopg2.errors.AmbiguousColumn: column reference
+"source_metadata" is ambiguous`. The `postings_for_matching` view also has
+a `source_metadata` column, so unqualified references blew up when JOINed.
+Fixed by prefixing all `source_metadata` → `p.source_metadata` in the
+haversine template, score query, and preview queries.
+
+#### Result
+
+Frankfurt, QL 3+4+0 (AI Engineering Partner profile): **322 postings**,
+sorted by cosine similarity.
+
+| Position | Title | Score |
+|---|---|---|
+| 1 | Ingenieur Qualität und Prozesssicherung | 51.8% |
+| 5 | Administrator Windows Senior | 45.7% |
+
+Position 5 is an **unclassified** posting — previously invisible, now surfaced
+and ranked. Page 2 shows scores 41.3% → 37.4%, confirming global pagination
+works correctly.
+
+### What we didn't get to
+
+The proposed order for today was: enrich button → inbox polling → cosine
+pre-filter. Instead, the session went deep on data quality (geonames
+contamination, DB locations) and the gate removal turned into a substantial
+search architecture change. The enrich button, inbox polling, and cosine
+pre-filter remain for a future session.
 
 ---
 
