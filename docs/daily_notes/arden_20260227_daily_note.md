@@ -378,6 +378,98 @@ New `api/limiter.py` avoids circular imports.
 
 ---
 
+## Deutsche Bank location fix (`05f5e58`)
+
+Deutsche Bank postings had `location_city = 'Unknown'` for all 1,559 active
+rows. Root cause: the Beesite API `PositionLocation` array is always empty —
+no `CityName` data is returned. The real location lives in the Workday URL
+slug: `/job/Frankfurt-Taunusanlage-12/...`
+
+**Fix:** Added `_parse_location_from_url()` that extracts city/state from
+the URL slug via `_GERMAN_CITY_MAP` (15 German cities → canonical name +
+Bundesland) and `_MULTIWORD_CITY_MAP` (international multi-word cities like
+New York, Hong Kong, Zürich). INSERT now persists `location_state` and
+`location_country`. Revalidation loop also backfills existing `'Unknown'`
+rows when it re-sees them on the next fetch.
+
+**Backfill:** All 1,559 active DB postings updated — 50 now in Frankfurt am
+Main, 38 in Berlin, 102 German total. Zero `'Unknown'` remaining.
+
+---
+
+## CRITICAL — Geonames contamination of Berufenet classifier
+
+### Discovery
+
+While investigating why only 9/50 Frankfurt Deutsche Bank postings got
+classified, found that the classified ones had **absurd** Berufenet mappings:
+
+| Job title | Assigned Berufenet | Actual profession |
+|---|---|---|
+| Client Service Analyst Wertpapiere | Zytologieassistent/in (cytology lab assistant) | Bankkaufmann/frau |
+| Senior Legal Counsel M&A | Verkehrsbetriebswirtschaft (traffic management) | Jurist/in |
+
+The **top Berufenet category across all DB postings** was `28331` — which
+`owl_names` reports as "Steingaden" (a Bavarian village). The `berufenet`
+table says it's actually "Sales-Manager/in".
+
+### Root cause
+
+A `geonames_import` run (user: arden, 2026-02-13) wrote **13,218 German
+place names** into `owl_names`. 155 of those entries accidentally collided
+with existing Berufenet IDs and **overwrote their primary display name**
+with town names. The embedding classifier builds its label space from
+`owl_names` → it was matching job titles against "Steingaden", "Rhumspringe",
+"Wildenbruch" instead of "Sales-Manager/in", "Vermessungsbeamter", etc.
+
+### Impact
+
+- **155 Berufenet professions** have corrupted primary names in `owl_names`
+- **22,701 active postings** have a `berufenet_id` that was assigned by
+  matching against town names → **all garbage classifications**
+- The classifier's `no_match` / `escalated` rate was artificially high
+  because real profession names were replaced by place names in the
+  embedding space
+- Matching quality for all users is degraded (wrong profession → wrong
+  candidate pool)
+
+### Fix plan
+
+1. **DELETE** all 13,218 `geonames_import` rows from `owl_names`
+2. **Restore** the 155 corrupted primary names from `berufenet.name`
+3. **NULL out** `berufenet_id` + `berufenet_verified` for the 22,701
+   affected postings (they need fresh classification)
+4. **Re-run** the berufenet classifier on the now-clean ontology
+5. **Add a guard** — `owl_names` INSERT should reject rows where `owl_id`
+   matches a `berufenet_id` AND `confidence_source` is not a berufenet-aware
+   pipeline
+
+### Prevention
+
+How do you prevent namespace contamination in a shared OWL table?
+
+The fundamental issue is that `owl_names` is a single flat namespace where
+`owl_id` is just an integer. Geonames IDs, Berufenet IDs, and any future
+ontology all share the same `owl_id` column. A bulk import into the wrong
+ID range silently overwrites unrelated entries.
+
+**Options:**
+- **Namespaced IDs** — prefix or range partition: Berufenet = 1–99999,
+  Geonames = 100000+. Fragile, arbitrary ceilings.
+- **Composite key** — `(owl_type, owl_id)` instead of just `owl_id`.
+  Each import declares its type. A geonames row can't collide with a
+  berufenet row even if the integer ID matches. This is the correct fix.
+- **Pre-import validation** — before any bulk import, cross-check proposed
+  IDs against all existing ontology tables. Reject if collisions found.
+- **Write-once guard on primary names** — a trigger or CHECK constraint
+  that prevents overwriting `is_primary = true` rows from a different
+  `confidence_source`. The original importer's primary name is sacred.
+
+The composite key is the structural fix; the write-once guard is the
+immediate safety net.
+
+---
+
 ## Clara threshold fix (`a397279`)
 
 Susanne saw 2 jobs instead of hundreds. Root cause: Clara-first path in
