@@ -30,8 +30,17 @@ SESSION_EXPIRE_HOURS = int(os.getenv('SESSION_EXPIRE_HOURS', '24'))
 # CORS
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8000')
 
-# App
-DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
+# Upload limits
+MAX_UPLOAD_SIZE_MB = int(os.getenv('MAX_UPLOAD_SIZE_MB', '10'))
+MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
+# Rate limiting
+RATE_LIMIT_DEFAULT = os.getenv('RATE_LIMIT_DEFAULT', '60/minute')
+RATE_LIMIT_LLM = os.getenv('RATE_LIMIT_LLM', '5/minute')
+RATE_LIMIT_AUTH = os.getenv('RATE_LIMIT_AUTH', '10/minute')
+
+# App — DEBUG defaults to false for safety; set DEBUG=true in .env for development
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
 # Email encryption (Fernet symmetric — AES-128-CBC + HMAC-SHA256)
 # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"

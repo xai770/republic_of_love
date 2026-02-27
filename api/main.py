@@ -14,6 +14,9 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from api.config import FRONTEND_URL, DEBUG
 from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding, devlog
 from api.deps import get_current_user, get_db
+from api.limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from lib.crypto import decrypt_email, mask_email
 from api.i18n import (
     get_language_from_request, create_translator, get_all_translations,
@@ -40,10 +43,17 @@ if FRONTEND_DIR.exists():
 else:
     templates = None
 
+# Rate limiter (in-memory, resets on restart — fine for single-server)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS middleware
+cors_origins = [FRONTEND_URL]
+if DEBUG:
+    cors_origins += ["http://localhost:3000", "http://localhost:8000"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:3000", "http://localhost:8000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

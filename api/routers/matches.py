@@ -3,13 +3,15 @@ Match endpoints — profile↔posting matches.
 """
 import threading
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 
 from api.deps import get_db, require_user
 from core.database import get_connection
+from api.limiter import limiter
+from api.config import RATE_LIMIT_LLM
 
 
 def _validate_postings_background(posting_ids: List[int]):
@@ -960,7 +962,9 @@ def _deliver_error_message(conn, user_id: int, posting_id: int, error: str):
 
 
 @router.post("/{profile_id}/{posting_id}/enrich")
+@limiter.limit(RATE_LIMIT_LLM)
 def enrich_match(
+    request: Request,
     profile_id: int,
     posting_id: int,
     user: dict = Depends(require_user),

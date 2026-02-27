@@ -18,6 +18,8 @@ from psycopg2.extras import Json
 
 from api.deps import get_db, require_user, require_unfrozen_user, _get_pool
 from config.settings import OLLAMA_EMBED_URL as _OLLAMA_EMBED_URL, EMBED_MODEL as _EMBED_MODEL
+from api.limiter import limiter
+from api.config import RATE_LIMIT_LLM
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 logger = logging.getLogger(__name__)
@@ -1197,7 +1199,9 @@ Extract all work experiences. Use null for missing dates. Order by most recent f
 
 
 @router.post("/me/parse-cv")
+@limiter.limit(RATE_LIMIT_LLM)
 async def parse_cv(
+    request: Request,
     file: UploadFile = File(...),
     gdpr_consent: str = Form(default=""),
     background_tasks: BackgroundTasks = BackgroundTasks(),
@@ -1215,9 +1219,18 @@ async def parse_cv(
             status_code=422,
             detail="GDPR consent required before CV processing. Send gdpr_consent=true."
         )
+
+    # File size guard — reject before reading into memory
+    from api.config import MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_SIZE_MB} MB."
+        )
+
     import uuid
     filename = file.filename.lower()
-    content = await file.read()
     text = ""
 
     try:
