@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/generate_fetch_docs.py` — do not edit by hand.
 > Regenerated on every git commit via `.git/hooks/post-commit`.
 
-**Generated:** 2026-02-27 05:21:51
+**Generated:** 2026-02-27 08:58:31
 **Script:** `scripts/turing_fetch.sh` (620 lines)
 **Schedule:** `50 23 * * * cd /home/xai/Documents/ty_learn && ./scripts/turing_fetch.sh 1 25000 force`
 **Log:** `logs/turing_fetch.log`
@@ -13,16 +13,16 @@
 
 | Metric | Count |
 |--------|------:|
-| Total postings | 380,476 |
-| Active postings | 179,316 |
-| — Arbeitsagentur | 177,757 |
+| Total postings | 381,724 |
+| Active postings | 180,136 |
+| — Arbeitsagentur | 178,577 |
 | — Deutsche Bank | 1,559 |
-| With description (>150 chars) | 343,902 |
-| With extracted summary | 7,766 |
-| Embeddable (postings_for_matching) | 161,913 |
-| Total embeddings | 352,877 |
-| Berufenet classified | 162,404 |
-| OWL vocabulary (confirmed) | 128,566 |
+| With description (>150 chars) | 358,362 |
+| With extracted summary | 7,825 |
+| Embeddable (postings_for_matching) | 176,702 |
+| Total embeddings | 364,932 |
+| Berufenet classified | 172,793 |
+| OWL vocabulary (confirmed) | 134,811 |
 | OWL pending triage | 0 |
 
 ---
@@ -320,7 +320,7 @@ duplicate embeddings and false "stale" reports.
 ---
 ## AA Fetch
 
-**File:** `actors/postings__arbeitsagentur_CU.py` (997 lines)
+**File:** `actors/postings__arbeitsagentur_CU.py` (1030 lines)
 
 > Arbeitsagentur Job Fetcher - Fetches job postings from the German Federal Employment Agency
 
@@ -347,6 +347,15 @@ SELECT ticket_id, completed_at
               AND completed_at > NOW() - INTERVAL '20 hours'
             ORDER BY completed_at DESC
             LIMIT 1
+```
+
+```sql
+UPDATE postings
+                    SET    invalidated    = false,
+                           invalidated_at = NULL,
+                           posting_status = 'active'
+                    WHERE  external_job_id = ANY(%s)
+                      AND  invalidated = true
 ```
 
 ```sql
@@ -386,14 +395,6 @@ INSERT INTO tickets (
                 %s, 1, NOW()
             )
             RETURNING ticket_id
-```
-
-```sql
-UPDATE tickets
-                SET status = 'completed',
-                    output = %s,
-                    completed_at = NOW()
-                WHERE ticket_id = %s
 ```
 
 </details>
@@ -1592,4 +1593,4 @@ Auto-triggered on every `git commit` via `.git/hooks/post-commit`.
 
 ---
 
-_Generated 2026-02-27 05:21:51 by generate_fetch_docs.py_
+_Generated 2026-02-27 08:58:31 by generate_fetch_docs.py_
