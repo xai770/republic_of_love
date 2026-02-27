@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 import json
 import os
+import re as _re
 import threading
 import logging
 import hashlib
@@ -495,6 +496,83 @@ def get_ql_levels(user: dict = Depends(require_user)):
 
 
 # ============================================================
+# Profile scope — infer search filters from yogi's profile
+# ============================================================
+
+EXP_TO_QL = {'junior': 2, 'mid': 3, 'senior': 4, 'lead': 4, 'executive': 4, 'expert': 4}
+
+@router.get("/search/profile-scope")
+def profile_scope(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Infer search scope from the yogi's profile.
+
+    Returns:
+        {
+          "available": true,
+          "domains":  ["71"],        // KLDB 2-digit codes
+          "ql":       [2, 3, 4],     // qualification levels
+          "location": "Berlin",      // city name (for geocoding client-side)
+          "experience_level": "mid",
+          "profile_id": 41
+        }
+
+    When no usable profile exists:
+        {"available": false, "reason": "..."}
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT profile_id, current_title, desired_roles,
+                   experience_level, location
+            FROM profiles
+            WHERE user_id = %s
+            ORDER BY updated_at DESC NULLS LAST
+            LIMIT 1
+        """, (user['user_id'],))
+        profile = cur.fetchone()
+
+    if not profile:
+        return {"available": False, "reason": "no_profile"}
+
+    # ── Infer domain codes from title + desired_roles tokens ──────
+    raw_title = profile['current_title'] or ''
+    raw_roles = profile['desired_roles'] or []
+    title_parts = _re.split(r'[\s/,;|]+', raw_title)
+    term_pool = [t for t in list(title_parts) + list(raw_roles) if len(t) >= 4]
+
+    inferred_domains: list = []
+    if term_pool:
+        like_clauses = ' OR '.join(['name ILIKE %s'] * len(term_pool))
+        like_params = ['%' + t + '%' for t in term_pool]
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT DISTINCT SUBSTRING(kldb FROM 3 FOR 2) AS domain_code"
+                f" FROM berufenet WHERE {like_clauses}",
+                like_params,
+            )
+            inferred_domains = [r['domain_code'] for r in cur.fetchall()]
+
+    # ── Infer QL from experience_level ────────────────────────────
+    exp = (profile['experience_level'] or '').lower()
+    base_ql = EXP_TO_QL.get(exp)
+    inferred_ql = []
+    if base_ql:
+        min_ql = max(1, base_ql - 1)
+        inferred_ql = list(range(min_ql, 5))  # e.g. mid→[2,3,4]
+
+    return {
+        "available": True,
+        "domains": inferred_domains,
+        "ql": inferred_ql,
+        "location": profile['location'] or None,
+        "experience_level": profile['experience_level'] or None,
+        "profile_id": profile['profile_id'],
+    }
+
+
+# ============================================================
 # Save search as active search for matching pipeline
 # ============================================================
 
@@ -579,6 +657,105 @@ class SearchResultsRequest(BaseModel):
     profile_ids: Optional[List[int]] = None   # posting_id list from profile match (OR'd with professions)
     offset: int = 0
     limit: int = 20
+    score: bool = False                   # request cosine scoring from profile embedding
+
+
+def _attach_cosine_scores(
+    postings: list,
+    results: list,
+    user_id: int,
+    conn,
+) -> None:
+    """
+    Decorate *results* in-place with a ``score`` field (0.0–1.0).
+
+    Loads the caller's profile embedding once, then batch-scores every
+    posting on the current page via cosine similarity.  Results that
+    cannot be scored (missing embedding) get ``score: None``.
+    """
+    import hashlib as _hl
+
+    # ── 1. Load profile → build text → look up embedding ─────────
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT skill_keywords, current_title, profile_summary,
+                   experience_level
+            FROM profiles
+            WHERE user_id = %s AND skill_keywords IS NOT NULL
+            ORDER BY updated_at DESC NULLS LAST LIMIT 1
+        """, (user_id,))
+        profile = cur.fetchone()
+
+    if not profile:
+        return
+
+    raw_skills = profile['skill_keywords']
+    if isinstance(raw_skills, list):
+        skills = raw_skills
+    elif isinstance(raw_skills, dict):
+        skills = raw_skills.get('keywords', [])
+    else:
+        skills = []
+
+    parts = []
+    if profile['current_title']:
+        parts.append(profile['current_title'])
+    if skills:
+        parts.append(' '.join(str(s) for s in skills))
+    if profile['profile_summary']:
+        parts.append(profile['profile_summary'][:500])
+    if profile['experience_level']:
+        parts.append(profile['experience_level'])
+    profile_text = ' | '.join(filter(None, parts)).strip()
+    if not profile_text:
+        return
+
+    profile_hash = _hl.sha256(profile_text.lower().strip().encode()).hexdigest()[:32]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT embedding FROM embeddings WHERE text_hash = %s",
+            (profile_hash,),
+        )
+        row = cur.fetchone()
+
+    if not row:
+        return
+
+    profile_emb = np.array(row['embedding'], dtype=np.float32)
+    profile_norm = float(np.linalg.norm(profile_emb))
+    if profile_norm == 0:
+        return
+
+    # ── 2. Batch-fetch posting embeddings via SQL join ────────────
+    # Use the same normalize_text_python() + SHA256 path that the
+    # embedding actor wrote, so hashes match exactly.
+    posting_ids = [p['posting_id'] for p in postings]
+
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT pfm.posting_id, e.embedding
+            FROM postings_for_matching pfm
+            JOIN embeddings e ON e.text_hash = LEFT(ENCODE(SHA256(
+                CONVERT_TO(normalize_text_python(pfm.match_text), 'UTF8')
+            ), 'hex'), 32)
+            WHERE pfm.posting_id = ANY(%s)
+        """, (posting_ids,))
+        emb_map = {r['posting_id']: r['embedding'] for r in cur.fetchall()}
+
+    # ── 3. Cosine similarity → attach to results ─────────────────
+    for res, row in zip(results, postings):
+        emb_data = emb_map.get(row['posting_id'])
+        if emb_data is None:
+            res['score'] = None
+            continue
+        posting_emb = np.array(emb_data, dtype=np.float32)
+        posting_norm = float(np.linalg.norm(posting_emb))
+        if posting_norm == 0:
+            res['score'] = None
+            continue
+        cosine = float(np.dot(profile_emb, posting_emb) / (profile_norm * posting_norm))
+        res['score'] = round(cosine, 3)
 
 
 @router.post("/search/results")
@@ -653,6 +830,13 @@ def search_results(
                 "interested": row['interested'],  # None, True, or False
                 "profile_match": row['posting_id'] in profile_id_set,
             })
+
+        # ── Optional cosine scoring (profile → posting similarity) ──
+        # When score=true, we decorate each result with a match percentage.
+        # This only scores the current page — match % is a decoration, not
+        # a filter or sort criterion.  Order remains first_seen DESC.
+        if req.score and results:
+            _attach_cosine_scores(postings, results, user['user_id'], conn)
 
         # Lazy verification: queue stale postings for background checking.
         # This runs AFTER we return results — user sees immediate response,

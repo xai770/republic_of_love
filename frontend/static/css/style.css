@@ -5641,7 +5641,19 @@ body {
     border-radius: 999px;
 }
 
-/* Stream B — profile match tag */
+/* Cosine match score badge (profile-as-scorer) */
+.tile-score-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* Stream B — profile match tag (legacy, kept for compat) */
 .profile-match-tag {
     font-size: 0.65rem;
     font-weight: 700;
@@ -6319,6 +6331,11 @@ body {
 [data-theme="dark"] .tile-new-badge {
     background: #276749;
     color: #c6f6d5;
+}
+
+[data-theme="dark"] .tile-score-badge {
+    background: #312e81;
+    color: #c7d2fe;
 }
 
 [data-theme="dark"] .profile-match-tag {
