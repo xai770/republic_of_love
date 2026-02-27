@@ -448,23 +448,29 @@ class BeesiteDBJobFetcher:
         # ------------------------------------------------------------------
         new_jobs = [j for j in jobs if j['external_id'] not in existing_map]
         if new_jobs:
-            logger.info("Existing: %d (revalidated: %d), new candidates: %d",
-                        stats['existing'], stats['revalidated'], len(new_jobs))
+            # Log platform breakdown
+            workday_count = sum(1 for j in new_jobs if 'myworkdayjobs.com' in j.get('apply_uri', ''))
+            cornerstone_count = sum(1 for j in new_jobs if 'recruitmentplatform.com' in j.get('apply_uri', ''))
+            logger.info("Existing: %d (revalidated: %d), new candidates: %d (Workday: %d, Cornerstone: %d)",
+                        stats['existing'], stats['revalidated'], len(new_jobs),
+                        workday_count, cornerstone_count)
         
         for i, job in enumerate(new_jobs, 1):
             try:
                 apply_url = job.get('apply_uri', '')
                 description = None
+                is_cornerstone = 'recruitmentplatform.com' in apply_url
                 
                 if apply_url:
                     description = self._fetch_description_from_workday(apply_url)
-                    time.sleep(0.2)
+                    if not is_cornerstone:
+                        time.sleep(0.2)  # rate-limit only for Workday fetches
                 
                 if not description:
                     stats['no_description'] += 1
-                    if i % 20 == 0 or i == len(new_jobs):
-                        logger.warning("[%s/%s new] Skipped %s jobs (no description)",
-                                       i, len(new_jobs), stats['no_description'])
+                    if i % 100 == 0 or i == len(new_jobs):
+                        logger.info("[%s/%s new] Skipped %s jobs (no description)",
+                                    i, len(new_jobs), stats['no_description'])
                     continue
                 
                 cur.execute("""
@@ -519,12 +525,28 @@ class BeesiteDBJobFetcher:
     
     def _fetch_description_from_workday(self, url: str) -> Optional[str]:
         """
-        Fetch job description from Workday URL (db.wd3.myworkdayjobs.com).
+        Fetch job description for a Deutsche Bank job URL.
+        
+        Supports two platforms:
+        - Workday (db.wd3.myworkdayjobs.com): REST API → og:description fallback
+        - Cornerstone (recruitmentplatform.com): meta description (usually too short)
         
         Returns description text or None if unavailable.
         """
         job_url = url.rstrip('/').removesuffix('/apply')
         
+        # ── Workday URLs: use REST API (fast, reliable, full HTML descriptions)
+        if 'myworkdayjobs.com' in job_url and '/DBWebsite/' in job_url:
+            desc = self._fetch_workday_rest_api(job_url)
+            if desc:
+                return desc
+            # Fall through to og:description scraping
+        
+        # ── Cornerstone URLs: no useful description available via static fetch
+        if 'recruitmentplatform.com' in job_url:
+            return None
+        
+        # ── Fallback: og:description scraping (original method)
         try:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'
@@ -537,16 +559,57 @@ class BeesiteDBJobFetcher:
             
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Look for og:description meta tag
-            meta_desc = soup.find('meta', attrs={'property': 'og:description'})
-            if meta_desc and meta_desc.get('content'):
-                description = meta_desc.get('content', '').strip()
-                if len(description) > 50:
-                    return sanitize_for_storage(description)
+            # Try og:description first, then name=description
+            for attr in [{'property': 'og:description'}, {'name': 'description'}]:
+                meta = soup.find('meta', attrs=attr)
+                if meta and meta.get('content'):
+                    description = meta.get('content', '').strip()
+                    if len(description) > 50:
+                        return sanitize_for_storage(description)
             
             return None
             
         except Exception:
+            return None
+    
+    def _fetch_workday_rest_api(self, job_url: str) -> Optional[str]:
+        """
+        Fetch description via Workday's REST API (JSON endpoint).
+        
+        Pattern: /wday/cxs/{tenant}/{site}/{job_path}
+        For Deutsche Bank: tenant=db, site=DBWebsite
+        
+        Returns plain text description or None.
+        """
+        try:
+            # Extract job path: everything after /DBWebsite/
+            job_path = job_url.split('/DBWebsite/')[-1]
+            api_url = f"https://db.wd3.myworkdayjobs.com/wday/cxs/db/DBWebsite/{job_path}"
+            
+            response = requests.get(
+                api_url,
+                headers={'Accept': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                return None
+            
+            data = response.json()
+            html_desc = data.get('jobPostingInfo', {}).get('jobDescription', '')
+            
+            if not html_desc or len(html_desc) < 50:
+                return None
+            
+            # Strip HTML tags to get clean text
+            text = BeautifulSoup(html_desc, 'html.parser').get_text(' ', strip=True)
+            if len(text) > 50:
+                return sanitize_for_storage(text)
+            
+            return None
+            
+        except Exception as e:
+            logger.debug("Workday REST API failed for %s: %s", job_url[:80], e)
             return None
     
     def _invalidate_stale_postings(self) -> Dict:
