@@ -218,6 +218,15 @@ BUNDESLAENDER = [
     'Thüringen',
 ]
 
+# The AA API `wo` parameter does fuzzy geocoding.  Some state names collide
+# with municipalities in other states (e.g. "Sachsen" → Sachsen bei Ansbach in
+# Bayern; "Hessen" → a village in Sachsen-Anhalt).  Prefixing with "Bundesland"
+# disambiguates. Only states that need it are listed here; others work as-is.
+BUNDESLAND_WO_OVERRIDE = {
+    'Hessen': 'Bundesland Hessen',
+    'Sachsen': 'Bundesland Sachsen',
+}
+
 
 # ============================================================================
 # ACTOR CLASS
@@ -323,7 +332,7 @@ class ArbeitsagenturJobFetcher:
                 'success': True,
                 '_consistency': '1/1',
                 'stats': stats,
-                'message': f"Fetched {stats['fetched']}, new: {stats['new']}, existing: {stats['existing']}, errors: {stats['errors']}",
+                'message': f"Fetched {stats['fetched']}, new: {stats['new']}, resurrected: {stats['resurrected']}, existing: {stats['existing']}, errors: {stats['errors']}",
             }
             
         except Exception as e:
@@ -613,6 +622,11 @@ class ArbeitsagenturJobFetcher:
         Uses external_job_id (refnr) for deduplication via the
         idx_postings_external_job_id_unique partial index.
         
+        Before each batch INSERT we "resurrect" any invalidated rows whose
+        external_job_id appears in the batch.  This lets the partial-index
+        ON CONFLICT clause see them, so the UPDATE branch fires instead of
+        silently inserting a duplicate row.
+        
         One INSERT ... ON CONFLICT per batch instead of row-by-row
         SELECT + UPDATE/INSERT — ~50x faster, minimal lock contention.
         """
@@ -620,6 +634,7 @@ class ArbeitsagenturJobFetcher:
             'fetched': len(jobs),
             'new': 0,
             'existing': 0,
+            'resurrected': 0,
             'descriptions_updated': 0,
             'errors': 0,
         }
@@ -631,7 +646,9 @@ class ArbeitsagenturJobFetcher:
             batch = jobs[batch_start:batch_start + BATCH_SIZE]
             
             values = []
+            batch_refnrs = []
             for job in batch:
+                batch_refnrs.append(job['refnr'])
                 values.append((
                     job['external_id'],
                     job['refnr'],
@@ -654,6 +671,20 @@ class ArbeitsagenturJobFetcher:
                 ))
             
             try:
+                # ── Resurrect invalidated rows so the partial-index ON CONFLICT
+                #    sees them.  Without this, re-encountered invalidated postings
+                #    would bypass the conflict clause and insert duplicate rows.
+                cur.execute("""
+                    UPDATE postings
+                    SET    invalidated    = false,
+                           invalidated_at = NULL,
+                           posting_status = 'active'
+                    WHERE  external_job_id = ANY(%s)
+                      AND  invalidated = true
+                """, (batch_refnrs,))
+                batch_resurrected = cur.rowcount
+                stats['resurrected'] += batch_resurrected
+
                 results = psycopg2.extras.execute_values(cur, """
                     INSERT INTO postings (
                         external_id, external_job_id, posting_name, job_title, beruf,
@@ -684,9 +715,10 @@ class ArbeitsagenturJobFetcher:
                 stats['existing'] += batch_existing
                 self.conn.commit()
                 
-                logger.info("[%d/%d] %d new, %d existing (batch: +%d new, +%d existing)",
+                logger.info("[%d/%d] %d new, %d existing (batch: +%d new, +%d existing, +%d resurrected)",
                             min(batch_start + BATCH_SIZE, len(jobs)), len(jobs),
-                            stats['new'], stats['existing'], batch_new, batch_existing)
+                            stats['new'], stats['existing'], batch_new, batch_existing,
+                            batch_resurrected)
             
             except Exception as e:
                 self.conn.rollback()
@@ -779,7 +811,8 @@ def main():
     # Build search queries based on args
     if args.states:
         # State-based fetch (16 queries, one per Bundesland) - recommended for reliability
-        search_queries = [{'wo': state} for state in BUNDESLAENDER]
+        # Use BUNDESLAND_WO_OVERRIDE for states whose plain name confuses the API
+        search_queries = [{'wo': BUNDESLAND_WO_OVERRIDE.get(s, s)} for s in BUNDESLAENDER]
         profile_name = 'all states (16 Bundesländer)'
     elif args.state:
         # Single state fetch
@@ -787,7 +820,7 @@ def main():
             logger.error("Unknown state: %s", args.state)
             logger.info("Valid states: %s", ', '.join(BUNDESLAENDER))
             return
-        search_queries = [{'wo': args.state}]
+        search_queries = [{'wo': BUNDESLAND_WO_OVERRIDE.get(args.state, args.state)}]
         profile_name = f'state: {args.state}'
     elif args.nationwide:
         # Germany-wide fetch (single query, no city filter)
@@ -908,7 +941,7 @@ def main():
                 'stats': stats,
                 'descriptions_fetched': actor.description_fetch_count,
                 'description_errors': actor.description_errors,
-                'message': f"Fetched {stats['fetched']}, new: {stats['new']}, existing: {stats['existing']}, descriptions: {actor.description_fetch_count}"
+                'message': f"Fetched {stats['fetched']}, new: {stats['new']}, resurrected: {stats['resurrected']}, existing: {stats['existing']}, descriptions: {actor.description_fetch_count}"
             }
         else:
             result = actor.process()
