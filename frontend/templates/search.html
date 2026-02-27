@@ -288,6 +288,8 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     // STATE
     // ============================================================
+    const STORAGE_KEY = 'turing_search_state';
+
     const state = {
         domains: [],     // selected KLDB 2-digit codes
         ql: [],          // selected QL levels [1-4]
@@ -300,6 +302,45 @@ window.SEARCH_TOUR_I18N = {
         // Bundesland filter
         states: [],
     };
+
+    /** Persist filter-relevant parts of state to localStorage. */
+    function saveState() {
+        try {
+            const snap = {
+                domains: state.domains,
+                ql: state.ql,
+                geoLocations: state.geoLocations,
+                professions: state.professions,
+                states: state.states,
+                _ts: Date.now(),
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
+        } catch(e) { /* quota / private-mode */ }
+    }
+
+    /**
+     * Restore filter state from localStorage.
+     * Returns true if meaningful filters were restored.
+     */
+    function restoreState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            const snap = JSON.parse(raw);
+            // Expire after 24 hours of inactivity
+            if (snap._ts && (Date.now() - snap._ts > 24 * 60 * 60 * 1000)) {
+                localStorage.removeItem(STORAGE_KEY);
+                return false;
+            }
+            let restored = false;
+            if (snap.domains && snap.domains.length)       { state.domains = snap.domains; restored = true; }
+            if (snap.ql && snap.ql.length)                 { state.ql = snap.ql; restored = true; }
+            if (snap.geoLocations && snap.geoLocations.length) { state.geoLocations = snap.geoLocations; restored = true; }
+            if (snap.professions && snap.professions.length)   { state.professions = snap.professions; restored = true; }
+            if (snap.states && snap.states.length)         { state.states = snap.states; restored = true; }
+            return restored;
+        } catch(e) { return false; }
+    }
 
     // ============================================================
     // MAP SETUP
@@ -1081,6 +1122,8 @@ window.SEARCH_TOUR_I18N = {
                     results: data.total
                 });
             }
+            // Persist filters so the user returns to the same view
+            saveState();
         } catch(e) {
             console.error('Search failed:', e);
         } finally {
@@ -1767,7 +1810,8 @@ window.SEARCH_TOUR_I18N = {
         
         // Apply Mira search filters from URL params (e.g. from dashboard chat)
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('domains') || urlParams.has('lat') || urlParams.has('ql')) {
+        const hasMiraParams = urlParams.has('domains') || urlParams.has('lat') || urlParams.has('ql');
+        if (hasMiraParams) {
             const miraFilters = {};
             if (urlParams.has('domains')) miraFilters.domains = urlParams.get('domains').split(',');
             if (urlParams.has('ql')) miraFilters.ql = urlParams.get('ql').split(',').map(Number);
@@ -1782,7 +1826,23 @@ window.SEARCH_TOUR_I18N = {
             window.history.replaceState({}, '', '/search');
         }
         
-        // Load profile scope (infer domain/QL/geo from CV) before first search
+        // Restore previous filter state from localStorage — but only when
+        // no Mira URL params overrode the state above
+        let hadSaved = false;
+        if (!hasMiraParams) {
+            hadSaved = restoreState();
+
+            // If geo was restored, redraw map layers + set radius dropdown
+            if (hadSaved && state.geoLocations.length > 0) {
+                const g0 = state.geoLocations[0];
+                document.getElementById('radius-select').value = String(g0.radius_km || 50);
+                map.setView([g0.lat, g0.lon], 10);
+                updateGeoLayers();
+            }
+        }
+
+        // Load profile scope (infer domain/QL/geo from CV) — only fills
+        // empty slots, so restored filters take priority
         await initProfileScope();
         doSearch();
         // Fix Leaflet tile rendering — force recalculation after layout resolves
