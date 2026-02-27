@@ -91,6 +91,82 @@ STALENESS_DAYS = 2  # Invalidate postings not seen for this many days
 MIN_DESCRIPTION_SUCCESS_RATE = 0.70  # Warn if <70% of new jobs get descriptions
 MAX_STALE_PERCENTAGE = 0.50  # Skip staleness if >50% would be invalidated (likely bug)
 
+# ── Location extraction from Workday URL slugs ──────────────────────────────
+# The Beesite API's PositionLocation array is always empty, so we parse the
+# city from the Workday apply-URL slug:  /job/<Location-Slug>/Title_RefID/...
+#
+# German city slugs → canonical (city, state) pairs.
+# Non-German cities are extracted but get location_country != 'Germany'.
+import re
+
+_GERMAN_CITY_MAP = {
+    'Frankfurt':   ('Frankfurt am Main', 'Hessen'),
+    'Berlin':      ('Berlin', 'Berlin'),
+    'Bonn':        ('Bonn', 'Nordrhein-Westfalen'),
+    'Eschborn':    ('Eschborn', 'Hessen'),
+    'Hamburg':     ('Hamburg', 'Hamburg'),
+    'Munich':      ('München', 'Bayern'),
+    'Stuttgart':   ('Stuttgart', 'Baden-Württemberg'),
+    'Wuppertal':   ('Wuppertal', 'Nordrhein-Westfalen'),
+    'Wesel':       ('Wesel', 'Nordrhein-Westfalen'),
+    'Cologne':     ('Köln', 'Nordrhein-Westfalen'),
+    'Dusseldorf':  ('Düsseldorf', 'Nordrhein-Westfalen'),
+    'Hannover':    ('Hannover', 'Niedersachsen'),
+    'Leipzig':     ('Leipzig', 'Sachsen'),
+    'Dresden':     ('Dresden', 'Sachsen'),
+    'Nuremberg':   ('Nürnberg', 'Bayern'),
+}
+
+# Multi-word / international city slugs that need special handling.
+# Checked BEFORE the single-token fallback. Format: slug prefix → city name.
+_MULTIWORD_CITY_MAP = {
+    'New-York':          'New York',
+    'New-Delhi':         'New Delhi',
+    'Hong-Kong':         'Hong Kong',
+    'One-Raffles':       'Singapore',
+    'North-Carolina':    'Cary',       # "North-CarolinaCary"
+    'Zrich':             'Zürich',
+    'Edificio-Mitre':    'Santiago',
+    'Kuala-Lumpur':      'Kuala Lumpur',
+    'Sao-Paulo':         'São Paulo',
+    'Sri-Lanka':         'Colombo',
+    'Tel-Aviv':          'Tel Aviv',
+}
+
+
+def _parse_location_from_url(url: str) -> dict:
+    """
+    Extract city, state, country from a Workday URL slug.
+    
+    URL format: .../job/<Location-Slug>/<Title-Slug>_<RefID>/...
+    Location-Slug examples:
+        Frankfurt-Taunusanlage-12
+        Berlin-Otto-Suhr-Allee-6-16
+        New-York-1-Columbus-Circle
+        Pune
+    
+    Returns dict with 'city', 'state', 'country' keys.
+    """
+    m = re.search(r'/job/([^/]+)/', url)
+    if not m:
+        return {'city': 'Unknown', 'state': None, 'country': None}
+    
+    slug = m.group(1)  # e.g. "Frankfurt-Taunusanlage-12"
+    
+    # Try matching against known German cities first
+    for key, (city, state) in _GERMAN_CITY_MAP.items():
+        if slug.startswith(key):
+            return {'city': city, 'state': state, 'country': 'Germany'}
+    
+    # Try multi-word / international city slugs
+    for prefix, city in _MULTIWORD_CITY_MAP.items():
+        if slug.startswith(prefix):
+            return {'city': city, 'state': None, 'country': None}
+    
+    # Fallback: first hyphen-delimited token
+    city_token = slug.split('-')[0]
+    return {'city': city_token, 'state': None, 'country': None}
+
 
 # ============================================================================
 # ACTOR CLASS
@@ -352,14 +428,25 @@ class BeesiteDBJobFetcher:
         if not job_id:
             return None
         
-        # Extract location
+        # Extract location – prefer API PositionLocation, fall back to URL slug
         locations = item.get('PositionLocation', [])
-        location = locations[0].get('CityName', 'Unknown') if locations else 'Unknown'
+        api_city = locations[0].get('CityName') if locations else None
         
         # Get apply URI
         apply_uri = item.get('ApplyURI', '')
         if isinstance(apply_uri, list):
             apply_uri = apply_uri[0] if apply_uri else ''
+        
+        # Resolve location: API → URL slug → 'Unknown'
+        if api_city:
+            location = api_city
+            location_state = None  # API doesn't provide state
+            location_country = None
+        else:
+            loc = _parse_location_from_url(apply_uri)
+            location = loc['city']
+            location_state = loc['state']
+            location_country = loc['country']
         
         # Get description (may be dict with Content key or direct string)
         description = item.get('PositionFormattedDescription', '')
@@ -370,6 +457,8 @@ class BeesiteDBJobFetcher:
             'external_id': str(job_id),
             'title': item.get('PositionTitle', 'Unknown'),
             'location': location,
+            'location_state': location_state,
+            'location_country': location_country,
             'apply_uri': apply_uri,
             'description': description,
             'raw_data': item
@@ -413,6 +502,9 @@ class BeesiteDBJobFetcher:
         # ------------------------------------------------------------------
         # Phase 2: Batch update existing jobs
         # ------------------------------------------------------------------
+        # Build a lookup: external_id → parsed job (for location updates)
+        jobs_by_ext = {j['external_id']: j for j in jobs}
+        
         if existing_map:
             # Revalidate any that were invalidated (job came back!)
             invalidated_ids = [
@@ -439,6 +531,24 @@ class BeesiteDBJobFetcher:
                     UPDATE postings SET last_seen_at = NOW()
                     WHERE posting_id = ANY(%s)
                 """, (active_ids,))
+            
+            # Fix location_city / location_state for existing postings that
+            # still have 'Unknown' (backfill from URL slug parsing).
+            for ext_id, row in existing_map.items():
+                job = jobs_by_ext.get(ext_id)
+                if not job:
+                    continue
+                city = job.get('location', 'Unknown')
+                state = job.get('location_state')
+                country = job.get('location_country')
+                if city and city != 'Unknown':
+                    cur.execute("""
+                        UPDATE postings
+                        SET location_city = %s,
+                            location_state = COALESCE(%s, location_state),
+                            location_country = COALESCE(%s, location_country)
+                        WHERE posting_id = %s AND location_city = 'Unknown'
+                    """, (city, state, country, row['posting_id']))
             
             stats['existing'] = len(existing_map)
             self.conn.commit()
@@ -475,10 +585,11 @@ class BeesiteDBJobFetcher:
                 
                 cur.execute("""
                     INSERT INTO postings (
-                        external_id, external_job_id, posting_name, job_title, location_city, 
+                        external_id, external_job_id, posting_name, job_title, location_city,
+                        location_state, location_country,
                         source, external_url, source_metadata, job_description,
                         first_seen_at, last_seen_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
                     ON CONFLICT (external_job_id)
                         WHERE invalidated = false AND external_job_id IS NOT NULL
                     DO NOTHING
@@ -489,6 +600,8 @@ class BeesiteDBJobFetcher:
                     job['title'],
                     job['title'],
                     job['location'],
+                    job.get('location_state'),
+                    job.get('location_country'),
                     'deutsche_bank',
                     (apply_url or 'https://careers.db.com').rstrip('/').removesuffix('/apply'),
                     json.dumps(job['raw_data']),
