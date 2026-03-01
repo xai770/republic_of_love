@@ -457,9 +457,13 @@ def search_preview(
               AND p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
             GROUP BY lat, lon
         """, params)
-        heatmap = [[float(r['lat']), float(r['lon']), r['weight']] for r in cur.fetchall()]
+        heatmap_rows = cur.fetchall()
+        # Cap heatmap at 5000 grid cells to limit browser canvas memory
+        if len(heatmap_rows) > 5000:
+            heatmap_rows = sorted(heatmap_rows, key=lambda r: r['weight'], reverse=True)[:5000]
+        heatmap = [[float(r['lat']), float(r['lon']), r['weight']] for r in heatmap_rows]
 
-        # ── 6. Map markers (all filters, most recent 500 with coords) ─────────
+        # ── 6. Map markers (all filters, most recent 200 with coords) ─────────
         cur.execute(f"""
             SELECT
                 p.posting_id,
@@ -472,7 +476,7 @@ def search_preview(
             WHERE {where_sql}
               AND p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' IS NOT NULL
             ORDER BY p.first_seen_at DESC NULLS LAST
-            LIMIT 500
+            LIMIT 200
         """, params)
         markers = [
             {

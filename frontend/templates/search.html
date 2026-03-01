@@ -809,32 +809,42 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     // HEATMAP
     // ============================================================
+    const HEAT_GRADIENT = {
+        0.0: 'rgba(240,244,255,0.0)',
+        0.15: 'rgba(147,197,253,0.5)',
+        0.35: 'rgba(59,130,246,0.65)',
+        0.55: 'rgba(34,197,94,0.75)',
+        0.75: 'rgba(250,204,21,0.85)',
+        0.90: 'rgba(249,115,22,0.9)',
+        1.0:  'rgba(239,68,68,1.0)'
+    };
+
     function renderHeatmap(points) {
-        if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
-        if (!points || points.length === 0) return;
+        if (!points || points.length === 0) {
+            if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+            return;
+        }
 
         // Use 90th percentile for max to prevent outlier dominance
         const weights = points.map(p => p[2]).sort((a, b) => a - b);
         const p90 = weights[Math.floor(weights.length * 0.9)] || 1;
         const maxW = Math.max(p90 * 1.5, 1);
 
-        heatLayer = L.heatLayer(points, {
-            radius: 18,
-            blur: 22,
-            maxZoom: 13,
-            minOpacity: 0.12,
-            max: maxW,
-            pane: 'heatPane',
-            gradient: {
-                0.0: 'rgba(240,244,255,0.0)',
-                0.15: 'rgba(147,197,253,0.5)',
-                0.35: 'rgba(59,130,246,0.65)',
-                0.55: 'rgba(34,197,94,0.75)',
-                0.75: 'rgba(250,204,21,0.85)',
-                0.90: 'rgba(249,115,22,0.9)',
-                1.0:  'rgba(239,68,68,1.0)'
-            }
-        }).addTo(map);
+        if (heatLayer) {
+            // REUSE existing canvas — avoids Firefox canvas GC leak
+            heatLayer.setLatLngs(points);
+            heatLayer.setOptions({ max: maxW });
+        } else {
+            heatLayer = L.heatLayer(points, {
+                radius: 18,
+                blur: 22,
+                maxZoom: 13,
+                minOpacity: 0.12,
+                max: maxW,
+                pane: 'heatPane',
+                gradient: HEAT_GRADIENT,
+            }).addTo(map);
+        }
     }
 
     // ============================================================
@@ -946,51 +956,54 @@ window.SEARCH_TOUR_I18N = {
         })
         .catch(e => console.warn('GeoJSON load failed:', e));
 
+    function bundeslandStyleFn(feature) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const name = feature.properties.name;
+        const hasSelection = state.states.length > 0;
+        const isSelected = state.states.includes(name);
+        if (hasSelection && isSelected) {
+            return {
+                color: isDark ? '#60a5fa' : '#2563eb',
+                weight: 2.5,
+                fillColor: isDark ? '#3b82f6' : '#3b82f6',
+                fillOpacity: 0.18,
+                dashArray: null,
+            };
+        } else if (hasSelection) {
+            return {
+                color: isDark ? '#475569' : '#cbd5e1',
+                weight: 1,
+                fillColor: isDark ? '#334155' : '#e2e8f0',
+                fillOpacity: 0.06,
+                dashArray: '3,3',
+            };
+        }
+        return {
+            color: isDark ? '#475569' : '#93c5fd',
+            weight: 1,
+            fillColor: isDark ? '#1e3a5f' : '#dbeafe',
+            fillOpacity: 0.10,
+            dashArray: null,
+        };
+    }
+
     function renderBundeslandOverlay() {
-        if (bundeslandLayer) { bundeslandLayer.clearLayers(); map.removeLayer(bundeslandLayer); bundeslandLayer = null; }
         if (!bundeslandGeoData) return;
 
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const selectedStates = state.states;
-        const hasSelection = selectedStates.length > 0;
+        if (bundeslandLayer) {
+            // REUSE existing layer — just update styles (avoids GeoJSON re-parse + SVG churn)
+            bundeslandLayer.setStyle(bundeslandStyleFn);
+            return;
+        }
 
+        // First call: create the layer once
         bundeslandLayer = L.geoJSON(bundeslandGeoData, {
-            style: function(feature) {
-                const name = feature.properties.name;
-                const isSelected = selectedStates.includes(name);
-                if (hasSelection && isSelected) {
-                    return {
-                        color: isDark ? '#60a5fa' : '#2563eb',
-                        weight: 2.5,
-                        fillColor: isDark ? '#3b82f6' : '#3b82f6',
-                        fillOpacity: 0.18,
-                        dashArray: null,
-                    };
-                } else if (hasSelection) {
-                    return {
-                        color: isDark ? '#475569' : '#cbd5e1',
-                        weight: 1,
-                        fillColor: isDark ? '#334155' : '#e2e8f0',
-                        fillOpacity: 0.06,
-                        dashArray: '3,3',
-                    };
-                }
-                // No selection — light blue tint for all
-                return {
-                    color: isDark ? '#475569' : '#93c5fd',
-                    weight: 1,
-                    fillColor: isDark ? '#1e3a5f' : '#dbeafe',
-                    fillOpacity: 0.10,
-                    dashArray: null,
-                };
-            },
+            style: bundeslandStyleFn,
             onEachFeature: function(feature, layer) {
-                // Bind tooltip ONCE per feature (avoid rebind churn on every hover)
                 const name = feature.properties.name;
                 layer.bindTooltip('', { sticky: true, className: 'bundesland-tooltip' });
 
                 layer.on('click', function(e) {
-                    // Stop propagation so map.on('click') doesn't also fire (double-doSearch + unwanted geo pin)
                     L.DomEvent.stopPropagation(e);
                     const idx = state.states.indexOf(name);
                     if (idx >= 0) {
@@ -1017,7 +1030,6 @@ window.SEARCH_TOUR_I18N = {
             },
         }).addTo(map);
 
-        // Send to back so heatmap and markers stay on top
         bundeslandLayer.bringToBack();
     }
 
@@ -1541,9 +1553,9 @@ window.SEARCH_TOUR_I18N = {
     let previewAbort = null;
 
     function doSearch() {
-        // Debounce: coalesce rapid-fire calls into one after 120ms of calm
+        // Debounce: coalesce rapid-fire calls into one after 250ms of calm
         clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(_doSearchNow, 120);
+        searchDebounceTimer = setTimeout(_doSearchNow, 250);
     }
 
     async function _doSearchNow() {
