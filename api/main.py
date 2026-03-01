@@ -152,19 +152,22 @@ def set_language(lang: str, response: Response, request: Request, conn=Depends(g
 
 @app.get("/")
 def landing_page(request: Request, conn=Depends(get_db)):
-    """Landing page — lobby for visitors, redirect to dashboard if authenticated."""
+    """Landing page — onboarding step 1 for visitors, redirect if authenticated."""
     if not templates:
         return {"name": "talent.yoga", "version": "0.1.0", "status": "running"}
     
     user = get_current_user(request, conn)
     if user:
+        if not user.get("onboarding_completed_at"):
+            return RedirectResponse(url="/onboarding", status_code=302)
         return RedirectResponse(url="/home", status_code=302)
     
-    # Show lobby for unauthenticated users
-    return templates.TemplateResponse("lobby.html", {
+    # Unauthenticated: show onboarding (step 1 + auth step only)
+    resp = templates.TemplateResponse("onboarding.html", {
         "request": request,
-        **get_i18n_context(request)
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return resp
 
 
 @app.get("/login")

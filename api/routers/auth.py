@@ -59,7 +59,7 @@ def login_with_google():
 
 
 @router.get("/callback")
-async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db)):
+async def auth_callback(request: Request, code: str = None, error: str = None, conn=Depends(get_db)):
     """
     Handle Google OAuth callback.
     Exchange code for tokens, create/update user, set session.
@@ -140,6 +140,14 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
             """, (email_enc, google_id, avatar_url))
             user_id = cur.fetchone()['user_id']
 
+            # Save pre-auth language choice from onboarding step 1
+            pre_auth_lang = request.cookies.get("ob_lang")
+            if pre_auth_lang in ("de", "en"):
+                cur.execute(
+                    "UPDATE users SET language = %s WHERE user_id = %s",
+                    (pre_auth_lang, user_id),
+                )
+
             # Try to link to existing profile with matching email (profile.email is
             # the CV-parsed email — still plaintext, different field from users.email)
             cur.execute("""
@@ -207,6 +215,8 @@ async def auth_callback(code: str = None, error: str = None, conn=Depends(get_db
         httponly=False,
         samesite="lax",
     )
+    # Clean up temporary pre-auth language cookie
+    response.delete_cookie(key="ob_lang")
     return response
 
 
