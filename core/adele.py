@@ -1306,13 +1306,17 @@ def _intro_has_profile_de(role_count: int, current_title: Optional[str]) -> str:
 
 def build_profile_context(user_id: int, conn) -> str:
     """
-    Build a concise profile snapshot string to use as LLM system context.
-    Returns empty string if the user has no profile or no work history.
+    Build a rich profile snapshot string to use as LLM system context.
+    Includes title, summary, skills, experience, desired roles/locations,
+    and recent work history so Adele can react to what's already known
+    and avoid re-asking for information that's already on the profile.
     """
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT profile_id, current_title, profile_summary "
+                "SELECT profile_id, current_title, profile_summary, "
+                "skill_keywords, desired_roles, desired_locations, location, "
+                "years_of_experience, experience_level, language "
                 "FROM profiles WHERE user_id = %s",
                 (user_id,)
             )
@@ -1321,28 +1325,85 @@ def build_profile_context(user_id: int, conn) -> str:
                 return ""
 
             cur.execute(
-                "SELECT job_title, job_description, is_current "
+                "SELECT job_title, company_name, department, job_description, "
+                "technologies_used, is_current, duration_months, location "
                 "FROM profile_work_history WHERE profile_id = %s "
                 "ORDER BY is_current DESC, start_date DESC NULLS LAST LIMIT 6",
                 (profile['profile_id'],)
             )
             jobs = cur.fetchall()
 
-        if not jobs:
-            return ""
+        lines = ["[CANDIDATE PROFILE — use as background context; "
+                 "do NOT re-ask for information already present here]"]
 
-        lines = ["[CANDIDATE PROFILE — use this as background context only]"]
         if profile.get('current_title'):
             lines.append(f"Current title: {profile['current_title']}")
+        if profile.get('experience_level'):
+            yrs = profile.get('years_of_experience')
+            yrs_str = f", {yrs} years" if yrs else ""
+            lines.append(f"Experience level: {profile['experience_level']}{yrs_str}")
+        if profile.get('location'):
+            lines.append(f"Location: {profile['location']}")
+        if profile.get('desired_roles'):
+            lines.append(f"Desired roles: {profile['desired_roles']}")
+        if profile.get('desired_locations'):
+            lines.append(f"Desired locations: {profile['desired_locations']}")
+        if profile.get('language'):
+            lines.append(f"Preferred language: {profile['language']}")
         if profile.get('profile_summary'):
-            summary = profile['profile_summary'][:400].replace('\n', ' ')
+            summary = profile['profile_summary'][:500].replace('\n', ' ')
             lines.append(f"Summary: {summary}")
-        lines.append(f"Work history ({len(jobs)} roles):")
-        for i, job in enumerate(jobs, 1):
-            title = job.get('job_title') or 'Unknown role'
-            desc = (job.get('job_description') or '')[:120].replace('\n', ' ')
-            current_flag = " (current)" if job.get('is_current') else ""
-            lines.append(f"  {i}. {title}{current_flag}" + (f" — {desc}" if desc else ""))
+
+        # Skills — include up to 25 most relevant
+        skills = profile.get('skill_keywords') or []
+        if isinstance(skills, list) and skills:
+            display = skills[:25]
+            more = f" (+{len(skills) - 25} more)" if len(skills) > 25 else ""
+            lines.append(f"Skills ({len(skills)} total): {', '.join(display)}{more}")
+
+        # Gaps — tell Adele what's missing so she can proactively ask
+        gaps = []
+        if not profile.get('location'):
+            gaps.append('location')
+        if not profile.get('desired_roles'):
+            gaps.append('desired_roles')
+        if not profile.get('desired_locations'):
+            gaps.append('desired_locations')
+        if not skills:
+            gaps.append('skills')
+        if gaps:
+            lines.append(f"GAPS (fields still empty — try to fill these): {', '.join(gaps)}")
+
+        if jobs:
+            lines.append(f"\nWork history ({len(jobs)} roles):")
+            for i, job in enumerate(jobs, 1):
+                title = job.get('job_title') or 'Unknown role'
+                company = job.get('company_name') or ''
+                dept = job.get('department') or ''
+                dur = job.get('duration_months')
+                loc = job.get('location') or ''
+                current_flag = " (current)" if job.get('is_current') else ""
+                dur_str = f", {dur} months" if dur else ""
+
+                header = f"  {i}. {title}{current_flag}"
+                if company:
+                    header += f" @ {company}"
+                if dept:
+                    header += f" ({dept})"
+                if loc:
+                    header += f" — {loc}"
+                header += dur_str
+                lines.append(header)
+
+                desc = (job.get('job_description') or '')[:200].replace('\n', ' ')
+                if desc:
+                    lines.append(f"     {desc}")
+                techs = job.get('technologies_used') or ''
+                if techs:
+                    lines.append(f"     Tech: {techs[:150]}")
+        else:
+            lines.append("\nNo work history recorded yet.")
+
         lines.append("")
         return "\n".join(lines)
     except Exception as e:
