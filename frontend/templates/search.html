@@ -810,7 +810,7 @@ window.SEARCH_TOUR_I18N = {
     // HEATMAP
     // ============================================================
     function renderHeatmap(points) {
-        if (heatLayer) map.removeLayer(heatLayer);
+        if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
         if (!points || points.length === 0) return;
 
         // Use 90th percentile for max to prevent outlier dominance
@@ -850,7 +850,7 @@ window.SEARCH_TOUR_I18N = {
     }
 
     function renderMarkers(markers) {
-        if (markerLayer) { map.removeLayer(markerLayer); markerLayer = null; }
+        if (markerLayer) { markerLayer.clearLayers(); map.removeLayer(markerLayer); markerLayer = null; }
         if (!markers || markers.length === 0) return;
 
         const zoom = map.getZoom();
@@ -947,7 +947,7 @@ window.SEARCH_TOUR_I18N = {
         .catch(e => console.warn('GeoJSON load failed:', e));
 
     function renderBundeslandOverlay() {
-        if (bundeslandLayer) { map.removeLayer(bundeslandLayer); bundeslandLayer = null; }
+        if (bundeslandLayer) { bundeslandLayer.clearLayers(); map.removeLayer(bundeslandLayer); bundeslandLayer = null; }
         if (!bundeslandGeoData) return;
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -985,8 +985,13 @@ window.SEARCH_TOUR_I18N = {
                 };
             },
             onEachFeature: function(feature, layer) {
-                layer.on('click', function() {
-                    const name = feature.properties.name;
+                // Bind tooltip ONCE per feature (avoid rebind churn on every hover)
+                const name = feature.properties.name;
+                layer.bindTooltip('', { sticky: true, className: 'bundesland-tooltip' });
+
+                layer.on('click', function(e) {
+                    // Stop propagation so map.on('click') doesn't also fire (double-doSearch + unwanted geo pin)
+                    L.DomEvent.stopPropagation(e);
                     const idx = state.states.indexOf(name);
                     if (idx >= 0) {
                         state.states.splice(idx, 1);
@@ -997,18 +1002,16 @@ window.SEARCH_TOUR_I18N = {
                     doSearch();
                 });
                 layer.on('mouseover', function(e) {
-                    const name = feature.properties.name;
                     const loc = state.locationTree?.locations?.find(l => l.state === name);
                     const count = loc ? loc.count.toLocaleString(LANG === 'de' ? 'de-DE' : 'en-US') : '—';
-                    layer.bindTooltip(`<strong>${tState(name)}</strong><br>${count} ${LANG === 'de' ? 'Stellen' : 'posts'}`, {
-                        sticky: true, className: 'bundesland-tooltip'
-                    }).openTooltip(e.latlng);
+                    layer.setTooltipContent(`<strong>${tState(name)}</strong><br>${count} ${LANG === 'de' ? 'Stellen' : 'posts'}`);
+                    layer.openTooltip(e.latlng);
                     if (!state.states.includes(name)) {
                         layer.setStyle({ fillOpacity: 0.22, weight: 2 });
                     }
                 });
                 layer.on('mouseout', function() {
-                    layer.unbindTooltip();
+                    layer.closeTooltip();
                     bundeslandLayer.resetStyle(layer);
                 });
             },
@@ -1019,7 +1022,7 @@ window.SEARCH_TOUR_I18N = {
     }
 
     function renderCityMarkers() {
-        if (cityMarkerLayer) { map.removeLayer(cityMarkerLayer); cityMarkerLayer = null; }
+        if (cityMarkerLayer) { cityMarkerLayer.clearLayers(); map.removeLayer(cityMarkerLayer); cityMarkerLayer = null; }
         if (!state.locationTree || !state.locationTree.locations) return;
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1455,6 +1458,8 @@ window.SEARCH_TOUR_I18N = {
     }
 
     async function loadIntelligence() {
+        if (intelligenceAbort) intelligenceAbort.abort();
+        intelligenceAbort = new AbortController();
         try {
             const body = {};
             if (state.domains.length > 0) body.domains = state.domains;
@@ -1462,19 +1467,27 @@ window.SEARCH_TOUR_I18N = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal: intelligenceAbort.signal,
             });
             if (!res.ok) return;
             const data = await res.json();
             renderSparkline(data.activity);
         } catch(e) {
-            console.warn('Intelligence load failed:', e);
+            if (e.name !== 'AbortError') console.warn('Intelligence load failed:', e);
         }
     }
 
     // ============================================================
     // HIERARCHY TREE LOADERS
     // ============================================================
+    let sectorTreeAbort = null;
+    let locationTreeAbort = null;
+    let intelligenceAbort = null;
+    let resultsAbort = null;
+
     async function loadSectorTree() {
+        if (sectorTreeAbort) sectorTreeAbort.abort();
+        sectorTreeAbort = new AbortController();
         try {
             const body = {};
             if (state.states.length > 0) body.states = state.states;
@@ -1483,6 +1496,7 @@ window.SEARCH_TOUR_I18N = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal: sectorTreeAbort.signal,
             });
             if (res.ok) {
                 const data = await res.json();
@@ -1491,10 +1505,14 @@ window.SEARCH_TOUR_I18N = {
                 data.sectors.forEach(s => { window._domainMap[s.name] = s.codes; });
                 renderSectorTree(data);
             }
-        } catch(e) { console.warn('Sector tree load failed:', e); }
+        } catch(e) {
+            if (e.name !== 'AbortError') console.warn('Sector tree load failed:', e);
+        }
     }
 
     async function loadLocationTree() {
+        if (locationTreeAbort) locationTreeAbort.abort();
+        locationTreeAbort = new AbortController();
         try {
             const body = {};
             if (state.domains.length > 0) body.domains = state.domains;
@@ -1502,13 +1520,16 @@ window.SEARCH_TOUR_I18N = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal: locationTreeAbort.signal,
             });
             if (res.ok) {
                 const data = await res.json();
                 renderLocationTree(data);
                 renderCityMarkers();
             }
-        } catch(e) { console.warn('Location tree load failed:', e); }
+        } catch(e) {
+            if (e.name !== 'AbortError') console.warn('Location tree load failed:', e);
+        }
     }
 
     // ============================================================
@@ -1516,10 +1537,22 @@ window.SEARCH_TOUR_I18N = {
     // ============================================================
     let searchPending = false;
     let searchQueued = false;
+    let searchDebounceTimer = null;
+    let previewAbort = null;
 
-    async function doSearch() {
+    function doSearch() {
+        // Debounce: coalesce rapid-fire calls into one after 120ms of calm
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(_doSearchNow, 120);
+    }
+
+    async function _doSearchNow() {
         if (searchPending) { searchQueued = true; return; }
         searchPending = true;
+
+        // Abort any in-flight preview request
+        if (previewAbort) previewAbort.abort();
+        previewAbort = new AbortController();
 
         const body = {};
         if (state.domains.length > 0) body.domains = state.domains;
@@ -1534,6 +1567,7 @@ window.SEARCH_TOUR_I18N = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal: previewAbort.signal,
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
@@ -1574,12 +1608,12 @@ window.SEARCH_TOUR_I18N = {
             // Persist filters so the user returns to the same view
             saveState();
         } catch(e) {
-            console.error('Search failed:', e);
+            if (e.name !== 'AbortError') console.error('Search failed:', e);
         } finally {
             searchPending = false;
             if (searchQueued) {
                 searchQueued = false;
-                doSearch();
+                _doSearchNow();
             }
         }
     }
@@ -1604,7 +1638,9 @@ window.SEARCH_TOUR_I18N = {
     }
 
     async function loadResults(reset) {
-        if (resultsLoading) return;
+        if (resultsLoading && !reset) return;
+        if (reset && resultsAbort) resultsAbort.abort();
+        resultsAbort = new AbortController();
         resultsLoading = true;
 
         if (reset) resultsOffset = 0;
@@ -1628,6 +1664,7 @@ window.SEARCH_TOUR_I18N = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal: resultsAbort.signal,
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
@@ -1702,6 +1739,7 @@ window.SEARCH_TOUR_I18N = {
                 showMore.style.display = 'none';
             }
         } catch(e) {
+            if (e.name === 'AbortError') return;
             console.error('Results failed:', e);
             if (reset) grid.innerHTML = `<div class="results-empty">${I18N.network_error}</div>`;
         } finally {
