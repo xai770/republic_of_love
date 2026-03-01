@@ -549,7 +549,7 @@ window.SEARCH_TOUR_I18N = {
         const allInScope = state.domains.length === 0;
 
         container.innerHTML = sectors.map(s => {
-            const selected = allInScope || s.codes.some(c => state.domains.includes(c));
+            const selected = !allInScope && s.codes.some(c => state.domains.includes(c));
             const dimmed = !allInScope && !selected;
             const isOpen = state.openSectors.has(s.name) || (searchVal && !dimmed);
             const tint = allInScope ? 'tint-all' : '';
@@ -576,7 +576,7 @@ window.SEARCH_TOUR_I18N = {
                 }
             }
 
-            return `<div class="tree-parent-group ${dimmed ? 'dimmed' : ''} ${tint}">
+            return `<div class="tree-parent-group ${selected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${tint}">
                 <div class="tree-parent" data-type="sector" data-codes="${s.codes.join(',')}" data-name="${s.name}">
                     <span class="tree-chevron ${isOpen ? 'open' : ''}">${s.professions.length > 0 ? '▸' : ''}</span>
                     <span class="tree-dot" style="background:${s.color}"></span>
@@ -671,8 +671,8 @@ window.SEARCH_TOUR_I18N = {
         const allInScope = state.states.length === 0 && state.cities.length === 0;
 
         container.innerHTML = locations.map(loc => {
-            const stateSelected = allInScope || state.states.includes(loc.state)
-                || state.cities.some(c => c.state === loc.state);
+            const stateSelected = !allInScope && (state.states.includes(loc.state)
+                || state.cities.some(c => c.state === loc.state));
             const dimmed = !allInScope && !stateSelected;
             const isOpen = state.openStates.has(loc.state) || (searchVal && !dimmed);
             const tint = allInScope ? 'tint-all' : '';
@@ -699,7 +699,7 @@ window.SEARCH_TOUR_I18N = {
                 }
             }
 
-            return `<div class="tree-parent-group ${dimmed ? 'dimmed' : ''} ${tint}">
+            return `<div class="tree-parent-group ${stateSelected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${tint}">
                 <div class="tree-parent" data-type="state" data-state="${loc.state}">
                     <span class="tree-chevron ${isOpen ? 'open' : ''}">${loc.total_cities > 0 ? '▸' : ''}</span>
                     <span class="tree-parent-name">${tState(loc.state)}</span>
@@ -1473,8 +1473,13 @@ window.SEARCH_TOUR_I18N = {
         if (intelligenceAbort) intelligenceAbort.abort();
         intelligenceAbort = new AbortController();
         try {
-            const body = {};
+            const body = { days: 60 };
             if (state.domains.length > 0) body.domains = state.domains;
+            if (state.ql.length > 0) body.ql = state.ql;
+            if (state.states.length > 0) body.states = state.states;
+            if (state.professions.length > 0) body.professions = state.professions;
+            if (state.geoLocations.length > 0)
+                body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
             const res = await fetch('/api/search/intelligence', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

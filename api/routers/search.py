@@ -1106,7 +1106,10 @@ def record_interest(
 class IntelligenceRequest(BaseModel):
     domains: Optional[List[str]] = None   # selected KLDB 2-digit codes
     ql: Optional[List[int]] = None
-    days: int = 30
+    states: Optional[List[str]] = None
+    professions: Optional[List[str]] = None
+    geo_locations: Optional[List[dict]] = None
+    days: int = 60
 
 @router.post("/search/intelligence")
 def search_intelligence(
@@ -1116,91 +1119,118 @@ def search_intelligence(
 ):
     """
     Intelligence panel data for the current search filters.
-    Returns: activity (14-day sparkline), states ranking, professions ranking.
-    Works with or without domain selection.
+    Returns: activity (sparkline), states ranking, professions ranking.
+    Filters: domains, QL, states, professions, geo_locations — all cross-filter the sparkline.
     """
-    has_domains = bool(req.domains)
+    # Build dynamic WHERE clause — reuse preview-style filter logic
+    where_parts = ["p.enabled = true", "p.invalidated = false", "p.berufenet_id IS NOT NULL"]
+    params = []
+
+    if req.domains:
+        params.append(req.domains)
+        where_parts.append("SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)")
+
+    if req.ql:
+        params.append(req.ql)
+        where_parts.append("(CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) = ANY(%s) OR b.berufenet_id IS NULL)")
+
+    if req.states:
+        params.append(req.states)
+        where_parts.append("p.location_state = ANY(%s)")
+
+    if req.professions:
+        params.append(req.professions)
+        where_parts.append("b.name = ANY(%s)")
+
+    if req.geo_locations:
+        geo_parts = []
+        for g in req.geo_locations:
+            lat, lon = g.get("lat"), g.get("lon")
+            radius_km = g.get("radius_km")
+            if lat is not None and lon is not None and radius_km:
+                geo_parts.append(
+                    "ST_DWithin(ST_SetSRID(ST_MakePoint("
+                    "  CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT),"
+                    "  CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)"
+                    "), 4326)::geography,"
+                    "ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,"
+                    "%s)"
+                )
+                params.extend([lon, lat, radius_km * 1000])
+        if geo_parts:
+            where_parts.append("(" + " OR ".join(geo_parts) + ")")
+
+    needs_join = bool(req.domains or req.ql or req.professions)
+    join_sql = "JOIN berufenet b ON b.berufenet_id = p.berufenet_id" if needs_join else "LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id"
+    where_sql = " AND ".join(where_parts)
+
+    params.append(req.days)
 
     with conn.cursor() as cur:
-        # ── 14-day activity (new postings per day) ───────────────
-        if has_domains:
-            cur.execute("""
-                SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
-                FROM postings p
-                JOIN berufenet b ON b.berufenet_id = p.berufenet_id
-                WHERE p.enabled = true AND p.invalidated = false
-                  AND SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s)
-                  AND p.first_seen_at > NOW() - INTERVAL '30 days'
-                GROUP BY day ORDER BY day
-            """, [req.domains])
-        else:
-            cur.execute("""
-                SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
-                FROM postings p
-                WHERE p.enabled = true AND p.invalidated = false
-                  AND p.berufenet_id IS NOT NULL
-                  AND p.first_seen_at > NOW() - INTERVAL '30 days'
-                GROUP BY day ORDER BY day
-            """)
+        # ── Activity sparkline (postings per day, filtered) ───────────────
+        cur.execute(f"""
+            SELECT DATE(p.first_seen_at) AS day, COUNT(*) AS count
+            FROM postings p {join_sql}
+            WHERE {where_sql}
+              AND p.first_seen_at > NOW() - make_interval(days => %s)
+            GROUP BY day ORDER BY day
+        """, params)
         raw_activity = {str(r['day']): r['count'] for r in cur.fetchall()}
         
-        # Fill in missing days with zero counts (ensure full 30-day span)
+        # Fill in missing days with zero counts
         from datetime import date, timedelta
         today = date.today()
         activity = []
-        for i in range(29, -1, -1):  # 30 days, oldest first
+        for i in range(req.days - 1, -1, -1):  # oldest first
             d = today - timedelta(days=i)
             activity.append({"date": str(d), "count": raw_activity.get(str(d), 0)})
 
-        # ── States ranking (fresh_14d from demand_snapshot) ──────
-        if has_domains:
-            cur.execute("""
-                SELECT location_state,
-                       SUM(fresh_14d) AS fresh,
-                       SUM(total_postings) AS total
-                FROM demand_snapshot
-                WHERE domain_code = ANY(%s) AND berufenet_id IS NULL
-                GROUP BY location_state
-                ORDER BY fresh DESC
-            """, [req.domains])
-        else:
-            cur.execute("""
-                SELECT location_state,
-                       SUM(fresh_14d) AS fresh,
-                       SUM(total_postings) AS total
-                FROM demand_snapshot
-                WHERE berufenet_id IS NULL
-                GROUP BY location_state
-                ORDER BY fresh DESC
-            """)
+        # ── States ranking (from demand_snapshot, filtered) ──────
+        ds_where = ["berufenet_id IS NULL"]
+        ds_params = []
+        if req.domains:
+            ds_params.append(req.domains)
+            ds_where.append("domain_code = ANY(%s)")
+        if req.states:
+            ds_params.append(req.states)
+            ds_where.append("location_state = ANY(%s)")
+        ds_where_sql = " AND ".join(ds_where)
+
+        cur.execute(f"""
+            SELECT location_state,
+                   SUM(fresh_14d) AS fresh,
+                   SUM(total_postings) AS total
+            FROM demand_snapshot
+            WHERE {ds_where_sql}
+            GROUP BY location_state
+            ORDER BY fresh DESC
+        """, ds_params)
         states = [
             {"state": r['location_state'], "fresh": r['fresh'], "total": r['total']}
             for r in cur.fetchall()
         ]
 
-        # ── Professions ranking (top 15 by fresh_14d nationally) ─
-        if has_domains:
-            cur.execute("""
-                SELECT berufenet_name AS name,
-                       SUM(fresh_14d) AS fresh,
-                       SUM(total_postings) AS total
-                FROM demand_snapshot
-                WHERE domain_code = ANY(%s) AND berufenet_id IS NOT NULL
-                GROUP BY berufenet_name
-                ORDER BY fresh DESC
-                LIMIT 15
-            """, [req.domains])
-        else:
-            cur.execute("""
-                SELECT berufenet_name AS name,
-                       SUM(fresh_14d) AS fresh,
-                       SUM(total_postings) AS total
-                FROM demand_snapshot
-                WHERE berufenet_id IS NOT NULL
-                GROUP BY berufenet_name
-                ORDER BY fresh DESC
-                LIMIT 15
-            """)
+        # ── Professions ranking (top 15, filtered) ─
+        dp_where = ["berufenet_id IS NOT NULL"]
+        dp_params = []
+        if req.domains:
+            dp_params.append(req.domains)
+            dp_where.append("domain_code = ANY(%s)")
+        if req.states:
+            dp_params.append(req.states)
+            dp_where.append("location_state = ANY(%s)")
+        dp_where_sql = " AND ".join(dp_where)
+
+        cur.execute(f"""
+            SELECT berufenet_name AS name,
+                   SUM(fresh_14d) AS fresh,
+                   SUM(total_postings) AS total
+            FROM demand_snapshot
+            WHERE {dp_where_sql}
+            GROUP BY berufenet_name
+            ORDER BY fresh DESC
+            LIMIT 15
+        """, dp_params)
         professions = [
             {"name": r['name'], "fresh": r['fresh'], "total": r['total'],
              "name_en": _get_prof_trans().get(r['name'])}
