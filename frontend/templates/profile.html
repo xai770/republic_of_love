@@ -134,6 +134,8 @@
     flex-shrink: 0;
     border-top: 1px solid var(--border);
     background: var(--card-bg);
+    position: relative;
+    z-index: 1001;   /* stay above expanded sidebar (z-index 1000) */
 }
 
 /* Chat input */
@@ -141,7 +143,7 @@
     display: flex;
     align-items: flex-end;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.15rem;
 }
 
 .pb-chat-input textarea {
@@ -703,6 +705,7 @@
     background: var(--bg);
     padding: 0.2rem 0.6rem;
     border-radius: 1rem;
+    margin-left: auto;   /* push pill to far right */
 }
 
 .pb-download-btn {
@@ -1163,10 +1166,10 @@
                         </svg>
                         <span class="pb-tool-label">{{ t('profile.translate_btn') }}</span>
                     </button>
-                    <span class="pb-completeness" id="pb-completeness">0%</span>
                     <button class="pb-download-btn" onclick="downloadProfile()" title="{{ t('profile.download') }}">
                         {{ t('profile.download') }}
                     </button>
+                    <span class="pb-completeness" id="pb-completeness">0%</span>
                 </div>
             </div>
 
