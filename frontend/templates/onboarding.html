@@ -1533,9 +1533,9 @@
         if (sc) {
             const copyLang = lang || state.lang || 'de';
             const copyObj = copyLang === 'en' ? COPY.en : COPY.de_du;
-            const vis = visibleStepNumber(state.currentStep);
-            const total = effectiveSteps();
-            sc.textContent = copyObj.step_counter.replace('{a}', vis).replace('{b}', total);
+            // Use previewed lang for total (languages without formality skip step 3)
+            const total = copyLang === 'en' ? 10 : 11;
+            sc.textContent = copyObj.step_counter.replace('{a}', 1).replace('{b}', total);
         }
         if (w && t.welcome) {
             const closing = $('#s1-closing');
