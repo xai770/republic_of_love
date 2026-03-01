@@ -5137,6 +5137,276 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* ============================================================
+   QL STRIP — compact horizontal chips at top of left panel
+   ============================================================ */
+.ql-strip {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #edf2f7;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+}
+
+.ql-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 16px;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.ql-chip:hover {
+    background: #f0f7ff;
+    border-color: var(--ql-color, #3498db);
+}
+
+.ql-chip.selected {
+    background: #e8f4fd;
+    border-color: var(--ql-color, #3498db);
+    font-weight: 600;
+}
+
+.ql-chip.dimmed {
+    opacity: 0.35;
+}
+
+.ql-chip.dimmed:hover {
+    opacity: 0.7;
+}
+
+.ql-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ql-chip-label {
+    color: #2d3748;
+}
+
+.ql-chip-count {
+    color: #718096;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   TREE COMPONENTS — shared by sector tree + location tree
+   ============================================================ */
+.tree-search {
+    width: 100%;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    outline: none;
+    margin-bottom: 0.4rem;
+    flex-shrink: 0;
+    background: #f7fafc;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.tree-search:focus {
+    border-color: #3498db;
+    background: white;
+}
+
+.tree-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #edf2f7;
+    margin-bottom: 0.3rem;
+    flex-shrink: 0;
+}
+
+.tree-col-name, .tree-col-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #718096;
+}
+
+.tree-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+.tree-sortable:hover {
+    color: #3498db;
+}
+
+.sort-arrow {
+    font-size: 0.65rem;
+    margin-left: 2px;
+}
+
+.tree-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-height: 0;
+}
+
+.tree-parent-group {
+    transition: opacity 0.2s;
+}
+
+.tree-parent-group.dimmed {
+    opacity: 0.3;
+}
+
+.tree-parent-group.dimmed:hover {
+    opacity: 0.6;
+}
+
+.tree-parent-group.tint-all .tree-parent {
+    background: rgba(52, 152, 219, 0.04);
+}
+
+.tree-parent {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-size: 0.8rem;
+}
+
+.tree-parent:hover {
+    background: #f0f7ff;
+}
+
+.tree-chevron {
+    width: 14px;
+    font-size: 0.65rem;
+    color: #a0aec0;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    text-align: center;
+    cursor: pointer;
+}
+
+.tree-chevron.open {
+    transform: rotate(90deg);
+}
+
+.tree-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.tree-parent-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #2d3748;
+}
+
+.tree-parent-count {
+    font-size: 0.72rem;
+    color: #718096;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.tree-children {
+    display: none;
+    padding-left: 1.6rem;
+}
+
+.tree-children.open {
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+}
+
+.tree-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-size: 0.75rem;
+}
+
+.tree-child:hover {
+    background: #f0f7ff;
+}
+
+.tree-child.selected {
+    background: #e8f4fd;
+    font-weight: 600;
+}
+
+.tree-child-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #4a5568;
+}
+
+.tree-child-count {
+    font-size: 0.68rem;
+    color: #a0aec0;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.tree-show-more {
+    color: #3498db;
+    font-size: 0.72rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.tree-show-more:hover {
+    text-decoration: underline;
+}
+
+.tree-more {
+    color: #a0aec0;
+    font-style: italic;
+    cursor: default;
+}
+
+/* Sparkline container in right panel */
+.intel-spark {
+    flex-shrink: 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #edf2f7;
+    margin-bottom: 0.5rem;
+}
+
+/* City pill */
+.city-pill {
+    background: #e0f2fe !important;
+    border-color: #7dd3fc !important;
+}
+
 /* Map panel */
 .panel-map {
     display: flex;
@@ -5195,6 +5465,19 @@ body {
 /* Clickable markers — pointer cursor */
 #search-map .leaflet-interactive { cursor: pointer; }
 [data-theme="dark"] .posting-marker-tooltip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+.bundesland-tooltip {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+[data-theme="dark"] .bundesland-tooltip {
     background: #1e293b;
     border-color: #334155;
     color: #e2e8f0;
@@ -6202,6 +6485,94 @@ body {
 
 [data-theme="dark"] .domain-bar-track {
     background: #4a5568;
+}
+
+/* Dark mode — new tree components */
+[data-theme="dark"] .ql-strip {
+    border-bottom-color: #4a5568;
+}
+
+[data-theme="dark"] .ql-chip {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #f7fafc;
+}
+
+[data-theme="dark"] .ql-chip:hover {
+    background: #4a5568;
+}
+
+[data-theme="dark"] .ql-chip.selected {
+    background: #2b6cb0;
+    border-color: var(--ql-color, #3498db);
+}
+
+[data-theme="dark"] .ql-chip-label {
+    color: #f7fafc;
+}
+
+[data-theme="dark"] .ql-chip-count {
+    color: #cbd5e0;
+}
+
+[data-theme="dark"] .tree-search {
+    background: #4a5568;
+    border-color: #718096;
+    color: #f7fafc;
+}
+
+[data-theme="dark"] .tree-search:focus {
+    border-color: #63b3ed;
+    background: #2d3748;
+}
+
+[data-theme="dark"] .tree-header {
+    border-bottom-color: #4a5568;
+}
+
+[data-theme="dark"] .tree-col-name,
+[data-theme="dark"] .tree-col-count {
+    color: #cbd5e0;
+}
+
+[data-theme="dark"] .tree-parent:hover {
+    background: #4a5568;
+}
+
+[data-theme="dark"] .tree-parent-name {
+    color: #f7fafc;
+}
+
+[data-theme="dark"] .tree-parent-count {
+    color: #cbd5e0;
+}
+
+[data-theme="dark"] .tree-child:hover {
+    background: #4a5568;
+}
+
+[data-theme="dark"] .tree-child.selected {
+    background: #2b6cb0;
+}
+
+[data-theme="dark"] .tree-child-name {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .tree-child-count {
+    color: #a0aec0;
+}
+
+[data-theme="dark"] .tree-parent-group.tint-all .tree-parent {
+    background: rgba(99, 179, 237, 0.08);
+}
+
+[data-theme="dark"] .intel-spark {
+    border-bottom-color: #4a5568;
+}
+
+[data-theme="dark"] .tree-show-more {
+    color: #63b3ed;
 }
 
 [data-theme="dark"] .map-controls {

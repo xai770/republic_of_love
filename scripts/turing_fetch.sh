@@ -591,6 +591,8 @@ fi
 # ── Market Intelligence: Demand Snapshot ──────────────────────
 ts "Computing demand snapshot..."
 python3 scripts/compute_demand_snapshot.py 2>&1
+ts "Computing city snapshot..."
+python3 scripts/compute_city_snapshot.py 2>&1
 ts "Computing profession similarity..."
 python3 scripts/compute_profession_similarity.py 2>&1
 

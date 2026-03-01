@@ -20,11 +20,18 @@
 
         <!-- Three-panel layout -->
         <div class="search-panels">
-            <!-- LEFT: Domain (Berufsfeld) -->
-            <div class="search-panel panel-domain">
-                <h3 class="panel-title">{{ t('search.domain_title') }}</h3>
-                <div class="domain-bars" id="domain-bars">
-                    <!-- Rendered by JS -->
+            <!-- LEFT: QL Bar + Sector→Profession tree -->
+            <div class="search-panel panel-left">
+                <div class="ql-strip" id="ql-strip">
+                    <!-- Compact horizontal QL bar -->
+                    <div class="panel-loading">{{ t('search.loading') }}</div>
+                </div>
+                <input type="text" class="tree-search" id="sector-search" placeholder="🔍 {{ t('search.filter_sectors') }}" autocomplete="off">
+                <div class="tree-header">
+                    <span class="tree-col-name tree-sortable" data-panel="sector" data-sort="name">{{ t('search.sector_col') }} <span class="sort-arrow">↕</span></span>
+                    <span class="tree-col-count tree-sortable" data-panel="sector" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
+                </div>
+                <div class="tree-body" id="sector-tree">
                     <div class="panel-loading">{{ t('search.loading') }}</div>
                 </div>
             </div>
@@ -54,30 +61,18 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Intelligence panel -->
-            <div class="search-panel panel-ql">
-                <h3 class="panel-title">{{ t('search.ql_title') }}</h3>
-                <div class="ql-buttons ql-compact" id="ql-buttons">
-                    <!-- Rendered by JS -->
+            <!-- RIGHT: Sparkline + Bundesland→City tree -->
+            <div class="search-panel panel-right">
+                <div class="intel-spark" id="intel-activity">
+                    <canvas id="sparkline-canvas" width="320" height="80" style="width:100%;height:80px;"></canvas>
+                </div>
+                <input type="text" class="tree-search" id="location-search" placeholder="🔍 {{ t('search.filter_locations') }}" autocomplete="off">
+                <div class="tree-header">
+                    <span class="tree-col-name tree-sortable" data-panel="location" data-sort="name">{{ t('search.location_col') }} <span class="sort-arrow">↕</span></span>
+                    <span class="tree-col-count tree-sortable" data-panel="location" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
+                </div>
+                <div class="tree-body" id="location-tree">
                     <div class="panel-loading">{{ t('search.loading') }}</div>
-                </div>
-
-                <!-- 30-day sparkline -->
-                <div class="intel-section" id="intel-activity" style="display:none;">
-                    <h4 class="intel-title">📊 30 Tage</h4>
-                    <canvas id="sparkline-canvas" width="320" height="100" style="width:100%;height:100px;"></canvas>
-                </div>
-
-                <!-- States + Professions side by side -->
-                <div class="intel-split" id="intel-split" style="display:none;">
-                    <div class="intel-list-col">
-                        <h4 class="intel-title">📍 Bundesländer</h4>
-                        <div class="intel-list" id="intel-states"></div>
-                    </div>
-                    <div class="intel-list-col">
-                        <h4 class="intel-title">🔀 Berufe</h4>
-                        <div class="intel-list" id="intel-professions"></div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -298,13 +293,24 @@ window.SEARCH_TOUR_I18N = {
         domains: [],     // selected KLDB 2-digit codes
         ql: [],          // selected QL levels [1-4]
         geoLocations: [],   // [{lat, lon, radius_km, label}] — supports multiple cities
-        professions: [],     // berufenet_name strings clicked from intel panel
+        professions: [],     // berufenet_name strings clicked from sector tree
         // data from last response
         data: null,
         // profile scope (inferred from CV — used for /enrich scoring)
         profileId: null,
         // Bundesland filter
         states: [],
+        // City filter (hierarchical: selected via location tree)
+        cities: [],       // [{state, city}] selected city entries
+        // Tree data caches
+        sectorTree: null,
+        locationTree: null,
+        // Tree open/collapsed states
+        openSectors: new Set(),
+        openStates: new Set(),
+        // Sort state for trees {field: 'name'|'count', dir: 'asc'|'desc'}
+        sectorSort: { field: 'count', dir: 'desc' },
+        locationSort: { field: 'count', dir: 'desc' },
     };
 
     /** Persist filter-relevant parts of state to localStorage. */
@@ -316,6 +322,7 @@ window.SEARCH_TOUR_I18N = {
                 geoLocations: state.geoLocations,
                 professions: state.professions,
                 states: state.states,
+                cities: state.cities,
                 _ts: Date.now(),
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
@@ -342,6 +349,7 @@ window.SEARCH_TOUR_I18N = {
             if (snap.geoLocations && snap.geoLocations.length) { state.geoLocations = snap.geoLocations; restored = true; }
             if (snap.professions && snap.professions.length)   { state.professions = snap.professions; restored = true; }
             if (snap.states && snap.states.length)         { state.states = snap.states; restored = true; }
+            if (snap.cities && snap.cities.length)         { state.cities = snap.cities; restored = true; }
             return restored;
         } catch(e) { return false; }
     }
@@ -466,91 +474,336 @@ window.SEARCH_TOUR_I18N = {
     });
 
     // ============================================================
-    // DOMAIN BARS
+    // QL STRIP (compact horizontal bar — top of left panel)
     // ============================================================
-    function renderDomains(domains) {
-        const container = document.getElementById('domain-bars');
-        if (!domains || domains.length === 0) {
-            container.innerHTML = '<div class="panel-empty">—</div>';
-            return;
-        }
-        const maxCount = Math.max(...domains.map(d => d.count));
-        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+    const QL_COLORS = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c', 0: '#999' };
 
-        container.innerHTML = domains.map(d => {
-            const pct = maxCount > 0 ? Math.round(d.count / maxCount * 100) : 0;
-            const selected = state.domains.length === 0 || d.codes.some(c => state.domains.includes(c));
-            const dimmed = state.domains.length > 0 && !selected;
-            return `
-                <div class="domain-bar ${dimmed ? 'dimmed' : ''} ${selected && state.domains.length > 0 ? 'selected' : ''}"
-                     data-codes="${d.codes.join(',')}" data-name="${d.name}">
-                    <div class="domain-bar-label">${tDomain(d.name)}</div>
-                    <div class="domain-bar-track">
-                        <div class="domain-bar-fill" style="width:${pct}%; background:${d.color};"></div>
-                    </div>
-                    <div class="domain-bar-count">${d.count.toLocaleString(locale)}</div>
-                </div>
-            `;
+    function renderQLStrip(levels) {
+        const container = document.getElementById('ql-strip');
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        if (!levels || levels.length === 0) { container.innerHTML = ''; return; }
+
+        container.innerHTML = levels.filter(l => l.level > 0).map(l => {
+            const selected = state.ql.length === 0 || state.ql.includes(l.level);
+            const dimmed = state.ql.length > 0 && !selected;
+            const color = QL_COLORS[l.level] || '#999';
+            return `<button class="ql-chip ${dimmed ? 'dimmed' : ''} ${selected && state.ql.length > 0 ? 'selected' : ''}"
+                     data-level="${l.level}" style="--ql-color:${color}">
+                <span class="ql-chip-dot" style="background:${color}"></span>
+                <span class="ql-chip-label">${tQL(l.level)}</span>
+                <span class="ql-chip-count">${l.count.toLocaleString(locale)}</span>
+            </button>`;
         }).join('');
     }
 
-    document.getElementById('domain-bars').addEventListener('click', function(e) {
-        const bar = e.target.closest('.domain-bar');
-        if (!bar) return;
-        const codes = bar.dataset.codes.split(',');
-
-        // Toggle: if all codes are already selected, remove them. Otherwise add them.
-        const allSelected = codes.every(c => state.domains.includes(c));
-        if (allSelected) {
-            state.domains = state.domains.filter(c => !codes.includes(c));
-        } else {
-            codes.forEach(c => { if (!state.domains.includes(c)) state.domains.push(c); });
-        }
+    document.getElementById('ql-strip').addEventListener('click', function(e) {
+        const chip = e.target.closest('.ql-chip');
+        if (!chip) return;
+        const level = parseInt(chip.dataset.level);
+        const idx = state.ql.indexOf(level);
+        if (idx >= 0) { state.ql.splice(idx, 1); } else { state.ql.push(level); }
         doSearch();
     });
 
     // ============================================================
-    // QL BAR CHART
+    // SECTOR TREE (left panel — sector→profession hierarchy)
     // ============================================================
-    function renderQL(levels) {
-        const container = document.getElementById('ql-buttons');
-        const qlColors = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c' };
+    function renderSectorTree(data) {
+        if (!data) return;
+        state.sectorTree = data;
+        const container = document.getElementById('sector-tree');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-        const total = levels.reduce((s, l) => s + l.count, 0) || 1;
+        const searchVal = (document.getElementById('sector-search').value || '').toLowerCase();
 
-        container.innerHTML = levels.map(l => {
-            const selected = state.ql.length === 0 || state.ql.includes(l.level);
-            const dimmed = state.ql.length > 0 && !selected;
-            const pct = ((l.count / total) * 100).toFixed(1);
-            const color = qlColors[l.level] || '#999';
-            return `
-                <div class="ql-btn ${dimmed ? 'dimmed' : ''} ${selected && state.ql.length > 0 ? 'selected' : ''}"
-                     data-level="${l.level}">
-                    <div class="ql-bar-header">
-                        <span class="ql-dot" style="background:${color};"></span>
-                        <span class="ql-label">${tQL(l.level)}</span>
-                        <span class="ql-count">${l.count.toLocaleString(locale)}</span>
-                        <span class="ql-pct">${pct}%</span>
-                    </div>
-                    <div class="ql-bar-track">
-                        <div class="ql-bar-fill" style="width:${pct}%; background:${color};"></div>
-                    </div>
+        let sectors = [...data.sectors];
+
+        // Apply search filter
+        if (searchVal) {
+            sectors = sectors.map(s => {
+                const nameMatch = tDomain(s.name).toLowerCase().includes(searchVal);
+                const filteredProfs = s.professions.filter(p => {
+                    const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
+                    return pName.toLowerCase().includes(searchVal);
+                });
+                if (nameMatch || filteredProfs.length > 0) {
+                    return { ...s, professions: nameMatch ? s.professions : filteredProfs };
+                }
+                return null;
+            }).filter(Boolean);
+        }
+
+        // Apply sort
+        const { field, dir } = state.sectorSort;
+        sectors.sort((a, b) => {
+            let cmp = field === 'name'
+                ? tDomain(a.name).localeCompare(tDomain(b.name))
+                : b.count - a.count;
+            return dir === 'asc' ? -cmp : cmp;
+        });
+
+        if (sectors.length === 0) {
+            container.innerHTML = '<div class="panel-empty">—</div>';
+            return;
+        }
+
+        const allInScope = state.domains.length === 0;
+
+        container.innerHTML = sectors.map(s => {
+            const selected = allInScope || s.codes.some(c => state.domains.includes(c));
+            const dimmed = !allInScope && !selected;
+            const isOpen = state.openSectors.has(s.name) || (searchVal && !dimmed);
+            const tint = allInScope ? 'tint-all' : '';
+
+            let profsHtml = '';
+            if (isOpen) {
+                // Sort professions same way
+                let profs = [...s.professions];
+                profs.sort((a, b) => field === 'name'
+                    ? a.name.localeCompare(b.name)
+                    : b.count - a.count);
+                if (dir === 'asc') profs.reverse();
+
+                profsHtml = profs.slice(0, 30).map(p => {
+                    const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
+                    const pSelected = state.professions.includes(p.name);
+                    return `<div class="tree-child ${pSelected ? 'selected' : ''}" data-type="profession" data-name="${p.name}">
+                        <span class="tree-child-name">${pName}</span>
+                        <span class="tree-child-count">${p.count.toLocaleString(locale)}</span>
+                    </div>`;
+                }).join('');
+                if (s.professions.length > 30) {
+                    profsHtml += `<div class="tree-child tree-more">+${s.professions.length - 30} more</div>`;
+                }
+            }
+
+            return `<div class="tree-parent-group ${dimmed ? 'dimmed' : ''} ${tint}">
+                <div class="tree-parent" data-type="sector" data-codes="${s.codes.join(',')}" data-name="${s.name}">
+                    <span class="tree-chevron ${isOpen ? 'open' : ''}">${s.professions.length > 0 ? '▸' : ''}</span>
+                    <span class="tree-dot" style="background:${s.color}"></span>
+                    <span class="tree-parent-name">${tDomain(s.name)}</span>
+                    <span class="tree-parent-count">${s.count.toLocaleString(locale)}</span>
                 </div>
-            `;
+                <div class="tree-children ${isOpen ? 'open' : ''}">${profsHtml}</div>
+            </div>`;
         }).join('');
     }
 
-    document.getElementById('ql-buttons').addEventListener('click', function(e) {
-        const btn = e.target.closest('.ql-btn');
-        if (!btn) return;
-        const level = parseInt(btn.dataset.level);
-        const idx = state.ql.indexOf(level);
-        if (idx >= 0) {
-            state.ql.splice(idx, 1);
-        } else {
-            state.ql.push(level);
+    // Sector tree click handlers
+    document.getElementById('sector-tree').addEventListener('click', function(e) {
+        const parent = e.target.closest('.tree-parent');
+        const child = e.target.closest('.tree-child');
+
+        if (child && child.dataset.type === 'profession') {
+            const name = child.dataset.name;
+            const idx = state.professions.indexOf(name);
+            if (idx >= 0) { state.professions.splice(idx, 1); } else { state.professions.push(name); }
+            doSearch();
+            return;
         }
-        doSearch();
+
+        if (parent) {
+            const chevron = parent.querySelector('.tree-chevron');
+            if (e.target === chevron || e.target.closest('.tree-chevron')) {
+                // Toggle expand/collapse
+                const name = parent.dataset.name;
+                if (state.openSectors.has(name)) { state.openSectors.delete(name); }
+                else { state.openSectors.add(name); }
+                renderSectorTree(state.sectorTree);
+                return;
+            }
+            // Click on the row = toggle domain selection
+            const codes = parent.dataset.codes.split(',');
+            const allSelected = codes.every(c => state.domains.includes(c));
+            if (allSelected) {
+                state.domains = state.domains.filter(c => !codes.includes(c));
+            } else {
+                codes.forEach(c => { if (!state.domains.includes(c)) state.domains.push(c); });
+            }
+            doSearch();
+        }
+    });
+
+    // Sector search box
+    document.getElementById('sector-search').addEventListener('input', function() {
+        renderSectorTree(state.sectorTree);
+    });
+
+    // ============================================================
+    // LOCATION TREE (right panel — Bundesland→City hierarchy)
+    // ============================================================
+    function renderLocationTree(data) {
+        if (!data) return;
+        state.locationTree = data;
+        const container = document.getElementById('location-tree');
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        const searchVal = (document.getElementById('location-search').value || '').toLowerCase();
+
+        let locations = [...data.locations];
+
+        // Apply search filter
+        if (searchVal) {
+            locations = locations.map(loc => {
+                const stateMatch = tState(loc.state).toLowerCase().includes(searchVal);
+                const filteredCities = loc.cities.filter(c =>
+                    c.city.toLowerCase().includes(searchVal)
+                );
+                if (stateMatch || filteredCities.length > 0) {
+                    return { ...loc, cities: stateMatch ? loc.cities : filteredCities };
+                }
+                return null;
+            }).filter(Boolean);
+        }
+
+        // Apply sort
+        const { field, dir } = state.locationSort;
+        locations.sort((a, b) => {
+            let cmp = field === 'name'
+                ? tState(a.state).localeCompare(tState(b.state))
+                : b.count - a.count;
+            return dir === 'asc' ? -cmp : cmp;
+        });
+
+        if (locations.length === 0) {
+            container.innerHTML = '<div class="panel-empty">—</div>';
+            return;
+        }
+
+        const allInScope = state.states.length === 0 && state.cities.length === 0;
+
+        container.innerHTML = locations.map(loc => {
+            const stateSelected = allInScope || state.states.includes(loc.state)
+                || state.cities.some(c => c.state === loc.state);
+            const dimmed = !allInScope && !stateSelected;
+            const isOpen = state.openStates.has(loc.state) || (searchVal && !dimmed);
+            const tint = allInScope ? 'tint-all' : '';
+
+            let citiesHtml = '';
+            if (isOpen) {
+                let cities = [...loc.cities];
+                cities.sort((a, b) => field === 'name'
+                    ? a.city.localeCompare(b.city)
+                    : b.count - a.count);
+                if (dir === 'asc') cities.reverse();
+
+                citiesHtml = cities.map(c => {
+                    const cSelected = state.cities.some(sc => sc.state === loc.state && sc.city === c.city);
+                    return `<div class="tree-child ${cSelected ? 'selected' : ''}" data-type="city" data-state="${loc.state}" data-city="${c.city}" data-lat="${c.lat || ''}" data-lon="${c.lon || ''}">
+                        <span class="tree-child-name">${c.city}</span>
+                        <span class="tree-child-count">${c.count.toLocaleString(locale)}</span>
+                    </div>`;
+                }).join('');
+                if (loc.total_cities > loc.cities.length) {
+                    citiesHtml += `<div class="tree-child tree-show-more" data-state="${loc.state}" data-offset="${loc.cities.length}">
+                        +${loc.total_cities - loc.cities.length} more…
+                    </div>`;
+                }
+            }
+
+            return `<div class="tree-parent-group ${dimmed ? 'dimmed' : ''} ${tint}">
+                <div class="tree-parent" data-type="state" data-state="${loc.state}">
+                    <span class="tree-chevron ${isOpen ? 'open' : ''}">${loc.total_cities > 0 ? '▸' : ''}</span>
+                    <span class="tree-parent-name">${tState(loc.state)}</span>
+                    <span class="tree-parent-count">${loc.count.toLocaleString(locale)}</span>
+                </div>
+                <div class="tree-children ${isOpen ? 'open' : ''}">${citiesHtml}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // Location tree click handlers
+    document.getElementById('location-tree').addEventListener('click', async function(e) {
+        const showMore = e.target.closest('.tree-show-more');
+        if (showMore) {
+            const st = showMore.dataset.state;
+            const offset = parseInt(showMore.dataset.offset) || 10;
+            const body = {};
+            if (state.domains.length > 0) body.domains = state.domains;
+            try {
+                const res = await fetch(`/api/search/location-tree/cities?state=${encodeURIComponent(st)}&offset=${offset}&limit=10`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    // Append cities to the location tree data
+                    const loc = state.locationTree.locations.find(l => l.state === st);
+                    if (loc && data.cities) {
+                        loc.cities = [...loc.cities, ...data.cities];
+                    }
+                    renderLocationTree(state.locationTree);
+                }
+            } catch(err) { console.warn('Load more cities failed:', err); }
+            return;
+        }
+
+        const child = e.target.closest('.tree-child');
+        const parent = e.target.closest('.tree-parent');
+
+        if (child && child.dataset.type === 'city') {
+            const entry = { state: child.dataset.state, city: child.dataset.city };
+            const idx = state.cities.findIndex(c => c.state === entry.state && c.city === entry.city);
+            if (idx >= 0) { state.cities.splice(idx, 1); } else { state.cities.push(entry); }
+            // Also add the state to states for the preview query
+            if (!state.states.includes(entry.state) && state.cities.some(c => c.state === entry.state)) {
+                state.states.push(entry.state);
+            }
+            doSearch();
+            return;
+        }
+
+        if (parent) {
+            const chevron = parent.querySelector('.tree-chevron');
+            if (e.target === chevron || e.target.closest('.tree-chevron')) {
+                const st = parent.dataset.state;
+                if (state.openStates.has(st)) { state.openStates.delete(st); }
+                else { state.openStates.add(st); }
+                renderLocationTree(state.locationTree);
+                return;
+            }
+            // Click on the row = toggle Bundesland selection
+            const st = parent.dataset.state;
+            const idx = state.states.indexOf(st);
+            if (idx >= 0) {
+                state.states.splice(idx, 1);
+                // Also remove any city filters for this state
+                state.cities = state.cities.filter(c => c.state !== st);
+            } else {
+                state.states.push(st);
+            }
+            doSearch();
+        }
+    });
+
+    // Location search box
+    document.getElementById('location-search').addEventListener('input', function() {
+        renderLocationTree(state.locationTree);
+    });
+
+    // ============================================================
+    // TREE SORTING (column header clicks)
+    // ============================================================
+    document.querySelectorAll('.tree-sortable').forEach(el => {
+        el.addEventListener('click', function() {
+            const panel = this.dataset.panel;
+            const field = this.dataset.sort;
+            const sortState = panel === 'sector' ? state.sectorSort : state.locationSort;
+
+            // Tri-state cycle: count-desc → name-asc → count-desc
+            if (sortState.field === field) {
+                sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
+            } else {
+                sortState.field = field;
+                sortState.dir = field === 'name' ? 'asc' : 'desc';
+            }
+
+            // Update arrow indicators
+            document.querySelectorAll(`.tree-sortable[data-panel="${panel}"] .sort-arrow`).forEach(a => a.textContent = '↕');
+            this.querySelector('.sort-arrow').textContent = sortState.dir === 'asc' ? '↑' : '↓';
+
+            if (panel === 'sector') renderSectorTree(state.sectorTree);
+            else renderLocationTree(state.locationTree);
+        });
     });
 
     // ============================================================
@@ -678,6 +931,158 @@ window.SEARCH_TOUR_I18N = {
     function updateZoomHint(z) { zoomHint.style.opacity = (z < MARKER_MIN_ZOOM && markerLayer) ? '1' : '0'; }
 
     // ============================================================
+    // BUNDESLAND GEOJSON OVERLAY + CITY MARKERS
+    // ============================================================
+    let bundeslandLayer = null;
+    let bundeslandGeoData = null;
+    let cityMarkerLayer = null;
+
+    // Load GeoJSON once at startup
+    fetch('/static/geo/bundeslaender.geojson')
+        .then(r => r.json())
+        .then(data => {
+            bundeslandGeoData = data;
+            renderBundeslandOverlay();
+        })
+        .catch(e => console.warn('GeoJSON load failed:', e));
+
+    function renderBundeslandOverlay() {
+        if (bundeslandLayer) { map.removeLayer(bundeslandLayer); bundeslandLayer = null; }
+        if (!bundeslandGeoData) return;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const selectedStates = state.states;
+        const hasSelection = selectedStates.length > 0;
+
+        bundeslandLayer = L.geoJSON(bundeslandGeoData, {
+            style: function(feature) {
+                const name = feature.properties.name;
+                const isSelected = selectedStates.includes(name);
+                if (hasSelection && isSelected) {
+                    return {
+                        color: isDark ? '#60a5fa' : '#2563eb',
+                        weight: 2.5,
+                        fillColor: isDark ? '#3b82f6' : '#3b82f6',
+                        fillOpacity: 0.18,
+                        dashArray: null,
+                    };
+                } else if (hasSelection) {
+                    return {
+                        color: isDark ? '#475569' : '#cbd5e1',
+                        weight: 1,
+                        fillColor: isDark ? '#334155' : '#e2e8f0',
+                        fillOpacity: 0.06,
+                        dashArray: '3,3',
+                    };
+                }
+                // No selection — light blue tint for all
+                return {
+                    color: isDark ? '#475569' : '#93c5fd',
+                    weight: 1,
+                    fillColor: isDark ? '#1e3a5f' : '#dbeafe',
+                    fillOpacity: 0.10,
+                    dashArray: null,
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                layer.on('click', function() {
+                    const name = feature.properties.name;
+                    const idx = state.states.indexOf(name);
+                    if (idx >= 0) {
+                        state.states.splice(idx, 1);
+                        state.cities = state.cities.filter(c => c.state !== name);
+                    } else {
+                        state.states.push(name);
+                    }
+                    doSearch();
+                });
+                layer.on('mouseover', function(e) {
+                    const name = feature.properties.name;
+                    const loc = state.locationTree?.locations?.find(l => l.state === name);
+                    const count = loc ? loc.count.toLocaleString(LANG === 'de' ? 'de-DE' : 'en-US') : '—';
+                    layer.bindTooltip(`<strong>${tState(name)}</strong><br>${count} ${LANG === 'de' ? 'Stellen' : 'posts'}`, {
+                        sticky: true, className: 'bundesland-tooltip'
+                    }).openTooltip(e.latlng);
+                    if (!state.states.includes(name)) {
+                        layer.setStyle({ fillOpacity: 0.22, weight: 2 });
+                    }
+                });
+                layer.on('mouseout', function() {
+                    layer.unbindTooltip();
+                    bundeslandLayer.resetStyle(layer);
+                });
+            },
+        }).addTo(map);
+
+        // Send to back so heatmap and markers stay on top
+        bundeslandLayer.bringToBack();
+    }
+
+    function renderCityMarkers() {
+        if (cityMarkerLayer) { map.removeLayer(cityMarkerLayer); cityMarkerLayer = null; }
+        if (!state.locationTree || !state.locationTree.locations) return;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        cityMarkerLayer = L.layerGroup();
+
+        state.locationTree.locations.forEach(loc => {
+            if (!loc.cities) return;
+            loc.cities.forEach(c => {
+                if (!c.lat || !c.lon) return;
+                const isSelected = state.cities.some(sc => sc.state === loc.state && sc.city === c.city);
+                const baseColor = isSelected
+                    ? (isDark ? '#f59e0b' : '#d97706')
+                    : (isDark ? '#60a5fa' : '#3b82f6');
+                const r = isSelected ? 6 : 4;
+                const opacity = isSelected ? 0.95 : 0.55;
+
+                const cm = L.circleMarker([c.lat, c.lon], {
+                    radius: r,
+                    color: baseColor,
+                    fillColor: baseColor,
+                    fillOpacity: opacity,
+                    weight: isSelected ? 2 : 1,
+                    pane: 'markerPane',
+                });
+
+                const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+                cm.bindTooltip(`<strong>${c.city}</strong><br>${c.count.toLocaleString(locale)} ${LANG === 'de' ? 'Stellen' : 'posts'}`, {
+                    direction: 'top', offset: [0, -6],
+                });
+
+                cm.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    const entry = { state: loc.state, city: c.city };
+                    const idx = state.cities.findIndex(sc => sc.state === entry.state && sc.city === entry.city);
+                    if (idx >= 0) { state.cities.splice(idx, 1); } else { state.cities.push(entry); }
+                    if (!state.states.includes(loc.state) && state.cities.some(sc => sc.state === loc.state)) {
+                        state.states.push(loc.state);
+                    }
+                    doSearch();
+                });
+
+                cityMarkerLayer.addLayer(cm);
+            });
+        });
+
+        // Only show city dots at reasonable zoom
+        if (map.getZoom() >= 7) {
+            cityMarkerLayer.addTo(map);
+        }
+    }
+
+    // Show/hide city markers on zoom change
+    map.on('zoomend', function() {
+        if (cityMarkerLayer) {
+            if (map.getZoom() >= 7 && !map.hasLayer(cityMarkerLayer)) {
+                cityMarkerLayer.addTo(map);
+            } else if (map.getZoom() < 7 && map.hasLayer(cityMarkerLayer)) {
+                map.removeLayer(cityMarkerLayer);
+            }
+        }
+    });
+
+    // ============================================================
     // ACTIVE FILTER PILLS — three grouped frames
     // Group 1: Role & Profile (profile + domains + professions) — all OR
     // Group 2: Qualification — all OR
@@ -699,7 +1104,7 @@ window.SEARCH_TOUR_I18N = {
             </div>`;
         }
 
-        // Group 1: Role & Profile
+        // Group 1: Role & Profile (hierarchical: Sector > Profession)
         const g1 = [];
         if (state.domains.length > 0) {
             const names = new Set();
@@ -709,16 +1114,36 @@ window.SEARCH_TOUR_I18N = {
                 }
             }
             names.forEach(name => {
-                g1.push(`<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
-                    ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
-                </span>`);
+                // Check if any professions are selected under this domain
+                const domainProfs = state.professions.filter(p => {
+                    if (!state.sectorTree) return false;
+                    const sector = state.sectorTree.sectors.find(s => s.name === name);
+                    return sector && sector.professions.some(sp => sp.name === p);
+                });
+                if (domainProfs.length > 0) {
+                    // Show hierarchical pills: Sector > Profession
+                    domainProfs.forEach(prof => {
+                        const displayProf = (state._profDisplayNames && state._profDisplayNames[prof]) || prof;
+                        g1.push(`<span class="filter-pill profession-pill" data-type="profession" data-name="${prof}">
+                            ${tDomain(name)} › ${displayProf} <button class="pill-remove" data-type="profession" data-name="${prof}">×</button>
+                        </span>`);
+                    });
+                } else {
+                    g1.push(`<span class="filter-pill domain-pill" data-type="domain" data-name="${name}">
+                        ${tDomain(name)} <button class="pill-remove" data-type="domain" data-name="${name}">×</button>
+                    </span>`);
+                }
             });
         }
+        // Professions not under a selected domain
         state.professions.forEach(name => {
-            const displayName = (state._profDisplayNames && state._profDisplayNames[name]) || name;
-            g1.push(`<span class="filter-pill profession-pill" data-type="profession" data-name="${name}">
-                💼 ${displayName} <button class="pill-remove" data-type="profession" data-name="${name}">×</button>
-            </span>`);
+            const alreadyShown = g1.some(html => html.includes(`data-name="${name}"`));
+            if (!alreadyShown) {
+                const displayName = (state._profDisplayNames && state._profDisplayNames[name]) || name;
+                g1.push(`<span class="filter-pill profession-pill" data-type="profession" data-name="${name}">
+                    💼 ${displayName} <button class="pill-remove" data-type="profession" data-name="${name}">×</button>
+                </span>`);
+            }
         });
 
         // Group 2: Qualification
@@ -729,12 +1154,22 @@ window.SEARCH_TOUR_I18N = {
             </span>`);
         });
 
-        // Group 3: Location
+        // Group 3: Location (hierarchical: Bundesland > City)
         const g3 = [];
         state.states.forEach(stateName => {
-            g3.push(`<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
-                🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
-            </span>`);
+            // Check if any cities are selected under this state
+            const stateCities = state.cities.filter(c => c.state === stateName);
+            if (stateCities.length > 0) {
+                stateCities.forEach(c => {
+                    g3.push(`<span class="filter-pill city-pill" data-type="city" data-state="${c.state}" data-city="${c.city}">
+                        ${tState(stateName)} › ${c.city} <button class="pill-remove" data-type="city" data-state="${c.state}" data-city="${c.city}">×</button>
+                    </span>`);
+                });
+            } else {
+                g3.push(`<span class="filter-pill state-pill" data-type="state" data-name="${stateName}">
+                    🗺 ${tState(stateName)} <button class="pill-remove" data-type="state" data-name="${stateName}">×</button>
+                </span>`);
+            }
         });
         state.geoLocations.forEach((g, idx) => {
             const rPart = g.radius_km
@@ -781,12 +1216,29 @@ window.SEARCH_TOUR_I18N = {
             const name = btn.dataset.name;
             const codes = (window._domainMap || {})[name] || [];
             state.domains = state.domains.filter(c => !codes.includes(c));
+            // Also remove professions under this domain
+            if (state.sectorTree) {
+                const sector = state.sectorTree.sectors.find(s => s.name === name);
+                if (sector) {
+                    const profNames = sector.professions.map(p => p.name);
+                    state.professions = state.professions.filter(p => !profNames.includes(p));
+                }
+            }
         } else if (type === 'ql') {
             const level = parseInt(btn.dataset.level);
             state.ql = state.ql.filter(l => l !== level);
         } else if (type === 'state') {
             const name = btn.dataset.name;
             state.states = state.states.filter(s => s !== name);
+            state.cities = state.cities.filter(c => c.state !== name);
+        } else if (type === 'city') {
+            const st = btn.dataset.state;
+            const city = btn.dataset.city;
+            state.cities = state.cities.filter(c => !(c.state === st && c.city === city));
+            // If no more cities for this state, check if state should be removed
+            if (!state.cities.some(c => c.state === st)) {
+                // Keep the state selected if it was explicitly selected
+            }
         } else if (type === 'profession') {
             const name = btn.dataset.name;
             state.professions = state.professions.filter(p => p !== name);
@@ -999,30 +1451,7 @@ window.SEARCH_TOUR_I18N = {
     }
 
     function renderIntelList(containerId, items, labelKey, filterType = null) {
-        const el = document.getElementById(containerId);
-        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-        if (!items || items.length === 0) {
-            el.innerHTML = '<div class="intel-empty">—</div>';
-            return;
-        }
-        el.innerHTML = items.map((item, i) => {
-            const name = item[labelKey] || '—';
-            let displayName = name;
-            if (filterType === 'state') {
-                displayName = tState(name);
-            } else if (filterType === 'profession' && LANG === 'en' && item.name_en) {
-                displayName = item.name_en;
-            }
-            const rowClass = filterType ? 'intel-row intel-row-clickable' : 'intel-row';
-            const extraAttrs = filterType
-                ? ` data-filter-type="${filterType}" data-filter-value="${name}" data-filter-display="${displayName}"`
-                : '';
-            return `<div class="${rowClass}"${extraAttrs} title="${displayName}: ${item.fresh}">
-                <span class="intel-rank">${i + 1}.</span>
-                <span class="intel-name">${displayName}</span>
-                <span class="intel-count">${item.fresh.toLocaleString(locale)}</span>
-            </div>`;
-        }).join('');
+        // Legacy — kept for compatibility but no longer rendered in panels
     }
 
     async function loadIntelligence() {
@@ -1037,35 +1466,50 @@ window.SEARCH_TOUR_I18N = {
             if (!res.ok) return;
             const data = await res.json();
             renderSparkline(data.activity);
-            document.getElementById('intel-split').style.display = '';
-            renderIntelList('intel-states', data.states, 'state', 'state');
-            renderIntelList('intel-professions', data.professions, 'name', 'profession');
         } catch(e) {
             console.warn('Intelligence load failed:', e);
         }
     }
 
-    // Click-to-filter on Bundesland rows in intelligence panel
-    document.getElementById('intel-split').addEventListener('click', async function(e) {
-        const row = e.target.closest('.intel-row-clickable');
-        if (!row) return;
-        const type = row.dataset.filterType;
-        const value = row.dataset.filterValue;
-        if (!value || value === '—') return;
-        if (type === 'state') {
-            if (!state.states.includes(value)) {
-                state.states.push(value);
-                doSearch();
+    // ============================================================
+    // HIERARCHY TREE LOADERS
+    // ============================================================
+    async function loadSectorTree() {
+        try {
+            const body = {};
+            if (state.states.length > 0) body.states = state.states;
+            if (state.ql.length > 0) body.ql = state.ql;
+            const res = await fetch('/api/search/sector-tree', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                // Build domain map for pills
+                window._domainMap = {};
+                data.sectors.forEach(s => { window._domainMap[s.name] = s.codes; });
+                renderSectorTree(data);
             }
-        } else if (type === 'profession') {
-            if (!state.professions.includes(value)) {
-                state.professions.push(value);
-                state._profDisplayNames = state._profDisplayNames || {};
-                state._profDisplayNames[value] = row.dataset.filterDisplay || value;
-                doSearch();
+        } catch(e) { console.warn('Sector tree load failed:', e); }
+    }
+
+    async function loadLocationTree() {
+        try {
+            const body = {};
+            if (state.domains.length > 0) body.domains = state.domains;
+            const res = await fetch('/api/search/location-tree', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                renderLocationTree(data);
+                renderCityMarkers();
             }
-        }
-    });
+        } catch(e) { console.warn('Location tree load failed:', e); }
+    }
 
     // ============================================================
     // MAIN SEARCH
@@ -1095,22 +1539,23 @@ window.SEARCH_TOUR_I18N = {
             const data = await res.json();
             state.data = data;
 
-            // Build domain map for pill rendering
-            window._domainMap = {};
-            data.by_domain.forEach(d => { window._domainMap[d.name] = d.codes; });
-
-            renderDomains(data.by_domain);
-            renderQL(data.by_ql);
+            // Render QL strip from preview data
+            renderQLStrip(data.by_ql);
             renderHeatmap(data.heatmap);
             renderMarkers(data.markers);
             renderTotal(data.total, data.landscape_total);
             renderFreshness(data.fresh_count);
             renderFilterPills();
+            renderBundeslandOverlay();
 
             // Force map tile refresh after render
             setTimeout(() => map.invalidateSize(), 50);
 
-            // Load intelligence data (sparkline + rankings)
+            // Load hierarchy trees (cross-filtered)
+            loadSectorTree();
+            loadLocationTree();
+
+            // Load sparkline
             loadIntelligence();
 
             // Load matching postings as result tiles

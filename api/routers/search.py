@@ -1581,3 +1581,321 @@ def search_profile(
         "experience_level": profile.get('experience_level') or None,
     }
 
+
+# ============================================================
+# Hierarchy endpoints — sector→profession tree, state→city tree
+# ============================================================
+
+class HierarchyRequest(BaseModel):
+    """
+    Cross-filter request for hierarchy panels.
+    Each panel sends the *other* panel's selections so counts are cross-filtered.
+    """
+    domains: Optional[List[str]] = None       # selected KLDB 2-digit codes
+    ql: Optional[List[int]] = None            # selected QL levels
+    states: Optional[List[str]] = None        # selected Bundesländer
+    cities: Optional[List[str]] = None        # selected cities (state:city format)
+    professions: Optional[List[str]] = None   # selected berufenet_names
+    geo_locations: Optional[List[GeoLocation]] = None
+
+
+@router.post("/search/sector-tree")
+def sector_tree(
+    req: HierarchyRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Returns the sector→profession hierarchy with counts.
+
+    Counts are cross-filtered by location selections (states/cities)
+    but NOT by sector/domain selections — so the user sees how many
+    postings each sector has given current location filters.
+
+    Response shape:
+    {
+      "sectors": [
+        {
+          "name": "IT & Technologie",
+          "codes": ["43"],
+          "color": "#fc8d62",
+          "count": 12345,
+          "professions": [
+            {"name": "Softwareentwicklung", "berufenet_id": 123, "count": 456},
+            ...
+          ]
+        },
+        ...
+      ]
+    }
+    """
+    with conn.cursor() as cur:
+        # Build WHERE clauses for cross-filtering by location
+        where_parts = []
+        params = []
+
+        if req.states:
+            where_parts.append("ds.location_state = ANY(%s)")
+            params.append(req.states)
+
+        if req.ql:
+            # QL filter: we need to look at postings directly for QL
+            # For now, QL is encoded in profession-level data via berufenet.kldb
+            # We'll handle QL at the display level or fall back to postings query
+            pass
+
+        where_sql = (" AND " + " AND ".join(where_parts)) if where_parts else ""
+
+        # ── Domain-level counts (berufenet_id IS NULL rows in demand_snapshot) ──
+        cur.execute(f"""
+            SELECT ds.domain_code,
+                   SUM(ds.total_postings) AS total,
+                   SUM(ds.fresh_14d) AS fresh
+            FROM demand_snapshot ds
+            WHERE ds.berufenet_id IS NULL
+            {where_sql}
+            GROUP BY ds.domain_code
+            ORDER BY total DESC
+        """, params)
+
+        domain_counts = {}
+        for row in cur.fetchall():
+            code = row['domain_code']
+            name = KLDB_DOMAINS.get(code, f'Sonstige ({code})')
+            if name not in domain_counts:
+                domain_counts[name] = {"codes": [], "total": 0, "fresh": 0}
+            domain_counts[name]["codes"].append(code)
+            domain_counts[name]["total"] += row['total']
+            domain_counts[name]["fresh"] += row['fresh']
+
+        # ── Profession-level counts ──────────────────────────────────────
+        cur.execute(f"""
+            SELECT ds.domain_code,
+                   ds.berufenet_id,
+                   ds.berufenet_name,
+                   SUM(ds.total_postings) AS total,
+                   SUM(ds.fresh_14d) AS fresh
+            FROM demand_snapshot ds
+            WHERE ds.berufenet_id IS NOT NULL
+            {where_sql}
+            GROUP BY ds.domain_code, ds.berufenet_id, ds.berufenet_name
+            ORDER BY total DESC
+        """, params)
+
+        prof_by_domain = {}
+        for row in cur.fetchall():
+            code = row['domain_code']
+            name = KLDB_DOMAINS.get(code, f'Sonstige ({code})')
+            if name not in prof_by_domain:
+                prof_by_domain[name] = []
+            prof_by_domain[name].append({
+                "name": row['berufenet_name'],
+                "berufenet_id": row['berufenet_id'],
+                "count": row['total'],
+                "fresh": row['fresh'],
+                "name_en": _get_prof_trans().get(row['berufenet_name']),
+            })
+
+        # ── Assemble response ────────────────────────────────────────────
+        sectors = []
+        for name, data in sorted(domain_counts.items(), key=lambda x: x[1]['total'], reverse=True):
+            profs = prof_by_domain.get(name, [])
+            profs.sort(key=lambda p: p['count'], reverse=True)
+            sectors.append({
+                "name": name,
+                "codes": data["codes"],
+                "color": DOMAIN_COLORS.get(name, '#cccccc'),
+                "count": data["total"],
+                "fresh": data["fresh"],
+                "professions": profs[:50],  # cap at 50 per sector
+            })
+
+        return {"sectors": sectors}
+
+
+@router.post("/search/location-tree")
+def location_tree(
+    req: HierarchyRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Returns the Bundesland→City hierarchy with counts.
+
+    Counts are cross-filtered by sector/domain selections
+    but NOT by location selections — so the user sees how many
+    postings each Bundesland has given current sector filters.
+
+    Response shape:
+    {
+      "locations": [
+        {
+          "state": "Bayern",
+          "count": 45000,
+          "fresh": 1200,
+          "cities": [
+            {"city": "München", "count": 12000, "fresh": 340, "lat": 48.13, "lon": 11.58},
+            ...
+          ]
+        },
+        ...
+      ]
+    }
+    """
+    with conn.cursor() as cur:
+        # Cross-filter by domain selections
+        where_parts = []
+        params = []
+
+        if req.domains:
+            where_parts.append("cs.domain_code = ANY(%s)")
+            params.append(req.domains)
+
+        # When domains are selected, use domain-specific rows; otherwise use totals
+        if req.domains:
+            domain_where = " AND " + " AND ".join(where_parts) if where_parts else ""
+            # State-level: sum city_snapshot rows that have a matching domain_code
+            cur.execute(f"""
+                SELECT cs.location_state,
+                       SUM(cs.total_postings) AS total,
+                       SUM(cs.fresh_14d) AS fresh
+                FROM city_snapshot cs
+                WHERE cs.domain_code IS NOT NULL
+                {domain_where}
+                GROUP BY cs.location_state
+                ORDER BY total DESC
+            """, params)
+        else:
+            # No domain filter — use the total rows (domain_code IS NULL)
+            cur.execute("""
+                SELECT cs.location_state,
+                       SUM(cs.total_postings) AS total,
+                       SUM(cs.fresh_14d) AS fresh
+                FROM city_snapshot cs
+                WHERE cs.domain_code IS NULL
+                GROUP BY cs.location_state
+                ORDER BY total DESC
+            """)
+
+        state_data = []
+        for row in cur.fetchall():
+            state_data.append({
+                "state": row['location_state'],
+                "count": row['total'],
+                "fresh": row['fresh'],
+            })
+
+        # ── City-level data per state ────────────────────────────────────
+        # For each state, get top cities
+        if req.domains:
+            cur.execute(f"""
+                SELECT cs.location_state,
+                       cs.location_city,
+                       SUM(cs.total_postings) AS total,
+                       SUM(cs.fresh_14d) AS fresh,
+                       AVG(cs.avg_lat) AS lat,
+                       AVG(cs.avg_lon) AS lon
+                FROM city_snapshot cs
+                WHERE cs.domain_code IS NOT NULL
+                {domain_where}
+                GROUP BY cs.location_state, cs.location_city
+                ORDER BY cs.location_state, total DESC
+            """, params)
+        else:
+            cur.execute("""
+                SELECT cs.location_state,
+                       cs.location_city,
+                       cs.total_postings AS total,
+                       cs.fresh_14d AS fresh,
+                       cs.avg_lat AS lat,
+                       cs.avg_lon AS lon
+                FROM city_snapshot cs
+                WHERE cs.domain_code IS NULL
+                ORDER BY cs.location_state, cs.total_postings DESC
+            """)
+
+        cities_by_state = {}
+        for row in cur.fetchall():
+            st = row['location_state']
+            if st not in cities_by_state:
+                cities_by_state[st] = []
+            cities_by_state[st].append({
+                "city": row['location_city'],
+                "count": row['total'],
+                "fresh": row['fresh'],
+                "lat": round(float(row['lat']), 4) if row['lat'] else None,
+                "lon": round(float(row['lon']), 4) if row['lon'] else None,
+            })
+
+        # Attach cities to states
+        locations = []
+        for sd in state_data:
+            cities = cities_by_state.get(sd['state'], [])
+            locations.append({
+                **sd,
+                "total_cities": len(cities),
+                "cities": cities[:10],  # top 10 initially
+            })
+
+        return {"locations": locations}
+
+
+@router.post("/search/location-tree/cities")
+def location_tree_cities(
+    state: str = Query(...),
+    offset: int = Query(default=10),
+    limit: int = Query(default=10),
+    req: HierarchyRequest = None,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """
+    Load more cities for a Bundesland (paginated).
+    Used by the "show more" button in the location tree panel.
+    """
+    if req is None:
+        req = HierarchyRequest()
+
+    with conn.cursor() as cur:
+        if req.domains:
+            cur.execute("""
+                SELECT cs.location_city,
+                       SUM(cs.total_postings) AS total,
+                       SUM(cs.fresh_14d) AS fresh,
+                       AVG(cs.avg_lat) AS lat,
+                       AVG(cs.avg_lon) AS lon
+                FROM city_snapshot cs
+                WHERE cs.location_state = %s
+                  AND cs.domain_code = ANY(%s)
+                  AND cs.domain_code IS NOT NULL
+                GROUP BY cs.location_city
+                ORDER BY total DESC
+                OFFSET %s LIMIT %s
+            """, (state, req.domains, offset, limit))
+        else:
+            cur.execute("""
+                SELECT cs.location_city AS location_city,
+                       cs.total_postings AS total,
+                       cs.fresh_14d AS fresh,
+                       cs.avg_lat AS lat,
+                       cs.avg_lon AS lon
+                FROM city_snapshot cs
+                WHERE cs.location_state = %s
+                  AND cs.domain_code IS NULL
+                ORDER BY cs.total_postings DESC
+                OFFSET %s LIMIT %s
+            """, (state, offset, limit))
+
+        cities = [
+            {
+                "city": row['location_city'],
+                "count": row['total'],
+                "fresh": row['fresh'],
+                "lat": round(float(row['lat']), 4) if row['lat'] else None,
+                "lon": round(float(row['lon']), 4) if row['lon'] else None,
+            }
+            for row in cur.fetchall()
+        ]
+
+        return {"state": state, "cities": cities, "offset": offset}
+

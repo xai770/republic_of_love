@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4iwDb3O98M76FAcG7cSIUM8XhrnjMARIZ7RKA3Yc45qUAvossGk18dOazfBmJEF
+\restrict snx9KTbv27wN3VuOZ73E0QTQiI1xPJmRpPVaL0dLukGKvuzE4P6wfZo3JnyYs80
 
 -- Dumped from database version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
@@ -1477,6 +1477,40 @@ ALTER FUNCTION public.posting_exists(p_source_id integer, p_external_job_id text
 
 COMMENT ON FUNCTION public.posting_exists(p_source_id integer, p_external_job_id text) IS 'Check if a posting already exists by source and external ID';
 
+
+--
+-- Name: prevent_owl_names_berufenet_overwrite(); Type: FUNCTION; Schema: public; Owner: base_admin
+--
+
+CREATE FUNCTION public.prevent_owl_names_berufenet_overwrite() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        berufenet_exists BOOLEAN;
+    BEGIN
+        -- Check if this owl_id is a berufenet profession
+        SELECT EXISTS(SELECT 1 FROM berufenet WHERE berufenet_id = NEW.owl_id)
+        INTO berufenet_exists;
+        
+        IF berufenet_exists THEN
+            -- Only allow berufenet-aware sources to write to berufenet IDs
+            IF NEW.confidence_source NOT IN (
+                'import', 'llm_confirmed', 'llm_single', 'human', 
+                'posting_city_name', 'repair_geonames_20260227'
+            ) THEN
+                RAISE EXCEPTION 
+                    'owl_names: source "%" cannot write to berufenet ID %. '
+                    'Only berufenet-aware sources may modify profession names.',
+                    NEW.confidence_source, NEW.owl_id;
+            END IF;
+        END IF;
+        
+        RETURN NEW;
+    END;
+    $$;
+
+
+ALTER FUNCTION public.prevent_owl_names_berufenet_overwrite() OWNER TO base_admin;
 
 --
 -- Name: queue_workflow_docs(); Type: FUNCTION; Schema: public; Owner: base_admin
@@ -7717,6 +7751,13 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.postings FOR EACH ROW EXEC
 
 
 --
+-- Name: owl_names trg_prevent_berufenet_overwrite; Type: TRIGGER; Schema: public; Owner: base_admin
+--
+
+CREATE TRIGGER trg_prevent_berufenet_overwrite BEFORE INSERT OR UPDATE ON public.owl_names FOR EACH ROW EXECUTE FUNCTION public.prevent_owl_names_berufenet_overwrite();
+
+
+--
 -- Name: task_types trg_task_types_update; Type: TRIGGER; Schema: public; Owner: base_admin
 --
 
@@ -8108,5 +8149,5 @@ ALTER EVENT TRIGGER schema_change_trigger OWNER TO base_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4iwDb3O98M76FAcG7cSIUM8XhrnjMARIZ7RKA3Yc45qUAvossGk18dOazfBmJEF
+\unrestrict snx9KTbv27wN3VuOZ73E0QTQiI1xPJmRpPVaL0dLukGKvuzE4P6wfZo3JnyYs80
 
