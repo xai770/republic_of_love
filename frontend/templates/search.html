@@ -22,6 +22,7 @@
         <div class="search-panels">
             <!-- LEFT: QL Bar + Sector→Profession tree -->
             <div class="search-panel panel-left">
+                <button class="panel-maximize-btn" data-panel="panel-left" title="Maximize">⛶</button>
                 <div class="ql-strip" id="ql-strip">
                     <!-- Compact horizontal QL bar -->
                     <div class="panel-loading">{{ t('search.loading') }}</div>
@@ -38,6 +39,7 @@
 
             <!-- CENTER: Map -->
             <div class="search-panel panel-map">
+                <button class="panel-maximize-btn" data-panel="panel-map" title="Maximize">⛶</button>
                 <div class="map-controls">
                     <input type="text" id="city-search" placeholder="{{ t('search.city_placeholder') }}" autocomplete="off">
                     <select id="radius-select">
@@ -63,6 +65,7 @@
 
             <!-- RIGHT: Sparkline + Bundesland→City tree -->
             <div class="search-panel panel-right">
+                <button class="panel-maximize-btn" data-panel="panel-right" title="Maximize">⛶</button>
                 <div class="intel-spark" id="intel-activity">
                     <canvas id="sparkline-canvas" width="320" height="80" style="width:100%;height:80px;"></canvas>
                 </div>
@@ -77,9 +80,19 @@
             </div>
         </div>
 
-        <!-- Save button -->
+        <!-- Filter action toolbar -->
         <div class="search-actions">
-            <button class="btn-save-search" id="btn-save-search">
+            <button class="filter-action-btn" id="btn-reload-profile" title="{{ t('search.reload_profile_title') }}">
+                👤 {{ t('search.reload_profile') }}
+            </button>
+            <button class="filter-action-btn btn-destructive" id="btn-clear-filters" title="{{ t('search.clear_filters_title') }}">
+                🗑 {{ t('search.clear_filters') }}
+            </button>
+            <div class="action-separator"></div>
+            <button class="filter-action-btn" id="btn-load-saved" title="{{ t('search.load_saved_title') }}">
+                📂 {{ t('search.load_saved') }}
+            </button>
+            <button class="btn-save-search" id="btn-save-search" title="{{ t('search.save_search_title') }}">
                 💾 {{ t('search.save_search') }}
             </button>
             <span class="save-feedback" id="save-feedback"></span>
@@ -87,6 +100,7 @@
 
         <!-- Search results -->
         <div class="search-results-section" id="search-results-section" style="display:none;">
+            <button class="panel-maximize-btn" data-panel="results" title="Maximize">⛶</button>
             <h2 class="results-section-title" id="results-title"></h2>
             <span class="results-sort-indicator" id="results-sort-indicator"></span>
             <div class="search-results-grid" id="search-results-grid">
@@ -220,6 +234,8 @@ window.SEARCH_TOUR_I18N = {
         save_success: '{{ t("search.save_success") }}',
         save_error: '{{ t("search.save_error") }}',
         network_error: '{{ t("search.network_error") }}',
+        profile_reloaded: '{{ t("search.profile_reloaded") }}',
+        load_success: '{{ t("search.load_success") }}',
         mira_greeting: '{{ t("search.mira_greeting") }}',
         mira_error: '{{ t("search.mira_error") }}',
         mira_offline: '{{ t("search.mira_offline") }}',
@@ -2022,6 +2038,115 @@ window.SEARCH_TOUR_I18N = {
         document.getElementById('btn-interested').classList.toggle('active', interested === true);
         document.getElementById('btn-not-interested').classList.toggle('active', interested === false);
     }
+
+    // ============================================================
+    // PANEL MAXIMIZE / RESTORE
+    // ============================================================
+    document.querySelectorAll('.panel-maximize-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const panelId = this.dataset.panel;
+
+            // Results grid — special case (fixed overlay)
+            if (panelId === 'results') {
+                const section = document.getElementById('search-results-section');
+                const isMax = section.classList.toggle('maximized');
+                this.textContent = isMax ? '⊗' : '⛶';
+                this.title = isMax ? 'Restore' : 'Maximize';
+                return;
+            }
+
+            const panels = document.querySelector('.search-panels');
+            const panel = panels.querySelector('.' + panelId);
+            if (!panel) return;
+
+            const wasMax = panel.classList.contains('maximized');
+
+            // Remove all maximized states
+            panels.querySelectorAll('.search-panel').forEach(p => p.classList.remove('maximized'));
+            panels.classList.remove('has-maximized');
+            panels.querySelectorAll('.panel-maximize-btn').forEach(b => {
+                b.textContent = '⛶'; b.title = 'Maximize';
+            });
+
+            if (!wasMax) {
+                panel.classList.add('maximized');
+                panels.classList.add('has-maximized');
+                this.textContent = '⊗';
+                this.title = 'Restore';
+            }
+
+            // Leaflet needs to know the map container resized
+            setTimeout(() => { map.invalidateSize(); }, 100);
+        });
+    });
+
+    // ============================================================
+    // FILTER ACTIONS — reload from profile, clear, load saved, save
+    // ============================================================
+
+    // 1. Reload defaults from profile
+    document.getElementById('btn-reload-profile').addEventListener('click', async function() {
+        const feedback = document.getElementById('save-feedback');
+        try {
+            // Clear current filters first
+            state.domains = [];
+            state.ql = [];
+            state.geoLocations = [];
+            state.professions = [];
+            state.states = [];
+            state.cities = [];
+            saveState();
+
+            // Re-init from profile scope
+            await initProfileScope();
+            doSearch();
+            feedback.textContent = I18N.profile_reloaded || '✓';
+            feedback.className = 'save-feedback success';
+        } catch(e) {
+            feedback.textContent = I18N.save_error;
+            feedback.className = 'save-feedback error';
+        }
+        setTimeout(() => { feedback.textContent = ''; }, 3000);
+    });
+
+    // 2. Clear all filters
+    document.getElementById('btn-clear-filters').addEventListener('click', function() {
+        state.domains = [];
+        state.ql = [];
+        state.geoLocations = [];
+        state.professions = [];
+        state.states = [];
+        state.cities = [];
+        saveState();
+        // Clear geo layers
+        updateGeoLayers();
+        // Reset map view to Germany center
+        map.setView([51.1657, 10.4515], 6);
+        doSearch();
+    });
+
+    // 3. Load saved search
+    document.getElementById('btn-load-saved').addEventListener('click', async function() {
+        const feedback = document.getElementById('save-feedback');
+        try {
+            // Clear current state first
+            state.domains = [];
+            state.ql = [];
+            state.geoLocations = [];
+            state.professions = [];
+            state.states = [];
+            state.cities = [];
+
+            await loadSavedSearch();
+            doSearch();
+            feedback.textContent = I18N.load_success || '✓ Loaded';
+            feedback.className = 'save-feedback success';
+        } catch(e) {
+            feedback.textContent = I18N.save_error;
+            feedback.className = 'save-feedback error';
+        }
+        setTimeout(() => { feedback.textContent = ''; }, 3000);
+    });
 
     // ============================================================
     // SAVE SEARCH
