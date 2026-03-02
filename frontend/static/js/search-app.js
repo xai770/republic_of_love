@@ -1278,6 +1278,9 @@
                 window._domainMap = {};
                 data.sectors.forEach(s => { window._domainMap[s.name] = s.codes; });
                 renderSectorTree(data);
+                // Re-render pills now that _domainMap is available
+                // (first doSearch renders pills before this async call completes)
+                renderFilterPills();
             }
         } catch(e) {
             if (e.name !== 'AbortError') console.warn('Sector tree load failed:', e);
