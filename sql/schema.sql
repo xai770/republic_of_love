@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict snx9KTbv27wN3VuOZ73E0QTQiI1xPJmRpPVaL0dLukGKvuzE4P6wfZo3JnyYs80
+\restrict 2gt57p7zmdyrolFnoOeh6ZVsqJ1zk4IjuEXNf3mhIwfcaBfUr2fcgx8qEcNVlm0
 
 -- Dumped from database version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
@@ -3357,6 +3357,55 @@ CREATE TABLE public.city_country_map (
 ALTER TABLE public.city_country_map OWNER TO base_admin;
 
 --
+-- Name: city_snapshot; Type: TABLE; Schema: public; Owner: base_admin
+--
+
+CREATE TABLE public.city_snapshot (
+    city_id integer NOT NULL,
+    location_state text NOT NULL,
+    location_city text NOT NULL,
+    domain_code text,
+    total_postings integer DEFAULT 0 NOT NULL,
+    fresh_14d integer DEFAULT 0 NOT NULL,
+    fresh_7d integer DEFAULT 0 NOT NULL,
+    avg_lat numeric(9,6),
+    avg_lon numeric(9,6),
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.city_snapshot OWNER TO base_admin;
+
+--
+-- Name: TABLE city_snapshot; Type: COMMENT; Schema: public; Owner: base_admin
+--
+
+COMMENT ON TABLE public.city_snapshot IS 'City-level posting aggregates for the search hierarchy panel. Refreshed nightly by compute_city_snapshot.py.';
+
+
+--
+-- Name: city_snapshot_city_id_seq; Type: SEQUENCE; Schema: public; Owner: base_admin
+--
+
+CREATE SEQUENCE public.city_snapshot_city_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.city_snapshot_city_id_seq OWNER TO base_admin;
+
+--
+-- Name: city_snapshot_city_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: base_admin
+--
+
+ALTER SEQUENCE public.city_snapshot_city_id_seq OWNED BY public.city_snapshot.city_id;
+
+
+--
 -- Name: company_alias_variants; Type: TABLE; Schema: public; Owner: base_admin
 --
 
@@ -5446,7 +5495,8 @@ CREATE TABLE public.users (
     terms_accepted_at timestamp with time zone,
     freeze_flag boolean DEFAULT false NOT NULL,
     gdpr_cv_consent_at timestamp with time zone,
-    is_protected boolean DEFAULT false NOT NULL
+    is_protected boolean DEFAULT false NOT NULL,
+    situation_context jsonb DEFAULT '{}'::jsonb
 );
 
 
@@ -6049,6 +6099,13 @@ ALTER TABLE ONLY public.batches ALTER COLUMN batch_id SET DEFAULT nextval('publi
 
 
 --
+-- Name: city_snapshot city_id; Type: DEFAULT; Schema: public; Owner: base_admin
+--
+
+ALTER TABLE ONLY public.city_snapshot ALTER COLUMN city_id SET DEFAULT nextval('public.city_snapshot_city_id_seq'::regclass);
+
+
+--
 -- Name: company_alias_variants variant_id; Type: DEFAULT; Schema: public; Owner: base_admin
 --
 
@@ -6328,6 +6385,22 @@ ALTER TABLE ONLY public.berufenet_synonyms
 
 ALTER TABLE ONLY public.city_country_map
     ADD CONSTRAINT city_country_map_pkey PRIMARY KEY (city_id);
+
+
+--
+-- Name: city_snapshot city_snapshot_location_state_location_city_domain_code_key; Type: CONSTRAINT; Schema: public; Owner: base_admin
+--
+
+ALTER TABLE ONLY public.city_snapshot
+    ADD CONSTRAINT city_snapshot_location_state_location_city_domain_code_key UNIQUE (location_state, location_city, domain_code);
+
+
+--
+-- Name: city_snapshot city_snapshot_pkey; Type: CONSTRAINT; Schema: public; Owner: base_admin
+--
+
+ALTER TABLE ONLY public.city_snapshot
+    ADD CONSTRAINT city_snapshot_pkey PRIMARY KEY (city_id);
 
 
 --
@@ -6927,6 +7000,34 @@ CREATE INDEX idx_city_country_map_city ON public.city_country_map USING btree (l
 --
 
 CREATE INDEX idx_city_country_map_city_ascii ON public.city_country_map USING btree (lower(city_ascii));
+
+
+--
+-- Name: idx_city_snapshot_city; Type: INDEX; Schema: public; Owner: base_admin
+--
+
+CREATE INDEX idx_city_snapshot_city ON public.city_snapshot USING btree (location_city);
+
+
+--
+-- Name: idx_city_snapshot_domain; Type: INDEX; Schema: public; Owner: base_admin
+--
+
+CREATE INDEX idx_city_snapshot_domain ON public.city_snapshot USING btree (domain_code) WHERE (domain_code IS NOT NULL);
+
+
+--
+-- Name: idx_city_snapshot_state; Type: INDEX; Schema: public; Owner: base_admin
+--
+
+CREATE INDEX idx_city_snapshot_state ON public.city_snapshot USING btree (location_state);
+
+
+--
+-- Name: idx_city_snapshot_total; Type: INDEX; Schema: public; Owner: base_admin
+--
+
+CREATE INDEX idx_city_snapshot_total ON public.city_snapshot USING btree (total_postings DESC);
 
 
 --
@@ -8149,5 +8250,5 @@ ALTER EVENT TRIGGER schema_change_trigger OWNER TO base_admin;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict snx9KTbv27wN3VuOZ73E0QTQiI1xPJmRpPVaL0dLukGKvuzE4P6wfZo3JnyYs80
+\unrestrict 2gt57p7zmdyrolFnoOeh6ZVsqJ1zk4IjuEXNf3mhIwfcaBfUr2fcgx8qEcNVlm0
 

@@ -11,76 +11,293 @@
 
     <main class="main-content search-page">
 
-        <!-- Active filter groups — replaces the old h1 title (header search bar hides on this page) -->
+        <!-- Active filter pills — persistent across all tabs -->
         <div class="search-header">
             <div class="search-active-filters" id="active-filters">
                 <!-- Active filter pills rendered by JS -->
             </div>
         </div>
 
-        <!-- Three-panel layout -->
-        <div class="search-panels">
-            <!-- LEFT: QL Bar + Sector→Profession tree -->
-            <div class="search-panel panel-left">
-                <button class="panel-maximize-btn" data-panel="panel-left" title="Maximize">⛶</button>
-                <div class="ql-strip" id="ql-strip">
-                    <!-- Compact horizontal QL bar -->
-                    <div class="panel-loading">{{ t('search.loading') }}</div>
+        <!-- Tab bar — always visible -->
+        <nav class="search-tabs" id="search-tabs">
+            <button class="search-tab active" data-tab="situation">
+                <span class="tab-icon">🧭</span>
+                <span class="tab-label">{{ t('search.tab_situation') }}</span>
+            </button>
+            <button class="search-tab" data-tab="direction">
+                <span class="tab-icon">💼</span>
+                <span class="tab-label">{{ t('search.tab_direction') }}</span>
+            </button>
+            <button class="search-tab" data-tab="level">
+                <span class="tab-icon">⭐</span>
+                <span class="tab-label">{{ t('search.tab_level') }}</span>
+            </button>
+            <button class="search-tab" data-tab="location">
+                <span class="tab-icon">📍</span>
+                <span class="tab-label">{{ t('search.tab_location') }}</span>
+            </button>
+            <button class="search-tab" data-tab="opportunities">
+                <span class="tab-icon">🎯</span>
+                <span class="tab-label">{{ t('search.tab_opportunities') }}</span>
+            </button>
+            <button class="search-tab tab-power" data-tab="power">
+                <span class="tab-icon">⚡</span>
+                <span class="tab-label">{{ t('search.tab_power') }}</span>
+            </button>
+        </nav>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TAB 1: Situation — calm questionnaire                     -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="tab-content active" data-tab="situation" id="tab-situation">
+            <div class="situation-container">
+                <div class="situation-intro" id="situation-intro">
+                    <h2 class="situation-title">{{ t('search.situation_title') }}</h2>
+                    <p class="situation-subtitle">{{ t('search.situation_subtitle') }}</p>
                 </div>
+
+                <!-- Question 1: Focus or Exploration -->
+                <div class="situation-card" data-question="search_mode" id="sq-search_mode">
+                    <div class="sq-collapsed" id="sqc-search_mode">
+                        <span class="sq-check">○</span>
+                        <span class="sq-summary-label">{{ t('search.sq_search_mode_short') }}</span>
+                        <span class="sq-summary-value" id="sqv-search_mode">—</span>
+                        <button class="sq-adjust">{{ t('search.sq_adjust') }}</button>
+                    </div>
+                    <div class="sq-expanded" id="sqe-search_mode" style="display:none;">
+                        <p class="sq-question">{{ t('search.sq_search_mode_q') }}</p>
+                        <p class="sq-question-sub">{{ t('search.sq_search_mode_sub') }}</p>
+                        <div class="sq-options" data-question="search_mode">
+                            <button class="sq-option" data-value="5">{{ t('search.sq_search_mode_5') }}</button>
+                            <button class="sq-option" data-value="4">{{ t('search.sq_search_mode_4') }}</button>
+                            <button class="sq-option" data-value="3">{{ t('search.sq_search_mode_3') }}</button>
+                            <button class="sq-option" data-value="2">{{ t('search.sq_search_mode_2') }}</button>
+                            <button class="sq-option" data-value="1">{{ t('search.sq_search_mode_1') }}</button>
+                        </div>
+                        <button class="sq-skip">{{ t('search.sq_skip') }}</button>
+                    </div>
+                </div>
+
+                <!-- Question 2: Change of profession -->
+                <div class="situation-card" data-question="field_change" id="sq-field_change">
+                    <div class="sq-collapsed" id="sqc-field_change">
+                        <span class="sq-check">○</span>
+                        <span class="sq-summary-label">{{ t('search.sq_field_change_short') }}</span>
+                        <span class="sq-summary-value" id="sqv-field_change">—</span>
+                        <button class="sq-adjust">{{ t('search.sq_adjust') }}</button>
+                    </div>
+                    <div class="sq-expanded" id="sqe-field_change" style="display:none;">
+                        <p class="sq-question">{{ t('search.sq_field_change_q') }}</p>
+                        <p class="sq-question-sub">{{ t('search.sq_field_change_sub') }}</p>
+                        <div class="sq-options" data-question="field_change">
+                            <button class="sq-option" data-value="5">{{ t('search.sq_field_change_5') }}</button>
+                            <button class="sq-option" data-value="4">{{ t('search.sq_field_change_4') }}</button>
+                            <button class="sq-option" data-value="3">{{ t('search.sq_field_change_3') }}</button>
+                            <button class="sq-option" data-value="2">{{ t('search.sq_field_change_2') }}</button>
+                            <button class="sq-option" data-value="1">{{ t('search.sq_field_change_1') }}</button>
+                        </div>
+                        <button class="sq-skip">{{ t('search.sq_skip') }}</button>
+                    </div>
+                </div>
+
+                <!-- Question 3: Intention -->
+                <div class="situation-card" data-question="intention" id="sq-intention">
+                    <div class="sq-collapsed" id="sqc-intention">
+                        <span class="sq-check">○</span>
+                        <span class="sq-summary-label">{{ t('search.sq_intention_short') }}</span>
+                        <span class="sq-summary-value" id="sqv-intention">—</span>
+                        <button class="sq-adjust">{{ t('search.sq_adjust') }}</button>
+                    </div>
+                    <div class="sq-expanded" id="sqe-intention" style="display:none;">
+                        <p class="sq-question">{{ t('search.sq_intention_q') }}</p>
+                        <div class="sq-options" data-question="intention">
+                            <button class="sq-option" data-value="1">{{ t('search.sq_intention_1') }}</button>
+                            <button class="sq-option" data-value="2">{{ t('search.sq_intention_2') }}</button>
+                            <button class="sq-option" data-value="3">{{ t('search.sq_intention_3') }}</button>
+                        </div>
+                        <button class="sq-skip">{{ t('search.sq_skip') }}</button>
+                    </div>
+                </div>
+
+                <p class="situation-reassurance">{{ t('search.situation_reassurance') }}</p>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TAB 2: Direction — sector/profession tree (full width)    -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="tab-content" data-tab="direction" id="tab-direction">
+            <div class="direction-container">
+                <h2 class="tab-section-title">{{ t('search.direction_title') }}</h2>
+                <p class="tab-section-subtitle">{{ t('search.direction_subtitle') }}</p>
                 <input type="text" class="tree-search" id="sector-search" placeholder="🔍 {{ t('search.filter_sectors') }}" autocomplete="off">
-                <div class="tree-header">
-                    <span class="tree-col-name tree-sortable" data-panel="sector" data-sort="name">{{ t('search.sector_col') }} <span class="sort-arrow">↕</span></span>
-                    <span class="tree-col-count tree-sortable" data-panel="sector" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
-                </div>
-                <div class="tree-body" id="sector-tree">
+                <nav class="direction-breadcrumb" id="direction-breadcrumb" style="display:none;">
+                    <a href="#" class="direction-back" id="direction-back">{{ t('search.direction_back') }}</a>
+                    <span class="direction-crumb-sep">›</span>
+                    <span class="direction-crumb-current" id="direction-crumb-current"></span>
+                </nav>
+                <div class="direction-tiles" id="direction-tiles">
                     <div class="panel-loading">{{ t('search.loading') }}</div>
                 </div>
+                <!-- Hidden sector tree kept for Power Search tab -->
+                <div class="tree-body direction-tree" id="sector-tree" style="display:none;"></div>
             </div>
+        </div>
 
-            <!-- CENTER: Map -->
-            <div class="search-panel panel-map">
-                <button class="panel-maximize-btn" data-panel="panel-map" title="Maximize">⛶</button>
-                <div class="map-controls">
-                    <input type="text" id="city-search" placeholder="{{ t('search.city_placeholder') }}" autocomplete="off">
-                    <select id="radius-select">
-                        <option value="">{{ t('search.no_radius') }}</option>
-                        <option value="10">10 km</option>
-                        <option value="25">25 km</option>
-                        <option value="50" selected>50 km</option>
-                        <option value="100">100 km</option>
-                    </select>
-                </div>
-                <div id="search-map"></div>
-                <div class="map-stats" id="map-stats">
-                    <div class="search-total" id="search-total">
-                        <span class="total-number">—</span>
-                        <span class="total-of" id="total-of" style="display:none;"></span>
-                        <span class="total-label">{{ t('search.positions_found') }}</span>
-                    </div>
-                    <div class="map-freshness" id="freshness-badge" style="display:none;">
-                        <span id="fresh-count">0</span> {{ t('search.fresh_this_week') }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT: Sparkline + Bundesland→City tree -->
-            <div class="search-panel panel-right">
-                <button class="panel-maximize-btn" data-panel="panel-right" title="Maximize">⛶</button>
-                <div class="intel-spark" id="intel-activity">
-                    <canvas id="sparkline-canvas" width="320" height="80" style="width:100%;height:80px;"></canvas>
-                </div>
-                <input type="text" class="tree-search" id="location-search" placeholder="🔍 {{ t('search.filter_locations') }}" autocomplete="off">
-                <div class="tree-header">
-                    <span class="tree-col-name tree-sortable" data-panel="location" data-sort="name">{{ t('search.location_col') }} <span class="sort-arrow">↕</span></span>
-                    <span class="tree-col-count tree-sortable" data-panel="location" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
-                </div>
-                <div class="tree-body" id="location-tree">
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TAB 3: Level — QL strip + demand breakdown                -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="tab-content" data-tab="level" id="tab-level">
+            <div class="level-container">
+                <h2 class="tab-section-title">{{ t('search.level_title') }}</h2>
+                <p class="tab-section-subtitle">{{ t('search.level_subtitle') }}</p>
+                <div class="ql-strip ql-strip-full" id="ql-strip">
                     <div class="panel-loading">{{ t('search.loading') }}</div>
+                </div>
+                <div class="level-demand-breakdown" id="level-demand">
+                    <!-- JS renders demand cards per QL level -->
                 </div>
             </div>
         </div>
 
-        <!-- Filter action toolbar -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TAB 4: Location — map(left) + state/city tree(right)      -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="tab-content" data-tab="location" id="tab-location">
+            <div class="location-container">
+                <h2 class="tab-section-title">{{ t('search.location_title') }}</h2>
+                <p class="tab-section-subtitle">{{ t('search.location_subtitle') }}</p>
+                <div class="location-panels">
+                    <div class="location-map-panel">
+                        <div class="map-controls">
+                            <input type="text" id="city-search" placeholder="{{ t('search.city_placeholder') }}" autocomplete="off">
+                            <select id="radius-select">
+                                <option value="">{{ t('search.no_radius') }}</option>
+                                <option value="10">10 km</option>
+                                <option value="25">25 km</option>
+                                <option value="50" selected>50 km</option>
+                                <option value="100">100 km</option>
+                            </select>
+                        </div>
+                        <div id="search-map"></div>
+                        <div class="map-stats" id="map-stats">
+                            <div class="search-total" id="search-total">
+                                <span class="total-number">—</span>
+                                <span class="total-of" id="total-of" style="display:none;"></span>
+                                <span class="total-label">{{ t('search.positions_found') }}</span>
+                            </div>
+                            <div class="map-freshness" id="freshness-badge" style="display:none;">
+                                <span id="fresh-count">0</span> {{ t('search.fresh_this_week') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="location-tree-panel">
+                        <input type="text" class="tree-search" id="location-search" placeholder="🔍 {{ t('search.filter_locations') }}" autocomplete="off">
+                        <div class="tree-header">
+                            <span class="tree-col-name tree-sortable" data-panel="location" data-sort="name">{{ t('search.location_col') }} <span class="sort-arrow">↕</span></span>
+                            <span class="tree-col-count tree-sortable" data-panel="location" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
+                        </div>
+                        <div class="tree-body" id="location-tree">
+                            <div class="panel-loading">{{ t('search.loading') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TAB 5: Opportunities — sparkline + result grid            -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="tab-content" data-tab="opportunities" id="tab-opportunities">
+            <div class="opportunities-container">
+                <!-- Sparkline at top -->
+                <div class="intel-spark" id="intel-activity">
+                    <canvas id="sparkline-canvas" width="320" height="80" style="width:100%;height:80px;"></canvas>
+                </div>
+
+                <!-- Search results -->
+                <div class="search-results-section" id="search-results-section">
+                    <h2 class="results-section-title" id="results-title"></h2>
+                    <span class="results-sort-indicator" id="results-sort-indicator"></span>
+                    <div class="search-results-grid" id="search-results-grid">
+                        <!-- Tiles rendered by JS -->
+                    </div>
+                    <div class="results-show-more" id="results-show-more" style="display:none;">
+                        <button class="btn-show-more" id="btn-show-more"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TAB 6: Power Search — original 3-panel + results          -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="tab-content" data-tab="power" id="tab-power">
+            <div class="search-panels">
+                <!-- LEFT: Sector→Profession tree -->
+                <div class="search-panel panel-left">
+                    <button class="panel-maximize-btn" data-panel="panel-left" title="Maximize">⛶</button>
+                    <div class="ql-strip ql-strip-power" id="ql-strip-power">
+                        <!-- Mirrors ql-strip -->
+                    </div>
+                    <input type="text" class="tree-search" id="sector-search-power" placeholder="🔍 {{ t('search.filter_sectors') }}" autocomplete="off">
+                    <div class="tree-header">
+                        <span class="tree-col-name tree-sortable" data-panel="sector" data-sort="name">{{ t('search.sector_col') }} <span class="sort-arrow">↕</span></span>
+                        <span class="tree-col-count tree-sortable" data-panel="sector" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
+                    </div>
+                    <div class="tree-body" id="sector-tree-power">
+                        <div class="panel-loading">{{ t('search.loading') }}</div>
+                    </div>
+                </div>
+
+                <!-- CENTER: Map -->
+                <div class="search-panel panel-map">
+                    <button class="panel-maximize-btn" data-panel="panel-map" title="Maximize">⛶</button>
+                    <div class="map-controls">
+                        <input type="text" id="city-search-power" placeholder="{{ t('search.city_placeholder') }}" autocomplete="off">
+                        <select id="radius-select-power">
+                            <option value="">{{ t('search.no_radius') }}</option>
+                            <option value="10">10 km</option>
+                            <option value="25">25 km</option>
+                            <option value="50" selected>50 km</option>
+                            <option value="100">100 km</option>
+                        </select>
+                    </div>
+                    <div id="search-map-power"></div>
+                    <div class="map-stats" id="map-stats-power">
+                        <div class="search-total" id="search-total-power">
+                            <span class="total-number">—</span>
+                            <span class="total-label">{{ t('search.positions_found') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Sparkline + Location tree -->
+                <div class="search-panel panel-right">
+                    <button class="panel-maximize-btn" data-panel="panel-right" title="Maximize">⛶</button>
+                    <div class="intel-spark" id="intel-activity-power">
+                        <canvas id="sparkline-canvas-power" width="320" height="80" style="width:100%;height:80px;"></canvas>
+                    </div>
+                    <input type="text" class="tree-search" id="location-search-power" placeholder="🔍 {{ t('search.filter_locations') }}" autocomplete="off">
+                    <div class="tree-header">
+                        <span class="tree-col-name tree-sortable" data-panel="location" data-sort="name">{{ t('search.location_col') }} <span class="sort-arrow">↕</span></span>
+                        <span class="tree-col-count tree-sortable" data-panel="location" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
+                    </div>
+                    <div class="tree-body" id="location-tree-power">
+                        <div class="panel-loading">{{ t('search.loading') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power search results -->
+            <div class="search-results-section" id="search-results-section-power">
+                <h2 class="results-section-title" id="results-title-power"></h2>
+                <div class="search-results-grid" id="search-results-grid-power">
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter action toolbar — persistent across tabs -->
         <div class="search-actions">
             <button class="filter-action-btn" id="btn-reload-profile" title="{{ t('search.reload_profile_title') }}">
                 👤 {{ t('search.reload_profile') }}
@@ -98,27 +315,12 @@
             <span class="save-feedback" id="save-feedback"></span>
         </div>
 
-        <!-- Search results -->
-        <div class="search-results-section" id="search-results-section" style="display:none;">
-            <button class="panel-maximize-btn" data-panel="results" title="Maximize">⛶</button>
-            <h2 class="results-section-title" id="results-title"></h2>
-            <span class="results-sort-indicator" id="results-sort-indicator"></span>
-            <div class="search-results-grid" id="search-results-grid">
-                <!-- Tiles rendered by JS -->
-            </div>
-            <div class="results-show-more" id="results-show-more" style="display:none;">
-                <button class="btn-show-more" id="btn-show-more"></button>
-            </div>
-        </div>
-
-
-
         <!-- Posting detail modal -->
         <div class="posting-modal-overlay" id="posting-modal-overlay">
             <div class="posting-modal">
                 <div class="posting-modal-toolbar">
                     <button class="posting-modal-feedback" id="posting-modal-feedback"
-                            onclick="openFeedbackWidget()" title="Feedback (Ctrl+Shift+F)">💡</button>
+                            title="Feedback (Ctrl+Shift+F)">💡</button>
                     <button class="posting-modal-close" id="posting-modal-close">&times;</button>
                 </div>
                 <div class="posting-modal-body" id="posting-modal-body">
@@ -141,13 +343,12 @@
 
     </main>
 
-    <!-- Mira Chat Widget (same as dashboard) -->
+    <!-- Mira Chat Widget -->
     <div id="mira-widget" class="mira-widget">
         <button class="mira-fab" id="mira-fab-btn" title="{{ t('search.mira_chat_title') }}">
             <span class="mira-fab-icon">💬</span>
             <span class="mira-fab-close">✕</span>
         </button>
-        
         <div class="mira-chat-window">
             <div class="mira-header">
                 <div class="mira-avatar">🧘</div>
@@ -157,15 +358,10 @@
                 </div>
                 <button class="mira-minimize" id="mira-minimize-btn">−</button>
             </div>
-            
-            <div class="mira-messages" id="mira-messages">
-            </div>
-            
+            <div class="mira-messages" id="mira-messages"></div>
             <div class="mira-input-area">
                 <textarea id="mira-input" placeholder="{{ t('search.mira_placeholder') }}" rows="1"></textarea>
-                <button class="mira-send" id="mira-send-btn">
-                    <span>➤</span>
-                </button>
+                <button class="mira-send" id="mira-send-btn"><span>➤</span></button>
             </div>
         </div>
     </div>
@@ -174,26 +370,26 @@
 <!-- Search tour i18n + script -->
 <script>
 window.SEARCH_TOUR_I18N = {
-    welcome_title: '{{ t("search.tour_welcome_title") }}',
-    welcome_desc: '{{ t("search.tour_welcome_desc") }}',
-    domain_title: '{{ t("search.tour_domain_title") }}',
-    domain_desc: '{{ t("search.tour_domain_desc") }}',
-    map_title: '{{ t("search.tour_map_title") }}',
-    map_desc: '{{ t("search.tour_map_desc") }}',
-    ql_title: '{{ t("search.tour_ql_title") }}',
-    ql_desc: '{{ t("search.tour_ql_desc") }}',
-    pills_title: '{{ t("search.tour_pills_title") }}',
-    pills_desc: '{{ t("search.tour_pills_desc") }}',
-    save_title: '{{ t("search.tour_save_title") }}',
-    save_desc: '{{ t("search.tour_save_desc") }}',
-    mira_title: '{{ t("search.tour_mira_title") }}',
-    mira_desc: '{{ t("search.tour_mira_desc") }}',
-    done_title: '{{ t("search.tour_done_title") }}',
-    done_desc: '{{ t("search.tour_done_desc") }}',
-    next: '{{ t("search.tour_next") }}',
-    prev: '{{ t("search.tour_prev") }}',
-    done: '{{ t("search.tour_done") }}',
-    progress: '{{ t("search.tour_progress") }}',
+    welcome_title: {{ t("search.tour_welcome_title") | tojson }},
+    welcome_desc: {{ t("search.tour_welcome_desc") | tojson }},
+    domain_title: {{ t("search.tour_domain_title") | tojson }},
+    domain_desc: {{ t("search.tour_domain_desc") | tojson }},
+    map_title: {{ t("search.tour_map_title") | tojson }},
+    map_desc: {{ t("search.tour_map_desc") | tojson }},
+    ql_title: {{ t("search.tour_ql_title") | tojson }},
+    ql_desc: {{ t("search.tour_ql_desc") | tojson }},
+    pills_title: {{ t("search.tour_pills_title") | tojson }},
+    pills_desc: {{ t("search.tour_pills_desc") | tojson }},
+    save_title: {{ t("search.tour_save_title") | tojson }},
+    save_desc: {{ t("search.tour_save_desc") | tojson }},
+    mira_title: {{ t("search.tour_mira_title") | tojson }},
+    mira_desc: {{ t("search.tour_mira_desc") | tojson }},
+    done_title: {{ t("search.tour_done_title") | tojson }},
+    done_desc: {{ t("search.tour_done_desc") | tojson }},
+    next: {{ t("search.tour_next") | tojson }},
+    prev: {{ t("search.tour_prev") | tojson }},
+    done: {{ t("search.tour_done") | tojson }},
+    progress: {{ t("search.tour_progress") | tojson }},
 };
 </script>
 <script src="/static/js/search-tour.js?v=20260212"></script>
@@ -203,79 +399,84 @@ window.SEARCH_TOUR_I18N = {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
-
 <!-- Search config injection (Jinja → JS) -->
 <script>
 window.SearchConfig = {
-    lang: '{{ lang }}',
-    userLang: '{{ user.language }}',
+    lang: {{ lang | tojson }},
+    userLang: {{ user.language | tojson }},
     i18n: {
-        ql: { 0: '{{ t("search.ql_nicht_klass") }}', 1: '{{ t("search.ql_helfer") }}', 2: '{{ t("search.ql_fachkraft") }}', 3: '{{ t("search.ql_spezialist") }}', 4: '{{ t("search.ql_experte") }}' },
+        ql: { 0: {{ t("search.ql_nicht_klass") | tojson }}, 1: {{ t("search.ql_helfer") | tojson }}, 2: {{ t("search.ql_fachkraft") | tojson }}, 3: {{ t("search.ql_spezialist") | tojson }}, 4: {{ t("search.ql_experte") | tojson }} },
         domains: {
-            'Gesundheit & Medizin': '{{ t("search.domain_gesundheit") }}',
-            'IT & Technologie': '{{ t("search.domain_it") }}',
-            'Fertigung & Technik': '{{ t("search.domain_fertigung") }}',
-            'Maschinen & Elektro': '{{ t("search.domain_maschinen") }}',
-            'Bau & Handwerk': '{{ t("search.domain_bau") }}',
-            'Finanzen & Banken': '{{ t("search.domain_finanzen") }}',
-            'Handel & Vertrieb': '{{ t("search.domain_handel") }}',
-            'Transport & Logistik': '{{ t("search.domain_transport") }}',
-            'Bildung & Soziales': '{{ t("search.domain_bildung") }}',
-            'Wissenschaft & Forschung': '{{ t("search.domain_wissenschaft") }}',
-            'Gastgewerbe & Tourismus': '{{ t("search.domain_tourismus") }}',
-            'Gastgewerbe & Lebensmittel': '{{ t("search.domain_lebensmittel") }}',
-            'Verwaltung & Recht': '{{ t("search.domain_verwaltung") }}',
-            'Wirtschaft & Management': '{{ t("search.domain_wirtschaft") }}',
-            'Land- & Forstwirtschaft': '{{ t("search.domain_landwirtschaft") }}',
-            'Sicherheit & Verteidigung': '{{ t("search.domain_sicherheit") }}',
-            'Kultur & Medien': '{{ t("search.domain_kultur") }}',
-            'Nicht klassifiziert': '{{ t("search.domain_nicht_klassifiziert") }}',
+            'Gesundheit & Medizin': {{ t("search.domain_gesundheit") | tojson }},
+            'IT & Technologie': {{ t("search.domain_it") | tojson }},
+            'Fertigung & Technik': {{ t("search.domain_fertigung") | tojson }},
+            'Maschinen & Elektro': {{ t("search.domain_maschinen") | tojson }},
+            'Bau & Handwerk': {{ t("search.domain_bau") | tojson }},
+            'Finanzen & Banken': {{ t("search.domain_finanzen") | tojson }},
+            'Handel & Vertrieb': {{ t("search.domain_handel") | tojson }},
+            'Transport & Logistik': {{ t("search.domain_transport") | tojson }},
+            'Bildung & Soziales': {{ t("search.domain_bildung") | tojson }},
+            'Wissenschaft & Forschung': {{ t("search.domain_wissenschaft") | tojson }},
+            'Gastgewerbe & Tourismus': {{ t("search.domain_tourismus") | tojson }},
+            'Gastgewerbe & Lebensmittel': {{ t("search.domain_lebensmittel") | tojson }},
+            'Verwaltung & Recht': {{ t("search.domain_verwaltung") | tojson }},
+            'Wirtschaft & Management': {{ t("search.domain_wirtschaft") | tojson }},
+            'Land- & Forstwirtschaft': {{ t("search.domain_landwirtschaft") | tojson }},
+            'Sicherheit & Verteidigung': {{ t("search.domain_sicherheit") | tojson }},
+            'Kultur & Medien': {{ t("search.domain_kultur") | tojson }},
+            'Nicht klassifiziert': {{ t("search.domain_nicht_klassifiziert") | tojson }},
         },
-        save_success: '{{ t("search.save_success") }}',
-        save_error: '{{ t("search.save_error") }}',
-        network_error: '{{ t("search.network_error") }}',
-        profile_reloaded: '{{ t("search.profile_reloaded") }}',
-        load_success: '{{ t("search.load_success") }}',
-        mira_greeting: '{{ t("search.mira_greeting") }}',
-        mira_error: '{{ t("search.mira_error") }}',
-        mira_offline: '{{ t("search.mira_offline") }}',
-        results_title: '{{ t("search.results_title") }}',
-        results_sort_score: '{{ t("search.results_sort_score") }}',
-        results_sort_recency: '{{ t("search.results_sort_recency") }}',
-        results_loading: '{{ t("search.results_loading") }}',
-        results_none: '{{ t("search.results_none") }}',
-        results_show_more: '{{ t("search.results_show_more") }}',
-        results_employer: '{{ t("search.results_employer") }}',
-        results_location: '{{ t("search.results_location") }}',
-        results_new: '{{ t("search.results_new") }}',
-        results_view_details: '{{ t("search.results_view_details") }}',
-        results_external: '{{ t("search.results_external") }}',
-        detail_summary: '{{ t("search.detail_summary") }}',
-        detail_description: '{{ t("search.detail_description") }}',
-        detail_employer: '{{ t("search.detail_employer") }}',
-        detail_location: '{{ t("search.detail_location") }}',
-        detail_qualification: '{{ t("search.detail_qualification") }}',
-        detail_sector: '{{ t("search.detail_sector") }}',
-        detail_source: '{{ t("search.detail_source") }}',
-        detail_seen_since: '{{ t("search.detail_seen_since") }}',
-        detail_start_date: '{{ t("search.detail_start_date") }}',
-        detail_contract: '{{ t("search.detail_contract") }}',
-        detail_hours: '{{ t("search.detail_hours") }}',
-        interest_prompt: '{{ t("search.interest_prompt") }}',
-        interest_yes: '{{ t("search.interest_yes") }}',
-        interest_no: '{{ t("search.interest_no") }}',
-        interest_reason_placeholder: '{{ t("search.interest_reason_placeholder") }}',
-        interest_saved: '{{ t("search.interest_saved") }}',
-        interest_already_yes: '{{ t("search.interest_already_yes") }}',
-        interest_already_no: '{{ t("search.interest_already_no") }}',
-        profile_row_tag:     '{{ t("search.profile_row_tag") }}',
-        profile_row_loading: '{{ t("search.profile_row_loading") }}',
-        profile_row_empty:   '{{ t("search.profile_row_empty") }}',
-        profile_row_pending: '{{ t("search.profile_row_pending") }}',
-        profile_filter_btn:  '{{ t("search.profile_filter_btn") }}',
+        save_success: {{ t("search.save_success") | tojson }},
+        save_error: {{ t("search.save_error") | tojson }},
+        network_error: {{ t("search.network_error") | tojson }},
+        profile_reloaded: {{ t("search.profile_reloaded") | tojson }},
+        load_success: {{ t("search.load_success") | tojson }},
+        mira_greeting: {{ t("search.mira_greeting") | tojson }},
+        mira_error: {{ t("search.mira_error") | tojson }},
+        mira_offline: {{ t("search.mira_offline") | tojson }},
+        results_title: {{ t("search.results_title") | tojson }},
+        results_sort_score: {{ t("search.results_sort_score") | tojson }},
+        results_sort_recency: {{ t("search.results_sort_recency") | tojson }},
+        results_loading: {{ t("search.results_loading") | tojson }},
+        results_none: {{ t("search.results_none") | tojson }},
+        results_show_more: {{ t("search.results_show_more") | tojson }},
+        results_employer: {{ t("search.results_employer") | tojson }},
+        results_location: {{ t("search.results_location") | tojson }},
+        results_new: {{ t("search.results_new") | tojson }},
+        results_view_details: {{ t("search.results_view_details") | tojson }},
+        results_external: {{ t("search.results_external") | tojson }},
+        detail_summary: {{ t("search.detail_summary") | tojson }},
+        detail_description: {{ t("search.detail_description") | tojson }},
+        detail_employer: {{ t("search.detail_employer") | tojson }},
+        detail_location: {{ t("search.detail_location") | tojson }},
+        detail_qualification: {{ t("search.detail_qualification") | tojson }},
+        detail_sector: {{ t("search.detail_sector") | tojson }},
+        detail_source: {{ t("search.detail_source") | tojson }},
+        detail_seen_since: {{ t("search.detail_seen_since") | tojson }},
+        detail_start_date: {{ t("search.detail_start_date") | tojson }},
+        detail_contract: {{ t("search.detail_contract") | tojson }},
+        detail_hours: {{ t("search.detail_hours") | tojson }},
+        interest_prompt: {{ t("search.interest_prompt") | tojson }},
+        interest_yes: {{ t("search.interest_yes") | tojson }},
+        interest_no: {{ t("search.interest_no") | tojson }},
+        interest_reason_placeholder: {{ t("search.interest_reason_placeholder") | tojson }},
+        interest_saved: {{ t("search.interest_saved") | tojson }},
+        interest_already_yes: {{ t("search.interest_already_yes") | tojson }},
+        interest_already_no: {{ t("search.interest_already_no") | tojson }},
+        profile_row_tag:     {{ t("search.profile_row_tag") | tojson }},
+        profile_row_loading: {{ t("search.profile_row_loading") | tojson }},
+        profile_row_empty:   {{ t("search.profile_row_empty") | tojson }},
+        profile_row_pending: {{ t("search.profile_row_pending") | tojson }},
+        profile_filter_btn:  {{ t("search.profile_filter_btn") | tojson }},
+        direction_all_sectors: {{ t("search.direction_all_sectors") | tojson }},
+        direction_professions_in: {{ t("search.direction_professions_in") | tojson }},
+        direction_back: {{ t("search.direction_back") | tojson }},
+        direction_select_all: {{ t("search.direction_select_all") | tojson }},
+        direction_positions: {{ t("search.direction_positions") | tojson }},
+        direction_new_this_week: {{ t("search.direction_new_this_week") | tojson }},
     }
 };
 </script>
-<!-- Search application (extracted from inline — 2330 lines → external) -->
-<script src="/static/js/search-app.js?v=20260302b"></script>
+<!-- Search application -->
+<script src="/static/js/search-app.js?v=20260303a"></script>
 {% endblock %}

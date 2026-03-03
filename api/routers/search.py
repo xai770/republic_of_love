@@ -47,6 +47,7 @@ def _get_prof_trans() -> dict:
 
 # ─── Nominatim proxy ──────────────────────────────────────────────────────────
 _GEO_CACHE: dict = {}  # simple in-process cache to respect Nominatim's rate limit
+_GEO_LOCK = threading.Lock()  # protect dict from concurrent request threads
 _GEO_HEADERS = {
     'User-Agent': 'TalentYoga/1.0 (https://talent.yoga; kontakt@talent.yoga)',
     'Accept-Language': 'de',
@@ -59,8 +60,10 @@ def geo_search(q: str = Query(..., min_length=2, max_length=100)):
     Caches results in-process; enforces User-Agent for OSM usage policy.
     """
     cache_key = q.lower().strip()
-    if cache_key in _GEO_CACHE:
-        return JSONResponse(_GEO_CACHE[cache_key])
+    with _GEO_LOCK:
+        cached = _GEO_CACHE.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
 
     try:
         resp = _requests.get(
@@ -75,10 +78,13 @@ def geo_search(q: str = Query(..., min_length=2, max_length=100)):
         logger.warning("Nominatim proxy error: %s", exc)
         return JSONResponse([], status_code=200)
 
-    # Cache up to 2000 entries (memory-cheap strings)
-    if len(_GEO_CACHE) > 2000:
-        _GEO_CACHE.clear()
-    _GEO_CACHE[cache_key] = data
+    with _GEO_LOCK:
+        # Evict oldest half when cache grows too large (LRU-lite)
+        if len(_GEO_CACHE) > 2000:
+            keys = list(_GEO_CACHE.keys())[:1000]
+            for k in keys:
+                del _GEO_CACHE[k]
+        _GEO_CACHE[cache_key] = data
     return JSONResponse(data)
 
 # ============================================================
@@ -623,6 +629,9 @@ class SaveSearchRequest(BaseModel):
     lat: Optional[float] = None
     lon: Optional[float] = None
     radius_km: Optional[int] = None
+    states: Optional[List[str]] = None
+    professions: Optional[List[str]] = None
+    geo_locations: Optional[List[GeoLocation]] = None
 
 
 @router.post("/search/save")
@@ -639,6 +648,9 @@ def save_search(
             "lat": req.lat,
             "lon": req.lon,
             "radius_km": req.radius_km,
+            "states": req.states,
+            "professions": req.professions,
+            "geo_locations": [g.model_dump() for g in req.geo_locations] if req.geo_locations else None,
         }
 
         # Upsert into profiles.search_params (JSONB column)
@@ -701,22 +713,12 @@ class SearchResultsRequest(BaseModel):
     score: bool = False                   # request cosine scoring from profile embedding
 
 
-def _attach_cosine_scores(
-    postings: list,
-    results: list,
-    user_id: int,
-    conn,
-) -> None:
+def _load_profile_embedding(user_id: int, conn) -> Optional[tuple]:
     """
-    Decorate *results* in-place with a ``score`` field (0.0–1.0).
-
-    Loads the caller's profile embedding once, then batch-scores every
-    posting on the current page via cosine similarity.  Results that
-    cannot be scored (missing embedding) get ``score: None``.
+    Load the user's profile embedding as (numpy_array, norm).
+    Returns None if no usable profile or embedding exists.
+    Shared by _attach_cosine_scores and _score_ranked_results.
     """
-    import hashlib as _hl
-
-    # ── 1. Load profile → build text → look up embedding ─────────
     with conn.cursor() as cur:
         cur.execute("""
             SELECT skill_keywords, current_title, profile_summary,
@@ -728,7 +730,7 @@ def _attach_cosine_scores(
         profile = cur.fetchone()
 
     if not profile:
-        return
+        return None
 
     raw_skills = profile['skill_keywords']
     if isinstance(raw_skills, list):
@@ -749,9 +751,9 @@ def _attach_cosine_scores(
         parts.append(profile['experience_level'])
     profile_text = ' | '.join(filter(None, parts)).strip()
     if not profile_text:
-        return
+        return None
 
-    profile_hash = _hl.sha256(profile_text.lower().strip().encode()).hexdigest()[:32]
+    profile_hash = hashlib.sha256(profile_text.lower().strip().encode()).hexdigest()[:32]
 
     with conn.cursor() as cur:
         cur.execute(
@@ -761,12 +763,33 @@ def _attach_cosine_scores(
         row = cur.fetchone()
 
     if not row:
-        return
+        return None
 
     profile_emb = np.array(row['embedding'], dtype=np.float32)
     profile_norm = float(np.linalg.norm(profile_emb))
     if profile_norm == 0:
+        return None
+
+    return profile_emb, profile_norm
+
+
+def _attach_cosine_scores(
+    postings: list,
+    results: list,
+    user_id: int,
+    conn,
+) -> None:
+    """
+    Decorate *results* in-place with a ``score`` field (0.0–1.0).
+
+    Loads the caller's profile embedding once, then batch-scores every
+    posting on the current page via cosine similarity.  Results that
+    cannot be scored (missing embedding) get ``score: None``.
+    """
+    result = _load_profile_embedding(user_id, conn)
+    if result is None:
         return
+    profile_emb, profile_norm = result
 
     # ── 2. Batch-fetch posting embeddings via SQL join ────────────
     # Use the same normalize_text_python() + SHA256 path that the
@@ -908,71 +931,18 @@ def _score_ranked_results(
     params: list,
 ) -> dict:
     """
-    Score-ranked search: fetch all matching postings, compute cosine similarity
-    against the user's profile embedding, sort by score DESC, then paginate.
+    Score-ranked search: fetch matching postings (capped at 5000), compute
+    cosine similarity against the user's profile embedding, sort by score
+    DESC, then paginate.
     """
-    import hashlib as _hl
-
     # ── 1. Load profile embedding ────────────────────────────────
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT skill_keywords, current_title, profile_summary,
-                   experience_level
-            FROM profiles
-            WHERE user_id = %s AND skill_keywords IS NOT NULL
-            ORDER BY updated_at DESC NULLS LAST LIMIT 1
-        """, (user['user_id'],))
-        profile = cur.fetchone()
-
-    if not profile:
-        # No profile → fall back to recency sort
+    result = _load_profile_embedding(user['user_id'], conn)
+    if result is None:
         req_copy = SearchResultsRequest(**req.model_dump())
         req_copy.score = False
         return search_results(req_copy, user, conn)
 
-    raw_skills = profile['skill_keywords']
-    if isinstance(raw_skills, list):
-        skills = raw_skills
-    elif isinstance(raw_skills, dict):
-        skills = raw_skills.get('keywords', [])
-    else:
-        skills = []
-
-    parts = []
-    if profile['current_title']:
-        parts.append(profile['current_title'])
-    if skills:
-        parts.append(' '.join(str(s) for s in skills))
-    if profile['profile_summary']:
-        parts.append(profile['profile_summary'][:500])
-    if profile['experience_level']:
-        parts.append(profile['experience_level'])
-    profile_text = ' | '.join(filter(None, parts)).strip()
-    if not profile_text:
-        req_copy = SearchResultsRequest(**req.model_dump())
-        req_copy.score = False
-        return search_results(req_copy, user, conn)
-
-    profile_hash = _hl.sha256(profile_text.lower().strip().encode()).hexdigest()[:32]
-
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT embedding FROM embeddings WHERE text_hash = %s",
-            (profile_hash,),
-        )
-        row = cur.fetchone()
-
-    if not row:
-        req_copy = SearchResultsRequest(**req.model_dump())
-        req_copy.score = False
-        return search_results(req_copy, user, conn)
-
-    profile_emb = np.array(row['embedding'], dtype=np.float32)
-    profile_norm = float(np.linalg.norm(profile_emb))
-    if profile_norm == 0:
-        req_copy = SearchResultsRequest(**req.model_dump())
-        req_copy.score = False
-        return search_results(req_copy, user, conn)
+    profile_emb, profile_norm = result
 
     # ── 2. Fetch all matching postings + their embeddings in one query ─
     with conn.cursor() as cur:
@@ -1003,6 +973,7 @@ def _score_ranked_results(
                 CONVERT_TO(normalize_text_python(pfm.match_text), 'UTF8')
             ), 'hex'), 32)
             WHERE {where_sql}
+            LIMIT 5000
         """, query_params)
         all_postings = cur.fetchall()
 
@@ -1143,22 +1114,16 @@ def search_intelligence(
         where_parts.append("b.name = ANY(%s)")
 
     if req.geo_locations:
-        geo_parts = []
-        for g in req.geo_locations:
-            lat, lon = g.get("lat"), g.get("lon")
-            radius_km = g.get("radius_km")
-            if lat is not None and lon is not None and radius_km:
-                geo_parts.append(
-                    "ST_DWithin(ST_SetSRID(ST_MakePoint("
-                    "  CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lon' AS FLOAT),"
-                    "  CAST(p.source_metadata->'raw_api_response'->'arbeitsort'->'koordinaten'->>'lat' AS FLOAT)"
-                    "), 4326)::geography,"
-                    "ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,"
-                    "%s)"
-                )
-                params.extend([lon, lat, radius_km * 1000])
-        if geo_parts:
-            where_parts.append("(" + " OR ".join(geo_parts) + ")")
+        # Build GeoLocation objects from raw dicts and use shared haversine helper
+        geo_locs = [
+            GeoLocation(lat=g['lat'], lon=g['lon'], radius_km=g.get('radius_km'))
+            for g in req.geo_locations
+            if g.get('lat') is not None and g.get('lon') is not None and g.get('radius_km')
+        ]
+        geo_sql, geo_params = _build_geo_where(geo_locs, None, None, None)
+        if geo_sql:
+            where_parts.append(geo_sql)
+            params.extend(geo_params)
 
     needs_join = bool(req.domains or req.ql or req.professions)
     join_sql = "JOIN berufenet b ON b.berufenet_id = p.berufenet_id" if needs_join else "LEFT JOIN berufenet b ON b.berufenet_id = p.berufenet_id"
@@ -1933,3 +1898,62 @@ def location_tree_cities(
 
         return {"state": state, "cities": cities, "offset": offset}
 
+
+# ─── Situation context (Step 1 questionnaire) ─────────────────────────────────
+
+class SituationContextUpdate(BaseModel):
+    """Partial update for situation questionnaire answers."""
+    model_config = ConfigDict(extra="forbid")
+    search_mode: Optional[int] = None    # 1-5: certainty about target profession
+    field_change: Optional[int] = None   # 1-4: willingness to change field
+    intention: Optional[int] = None      # 1-3: aktiv, beides, nachweis
+
+
+@router.get("/search/situation")
+def get_situation(
+    user: dict = Depends(require_user),
+    db=Depends(get_db),
+):
+    """Return the user's current situation context."""
+    with db.cursor() as cur:
+        cur.execute("SELECT situation_context FROM users WHERE user_id = %s", (user['user_id'],))
+        row = cur.fetchone()
+        return row['situation_context'] if row and row['situation_context'] else {}
+
+
+@router.post("/search/situation")
+def save_situation(
+    body: SituationContextUpdate,
+    user: dict = Depends(require_user),
+    db=Depends(get_db),
+):
+    """Merge partial situation answers into the user's context."""
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return {"ok": True}
+    with db.cursor() as cur:
+        # Merge into existing JSONB (preserves other keys)
+        cur.execute("""
+            UPDATE users
+            SET situation_context = COALESCE(situation_context, '{}'::jsonb) || %s::jsonb
+            WHERE user_id = %s
+            RETURNING situation_context
+        """, (json.dumps(updates), user['user_id']))
+        row = cur.fetchone()
+        db.commit()
+        return row['situation_context'] if row else {}
+
+
+@router.delete("/search/situation")
+def clear_situation(
+    user: dict = Depends(require_user),
+    db=Depends(get_db),
+):
+    """Clear all situation answers."""
+    with db.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET situation_context = '{}'::jsonb WHERE user_id = %s",
+            (user['user_id'],)
+        )
+        db.commit()
+    return {"ok": True}

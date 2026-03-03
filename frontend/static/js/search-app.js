@@ -60,6 +60,12 @@
         // Sort state for trees {field: 'name'|'count', dir: 'asc'|'desc'}
         sectorSort: { field: 'count', dir: 'desc' },
         locationSort: { field: 'count', dir: 'desc' },
+        // Tab state
+        activeTab: 'situation',
+        // Situation questionnaire answers {confidence, openness, hours, environment, intention}
+        situationContext: {},
+        // Direction tile zoom state: null = all sectors, sectorName = zoomed in
+        directionZoom: null,
     };
 
     /** Persist filter-relevant parts of state to localStorage. */
@@ -72,6 +78,7 @@
                 professions: state.professions,
                 states: state.states,
                 cities: state.cities,
+                activeTab: state.activeTab,
                 _ts: Date.now(),
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
@@ -99,8 +106,203 @@
             if (snap.professions && snap.professions.length)   { state.professions = snap.professions; restored = true; }
             if (snap.states && snap.states.length)         { state.states = snap.states; restored = true; }
             if (snap.cities && snap.cities.length)         { state.cities = snap.cities; restored = true; }
+            if (snap.activeTab) state.activeTab = snap.activeTab;
             return restored;
         } catch(e) { return false; }
+    }
+
+    // ============================================================
+    // TAB SWITCHING
+    // ============================================================
+    const VALID_TABS = ['situation', 'direction', 'level', 'location', 'opportunities', 'power'];
+    let mapNeedsInvalidate = true;  // first switch to location/power must fix Leaflet
+
+    function switchTab(tabName) {
+        if (!VALID_TABS.includes(tabName)) return;
+        state.activeTab = tabName;
+
+        // Update tab buttons
+        document.querySelectorAll('.search-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+        // Update tab content panels
+        document.querySelectorAll('.tab-content').forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.tab === tabName);
+        });
+
+        // Fix Leaflet when map becomes visible (location or power tab)
+        if ((tabName === 'location' || tabName === 'power') && typeof map !== 'undefined' && map) {
+            setTimeout(() => {
+                const mapEl = document.getElementById('search-map');
+                if (!mapEl || mapEl.offsetWidth === 0) return;
+                map.invalidateSize();
+                map.setView(map.getCenter());
+                // Re-render heatmap/markers now that canvas has real dimensions
+                if (state.data) {
+                    try { renderHeatmap(state.data.heatmap); } catch(_) {}
+                    try { renderMarkers(state.data.markers); } catch(_) {}
+                    try { renderBundeslandOverlay(); } catch(_) {}
+                }
+            }, 100);
+            // Second pass for slow layouts
+            setTimeout(() => {
+                const mapEl = document.getElementById('search-map');
+                if (mapEl && mapEl.offsetWidth > 0) map.invalidateSize();
+            }, 500);
+            mapNeedsInvalidate = false;
+        }
+
+        saveState();
+    }
+
+    // Wire tab bar clicks (event delegation)
+    document.getElementById('search-tabs').addEventListener('click', function(e) {
+        const tab = e.target.closest('.search-tab');
+        if (!tab) return;
+        switchTab(tab.dataset.tab);
+    });
+
+    // ============================================================
+    // SITUATION QUESTIONNAIRE
+    // ============================================================
+    const SQ_QUESTIONS = ['search_mode', 'field_change', 'intention'];
+
+    async function loadSituationContext() {
+        try {
+            const res = await fetch('/api/search/situation');
+            if (!res.ok) return;
+            const data = await res.json();
+            state.situationContext = data || {};
+            renderSituationCards();
+        } catch(e) {
+            console.warn('Failed to load situation context:', e);
+        }
+    }
+
+    async function saveSituationAnswer(question, value) {
+        state.situationContext[question] = value;
+        renderSituationCards();
+        try {
+            await fetch('/api/search/situation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [question]: value }),
+            });
+        } catch(e) {
+            console.warn('Failed to save situation answer:', e);
+        }
+    }
+
+    function renderSituationCards() {
+        SQ_QUESTIONS.forEach(q => {
+            const card = document.getElementById('sq-' + q);
+            const collapsed = document.getElementById('sqc-' + q);
+            const expanded = document.getElementById('sqe-' + q);
+            const valueEl = document.getElementById('sqv-' + q);
+            const checkEl = card ? card.querySelector('.sq-check') : null;
+            if (!card) return;
+
+            const val = state.situationContext[q];
+            const hasAnswer = val != null && val !== '';
+
+            card.classList.toggle('answered', hasAnswer);
+            if (checkEl) checkEl.textContent = hasAnswer ? '✓' : '○';
+
+            // Update summary value from the selected option text
+            if (hasAnswer && valueEl) {
+                const optBtn = expanded ? expanded.querySelector(`.sq-option[data-value="${val}"]`) : null;
+                valueEl.textContent = optBtn ? optBtn.textContent.trim() : val;
+            } else if (valueEl) {
+                valueEl.textContent = '—';
+            }
+
+            // Mark selected option
+            if (expanded) {
+                expanded.querySelectorAll('.sq-option').forEach(btn => {
+                    btn.classList.toggle('selected', btn.dataset.value === String(val));
+                });
+            }
+        });
+    }
+
+    function expandSituationCard(question) {
+        SQ_QUESTIONS.forEach(q => {
+            const collapsed = document.getElementById('sqc-' + q);
+            const expanded = document.getElementById('sqe-' + q);
+            if (!collapsed || !expanded) return;
+            if (q === question) {
+                collapsed.style.display = 'none';
+                expanded.style.display = '';
+            } else {
+                collapsed.style.display = '';
+                expanded.style.display = 'none';
+            }
+        });
+    }
+
+    function collapseSituationCard(question) {
+        const collapsed = document.getElementById('sqc-' + question);
+        const expanded = document.getElementById('sqe-' + question);
+        if (collapsed) collapsed.style.display = '';
+        if (expanded) expanded.style.display = 'none';
+    }
+
+    function advanceToNextQuestion(currentQuestion) {
+        const idx = SQ_QUESTIONS.indexOf(currentQuestion);
+        // Find the next unanswered question
+        for (let i = idx + 1; i < SQ_QUESTIONS.length; i++) {
+            if (state.situationContext[SQ_QUESTIONS[i]] == null) {
+                expandSituationCard(SQ_QUESTIONS[i]);
+                return;
+            }
+        }
+        // All answered — collapse current
+        collapseSituationCard(currentQuestion);
+    }
+
+    // Wire situation card interactions (event delegation on the container)
+    const situationContainer = document.querySelector('.situation-container');
+    if (situationContainer) {
+        // Click an option
+        situationContainer.addEventListener('click', function(e) {
+            const optBtn = e.target.closest('.sq-option');
+            if (optBtn) {
+                const question = optBtn.closest('.sq-options').dataset.question;
+                const value = optBtn.dataset.value;
+                saveSituationAnswer(question, value);
+                // Collapse this card and advance to next
+                setTimeout(() => advanceToNextQuestion(question), 200);
+                return;
+            }
+
+            // Click skip
+            const skipBtn = e.target.closest('.sq-skip');
+            if (skipBtn) {
+                const card = skipBtn.closest('.situation-card');
+                if (card) {
+                    const question = card.dataset.question;
+                    collapseSituationCard(question);
+                    advanceToNextQuestion(question);
+                }
+                return;
+            }
+
+            // Click adjust button → expand this card
+            const adjustBtn = e.target.closest('.sq-adjust');
+            if (adjustBtn) {
+                const card = adjustBtn.closest('.situation-card');
+                if (card) expandSituationCard(card.dataset.question);
+                return;
+            }
+
+            // Click collapsed row → expand this card
+            const collapsedRow = e.target.closest('.sq-collapsed');
+            if (collapsedRow) {
+                const card = collapsedRow.closest('.situation-card');
+                if (card) expandSituationCard(card.dataset.question);
+                return;
+            }
+        });
     }
 
     // ============================================================
@@ -165,6 +367,9 @@
     // Radius dropdown change — applies to all active geo locations
     document.getElementById('radius-select').addEventListener('change', async function() {
         const radius_km = parseInt(this.value) || null;
+        // Keep power tab dropdown in sync
+        const rp = document.getElementById('radius-select-power');
+        if (rp) rp.value = this.value;
         state.geoLocations = state.geoLocations.map(g => ({...g, radius_km}));
         updateGeoLayers();
         if (state.geoLocations.length > 0) {
@@ -220,7 +425,68 @@
         if (!cityInput.contains(e.target) && !cityDropdown.contains(e.target)) {
             cityDropdown.innerHTML = '';
         }
+        // Also close power tab dropdown
+        if (cityInputPower && !cityInputPower.contains(e.target) && !cityDropdownPower.contains(e.target)) {
+            cityDropdownPower.innerHTML = '';
+        }
     });
+
+    // ============================================================
+    // POWER TAB — city search + radius (mirrors primary controls)
+    // ============================================================
+    const cityInputPower = document.getElementById('city-search-power');
+    const radiusSelectPower = document.getElementById('radius-select-power');
+    let cityDropdownPower = null;
+    let cityTimeoutPower = null;
+
+    if (cityInputPower) {
+        cityDropdownPower = document.createElement('div');
+        cityDropdownPower.className = 'city-dropdown';
+        cityInputPower.parentElement.appendChild(cityDropdownPower);
+
+        cityInputPower.addEventListener('input', function() {
+            clearTimeout(cityTimeoutPower);
+            const q = this.value.trim();
+            if (q.length < 2) { cityDropdownPower.innerHTML = ''; return; }
+            cityTimeoutPower = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/geo/search?q=${encodeURIComponent(q)}`);
+                    const results = await res.json();
+                    cityDropdownPower.innerHTML = results.map(r =>
+                        `<div class="city-option" data-lat="${r.lat}" data-lon="${r.lon}">${r.display_name.split(',').slice(0,2).join(',')}</div>`
+                    ).join('');
+                } catch(e) {
+                    cityDropdownPower.innerHTML = '';
+                }
+            }, 400);
+        });
+
+        cityDropdownPower.addEventListener('click', function(e) {
+            const opt = e.target.closest('.city-option');
+            if (!opt) return;
+            const lat = parseFloat(opt.dataset.lat);
+            const lon = parseFloat(opt.dataset.lon);
+            const radius_km = parseInt((radiusSelectPower || document.getElementById('radius-select')).value) || 50;
+            const label = opt.textContent.trim();
+            state.geoLocations.push({lat, lon, radius_km, label});
+            cityInputPower.value = '';
+            cityDropdownPower.innerHTML = '';
+            map.setView([lat, lon], 10);
+            updateGeoLayers();
+            doSearch();
+        });
+    }
+
+    if (radiusSelectPower) {
+        radiusSelectPower.addEventListener('change', function() {
+            const radius_km = parseInt(this.value) || null;
+            // Keep primary dropdown in sync
+            document.getElementById('radius-select').value = this.value;
+            state.geoLocations = state.geoLocations.map(g => ({...g, radius_km}));
+            updateGeoLayers();
+            if (state.geoLocations.length > 0) doSearch();
+        });
+    }
 
     // ============================================================
     // QL STRIP (compact horizontal bar — top of left panel)
@@ -228,11 +494,8 @@
     const QL_COLORS = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c', 0: '#999' };
 
     function renderQLStrip(levels) {
-        const container = document.getElementById('ql-strip');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-        if (!levels || levels.length === 0) { container.innerHTML = ''; return; }
-
-        container.innerHTML = levels.filter(l => l.level > 0).map(l => {
+        const html = (!levels || levels.length === 0) ? '' : levels.filter(l => l.level > 0).map(l => {
             const selected = state.ql.length === 0 || state.ql.includes(l.level);
             const dimmed = state.ql.length > 0 && !selected;
             const color = QL_COLORS[l.level] || '#999';
@@ -243,16 +506,25 @@
                 <span class="ql-chip-count">${l.count.toLocaleString(locale)}</span>
             </button>`;
         }).join('');
+        // Render to both primary (tab 3) and power (tab 6) QL strips
+        ['ql-strip', 'ql-strip-power'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        });
     }
 
-    document.getElementById('ql-strip').addEventListener('click', function(e) {
+    // QL chip click handler — shared by both strips (event delegation)
+    function handleQLClick(e) {
         const chip = e.target.closest('.ql-chip');
         if (!chip) return;
         const level = parseInt(chip.dataset.level);
         const idx = state.ql.indexOf(level);
         if (idx >= 0) { state.ql.splice(idx, 1); } else { state.ql.push(level); }
         doSearch();
-    });
+    }
+    document.getElementById('ql-strip').addEventListener('click', handleQLClick);
+    const qlPower = document.getElementById('ql-strip-power');
+    if (qlPower) qlPower.addEventListener('click', handleQLClick);
 
     // ============================================================
     // SECTOR TREE (left panel — sector→profession hierarchy)
@@ -260,7 +532,6 @@
     function renderSectorTree(data) {
         if (!data) return;
         state.sectorTree = data;
-        const container = document.getElementById('sector-tree');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
         const searchVal = (document.getElementById('sector-search').value || '').toLowerCase();
 
@@ -290,55 +561,57 @@
             return dir === 'asc' ? -cmp : cmp;
         });
 
+        let html = '';
         if (sectors.length === 0) {
-            container.innerHTML = '<div class="panel-empty">—</div>';
-            return;
+            html = '<div class="panel-empty">—</div>';
+        } else {
+            const allInScope = state.domains.length === 0;
+            html = sectors.map(s => {
+                const selected = !allInScope && s.codes.some(c => state.domains.includes(c));
+                const dimmed = !allInScope && !selected;
+                const isOpen = state.openSectors.has(s.name) || (searchVal && !dimmed);
+                const tint = allInScope ? 'tint-all' : '';
+
+                let profsHtml = '';
+                if (isOpen) {
+                    let profs = [...s.professions];
+                    profs.sort((a, b) => field === 'name'
+                        ? a.name.localeCompare(b.name)
+                        : b.count - a.count);
+                    if (dir === 'asc') profs.reverse();
+
+                    profsHtml = profs.slice(0, 30).map(p => {
+                        const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
+                        const pSelected = state.professions.includes(p.name);
+                        return `<div class="tree-child ${pSelected ? 'selected' : ''}" data-type="profession" data-name="${p.name}">
+                            <span class="tree-child-name">${pName}</span>
+                            <span class="tree-child-count">${p.count.toLocaleString(locale)}</span>
+                        </div>`;
+                    }).join('');
+                    if (s.professions.length > 30) {
+                        profsHtml += `<div class="tree-child tree-more">+${s.professions.length - 30} more</div>`;
+                    }
+                }
+
+                return `<div class="tree-parent-group ${selected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${tint}">
+                    <div class="tree-parent" data-type="sector" data-codes="${s.codes.join(',')}" data-name="${s.name}">
+                        <span class="tree-chevron ${isOpen ? 'open' : ''}">${s.professions.length > 0 ? '▸' : ''}</span>
+                        <span class="tree-dot" style="background:${s.color}"></span>
+                        <span class="tree-parent-name">${tDomain(s.name)}</span>
+                        <span class="tree-parent-count">${s.count.toLocaleString(locale)}</span>
+                    </div>
+                    <div class="tree-children ${isOpen ? 'open' : ''}">${profsHtml}</div>
+                </div>`;
+            }).join('');
         }
 
-        const allInScope = state.domains.length === 0;
-
-        container.innerHTML = sectors.map(s => {
-            const selected = !allInScope && s.codes.some(c => state.domains.includes(c));
-            const dimmed = !allInScope && !selected;
-            const isOpen = state.openSectors.has(s.name) || (searchVal && !dimmed);
-            const tint = allInScope ? 'tint-all' : '';
-
-            let profsHtml = '';
-            if (isOpen) {
-                // Sort professions same way
-                let profs = [...s.professions];
-                profs.sort((a, b) => field === 'name'
-                    ? a.name.localeCompare(b.name)
-                    : b.count - a.count);
-                if (dir === 'asc') profs.reverse();
-
-                profsHtml = profs.slice(0, 30).map(p => {
-                    const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
-                    const pSelected = state.professions.includes(p.name);
-                    return `<div class="tree-child ${pSelected ? 'selected' : ''}" data-type="profession" data-name="${p.name}">
-                        <span class="tree-child-name">${pName}</span>
-                        <span class="tree-child-count">${p.count.toLocaleString(locale)}</span>
-                    </div>`;
-                }).join('');
-                if (s.professions.length > 30) {
-                    profsHtml += `<div class="tree-child tree-more">+${s.professions.length - 30} more</div>`;
-                }
-            }
-
-            return `<div class="tree-parent-group ${selected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${tint}">
-                <div class="tree-parent" data-type="sector" data-codes="${s.codes.join(',')}" data-name="${s.name}">
-                    <span class="tree-chevron ${isOpen ? 'open' : ''}">${s.professions.length > 0 ? '▸' : ''}</span>
-                    <span class="tree-dot" style="background:${s.color}"></span>
-                    <span class="tree-parent-name">${tDomain(s.name)}</span>
-                    <span class="tree-parent-count">${s.count.toLocaleString(locale)}</span>
-                </div>
-                <div class="tree-children ${isOpen ? 'open' : ''}">${profsHtml}</div>
-            </div>`;
-        }).join('');
+        // Render to power tab sector tree only (Direction tab uses tiles)
+        const powerEl = document.getElementById('sector-tree-power');
+        if (powerEl) powerEl.innerHTML = html;
     }
 
-    // Sector tree click handlers
-    document.getElementById('sector-tree').addEventListener('click', function(e) {
+    // Sector tree click handler — shared
+    function handleSectorTreeClick(e) {
         const parent = e.target.closest('.tree-parent');
         const child = e.target.closest('.tree-child');
 
@@ -370,11 +643,183 @@
             }
             doSearch();
         }
-    });
+    }
+    document.getElementById('sector-tree').addEventListener('click', handleSectorTreeClick);
+    const sectorPower = document.getElementById('sector-tree-power');
+    if (sectorPower) sectorPower.addEventListener('click', handleSectorTreeClick);
 
     // Sector search box
     document.getElementById('sector-search').addEventListener('input', function() {
         renderSectorTree(state.sectorTree);
+        renderDirectionTiles();
+    });
+    const sectorSearchPower = document.getElementById('sector-search-power');
+    if (sectorSearchPower) sectorSearchPower.addEventListener('input', function() {
+        renderSectorTree(state.sectorTree);
+    });
+
+    // ============================================================
+    // DIRECTION TILES (Tab 2 — two-level sector → profession grid)
+    // ============================================================
+    function renderDirectionTiles() {
+        const data = state.sectorTree;
+        if (!data) return;
+        const tilesEl = document.getElementById('direction-tiles');
+        const breadcrumb = document.getElementById('direction-breadcrumb');
+        const crumbCurrent = document.getElementById('direction-crumb-current');
+        if (!tilesEl) return;
+
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        const searchVal = (document.getElementById('sector-search').value || '').toLowerCase();
+        const allInScope = state.domains.length === 0;
+
+        // Find the max count for proportional bars
+        const maxCount = Math.max(...data.sectors.map(s => s.count), 1);
+
+        if (state.directionZoom) {
+            // --- Level 2: Professions in a sector ---
+            const sector = data.sectors.find(s => s.name === state.directionZoom);
+            if (!sector) {
+                // Sector no longer in data (filter change) — reset to Level 1
+                state.directionZoom = null;
+                renderDirectionTiles();
+                return;
+            }
+
+            breadcrumb.style.display = '';
+            crumbCurrent.textContent = tDomain(sector.name);
+
+            let profs = [...sector.professions];
+            // Apply search filter to professions
+            if (searchVal) {
+                profs = profs.filter(p => {
+                    const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
+                    return pName.toLowerCase().includes(searchVal);
+                });
+            }
+            // Sort by count descending
+            profs.sort((a, b) => b.count - a.count);
+
+            const sectorSelected = !allInScope && sector.codes.some(c => state.domains.includes(c));
+            const profMax = Math.max(...profs.map(p => p.count), 1);
+
+            // Sector header tile (select-all)
+            let html = `<div class="direction-tile sector-header-tile ${sectorSelected ? 'selected' : ''}"
+                              style="--dt-color:${sector.color}"
+                              data-action="toggle-sector" data-codes="${sector.codes.join(',')}" data-name="${sector.name}">
+                <span class="tree-dot" style="background:${sector.color}; width:10px; height:10px; border-radius:50%; flex-shrink:0;"></span>
+                <span class="dt-name">${tDomain(sector.name)}</span>
+                <span class="dt-stats">
+                    <span class="dt-count">${sector.count.toLocaleString(locale)} ${I18N.direction_positions}</span>
+                    ${sector.fresh ? `<span class="dt-fresh">+${sector.fresh} ${I18N.direction_new_this_week}</span>` : ''}
+                </span>
+                <span class="dt-select-label">${I18N.direction_select_all}</span>
+            </div>`;
+
+            if (profs.length === 0) {
+                html += '<div class="panel-empty">—</div>';
+            } else {
+                html += profs.map(p => {
+                    const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
+                    const pSelected = state.professions.includes(p.name);
+                    const pct = Math.max(2, Math.round(p.count / profMax * 100));
+                    return `<div class="direction-tile prof-tile ${pSelected ? 'selected' : ''}"
+                                 style="--dt-color:${sector.color}"
+                                 data-action="toggle-profession" data-name="${p.name}">
+                        <div class="dt-name">${pName}</div>
+                        <div class="dt-stats">
+                            <span class="dt-count">${p.count.toLocaleString(locale)}</span>
+                            ${p.fresh ? `<span class="dt-fresh">+${p.fresh}</span>` : ''}
+                        </div>
+                        <div class="dt-bar-track"><div class="dt-bar-fill" style="width:${pct}%"></div></div>
+                    </div>`;
+                }).join('');
+            }
+
+            tilesEl.innerHTML = html;
+        } else {
+            // --- Level 1: All sectors ---
+            breadcrumb.style.display = 'none';
+
+            let sectors = [...data.sectors];
+            // Apply search filter
+            if (searchVal) {
+                sectors = sectors.filter(s => {
+                    const nameMatch = tDomain(s.name).toLowerCase().includes(searchVal);
+                    const profMatch = s.professions.some(p => {
+                        const pName = (LANG === 'en' && p.name_en) ? p.name_en : p.name;
+                        return pName.toLowerCase().includes(searchVal);
+                    });
+                    return nameMatch || profMatch;
+                });
+            }
+            // Sort by count descending
+            sectors.sort((a, b) => b.count - a.count);
+
+            if (sectors.length === 0) {
+                tilesEl.innerHTML = '<div class="panel-empty">—</div>';
+                return;
+            }
+
+            tilesEl.innerHTML = sectors.map(s => {
+                const selected = !allInScope && s.codes.some(c => state.domains.includes(c));
+                const dimmed = !allInScope && !selected;
+                const pct = Math.max(2, Math.round(s.count / maxCount * 100));
+                return `<div class="direction-tile ${selected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''}"
+                             style="--dt-color:${s.color}"
+                             data-action="zoom-sector" data-codes="${s.codes.join(',')}" data-name="${s.name}">
+                    <div class="dt-name">${tDomain(s.name)}</div>
+                    <div class="dt-stats">
+                        <span class="dt-count">${s.count.toLocaleString(locale)} ${I18N.direction_positions}</span>
+                        ${s.fresh ? `<span class="dt-fresh">+${s.fresh} ${I18N.direction_new_this_week}</span>` : ''}
+                    </div>
+                    <div class="dt-bar-track"><div class="dt-bar-fill" style="width:${pct}%"></div></div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // Direction tiles click handler
+    document.getElementById('direction-tiles').addEventListener('click', function(e) {
+        const tile = e.target.closest('.direction-tile');
+        if (!tile) return;
+
+        const action = tile.dataset.action;
+
+        if (action === 'zoom-sector') {
+            // Level 1 → Level 2: zoom into the sector
+            state.directionZoom = tile.dataset.name;
+            renderDirectionTiles();
+            return;
+        }
+
+        if (action === 'toggle-sector') {
+            // Toggle the whole sector's domain codes
+            const codes = tile.dataset.codes.split(',');
+            const allSelected = codes.every(c => state.domains.includes(c));
+            if (allSelected) {
+                state.domains = state.domains.filter(c => !codes.includes(c));
+            } else {
+                codes.forEach(c => { if (!state.domains.includes(c)) state.domains.push(c); });
+            }
+            doSearch();
+            return;
+        }
+
+        if (action === 'toggle-profession') {
+            const name = tile.dataset.name;
+            const idx = state.professions.indexOf(name);
+            if (idx >= 0) { state.professions.splice(idx, 1); } else { state.professions.push(name); }
+            doSearch();
+            return;
+        }
+    });
+
+    // Back breadcrumb click
+    document.getElementById('direction-back').addEventListener('click', function(e) {
+        e.preventDefault();
+        state.directionZoom = null;
+        renderDirectionTiles();
     });
 
     // ============================================================
@@ -383,7 +828,6 @@
     function renderLocationTree(data) {
         if (!data) return;
         state.locationTree = data;
-        const container = document.getElementById('location-tree');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
         const searchVal = (document.getElementById('location-search').value || '').toLowerCase();
 
@@ -412,55 +856,60 @@
             return dir === 'asc' ? -cmp : cmp;
         });
 
+        let html = '';
         if (locations.length === 0) {
-            container.innerHTML = '<div class="panel-empty">—</div>';
-            return;
+            html = '<div class="panel-empty">—</div>';
+        } else {
+            const allInScope = state.states.length === 0 && state.cities.length === 0;
+            html = locations.map(loc => {
+                const stateSelected = !allInScope && (state.states.includes(loc.state)
+                    || state.cities.some(c => c.state === loc.state));
+                const dimmed = !allInScope && !stateSelected;
+                const isOpen = state.openStates.has(loc.state) || (searchVal && !dimmed);
+                const tint = allInScope ? 'tint-all' : '';
+
+                let citiesHtml = '';
+                if (isOpen) {
+                    let cities = [...loc.cities];
+                    cities.sort((a, b) => field === 'name'
+                        ? a.city.localeCompare(b.city)
+                        : b.count - a.count);
+                    if (dir === 'asc') cities.reverse();
+
+                    citiesHtml = cities.map(c => {
+                        const cSelected = state.cities.some(sc => sc.state === loc.state && sc.city === c.city);
+                        return `<div class="tree-child ${cSelected ? 'selected' : ''}" data-type="city" data-state="${loc.state}" data-city="${c.city}" data-lat="${c.lat || ''}" data-lon="${c.lon || ''}">
+                            <span class="tree-child-name">${c.city}</span>
+                            <span class="tree-child-count">${c.count.toLocaleString(locale)}</span>
+                        </div>`;
+                    }).join('');
+                    if (loc.total_cities > loc.cities.length) {
+                        citiesHtml += `<div class="tree-child tree-show-more" data-state="${loc.state}" data-offset="${loc.cities.length}">
+                            +${loc.total_cities - loc.cities.length} more…
+                        </div>`;
+                    }
+                }
+
+                return `<div class="tree-parent-group ${stateSelected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${tint}">
+                    <div class="tree-parent" data-type="state" data-state="${loc.state}">
+                        <span class="tree-chevron ${isOpen ? 'open' : ''}">${loc.total_cities > 0 ? '▸' : ''}</span>
+                        <span class="tree-parent-name">${tState(loc.state)}</span>
+                        <span class="tree-parent-count">${loc.count.toLocaleString(locale)}</span>
+                    </div>
+                    <div class="tree-children ${isOpen ? 'open' : ''}">${citiesHtml}</div>
+                </div>`;
+            }).join('');
         }
 
-        const allInScope = state.states.length === 0 && state.cities.length === 0;
-
-        container.innerHTML = locations.map(loc => {
-            const stateSelected = !allInScope && (state.states.includes(loc.state)
-                || state.cities.some(c => c.state === loc.state));
-            const dimmed = !allInScope && !stateSelected;
-            const isOpen = state.openStates.has(loc.state) || (searchVal && !dimmed);
-            const tint = allInScope ? 'tint-all' : '';
-
-            let citiesHtml = '';
-            if (isOpen) {
-                let cities = [...loc.cities];
-                cities.sort((a, b) => field === 'name'
-                    ? a.city.localeCompare(b.city)
-                    : b.count - a.count);
-                if (dir === 'asc') cities.reverse();
-
-                citiesHtml = cities.map(c => {
-                    const cSelected = state.cities.some(sc => sc.state === loc.state && sc.city === c.city);
-                    return `<div class="tree-child ${cSelected ? 'selected' : ''}" data-type="city" data-state="${loc.state}" data-city="${c.city}" data-lat="${c.lat || ''}" data-lon="${c.lon || ''}">
-                        <span class="tree-child-name">${c.city}</span>
-                        <span class="tree-child-count">${c.count.toLocaleString(locale)}</span>
-                    </div>`;
-                }).join('');
-                if (loc.total_cities > loc.cities.length) {
-                    citiesHtml += `<div class="tree-child tree-show-more" data-state="${loc.state}" data-offset="${loc.cities.length}">
-                        +${loc.total_cities - loc.cities.length} more…
-                    </div>`;
-                }
-            }
-
-            return `<div class="tree-parent-group ${stateSelected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${tint}">
-                <div class="tree-parent" data-type="state" data-state="${loc.state}">
-                    <span class="tree-chevron ${isOpen ? 'open' : ''}">${loc.total_cities > 0 ? '▸' : ''}</span>
-                    <span class="tree-parent-name">${tState(loc.state)}</span>
-                    <span class="tree-parent-count">${loc.count.toLocaleString(locale)}</span>
-                </div>
-                <div class="tree-children ${isOpen ? 'open' : ''}">${citiesHtml}</div>
-            </div>`;
-        }).join('');
+        // Render to both primary (tab 4) and power (tab 6) location trees
+        ['location-tree', 'location-tree-power'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        });
     }
 
-    // Location tree click handlers
-    document.getElementById('location-tree').addEventListener('click', async function(e) {
+    // Location tree click handler — shared
+    async function handleLocationTreeClick(e) {
         const showMore = e.target.closest('.tree-show-more');
         if (showMore) {
             const st = showMore.dataset.state;
@@ -475,7 +924,6 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    // Append cities to the location tree data
                     const loc = state.locationTree.locations.find(l => l.state === st);
                     if (loc && data.cities) {
                         loc.cities = [...loc.cities, ...data.cities];
@@ -493,7 +941,6 @@
             const entry = { state: child.dataset.state, city: child.dataset.city };
             const idx = state.cities.findIndex(c => c.state === entry.state && c.city === entry.city);
             if (idx >= 0) { state.cities.splice(idx, 1); } else { state.cities.push(entry); }
-            // Also add the state to states for the preview query
             if (!state.states.includes(entry.state) && state.cities.some(c => c.state === entry.state)) {
                 state.states.push(entry.state);
             }
@@ -510,22 +957,27 @@
                 renderLocationTree(state.locationTree);
                 return;
             }
-            // Click on the row = toggle Bundesland selection
             const st = parent.dataset.state;
             const idx = state.states.indexOf(st);
             if (idx >= 0) {
                 state.states.splice(idx, 1);
-                // Also remove any city filters for this state
                 state.cities = state.cities.filter(c => c.state !== st);
             } else {
                 state.states.push(st);
             }
             doSearch();
         }
-    });
+    }
+    document.getElementById('location-tree').addEventListener('click', handleLocationTreeClick);
+    const locPower = document.getElementById('location-tree-power');
+    if (locPower) locPower.addEventListener('click', handleLocationTreeClick);
 
     // Location search box
     document.getElementById('location-search').addEventListener('input', function() {
+        renderLocationTree(state.locationTree);
+    });
+    const locSearchPower = document.getElementById('location-search-power');
+    if (locSearchPower) locSearchPower.addEventListener('input', function() {
         renderLocationTree(state.locationTree);
     });
 
@@ -569,6 +1021,10 @@
     };
 
     function renderHeatmap(points) {
+        // Skip when map is in a hidden tab (0-size canvas crashes leaflet.heat)
+        const mapEl = document.getElementById('search-map');
+        if (mapEl && mapEl.offsetWidth === 0) return;
+
         if (!points || points.length === 0) {
             if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
             return;
@@ -657,10 +1113,11 @@
         updateZoomHint(zoom);
     }
 
-    // Toggle markers + resize on zoom
+    // Toggle markers + resize on zoom (single consolidated handler)
     map.on('zoomend', function() {
         const zoom = map.getZoom();
         updateZoomBadge(zoom);
+        // Posting markers
         if (markerLayer) {
             if (zoom >= MARKER_MIN_ZOOM && !map.hasLayer(markerLayer)) {
                 markerLayer.addTo(map);
@@ -670,6 +1127,14 @@
             if (map.hasLayer(markerLayer)) {
                 const r = markerRadius(zoom);
                 markerLayer.eachLayer(function(layer) { layer.setRadius(r); });
+            }
+        }
+        // City markers
+        if (cityMarkerLayer) {
+            if (zoom >= 7 && !map.hasLayer(cityMarkerLayer)) {
+                cityMarkerLayer.addTo(map);
+            } else if (zoom < 7 && map.hasLayer(cityMarkerLayer)) {
+                map.removeLayer(cityMarkerLayer);
             }
         }
         updateZoomHint(zoom);
@@ -834,17 +1299,6 @@
             cityMarkerLayer.addTo(map);
         }
     }
-
-    // Show/hide city markers on zoom change
-    map.on('zoomend', function() {
-        if (cityMarkerLayer) {
-            if (map.getZoom() >= 7 && !map.hasLayer(cityMarkerLayer)) {
-                cityMarkerLayer.addTo(map);
-            } else if (map.getZoom() < 7 && map.hasLayer(cityMarkerLayer)) {
-                map.removeLayer(cityMarkerLayer);
-            }
-        }
-    });
 
     // ============================================================
     // ACTIVE FILTER PILLS — three grouped frames
@@ -1019,16 +1473,28 @@
     // TOTAL + FRESHNESS
     // ============================================================
     function renderTotal(total, landscapeTotal) {
-        const el = document.getElementById('search-total');
-        const ofEl = document.getElementById('total-of');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-        el.querySelector('.total-number').textContent = total.toLocaleString(locale);
-        if (landscapeTotal && landscapeTotal !== total) {
-            const ofWord = LANG === 'de' ? 'von' : 'of';
-            ofEl.textContent = `${ofWord} ${landscapeTotal.toLocaleString(locale)}`;
-            ofEl.style.display = '';
-        } else {
-            ofEl.style.display = 'none';
+        const totalStr = total.toLocaleString(locale);
+        const hasOf = landscapeTotal && landscapeTotal !== total;
+        const ofWord = LANG === 'de' ? 'von' : 'of';
+        const ofStr = hasOf ? `${ofWord} ${landscapeTotal.toLocaleString(locale)}` : '';
+
+        // Primary total display
+        const el = document.getElementById('search-total');
+        if (el) {
+            const numEl = el.querySelector('.total-number');
+            if (numEl) numEl.textContent = totalStr;
+        }
+        const ofEl = document.getElementById('total-of');
+        if (ofEl) {
+            ofEl.textContent = ofStr;
+            ofEl.style.display = hasOf ? '' : 'none';
+        }
+        // Power tab total
+        const elP = document.getElementById('search-total-power');
+        if (elP) {
+            const numP = elP.querySelector('.total-number');
+            if (numP) numP.textContent = totalStr;
         }
     }
 
@@ -1049,17 +1515,23 @@
     let _lastSparklineDays = null;
 
     function renderSparkline(days, _retries) {
-        const canvas = document.getElementById('sparkline-canvas');
-        const section = document.getElementById('intel-activity');
+        _lastSparklineDays = days;
+        _drawSparklineOn(days, 'sparkline-canvas', 'intel-activity', _retries);
+        _drawSparklineOn(days, 'sparkline-canvas-power', 'intel-activity-power', _retries);
+    }
+
+    function _drawSparklineOn(days, canvasId, sectionId, _retries) {
+        const canvas = document.getElementById(canvasId);
+        const section = document.getElementById(sectionId);
+        if (!canvas || !section) return;
         if (!days || days.length === 0) { section.style.display = 'none'; return; }
         section.style.display = '';
-        _lastSparklineDays = days;
 
         // HiDPI canvas sizing
         const rect = canvas.getBoundingClientRect();
         // Guard: if panel hasn't laid out yet, retry after a short delay
         if (rect.width < 10 && (_retries || 0) < 5) {
-            setTimeout(() => renderSparkline(days, (_retries || 0) + 1), 200);
+            setTimeout(() => _drawSparklineOn(days, canvasId, sectionId, (_retries || 0) + 1), 200);
             return;
         }
         const dpr = window.devicePixelRatio || 1;
@@ -1210,20 +1682,23 @@
         ctx.shadowBlur = 0;
 
         // --- Hover tooltip ---
-        canvas.onmousemove = function(e) {
-            const br = canvas.getBoundingClientRect();
-            const mx = e.clientX - br.left;
-            let closest = points[0], minDist = 9999;
-            for (const p of points) {
-                const dist = Math.abs(p.x - mx);
-                if (dist < minDist) { minDist = dist; closest = p; }
-            }
-            canvas.title = closest.date + ': ' + closest.count.toLocaleString();
-        };
-    }
-
-    function renderIntelList(containerId, items, labelKey, filterType = null) {
-        // Legacy — kept for compatibility but no longer rendered in panels
+        // Store points on canvas for hover handler (avoids closure leak on re-render)
+        canvas._sparklinePoints = points;
+        if (!canvas._sparklineHover) {
+            canvas._sparklineHover = true;
+            canvas.addEventListener('mousemove', function(e) {
+                const pts = canvas._sparklinePoints;
+                if (!pts || !pts.length) return;
+                const br = canvas.getBoundingClientRect();
+                const mx = e.clientX - br.left;
+                let closest = pts[0], minDist = 9999;
+                for (const p of pts) {
+                    const dist = Math.abs(p.x - mx);
+                    if (dist < minDist) { minDist = dist; closest = p; }
+                }
+                canvas.title = closest.date + ': ' + closest.count.toLocaleString();
+            });
+        }
     }
 
     async function loadIntelligence() {
@@ -1278,6 +1753,7 @@
                 window._domainMap = {};
                 data.sectors.forEach(s => { window._domainMap[s.name] = s.codes; });
                 renderSectorTree(data);
+                renderDirectionTiles();
                 // Re-render pills now that _domainMap is available
                 // (first doSearch renders pills before this async call completes)
                 renderFilterPills();
@@ -1352,22 +1828,22 @@
 
             // Render QL strip from preview data
             renderQLStrip(data.by_ql);
-            renderHeatmap(data.heatmap);
-            renderMarkers(data.markers);
+            try { renderHeatmap(data.heatmap); } catch(_) {}
+            try { renderMarkers(data.markers); } catch(_) {}
             renderTotal(data.total, data.landscape_total);
             renderFreshness(data.fresh_count);
             renderFilterPills();
-            renderBundeslandOverlay();
+            try { renderBundeslandOverlay(); } catch(_) {}
 
-            // Force map tile refresh after render
-            setTimeout(() => map.invalidateSize(), 50);
+            // Force map tile refresh after render (only if map visible)
+            setTimeout(() => { const m = document.getElementById('search-map'); if (m && m.offsetWidth > 0) map.invalidateSize(); }, 50);
 
-            // Load hierarchy trees (cross-filtered)
-            loadSectorTree();
-            loadLocationTree();
-
-            // Load sparkline
-            loadIntelligence();
+            // Load cross-filtered panels in parallel (each has its own AbortController)
+            await Promise.allSettled([
+                loadSectorTree(),
+                loadLocationTree(),
+                loadIntelligence(),
+            ]);
 
             // Load matching postings as result tiles
             loadResults(true);
@@ -1515,6 +1991,12 @@
             } else {
                 showMore.style.display = 'none';
             }
+
+            // Sync results to power tab grid
+            const powerGrid = document.getElementById('search-results-grid-power');
+            if (powerGrid) powerGrid.innerHTML = grid.innerHTML;
+            const powerTitle = document.getElementById('results-title-power');
+            if (powerTitle) powerTitle.textContent = I18N.results_title;
         } catch(e) {
             if (e.name === 'AbortError') return;
             console.error('Results failed:', e);
@@ -1538,6 +2020,18 @@
             openPostingDetail(parseInt(tile.dataset.postingId));
         }
     });
+
+    // Same handler for power tab results grid
+    const powerResultsGrid = document.getElementById('search-results-grid-power');
+    if (powerResultsGrid) {
+        powerResultsGrid.addEventListener('click', function(e) {
+            const btn = e.target.closest('.tile-details-btn');
+            const tile = e.target.closest('.result-tile');
+            if (btn && tile) {
+                openPostingDetail(parseInt(tile.dataset.postingId));
+            }
+        });
+    }
 
     // Show more
     document.getElementById('btn-show-more').addEventListener('click', function() {
@@ -1899,11 +2393,14 @@
         const body = {};
         if (state.domains.length > 0) body.domains = state.domains;
         if (state.ql.length > 0) body.ql = state.ql;
-        // Save first geo location for backward compat with SaveSearch backend
+        if (state.states.length > 0) body.states = state.states;
+        if (state.professions.length > 0) body.professions = state.professions;
+        // Multi-location (full list) + legacy single-location for backward compat
         if (state.geoLocations.length > 0) {
             body.lat      = state.geoLocations[0].lat;
             body.lon      = state.geoLocations[0].lon;
             body.radius_km = state.geoLocations[0].radius_km;
+            body.geo_locations = state.geoLocations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km}));
         }
 
         const feedback = document.getElementById('save-feedback');
@@ -1940,7 +2437,16 @@
                 const sp = data.search_params;
                 if (sp.domains) state.domains = sp.domains;
                 if (sp.ql) state.ql = sp.ql;
-                if (sp.lat != null && sp.lon != null) {
+                if (sp.states) state.states = sp.states;
+                if (sp.professions) state.professions = sp.professions;
+                // Prefer multi-location array, fall back to legacy single lat/lon
+                if (sp.geo_locations && sp.geo_locations.length > 0) {
+                    state.geoLocations = sp.geo_locations.map(g => ({lat: g.lat, lon: g.lon, radius_km: g.radius_km || 50, label: ''}));
+                    const first = sp.geo_locations[0];
+                    document.getElementById('radius-select').value = first.radius_km || 50;
+                    map.setView([first.lat, first.lon], 10);
+                    updateGeoLayers();
+                } else if (sp.lat != null && sp.lon != null) {
                     const radius_km = sp.radius_km || 50;
                     state.geoLocations.push({lat: sp.lat, lon: sp.lon, radius_km, label: ''});
                     document.getElementById('radius-select').value = radius_km;
@@ -2224,18 +2730,32 @@
             }
         }
 
+        // Restore active tab (or default to 'situation')
+        switchTab(state.activeTab || 'situation');
+
+        // Load situation questionnaire answers from API
+        loadSituationContext();
+
         // Load profile scope (infer domain/QL/geo from CV) — only fills
         // empty slots, so restored filters take priority
         await initProfileScope();
         doSearch();
         // Fix Leaflet tile rendering — force recalculation after layout resolves
-        // The grid now has explicit height (calc(100vh-220px)) so this should work reliably
-        setTimeout(() => { map.invalidateSize(); map.setView(map.getCenter()); }, 200);
-        setTimeout(() => map.invalidateSize(), 1000);
+        // Only invalidate if the map is currently visible (on location or power tab)
+        setTimeout(() => {
+            const mapEl = document.getElementById('search-map');
+            if (mapEl && mapEl.offsetWidth > 0) {
+                map.invalidateSize(); map.setView(map.getCenter());
+            }
+        }, 200);
+        setTimeout(() => {
+            const mapEl = document.getElementById('search-map');
+            if (mapEl && mapEl.offsetWidth > 0) map.invalidateSize();
+        }, 1000);
         // Watch for container resize (window resize, sidebar toggle)
         if (window.ResizeObserver) {
             const mapEl = document.getElementById('search-map');
-            const ro = new ResizeObserver(() => map.invalidateSize());
+            const ro = new ResizeObserver(() => { if (mapEl.offsetWidth > 0) map.invalidateSize(); });
             ro.observe(mapEl);
             // Also watch the panels container (catches grid reflow on zoom)
             const panels = document.querySelector('.search-panels');
@@ -2257,8 +2777,8 @@
         window.addEventListener('resize', function() {
             clearTimeout(_zoomTimer);
             _zoomTimer = setTimeout(() => {
-                map.invalidateSize();
-                map.setView(map.getCenter());
+                const m = document.getElementById('search-map');
+                if (m && m.offsetWidth > 0) { map.invalidateSize(); map.setView(map.getCenter()); }
             }, 150);
         });
         // Vibrate + open Mira
@@ -2316,6 +2836,10 @@
             if (radiusSelect) {
                 radiusSelect.value = String(radius_km);
             }
+            const radiusSelectPower = document.getElementById('radius-select-power');
+            if (radiusSelectPower) {
+                radiusSelectPower.value = String(radius_km);
+            }
 
             // Pan map and draw circles
             map.setView([filters.lat, filters.lon], 10);
@@ -2326,7 +2850,7 @@
         if (changed) {
             doSearch();
             // Ensure map tiles reload after filter-driven view change
-            setTimeout(() => map.invalidateSize(), 200);
+            setTimeout(() => { const m = document.getElementById('search-map'); if (m && m.offsetWidth > 0) map.invalidateSize(); }, 200);
         }
     };
 })();
