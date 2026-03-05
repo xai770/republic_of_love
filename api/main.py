@@ -259,9 +259,19 @@ def search_page(request: Request, conn=Depends(get_db)):
     if needs_onboarding(user):
         return RedirectResponse(url="/onboarding", status_code=302)
     
+    # Check if user has a profile (for card-flip gate)
+    has_profile = False
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM profiles WHERE user_id = %s LIMIT 1", (user['user_id'],))
+            has_profile = cur.fetchone() is not None
+    except Exception:
+        pass
+    
     return templates.TemplateResponse("search.html", {
         "request": request,
         "user": user,
+        "has_profile": has_profile,
         **get_i18n_context(request)
     })
 

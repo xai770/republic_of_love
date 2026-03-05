@@ -112,23 +112,99 @@
     }
 
     // ============================================================
-    // TAB SWITCHING
+    // TAB SWITCHING + PILL BAR
     // ============================================================
-    const VALID_TABS = ['situation', 'direction', 'level', 'location', 'opportunities', 'power'];
+    const GUIDED_TABS = ['situation', 'direction', 'level', 'location', 'opportunities'];
+    const VALID_TABS = [...GUIDED_TABS, 'power'];
     let mapNeedsInvalidate = true;  // first switch to location/power must fix Leaflet
+
+    /** Position the sliding pill highlight behind the active pill button. */
+    function positionPillHighlight(animate) {
+        const bar = document.getElementById('search-pill-bar');
+        const highlight = document.getElementById('pill-highlight');
+        const activePill = bar ? bar.querySelector('.search-pill.active') : null;
+        if (!bar || !highlight || !activePill) {
+            highlight && (highlight.style.opacity = '0');
+            return;
+        }
+        const barRect = bar.getBoundingClientRect();
+        const pillRect = activePill.getBoundingClientRect();
+        if (!animate) highlight.style.transition = 'none';
+        highlight.style.left = (pillRect.left - barRect.left) + 'px';
+        highlight.style.width = pillRect.width + 'px';
+        highlight.style.opacity = '1';
+        if (!animate) {
+            // Force reflow then re-enable transition
+            highlight.offsetHeight; // eslint-disable-line no-unused-expressions
+            highlight.style.transition = '';
+        }
+    }
+
+    /** Count answered guided pills and update counter, progress bar, and power badge. */
+    function updatePillProgress() {
+        const checks = {
+            situation: Object.keys(state.situationContext).length >= 1,
+            direction: state.domains.length > 0 || state.professions.length > 0,
+            level: state.ql.length > 0,
+            location: state.geoLocations.length > 0 || state.states.length > 0 || state.cities.length > 0,
+            opportunities: state.data != null,
+        };
+        let done = 0;
+        GUIDED_TABS.forEach(tab => {
+            const el = document.getElementById('pill-check-' + tab);
+            const stepEl = document.querySelector('.player-step[data-tab="' + tab + '"]');
+            if (checks[tab]) {
+                done++;
+                if (el) el.textContent = '✓';
+                if (stepEl) stepEl.classList.add('done');
+            } else {
+                if (el) el.textContent = '';
+                if (stepEl) stepEl.classList.remove('done');
+            }
+        });
+        // Counter
+        const counter = document.getElementById('pill-done-count');
+        if (counter) counter.textContent = String(done);
+        // Progress bar (0-100%)
+        const fill = document.getElementById('pill-track-fill');
+        if (fill) fill.style.width = (done / GUIDED_TABS.length * 100) + '%';
+        // Power search badge unlock
+        const badge = document.getElementById('power-search-badge');
+        if (badge) {
+            badge.classList.toggle('enabled', done >= 1);
+            badge.classList.toggle('disabled', done < 1);
+        }
+    }
 
     function switchTab(tabName) {
         if (!VALID_TABS.includes(tabName)) return;
+
+        // Block Power Search if still locked
+        const badge = document.getElementById('power-search-badge');
+        if (tabName === 'power' && badge && badge.classList.contains('disabled')) return;
+
         state.activeTab = tabName;
 
-        // Update tab buttons
-        document.querySelectorAll('.search-tab').forEach(btn => {
+        // Update pill buttons (guided tabs only)
+        document.querySelectorAll('.search-pill').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
+        // If switching to 'power', remove active from all pills
+        if (tabName === 'power') {
+            document.querySelectorAll('.search-pill').forEach(btn => btn.classList.remove('active'));
+        }
+
         // Update tab content panels
         document.querySelectorAll('.tab-content').forEach(panel => {
             panel.classList.toggle('active', panel.dataset.tab === tabName);
         });
+
+        // Filter pills header — visible only on power tab
+        const header = document.getElementById('search-header');
+        if (header) header.style.display = tabName === 'power' ? '' : 'none';
+
+        // Slide pill highlight
+        positionPillHighlight(true);
 
         // Fix Leaflet when map becomes visible (location or power tab)
         if ((tabName === 'location' || tabName === 'power') && typeof map !== 'undefined' && map) {
@@ -137,14 +213,12 @@
                 if (!mapEl || mapEl.offsetWidth === 0) return;
                 map.invalidateSize();
                 map.setView(map.getCenter());
-                // Re-render heatmap/markers now that canvas has real dimensions
                 if (state.data) {
                     try { renderHeatmap(state.data.heatmap); } catch(_) {}
                     try { renderMarkers(state.data.markers); } catch(_) {}
                     try { renderBundeslandOverlay(); } catch(_) {}
                 }
             }, 100);
-            // Second pass for slow layouts
             setTimeout(() => {
                 const mapEl = document.getElementById('search-map');
                 if (mapEl && mapEl.offsetWidth > 0) map.invalidateSize();
@@ -153,17 +227,29 @@
         }
 
         saveState();
+        updatePillProgress();
+        updatePlayerState();
     }
 
-    // Wire tab bar clicks (event delegation)
-    document.getElementById('search-tabs').addEventListener('click', function(e) {
-        const tab = e.target.closest('.search-tab');
-        if (!tab) return;
-        switchTab(tab.dataset.tab);
-    });
+    // Wire pill bar clicks (event delegation)
+    const pillBar = document.getElementById('search-pill-bar');
+    if (pillBar) {
+        pillBar.addEventListener('click', function(e) {
+            const pill = e.target.closest('.search-pill');
+            if (!pill) return;
+            switchTab(pill.dataset.tab);
+        });
+    }
+    // Wire Power Search badge
+    const powerBadge = document.getElementById('power-search-badge');
+    if (powerBadge) {
+        powerBadge.addEventListener('click', function() {
+            switchTab('power');
+        });
+    }
 
     // ============================================================
-    // SITUATION QUESTIONNAIRE
+    // FLIP-CARD SITUATION QUESTIONNAIRE
     // ============================================================
     const SQ_QUESTIONS = ['search_mode', 'field_change', 'intention'];
 
@@ -173,7 +259,7 @@
             if (!res.ok) return;
             const data = await res.json();
             state.situationContext = data || {};
-            renderSituationCards();
+            renderFlipCards();
         } catch(e) {
             console.warn('Failed to load situation context:', e);
         }
@@ -181,7 +267,8 @@
 
     async function saveSituationAnswer(question, value) {
         state.situationContext[question] = value;
-        renderSituationCards();
+        renderFlipCards();
+        updatePillProgress();
         try {
             await fetch('/api/search/situation', {
                 method: 'POST',
@@ -193,113 +280,339 @@
         }
     }
 
-    function renderSituationCards() {
+    function renderFlipCards() {
         SQ_QUESTIONS.forEach(q => {
-            const card = document.getElementById('sq-' + q);
-            const collapsed = document.getElementById('sqc-' + q);
-            const expanded = document.getElementById('sqe-' + q);
-            const valueEl = document.getElementById('sqv-' + q);
-            const checkEl = card ? card.querySelector('.sq-check') : null;
+            const card = document.getElementById('fc-' + q);
+            const valEl = document.getElementById('fc-val-' + q);
             if (!card) return;
 
             const val = state.situationContext[q];
             const hasAnswer = val != null && val !== '';
 
             card.classList.toggle('answered', hasAnswer);
-            if (checkEl) checkEl.textContent = hasAnswer ? '✓' : '○';
 
-            // Update summary value from the selected option text
-            if (hasAnswer && valueEl) {
-                const optBtn = expanded ? expanded.querySelector(`.sq-option[data-value="${val}"]`) : null;
-                valueEl.textContent = optBtn ? optBtn.textContent.trim() : val;
-            } else if (valueEl) {
-                valueEl.textContent = '—';
+            // Unflip answered cards so user sees the front with ✓ + answer
+            if (hasAnswer && card.classList.contains('flipped')) {
+                card.classList.remove('flipped');
             }
 
-            // Mark selected option
-            if (expanded) {
-                expanded.querySelectorAll('.sq-option').forEach(btn => {
+            // Update the answer value display on the front (micro-feedback: short label + ✓)
+            if (hasAnswer && valEl) {
+                if (val === '__skipped') {
+                    valEl.textContent = '— skipped';
+                } else {
+                    const back = card.querySelector('.flip-card-back');
+                    const optBtn = back ? back.querySelector(`.fc-option[data-value="${val}"]`) : null;
+                    const fullText = optBtn ? optBtn.textContent.trim() : val;
+                    valEl.textContent = '✓ ' + fullText;
+                }
+            } else if (valEl) {
+                valEl.textContent = '';
+            }
+
+            // Mark selected option on the back
+            const back = card.querySelector('.flip-card-back');
+            if (back) {
+                back.querySelectorAll('.fc-option').forEach(btn => {
                     btn.classList.toggle('selected', btn.dataset.value === String(val));
                 });
             }
         });
     }
 
-    function expandSituationCard(question) {
+    /** Flip a card open; unflip any other currently flipped card. */
+    function flipCard(question) {
         SQ_QUESTIONS.forEach(q => {
-            const collapsed = document.getElementById('sqc-' + q);
-            const expanded = document.getElementById('sqe-' + q);
-            if (!collapsed || !expanded) return;
+            const card = document.getElementById('fc-' + q);
+            if (!card) return;
             if (q === question) {
-                collapsed.style.display = 'none';
-                expanded.style.display = '';
+                card.classList.add('flipped');
             } else {
-                collapsed.style.display = '';
-                expanded.style.display = 'none';
+                card.classList.remove('flipped');
             }
         });
     }
 
-    function collapseSituationCard(question) {
-        const collapsed = document.getElementById('sqc-' + question);
-        const expanded = document.getElementById('sqe-' + question);
-        if (collapsed) collapsed.style.display = '';
-        if (expanded) expanded.style.display = 'none';
+    function unflipCard(question) {
+        const card = document.getElementById('fc-' + question);
+        if (card) card.classList.remove('flipped');
     }
 
-    function advanceToNextQuestion(currentQuestion) {
+    /** After answering, auto-flip the next unanswered card. */
+    function advanceToNextCard(currentQuestion) {
         const idx = SQ_QUESTIONS.indexOf(currentQuestion);
-        // Find the next unanswered question
         for (let i = idx + 1; i < SQ_QUESTIONS.length; i++) {
             if (state.situationContext[SQ_QUESTIONS[i]] == null) {
-                expandSituationCard(SQ_QUESTIONS[i]);
+                setTimeout(() => flipCard(SQ_QUESTIONS[i]), 400);
+                updateCardNav();
                 return;
             }
         }
-        // All answered — collapse current
-        collapseSituationCard(currentQuestion);
+        // All done — just unflip
+        unflipCard(currentQuestion);
+        updateCardNav();
     }
 
-    // Wire situation card interactions (event delegation on the container)
+    /** Get the currently flipped card index, or -1 if none flipped. */
+    function getFlippedCardIndex() {
+        for (let i = 0; i < SQ_QUESTIONS.length; i++) {
+            const card = document.getElementById('fc-' + SQ_QUESTIONS[i]);
+            if (card && card.classList.contains('flipped')) return i;
+        }
+        return -1;
+    }
+
+    /** Get the current "position" in the flow: -1 = no card flipped (overview), 0-2 = card index. */
+    function getCardNavPosition() {
+        return getFlippedCardIndex();
+    }
+
+    /** Update arrow enabled/disabled state. */
+    function updateCardNav() {
+        const backBtn = document.getElementById('player-back');
+        const fwdBtn = document.getElementById('player-next');
+        if (!backBtn || !fwdBtn) return;
+        // Only control back button when on the situation tab
+        if (state.activeTab === 'situation') {
+            const pos = getCardNavPosition();
+            backBtn.disabled = (pos <= -1);
+        }
+        fwdBtn.disabled = false;
+    }
+
+    /** Navigate forward: flip next card, or advance to next tab. */
+    function cardNavForward() {
+        const pos = getCardNavPosition();
+        if (pos === -1) {
+            // No card flipped — flip the first unanswered card, or if all answered, go to next tab
+            for (let i = 0; i < SQ_QUESTIONS.length; i++) {
+                if (state.situationContext[SQ_QUESTIONS[i]] == null) {
+                    flipCard(SQ_QUESTIONS[i]);
+                    updateCardNav();
+                    return;
+                }
+            }
+            // All answered — go to next tab
+            switchTab('direction');
+            return;
+        }
+        // Currently on a card — move to next card or next tab
+        if (pos < SQ_QUESTIONS.length - 1) {
+            flipCard(SQ_QUESTIONS[pos + 1]);
+        } else {
+            // Last card — unflip and go to next tab
+            unflipCard(SQ_QUESTIONS[pos]);
+            switchTab('direction');
+        }
+        updateCardNav();
+    }
+
+    /** Navigate backward: go to previous card, or unflip to overview. */
+    function cardNavBack() {
+        const pos = getCardNavPosition();
+        if (pos <= 0) {
+            // At first card or overview — unflip all
+            SQ_QUESTIONS.forEach(q => unflipCard(q));
+        } else {
+            flipCard(SQ_QUESTIONS[pos - 1]);
+        }
+        updateCardNav();
+    }
+
+    // Wire card nav arrows (now in the player bar)
+    const cardNavFwd = document.getElementById('player-next');
+    const cardNavBck = document.getElementById('player-back');
+    if (cardNavFwd) cardNavFwd.addEventListener('click', playerNext);
+    if (cardNavBck) cardNavBck.addEventListener('click', playerBack);
+
+    /** Player Next: on situation tab delegates to cardNavForward, otherwise goes to next tab. */
+    function playerNext() {
+        const tab = state.activeTab;
+        if (tab === 'situation') {
+            cardNavForward();
+            return;
+        }
+        const idx = GUIDED_TABS.indexOf(tab);
+        if (idx >= 0 && idx < GUIDED_TABS.length - 1) {
+            switchTab(GUIDED_TABS[idx + 1]);
+        } else if (idx === GUIDED_TABS.length - 1) {
+            // Last guided tab — go to power search if unlocked
+            const badge = document.getElementById('power-search-badge');
+            if (badge && badge.classList.contains('enabled')) switchTab('power');
+        }
+        updatePlayerState();
+    }
+
+    /** Player Back: on situation tab delegates to cardNavBack, otherwise goes to prev tab. */
+    function playerBack() {
+        const tab = state.activeTab;
+        if (tab === 'situation') {
+            cardNavBack();
+            return;
+        }
+        const idx = GUIDED_TABS.indexOf(tab);
+        if (idx > 0) {
+            switchTab(GUIDED_TABS[idx - 1]);
+        } else if (tab === 'power') {
+            switchTab(GUIDED_TABS[GUIDED_TABS.length - 1]);
+        }
+        updatePlayerState();
+    }
+
+    /** Sync player step dots, display text, and back/next button states. */
+    let hintRotationId = null;
+    let stepFlashTimeout = null;
+    let welcomePhase = true;  // gates flashStepInfo/startHintRotation until welcome pulse done
+
+    function startHintRotation() {
+        if (welcomePhase) return;
+        const marquee = document.getElementById('player-marquee');
+        if (!marquee || hintRotationId) return;
+        const hints = [I18N.player_hint_1, I18N.player_hint_2, I18N.player_hint_3].filter(Boolean);
+        if (!hints.length) return;
+        let idx = 0;
+        marquee.textContent = hints[0];
+        hintRotationId = setInterval(() => {
+            marquee.classList.add('fade-out');
+            setTimeout(() => {
+                idx = (idx + 1) % hints.length;
+                marquee.textContent = hints[idx];
+                marquee.classList.remove('fade-out');
+            }, 300);
+        }, 5000);
+    }
+
+    /** Flash step info briefly, then resume hint rotation. */
+    function flashStepInfo(text) {
+        if (welcomePhase) return;
+        const marquee = document.getElementById('player-marquee');
+        if (!marquee) return;
+        // Pause hint rotation
+        if (hintRotationId) { clearInterval(hintRotationId); hintRotationId = null; }
+        if (stepFlashTimeout) clearTimeout(stepFlashTimeout);
+        // Show step info
+        marquee.classList.remove('fade-out');
+        marquee.textContent = text;
+        // Resume hints after 3s
+        stepFlashTimeout = setTimeout(() => {
+            marquee.classList.add('fade-out');
+            setTimeout(() => {
+                marquee.classList.remove('fade-out');
+                startHintRotation();
+            }, 300);
+        }, 3000);
+    }
+
+    function updatePlayerState() {
+        const tab = state.activeTab;
+        const idx = GUIDED_TABS.indexOf(tab);
+        // Step dots: active + done classes
+        document.querySelectorAll('.player-step').forEach(step => {
+            const t = step.dataset.tab;
+            const ti = GUIDED_TABS.indexOf(t);
+            step.classList.toggle('active', t === tab);
+        });
+        // Back button: disabled on first tab with no card flipped
+        const backBtn = document.getElementById('player-back');
+        if (backBtn) {
+            if (tab === 'situation') {
+                backBtn.disabled = (getCardNavPosition() <= -1);
+            } else {
+                backBtn.disabled = (idx <= 0 && tab !== 'power');
+            }
+        }
+        // Display text — flash step info briefly, then resume hints
+        const marquee = document.getElementById('player-marquee');
+        if (marquee) {
+            const tabNames = {
+                situation: document.querySelector('.player-step[data-tab="situation"]')?.title || 'Situation',
+                direction: document.querySelector('.player-step[data-tab="direction"]')?.title || 'Direction',
+                level: document.querySelector('.player-step[data-tab="level"]')?.title || 'Level',
+                location: document.querySelector('.player-step[data-tab="location"]')?.title || 'Location',
+                opportunities: document.querySelector('.player-step[data-tab="opportunities"]')?.title || 'Opportunities',
+                power: 'PowerSearch',
+            };
+            if (idx >= 0) {
+                flashStepInfo((idx + 1) + ' / ' + GUIDED_TABS.length + ' \u2014 ' + (tabNames[tab] || tab));
+            } else if (tab === 'power') {
+                flashStepInfo('\u26a1 PowerSearch');
+            }
+        }
+    }
+
+    // Wire player step dot clicks
+    document.querySelectorAll('.player-step').forEach(step => {
+        step.addEventListener('click', function() {
+            switchTab(this.dataset.tab);
+        });
+    });
+
+    // Profile gate — show if no profile
+    function applyProfileGate() {
+        const gate = document.getElementById('profile-gate');
+        const cardsRow = document.getElementById('flip-cards-row');
+        if (!gate || !cardsRow) return;
+        if (!window.SearchConfig.hasProfile) {
+            gate.style.display = '';
+            cardsRow.style.opacity = '0.35';
+            cardsRow.style.pointerEvents = 'none';
+        } else {
+            gate.style.display = 'none';
+            cardsRow.style.opacity = '';
+            cardsRow.style.pointerEvents = '';
+        }
+    }
+
+    // Wire flip-card interactions (event delegation on the container)
     const situationContainer = document.querySelector('.situation-container');
     if (situationContainer) {
-        // Click an option
         situationContainer.addEventListener('click', function(e) {
-            const optBtn = e.target.closest('.sq-option');
+            // Click an option on the back
+            const optBtn = e.target.closest('.fc-option');
             if (optBtn) {
-                const question = optBtn.closest('.sq-options').dataset.question;
+                const question = optBtn.closest('.fc-options').dataset.question;
                 const value = optBtn.dataset.value;
                 saveSituationAnswer(question, value);
-                // Collapse this card and advance to next
-                setTimeout(() => advanceToNextQuestion(question), 200);
+                setTimeout(() => advanceToNextCard(question), 350);
                 return;
             }
 
-            // Click skip
-            const skipBtn = e.target.closest('.sq-skip');
+            // Click skip on the back
+            const skipBtn = e.target.closest('.fc-skip');
             if (skipBtn) {
-                const card = skipBtn.closest('.situation-card');
+                const card = skipBtn.closest('.flip-card');
                 if (card) {
                     const question = card.dataset.question;
-                    collapseSituationCard(question);
-                    advanceToNextQuestion(question);
+                    // Mark as skipped (treat as answered for progress)
+                    saveSituationAnswer(question, '__skipped');
+                    setTimeout(() => advanceToNextCard(question), 350);
                 }
                 return;
             }
 
-            // Click adjust button → expand this card
-            const adjustBtn = e.target.closest('.sq-adjust');
-            if (adjustBtn) {
-                const card = adjustBtn.closest('.situation-card');
-                if (card) expandSituationCard(card.dataset.question);
+            // Click "Turn over" button on the front
+            const turnBtn = e.target.closest('.fc-turn-btn');
+            if (turnBtn) {
+                const card = turnBtn.closest('.flip-card');
+                if (card) flipCard(card.dataset.question);
                 return;
             }
 
-            // Click collapsed row → expand this card
-            const collapsedRow = e.target.closest('.sq-collapsed');
-            if (collapsedRow) {
-                const card = collapsedRow.closest('.situation-card');
-                if (card) expandSituationCard(card.dataset.question);
+            // Click "Change" button on answered front
+            const changeBtn = e.target.closest('.fc-change-btn');
+            if (changeBtn) {
+                const card = changeBtn.closest('.flip-card');
+                if (card) flipCard(card.dataset.question);
+                return;
+            }
+
+            // Click the front face generally → flip the card
+            const front = e.target.closest('.flip-card-front');
+            if (front) {
+                const card = front.closest('.flip-card');
+                if (card && !card.classList.contains('flipped')) {
+                    flipCard(card.dataset.question);
+                }
                 return;
             }
         });
@@ -2488,10 +2801,20 @@
         miraState.isOpen = false;
         widget.classList.remove('open', 'mira-idle');
         clearTimeout(miraState.idleTimer);
+        sessionStorage.setItem('mira-closed', '1');
     }
 
     function toggleMiraChat() {
-        if (miraState.isOpen) closeMiraChat(); else openMiraChat();
+        if (miraState.isOpen) closeMiraChat(); else openMiraFromPlayer();
+    }
+
+    function openMiraFromPlayer() {
+        const widget = document.getElementById('mira-widget');
+        if (widget) {
+            sessionStorage.removeItem('mira-closed');
+            widget.style.display = '';
+            openMiraChat();
+        }
     }
 
     // Idle transparency — after 5s without hover/interaction, dim the chat
@@ -2649,6 +2972,10 @@
     }
 
     function triggerMiraGreeting() {
+        // Respect session preference: if user closed Mira, don't re-open
+        if (sessionStorage.getItem('mira-closed') === '1') {
+            return;
+        }
         const widget = document.getElementById('mira-widget');
         const fab = widget.querySelector('.mira-fab');
         miraState.hasGreeted = true;
@@ -2732,14 +3059,65 @@
 
         // Restore active tab (or default to 'situation')
         switchTab(state.activeTab || 'situation');
+        positionPillHighlight(false);  // snap highlight to initial position
 
         // Load situation questionnaire answers from API
         loadSituationContext();
+
+        // Profile gate
+        applyProfileGate();
+        updateCardNav();
+        updatePlayerState();
+
+        // Welcome → pulse → entrance → wiggle → hints
+        (function playerBootSequence() {
+            const player = document.getElementById('search-player');
+            const marquee = document.getElementById('player-marquee');
+            if (!marquee || !player) return;
+
+            // Phase 1: Show welcome message + 3× pulse (3s)
+            marquee.textContent = I18N.player_welcome || 'Your search, your way — let\u2019s begin.';
+            marquee.classList.add('welcome-pulse');
+
+            marquee.addEventListener('animationend', function onPulse(e) {
+                if (e.animationName !== 'welcomePulse') return;
+                marquee.removeEventListener('animationend', onPulse);
+                marquee.classList.remove('welcome-pulse');
+                welcomePhase = false;
+
+                // Phase 2: Start hints + entrance animation
+                startHintRotation();
+                player.classList.add('entrance');
+                player.addEventListener('animationend', function onEntrance(e2) {
+                    if (e2.animationName !== 'playerEntrance') return;
+                    player.removeEventListener('animationend', onEntrance);
+                    player.classList.remove('entrance');
+                    // Phase 3: Persistent wiggle
+                    player.classList.add('attention');
+                });
+            }, { once: false });
+
+            // Stop wiggle on any player interaction
+            player.addEventListener('click', function stopWiggle() {
+                player.classList.remove('attention');
+                player.removeEventListener('click', stopWiggle);
+            }, { once: true });
+        })();
+
+        // 10-second pulse on Next button to draw attention
+        setTimeout(() => {
+            const nextBtn = document.getElementById('player-next');
+            if (nextBtn) {
+                nextBtn.classList.add('pulse');
+                nextBtn.addEventListener('animationend', () => nextBtn.classList.remove('pulse'), { once: true });
+            }
+        }, 10000);
 
         // Load profile scope (infer domain/QL/geo from CV) — only fills
         // empty slots, so restored filters take priority
         await initProfileScope();
         doSearch();
+        updatePillProgress();
         // Fix Leaflet tile rendering — force recalculation after layout resolves
         // Only invalidate if the map is currently visible (on location or power tab)
         setTimeout(() => {

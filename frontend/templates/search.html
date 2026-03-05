@@ -11,40 +11,42 @@
 
     <main class="main-content search-page">
 
-        <!-- Active filter pills — persistent across all tabs -->
-        <div class="search-header">
+        <!-- Active filter pills — only visible on Power Search tab -->
+        <div class="search-header" id="search-header" style="display:none;">
             <div class="search-active-filters" id="active-filters">
                 <!-- Active filter pills rendered by JS -->
             </div>
         </div>
 
-        <!-- Tab bar — always visible -->
-        <nav class="search-tabs" id="search-tabs">
-            <button class="search-tab active" data-tab="situation">
-                <span class="tab-icon">🧭</span>
-                <span class="tab-label">{{ t('search.tab_situation') }}</span>
-            </button>
-            <button class="search-tab" data-tab="direction">
-                <span class="tab-icon">💼</span>
-                <span class="tab-label">{{ t('search.tab_direction') }}</span>
-            </button>
-            <button class="search-tab" data-tab="level">
-                <span class="tab-icon">⭐</span>
-                <span class="tab-label">{{ t('search.tab_level') }}</span>
-            </button>
-            <button class="search-tab" data-tab="location">
-                <span class="tab-icon">📍</span>
-                <span class="tab-label">{{ t('search.tab_location') }}</span>
-            </button>
-            <button class="search-tab" data-tab="opportunities">
-                <span class="tab-icon">🎯</span>
-                <span class="tab-label">{{ t('search.tab_opportunities') }}</span>
-            </button>
-            <button class="search-tab tab-power" data-tab="power">
-                <span class="tab-icon">⚡</span>
-                <span class="tab-label">{{ t('search.tab_power') }}</span>
-            </button>
-        </nav>
+        <!-- Framed area: pill bar + tab content panels -->
+        <div class="tab-frame" id="tab-frame">
+
+        <!-- Pill bar — tab navigation -->
+        <div class="search-nav-row" id="search-nav-row">
+            <div class="search-pill-bar" id="search-pill-bar">
+                <div class="pill-highlight" id="pill-highlight"></div>
+                <button class="search-pill active" data-tab="situation">
+                    <span class="pill-icon">🧭</span>
+                    <span class="pill-label">{{ t('search.tab_situation') }}</span>
+                </button>
+                <button class="search-pill" data-tab="direction">
+                    <span class="pill-icon">💼</span>
+                    <span class="pill-label">{{ t('search.tab_direction') }}</span>
+                </button>
+                <button class="search-pill" data-tab="level">
+                    <span class="pill-icon">⭐</span>
+                    <span class="pill-label">{{ t('search.tab_level') }}</span>
+                </button>
+                <button class="search-pill" data-tab="location">
+                    <span class="pill-icon">📍</span>
+                    <span class="pill-label">{{ t('search.tab_location') }}</span>
+                </button>
+                <button class="search-pill" data-tab="opportunities">
+                    <span class="pill-icon">🎯</span>
+                    <span class="pill-label">{{ t('search.tab_opportunities') }}</span>
+                </button>
+            </div>
+        </div>
 
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- TAB 1: Situation — calm questionnaire                     -->
@@ -54,72 +56,93 @@
                 <div class="situation-intro" id="situation-intro">
                     <h2 class="situation-title">{{ t('search.situation_title') }}</h2>
                     <p class="situation-subtitle">{{ t('search.situation_subtitle') }}</p>
+                    <p class="situation-subtitle">{{ t('search.situation_subtitle_2') }}</p>
                 </div>
 
-                <!-- Question 1: Focus or Exploration -->
-                <div class="situation-card" data-question="search_mode" id="sq-search_mode">
-                    <div class="sq-collapsed" id="sqc-search_mode">
-                        <span class="sq-check">○</span>
-                        <span class="sq-summary-label">{{ t('search.sq_search_mode_short') }}</span>
-                        <span class="sq-summary-value" id="sqv-search_mode">—</span>
-                        <button class="sq-adjust">{{ t('search.sq_adjust') }}</button>
-                    </div>
-                    <div class="sq-expanded" id="sqe-search_mode" style="display:none;">
-                        <p class="sq-question">{{ t('search.sq_search_mode_q') }}</p>
-                        <p class="sq-question-sub">{{ t('search.sq_search_mode_sub') }}</p>
-                        <div class="sq-options" data-question="search_mode">
-                            <button class="sq-option" data-value="5">{{ t('search.sq_search_mode_5') }}</button>
-                            <button class="sq-option" data-value="4">{{ t('search.sq_search_mode_4') }}</button>
-                            <button class="sq-option" data-value="3">{{ t('search.sq_search_mode_3') }}</button>
-                            <button class="sq-option" data-value="2">{{ t('search.sq_search_mode_2') }}</button>
-                            <button class="sq-option" data-value="1">{{ t('search.sq_search_mode_1') }}</button>
+                <!-- Profile gate overlay (hidden by default, shown by JS if no profile) -->
+                <div class="profile-gate" id="profile-gate" style="display:none;">
+                    <div class="profile-gate-icon">🔒</div>
+                    <p class="profile-gate-text">{{ t('search.sq_profile_gate_title') }}</p>
+                    <a href="/profile" class="profile-gate-cta">{{ t('search.sq_profile_gate_cta') }}</a>
+                </div>
+
+                <div class="flip-cards-row" id="flip-cards-row">
+                    <!-- Card 1: My Focus -->
+                    <div class="flip-card" data-question="search_mode" id="fc-search_mode">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="fc-icon">🧭</span>
+                                <h3 class="fc-title">{{ t('search.sq_card_title_focus') }}</h3>
+                                <p class="fc-teaser">{{ t('search.sq_card_teaser_focus') }}</p>
+                                <span class="fc-answered-value" id="fc-val-search_mode"></span>
+                                <button class="fc-turn-btn">{{ t('search.sq_card_turn') }}</button>
+                                <button class="fc-change-btn" style="display:none;">{{ t('search.sq_card_change') }}</button>
+                            </div>
+                            <div class="flip-card-back">
+                                <p class="fc-question">{{ t('search.sq_search_mode_q') }}</p>
+                                <p class="fc-question-sub">{{ t('search.sq_search_mode_sub') }}</p>
+                                <div class="fc-options" data-question="search_mode">
+                                    <button class="fc-option" data-value="5">{{ t('search.sq_search_mode_5') }}</button>
+                                    <button class="fc-option" data-value="4">{{ t('search.sq_search_mode_4') }}</button>
+                                    <button class="fc-option" data-value="3">{{ t('search.sq_search_mode_3') }}</button>
+                                    <button class="fc-option" data-value="2">{{ t('search.sq_search_mode_2') }}</button>
+                                    <button class="fc-option" data-value="1">{{ t('search.sq_search_mode_1') }}</button>
+                                </div>
+                                <button class="fc-skip">{{ t('search.sq_skip') }}</button>
+                            </div>
                         </div>
-                        <button class="sq-skip">{{ t('search.sq_skip') }}</button>
                     </div>
-                </div>
 
-                <!-- Question 2: Change of profession -->
-                <div class="situation-card" data-question="field_change" id="sq-field_change">
-                    <div class="sq-collapsed" id="sqc-field_change">
-                        <span class="sq-check">○</span>
-                        <span class="sq-summary-label">{{ t('search.sq_field_change_short') }}</span>
-                        <span class="sq-summary-value" id="sqv-field_change">—</span>
-                        <button class="sq-adjust">{{ t('search.sq_adjust') }}</button>
-                    </div>
-                    <div class="sq-expanded" id="sqe-field_change" style="display:none;">
-                        <p class="sq-question">{{ t('search.sq_field_change_q') }}</p>
-                        <p class="sq-question-sub">{{ t('search.sq_field_change_sub') }}</p>
-                        <div class="sq-options" data-question="field_change">
-                            <button class="sq-option" data-value="5">{{ t('search.sq_field_change_5') }}</button>
-                            <button class="sq-option" data-value="4">{{ t('search.sq_field_change_4') }}</button>
-                            <button class="sq-option" data-value="3">{{ t('search.sq_field_change_3') }}</button>
-                            <button class="sq-option" data-value="2">{{ t('search.sq_field_change_2') }}</button>
-                            <button class="sq-option" data-value="1">{{ t('search.sq_field_change_1') }}</button>
+                    <!-- Card 2: My Field -->
+                    <div class="flip-card" data-question="field_change" id="fc-field_change">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="fc-icon">💼</span>
+                                <h3 class="fc-title">{{ t('search.sq_card_title_field') }}</h3>
+                                <p class="fc-teaser">{{ t('search.sq_card_teaser_field') }}</p>
+                                <span class="fc-answered-value" id="fc-val-field_change"></span>
+                                <button class="fc-turn-btn">{{ t('search.sq_card_turn') }}</button>
+                                <button class="fc-change-btn" style="display:none;">{{ t('search.sq_card_change') }}</button>
+                            </div>
+                            <div class="flip-card-back">
+                                <p class="fc-question">{{ t('search.sq_field_change_q') }}</p>
+                                <p class="fc-question-sub">{{ t('search.sq_field_change_sub') }}</p>
+                                <div class="fc-options" data-question="field_change">
+                                    <button class="fc-option" data-value="5">{{ t('search.sq_field_change_5') }}</button>
+                                    <button class="fc-option" data-value="4">{{ t('search.sq_field_change_4') }}</button>
+                                    <button class="fc-option" data-value="3">{{ t('search.sq_field_change_3') }}</button>
+                                    <button class="fc-option" data-value="2">{{ t('search.sq_field_change_2') }}</button>
+                                    <button class="fc-option" data-value="1">{{ t('search.sq_field_change_1') }}</button>
+                                </div>
+                                <button class="fc-skip">{{ t('search.sq_skip') }}</button>
+                            </div>
                         </div>
-                        <button class="sq-skip">{{ t('search.sq_skip') }}</button>
                     </div>
-                </div>
 
-                <!-- Question 3: Intention -->
-                <div class="situation-card" data-question="intention" id="sq-intention">
-                    <div class="sq-collapsed" id="sqc-intention">
-                        <span class="sq-check">○</span>
-                        <span class="sq-summary-label">{{ t('search.sq_intention_short') }}</span>
-                        <span class="sq-summary-value" id="sqv-intention">—</span>
-                        <button class="sq-adjust">{{ t('search.sq_adjust') }}</button>
-                    </div>
-                    <div class="sq-expanded" id="sqe-intention" style="display:none;">
-                        <p class="sq-question">{{ t('search.sq_intention_q') }}</p>
-                        <div class="sq-options" data-question="intention">
-                            <button class="sq-option" data-value="1">{{ t('search.sq_intention_1') }}</button>
-                            <button class="sq-option" data-value="2">{{ t('search.sq_intention_2') }}</button>
-                            <button class="sq-option" data-value="3">{{ t('search.sq_intention_3') }}</button>
+                    <!-- Card 3: My Plan -->
+                    <div class="flip-card" data-question="intention" id="fc-intention">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="fc-icon">📋</span>
+                                <h3 class="fc-title">{{ t('search.sq_card_title_plan') }}</h3>
+                                <p class="fc-teaser">{{ t('search.sq_card_teaser_plan') }}</p>
+                                <span class="fc-answered-value" id="fc-val-intention"></span>
+                                <button class="fc-turn-btn">{{ t('search.sq_card_turn') }}</button>
+                                <button class="fc-change-btn" style="display:none;">{{ t('search.sq_card_change') }}</button>
+                            </div>
+                            <div class="flip-card-back">
+                                <p class="fc-question">{{ t('search.sq_intention_q') }}</p>
+                                <p class="fc-question-sub">{{ t('search.sq_intention_sub') }}</p>
+                                <div class="fc-options" data-question="intention">
+                                    <button class="fc-option" data-value="1">{{ t('search.sq_intention_1') }}</button>
+                                    <button class="fc-option" data-value="2">{{ t('search.sq_intention_2') }}</button>
+                                    <button class="fc-option" data-value="3">{{ t('search.sq_intention_3') }}</button>
+                                </div>
+                                <button class="fc-skip">{{ t('search.sq_skip') }}</button>
+                            </div>
                         </div>
-                        <button class="sq-skip">{{ t('search.sq_skip') }}</button>
                     </div>
                 </div>
-
-                <p class="situation-reassurance">{{ t('search.situation_reassurance') }}</p>
             </div>
         </div>
 
@@ -296,22 +319,63 @@
                 </div>
             </div>
         </div>
+        </div><!-- /tab-frame -->
 
-        <!-- Filter action toolbar — persistent across tabs -->
-        <div class="search-actions">
-            <button class="filter-action-btn" id="btn-reload-profile" title="{{ t('search.reload_profile_title') }}">
-                👤 {{ t('search.reload_profile') }}
+        <!-- Player bar — bottom sticky, navigation + progress + actions -->
+        <div class="search-player" id="search-player">
+            <button class="player-btn player-back" id="player-back" title="Back" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="19 20 9 12 19 4"/><line x1="5" y1="4" x2="5" y2="20"/></svg>
             </button>
-            <button class="filter-action-btn btn-destructive" id="btn-clear-filters" title="{{ t('search.clear_filters_title') }}">
-                🗑 {{ t('search.clear_filters') }}
+            <div class="player-center">
+                <div class="player-steps" id="player-steps">
+                    <button class="player-step active" data-tab="situation" title="{{ t('search.tab_situation') }}">
+                        <span class="step-dot"></span>
+                        <span class="step-check" id="pill-check-situation"></span>
+                    </button>
+                    <button class="player-step" data-tab="direction" title="{{ t('search.tab_direction') }}">
+                        <span class="step-dot"></span>
+                        <span class="step-check" id="pill-check-direction"></span>
+                    </button>
+                    <button class="player-step" data-tab="level" title="{{ t('search.tab_level') }}">
+                        <span class="step-dot"></span>
+                        <span class="step-check" id="pill-check-level"></span>
+                    </button>
+                    <button class="player-step" data-tab="location" title="{{ t('search.tab_location') }}">
+                        <span class="step-dot"></span>
+                        <span class="step-check" id="pill-check-location"></span>
+                    </button>
+                    <button class="player-step" data-tab="opportunities" title="{{ t('search.tab_opportunities') }}">
+                        <span class="step-dot"></span>
+                        <span class="step-check" id="pill-check-opportunities"></span>
+                    </button>
+                </div>
+                <div class="player-track">
+                    <div class="player-track-fill" id="pill-track-fill"></div>
+                </div>
+                <div class="player-display" id="player-display">
+                    <span class="player-marquee" id="player-marquee">{{ t('search.player_click_next') }}</span>
+                </div>
+            </div>
+            <button class="player-btn player-next" id="player-next" title="Next">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 4 15 12 5 20"/><line x1="19" y1="4" x2="19" y2="20"/></svg>
             </button>
-            <div class="action-separator"></div>
-            <button class="filter-action-btn" id="btn-load-saved" title="{{ t('search.load_saved_title') }}">
-                📂 {{ t('search.load_saved') }}
-            </button>
-            <button class="btn-save-search" id="btn-save-search" title="{{ t('search.save_search_title') }}">
-                💾 {{ t('search.save_search') }}
-            </button>
+            <div class="player-actions">
+                <button class="player-action-btn" id="btn-reload-profile" title="{{ t('search.reload_profile_title') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <button class="player-action-btn btn-destructive" id="btn-clear-filters" title="{{ t('search.clear_filters_title') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+                <button class="player-action-btn" id="btn-load-saved" title="{{ t('search.load_saved_title') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                </button>
+                <button class="player-action-btn" id="btn-save-search" title="{{ t('search.save_search_title') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
+                <button class="player-action-btn power-search-badge disabled" id="power-search-badge" data-tab="power" title="{{ t('search.tab_power') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </button>
+            </div>
             <span class="save-feedback" id="save-feedback"></span>
         </div>
 
@@ -404,6 +468,8 @@ window.SEARCH_TOUR_I18N = {
 window.SearchConfig = {
     lang: {{ lang | tojson }},
     userLang: {{ user.language | tojson }},
+    formality: {{ (user.formality or 'du') | tojson }},
+    hasProfile: {{ has_profile | tojson }},
     i18n: {
         ql: { 0: {{ t("search.ql_nicht_klass") | tojson }}, 1: {{ t("search.ql_helfer") | tojson }}, 2: {{ t("search.ql_fachkraft") | tojson }}, 3: {{ t("search.ql_spezialist") | tojson }}, 4: {{ t("search.ql_experte") | tojson }} },
         domains: {
@@ -474,9 +540,13 @@ window.SearchConfig = {
         direction_select_all: {{ t("search.direction_select_all") | tojson }},
         direction_positions: {{ t("search.direction_positions") | tojson }},
         direction_new_this_week: {{ t("search.direction_new_this_week") | tojson }},
+        player_hint_1: {{ t("search.player_hint_1") | tojson }},
+        player_hint_2: {{ t("search.player_hint_2") | tojson }},
+        player_hint_3: {{ t("search.player_hint_3") | tojson }},
+        player_welcome: {{ t("search.player_welcome") | tojson }},
     }
 };
 </script>
 <!-- Search application -->
-<script src="/static/js/search-app.js?v=20260303a"></script>
+<script src="/static/js/search-app.js?v=20260305h"></script>
 {% endblock %}
