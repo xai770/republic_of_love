@@ -464,6 +464,17 @@
     let stepFlashTimeout = null;
     let welcomePhase = true;  // gates flashStepInfo/startHintRotation until welcome pulse done
 
+    function checkDisplayScroll() {
+        const display = document.getElementById('player-display');
+        const marquee = document.getElementById('player-marquee');
+        if (!display || !marquee) return;
+        if (marquee.scrollWidth > display.clientWidth) {
+            display.classList.add('scrolling');
+        } else {
+            display.classList.remove('scrolling');
+        }
+    }
+
     function startHintRotation() {
         if (welcomePhase) return;
         const marquee = document.getElementById('player-marquee');
@@ -472,12 +483,14 @@
         if (!hints.length) return;
         let idx = 0;
         marquee.textContent = hints[0];
+        checkDisplayScroll();
         hintRotationId = setInterval(() => {
             marquee.classList.add('fade-out');
             setTimeout(() => {
                 idx = (idx + 1) % hints.length;
                 marquee.textContent = hints[idx];
                 marquee.classList.remove('fade-out');
+                checkDisplayScroll();
             }, 300);
         }, 5000);
     }
@@ -493,6 +506,7 @@
         // Show step info
         marquee.classList.remove('fade-out');
         marquee.textContent = text;
+        checkDisplayScroll();
         // Resume hints after 3s
         stepFlashTimeout = setTimeout(() => {
             marquee.classList.add('fade-out');

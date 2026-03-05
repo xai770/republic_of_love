@@ -4572,12 +4572,12 @@ body {
     bottom: 12px;
     left: 70px;
     right: 80px;
-    width: fit-content;
+    width: 700px;
     margin: 0 auto;
     z-index: 50;
     padding: 6px 16px;
-    background: #dbeafe;
-    border: 1px solid #bfdbfe;
+    background: #b6d4f7;
+    border: 1px solid rgba(127, 184, 237, 0.25);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(59,130,246,0.12), 0 2px 8px rgba(0,0,0,0.04);
 }
@@ -4716,12 +4716,15 @@ body {
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
-    max-width: 100%;
+    width: 340px;
     line-height: 1.3;
     background: #fff;
     border-radius: 8px;
     padding: 4px 12px;
     border: 1px solid #e2e8f0;
+}
+.player-display.scrolling .player-marquee {
+    animation: playerMarquee 12s linear infinite;
 }
 
 /* Scrolling marquee */
@@ -4874,7 +4877,7 @@ body {
     border: 1px solid #93c5fd;
     border-radius: 20px;
     padding: 0.5rem 1.25rem 1.25rem;
-    margin-bottom: 80px; /* space for sticky player */
+    margin-bottom: 120px; /* space for sticky player */
     box-shadow: 0 4px 16px rgba(59,130,246,0.08), 0 1px 4px rgba(0,0,0,0.04);
 }
 
@@ -5036,9 +5039,6 @@ body {
 }
 .tab-content.active {
     display: block;
-    min-height: calc(100vh - 260px);
-    max-height: calc(100vh - 260px);
-    overflow-y: auto;
 }
 @keyframes tabFadeIn {
     from { opacity: 0; transform: translateY(4px); }
@@ -5051,7 +5051,7 @@ body {
 .situation-container {
     max-width: 1320px;
     margin: 0 auto;
-    padding: 1.5rem 1.5rem 1rem;
+    padding: 1.5rem 1.5rem 1.5rem;
     background: #f8fafc;
     border-radius: 20px;
 }
@@ -7628,9 +7628,9 @@ body {
 
 /* Dark mode — player bar */
 [data-theme="dark"] .search-player {
-    background: #1e293b;
-    border-color: #334155;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+    background: #283548;
+    border-color: rgba(96, 165, 250, 0.18);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(96,165,250,0.08);
 }
 [data-theme="dark"] .player-btn:disabled {
     background: #334155;
