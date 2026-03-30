@@ -239,12 +239,28 @@
         toggle: toggleMiraChat,
         addMessage: addMessage,
         loadScreenContext: loadScreenContext,
+        refreshCreditBadge: refreshCreditBadge,
     };
 
+    function refreshCreditBadge() {
+        fetch('/api/account/credit-balance')
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (!data) return;
+                var badge = document.getElementById('mira-credit-badge');
+                if (badge) {
+                    badge.textContent = data.badge;
+                    badge.title = '€' + data.balance_eur + ' credit';
+                }
+            })
+            .catch(function() {});
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { wire(); loadScreenContext(); });
+        document.addEventListener('DOMContentLoaded', function() { wire(); loadScreenContext(); refreshCreditBadge(); });
     } else {
         wire();
         loadScreenContext();
+        refreshCreditBadge();
     }
 })();

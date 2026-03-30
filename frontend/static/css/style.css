@@ -1646,6 +1646,14 @@ body {
     background: #c8edea;
 }
 
+/* Credit badge in Mira header */
+.mira-credit-badge {
+    font-size: 1rem;
+    padding: 2px 4px;
+    cursor: default;
+    opacity: 0.85;
+}
+
 /* Tour button in Mira header */
 .mira-tour-btn {
     background: none;

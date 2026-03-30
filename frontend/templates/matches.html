@@ -496,18 +496,31 @@ async function requestResearch(postingId) {
     const match = allMatches.find(m => m.posting_id === postingId);
     if (!match) return;
     
-    // Stripe placeholder — Doug research not yet paid
-    if (typeof showPlaceholderDialog === 'function') {
-        showPlaceholderDialog('doug_research',
-            I18N.placeholder_doug || 'Doug research reports will be available soon. We\'re setting up payments — check back shortly.',
-            { emoji: '🔍' });
+    // Credit confirmation dialog
+    if (typeof confirmCreditSpend === 'function') {
+        confirmCreditSpend('employer_research', 'Doug Employer Research', function() {
+            _doRequestResearch(postingId, match);
+        });
         return;
     }
-    
+    // Fallback: call directly
+    _doRequestResearch(postingId, match);
+}
+
+async function _doRequestResearch(postingId, match) {
     try {
         const res = await fetch(`/api/interactions/research/${postingId}`, {
             method: 'POST'
         });
+        
+        if (res.status === 402) {
+            const err = await res.json();
+            if (typeof handleInsufficientCredit === 'function') {
+                handleInsufficientCredit(err.detail || err);
+            }
+            return;
+        }
+        
         const data = await res.json();
         
         if (data.status === 'ok') {

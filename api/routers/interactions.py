@@ -512,7 +512,20 @@ def request_research(
             "state": current_state,
             "message": "Research already requested or completed"
         }
-    
+
+    # ── Credit pre-check ──
+    from lib.credits import check_credit, spend_credit, get_credit_balance
+    credit_info = get_credit_balance(conn, user_id)
+    if not credit_info['is_sustainer']:
+        check_credit(conn, user_id, 'employer_research')
+        spend_credit(
+            conn, user_id,
+            cost_cents=check_credit(conn, user_id, 'employer_research', raise_on_insufficient=False)['cost_cents'],
+            description=f'Doug employer research — posting {posting_id}',
+            deliverable_ref=f'doug:{posting_id}',
+            commit=False,
+        )
+
     # Set to researching
     cur.execute("""
         UPDATE user_posting_interactions

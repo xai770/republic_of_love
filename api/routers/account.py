@@ -320,6 +320,47 @@ def get_usage_balance(
     return get_balance(conn, user['user_id'])
 
 
+@router.get("/credit-balance")
+def get_credit_balance_endpoint(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Return prepaid credit balance, badge, and tier.
+    Used by Mira widget header and account page.
+    """
+    from lib.credits import get_credit_balance
+    return get_credit_balance(conn, user['user_id'])
+
+
+@router.get("/credit-transactions")
+def get_credit_transactions(
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """Return recent credit transaction history."""
+    from lib.credits import get_transaction_history
+    return {"transactions": get_transaction_history(conn, user['user_id'])}
+
+
+@router.get("/credit-check/{event_type}")
+def credit_precheck(
+    event_type: str,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db)
+):
+    """
+    Pre-check: can the user afford this deliverable?
+    Returns cost, balance, and whether it's allowed.
+    Does NOT deduct — just checks.
+    """
+    ALLOWED_TYPES = {'match_report', 'cover_letter', 'employer_research'}
+    if event_type not in ALLOWED_TYPES:
+        raise HTTPException(400, f"Unknown deliverable type: {event_type}")
+    from lib.credits import check_credit
+    return check_credit(conn, user['user_id'], event_type, raise_on_insufficient=False)
+
+
 # Real compute costs per event (from billing_assumptions.yaml Section D).
 # These are what it costs US, not what we charge.
 _COMPUTE_COST_CENTS = {

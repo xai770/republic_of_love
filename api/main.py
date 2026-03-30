@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from api.config import FRONTEND_URL, DEBUG
-from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding, devlog
+from api.routers import health, auth, dashboard, profiles, postings, matches, visualization, notifications, ledger, admin, mira, interactions, messages, y2y, journey, subscription, push, documents, account, search, events, feedback, intelligence, adele, onboarding, devlog, payments
 from api.deps import get_current_user, get_db
 from api.limiter import limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -75,6 +75,7 @@ app.include_router(messages.router, prefix="/api")
 app.include_router(y2y.router, prefix="/api")
 app.include_router(journey.router, prefix="/api")
 app.include_router(subscription.router, prefix="/api")
+app.include_router(payments.router, prefix="/api")
 app.include_router(push.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(account.router, prefix="/api")

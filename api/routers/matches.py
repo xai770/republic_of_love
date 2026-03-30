@@ -1023,6 +1023,20 @@ def enrich_match(
                 "computed_at": existing['computed_at'],
             }
 
+    # ── Credit pre-check (not yet enriched → will cost credits) ──
+    from lib.credits import check_credit, spend_credit, get_credit_balance
+    credit_info = get_credit_balance(conn, user['user_id'])
+    if not credit_info['is_sustainer']:
+        # Pre-check raises 402 if insufficient
+        check_credit(conn, user['user_id'], 'match_report')
+        # Deduct immediately (before background task starts)
+        spend_credit(
+            conn, user['user_id'],
+            cost_cents=check_credit(conn, user['user_id'], 'match_report', raise_on_insufficient=False)['cost_cents'],
+            description=f'Clara match report — posting {posting_id}',
+            deliverable_ref=f'clara:{profile_id}:{posting_id}',
+        )
+
     # Not yet enriched — fire background task and return immediately
     threading.Thread(
         target=_run_clara_in_background,

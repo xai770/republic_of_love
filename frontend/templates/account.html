@@ -108,28 +108,34 @@
             </section>
             
             <!-- Credits & Plan -->
-            <section class="account-section">
+            <section class="account-section" id="credits">
                 <h2>💳 {{ t('account.credits_plan') if t('account.credits_plan') else 'Credits & Plan' }}</h2>
 
                 <div class="account-field">
                     <label>{{ t('account.current_balance') if t('account.current_balance') else 'Credit Balance' }}</label>
                     <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
-                        <span style="font-size:1.5rem;font-weight:600;color:var(--teal,#2d9f8f);"
-                              title="{{ t('account.balance_tooltip') if t('account.balance_tooltip') else 'Payment system coming soon — all features free during preview' }}">€0.00</span>
-                        <span style="font-size:0.85rem;color:var(--text-muted,#888);font-style:italic;">
-                            {{ t('account.preview_free') if t('account.preview_free') else 'All features free during preview' }}
-                        </span>
+                        <span id="credit-balance-display" style="font-size:1.5rem;font-weight:600;color:var(--teal,#2d9f8f);">—</span>
+                        <span id="credit-badge-display" style="font-size:1.3rem;"></span>
+                        <span id="credit-tier-display" style="font-size:0.85rem;color:var(--text-muted,#888);font-style:italic;"></span>
                     </div>
                 </div>
 
                 <div class="account-field" style="margin-top:12px;">
                     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <button class="btn-secondary" onclick="showPlaceholderDialog('top_up', '{{ t('account.placeholder_topup') if t('account.placeholder_topup') else 'Credit top-ups are coming soon. During the preview period, all features are free.' }}', {emoji:'💳'})">
+                        <button class="btn-secondary" id="btn-topup" onclick="showTopupDialog()">
                             💳 {{ t('account.top_up') if t('account.top_up') else 'Top Up Credits' }}
                         </button>
-                        <button class="btn-secondary" onclick="showPlaceholderDialog('sustainer', '{{ t('account.placeholder_sustainer') if t('account.placeholder_sustainer') else 'Sustainer subscriptions are coming soon. Thank you for your interest!' }}', {emoji:'🌳'})">
+                        <button class="btn-secondary" id="btn-sustainer" onclick="showSustainerDialog()">
                             🌳 {{ t('account.become_sustainer') if t('account.become_sustainer') else 'Become a Sustainer' }}
                         </button>
+                    </div>
+                </div>
+
+                <!-- Transaction history -->
+                <div class="account-field" style="margin-top:16px;">
+                    <label>{{ t('account.recent_transactions') if t('account.recent_transactions') else 'Recent Transactions' }}</label>
+                    <div id="credit-txn-list" style="margin-top:8px;font-size:0.85rem;line-height:1.7;color:var(--text-muted,#888);font-family:monospace;">
+                        Loading…
                     </div>
                 </div>
             </section>
@@ -347,5 +353,177 @@ function showToast(message) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
+
+// ── Credit balance + transactions ───────────────────────────────────────
+async function loadCreditBalance() {
+    try {
+        const r = await fetch('/api/account/credit-balance');
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('credit-balance-display').textContent = '€' + d.balance_eur;
+        document.getElementById('credit-badge-display').textContent = d.badge;
+        const tierEl = document.getElementById('credit-tier-display');
+        if (d.is_sustainer) {
+            tierEl.textContent = 'Sustainer — unlimited AI actions';
+        } else if (d.balance_cents > 0) {
+            tierEl.textContent = '';
+        } else {
+            tierEl.textContent = 'Top up to use paid features';
+        }
+    } catch (_) {}
+}
+
+async function loadCreditTransactions() {
+    const el = document.getElementById('credit-txn-list');
+    try {
+        const r = await fetch('/api/account/credit-transactions');
+        if (!r.ok) { el.textContent = '—'; return; }
+        const d = await r.json();
+        if (!d.transactions || d.transactions.length === 0) {
+            el.textContent = 'No transactions yet.';
+            return;
+        }
+        el.innerHTML = d.transactions.map(function(t) {
+            const sign = t.amount_cents >= 0 ? '+' : '';
+            const eur = sign + '€' + (t.amount_cents / 100).toFixed(2);
+            const color = t.amount_cents >= 0 ? '#2a7' : '#c44';
+            const date = t.created_at ? t.created_at.substring(0, 10) : '';
+            return '<div style="display:flex;justify-content:space-between;padding:2px 0;">' +
+                '<span>' + date + ' — ' + (t.description || t.txn_type) + '</span>' +
+                '<span style="color:' + color + ';font-weight:600;">' + eur + '</span></div>';
+        }).join('');
+    } catch (_) {
+        el.textContent = '—';
+    }
+}
+
+// ── Top-up dialog ───────────────────────────────────────────────────────
+function showTopupDialog() {
+    const packs = [
+        { cents: 500, label: '€5' },
+        { cents: 1000, label: '€10' },
+        { cents: 2000, label: '€20' },
+    ];
+    const btns = packs.map(function(p) {
+        return '<button class="topup-pack-btn" data-cents="' + p.cents + '">' + p.label + '</button>';
+    }).join('');
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);';
+    overlay.innerHTML =
+        '<div style="background:var(--card-bg,#fff);border-radius:16px;padding:28px 24px 20px;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2);">' +
+        '<div style="font-size:2rem;margin-bottom:8px;">💳</div>' +
+        '<h3 style="margin:0 0 8px;">Top Up Credits</h3>' +
+        '<p style="font-size:0.9rem;color:var(--text-secondary,#555);margin:0 0 16px;">Choose an amount to add to your balance.</p>' +
+        '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;">' + btns + '</div>' +
+        '<button class="topup-cancel-btn" style="background:var(--bg-muted,#eee);color:var(--text-primary,#333);border:none;padding:8px 24px;border-radius:8px;cursor:pointer;">Cancel</button>' +
+        '</div>';
+
+    // Style pack buttons
+    overlay.querySelectorAll('.topup-pack-btn').forEach(function(b) {
+        b.style.cssText = 'background:var(--teal,#2d9f8f);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;min-width:70px;';
+        b.addEventListener('click', function() {
+            const cents = parseInt(this.dataset.cents);
+            overlay.remove();
+            processTopup(cents);
+        });
+    });
+
+    overlay.querySelector('.topup-cancel-btn').addEventListener('click', function() { overlay.remove(); });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+
+async function processTopup(cents) {
+    try {
+        const r = await fetch('/api/payments/topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount_cents: cents })
+        });
+        const d = await r.json();
+        if (d.checkout_url) {
+            window.location.href = d.checkout_url;
+        } else if (d.error) {
+            showToast(d.error);
+        }
+    } catch (e) {
+        showToast('Failed to start checkout');
+    }
+}
+
+// ── Sustainer dialog ────────────────────────────────────────────────────
+function showSustainerDialog() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);';
+    overlay.innerHTML =
+        '<div style="background:var(--card-bg,#fff);border-radius:16px;padding:28px 24px 20px;max-width:400px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2);">' +
+        '<div style="font-size:2rem;margin-bottom:8px;">🌳</div>' +
+        '<h3 style="margin:0 0 8px;">Become a Sustainer</h3>' +
+        '<p style="font-size:0.9rem;color:var(--text-secondary,#555);margin:0 0 12px;">Monthly support — unlimited AI actions + fund a free user\'s trial.</p>' +
+        '<div style="margin-bottom:16px;">' +
+            '<label style="font-size:0.85rem;color:var(--text-muted,#888);">Monthly amount (€10 minimum)</label>' +
+            '<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:6px;">' +
+                '<span style="font-size:1.2rem;font-weight:600;">€</span>' +
+                '<input type="number" id="sustainer-amount" min="10" value="10" step="5" ' +
+                    'style="width:80px;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1.1rem;text-align:center;">' +
+                '<span style="font-size:0.85rem;color:var(--text-muted,#888);">/month</span>' +
+            '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;justify-content:center;">' +
+            '<button class="sustainer-cancel-btn" style="background:var(--bg-muted,#eee);color:var(--text-primary,#333);border:none;padding:10px 24px;border-radius:8px;cursor:pointer;">Cancel</button>' +
+            '<button class="sustainer-confirm-btn" style="background:#2d9f8f;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;">Subscribe 🌳</button>' +
+        '</div>' +
+        '</div>';
+
+    overlay.querySelector('.sustainer-cancel-btn').addEventListener('click', function() { overlay.remove(); });
+    overlay.querySelector('.sustainer-confirm-btn').addEventListener('click', function() {
+        const amt = parseInt(document.getElementById('sustainer-amount').value) || 10;
+        overlay.remove();
+        processSustainer(Math.max(amt, 10) * 100);
+    });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+
+async function processSustainer(cents) {
+    try {
+        const r = await fetch('/api/payments/sustainer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount_cents: cents })
+        });
+        const d = await r.json();
+        if (d.checkout_url) {
+            window.location.href = d.checkout_url;
+        } else if (d.error) {
+            showToast(d.error);
+        }
+    } catch (e) {
+        showToast('Failed to start checkout');
+    }
+}
+
+// ── Handle URL params (returning from Stripe) ──────────────────────────
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('topup') === 'success') {
+        showToast('✅ Credits added successfully!');
+        history.replaceState(null, '', '/account');
+    } else if (params.get('topup') === 'canceled') {
+        showToast('Top-up canceled.');
+        history.replaceState(null, '', '/account');
+    } else if (params.get('sustainer') === 'success') {
+        showToast('🌳 Welcome, Sustainer! Thank you for your support.');
+        history.replaceState(null, '', '/account');
+    } else if (params.get('sustainer') === 'canceled') {
+        showToast('Sustainer sign-up canceled.');
+        history.replaceState(null, '', '/account');
+    }
+})();
+
+// Load credit data on page load
+loadCreditBalance();
+loadCreditTransactions();
 </script>
 {% endblock %}

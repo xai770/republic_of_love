@@ -96,7 +96,8 @@ FAQ_KNOWLEDGE_EN = """
 - Top-up packs: €5, €10, or €20 (no subscription needed)
 - Credits never expire
 - Sustainer: €10+/month — unlimited AI actions + you fund another yogi
-- Payment system coming soon — until then everything is free
+- Clara match reports and Doug research deduct credits; Mira chat is always free
+- Top up or become a Sustainer under Account → Credits & Plan
 
 **Privacy:**
 - Only skills, preferences, application history stored
