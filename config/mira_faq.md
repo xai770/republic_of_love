@@ -48,20 +48,20 @@
 - Preise?
 
 **answer_de:**
-talent.yoga ist für Jobsuchende kostenlos nutzbar. Du kannst Stellen suchen, dein Profil anlegen und Matches sehen — ohne zu bezahlen.
+Stellen suchen, mit mir chatten, dein Profil pflegen, den Bewerbungsprotokoll führen — das ist alles kostenlos und bleibt es auch.
 
-Wer mehr möchte (unbegrenzte Matches, Recherche durch Doug, Coaching durch Adele), kann ein Standard- oder Sustainer-Abo wählen. Die genauen Preise findest du unter "Finanzen" — dort zeigen wir auch, wohin jeder Euro geht.
+Wenn du einen konkreten Mehrwert willst — z.B. ein Anschreiben, einen Match-Report oder eine Arbeitgeber-Recherche — kostet das ein paar Cent bis einen Euro. Du lädst Guthaben auf (€5, €10 oder €20) und zahlst pro Ergebnis. Kein Abo nötig.
 
 **answer_en:**
-talent.yoga is free to use for job seekers. You can search jobs, create your profile, and see matches — without paying anything.
+Searching jobs, chatting with me, managing your profile, keeping your activity log — all free, and always will be.
 
-If you want more (unlimited matches, research by Doug, coaching by Adele), you can choose a Standard or Sustainer subscription. You'll find exact prices under "Finances" — where we also show where every euro goes.
+When you want a concrete deliverable — like a cover letter, a match report, or an employer research report — that costs a few cents to a euro. You top up credit (€5, €10, or €20) and pay per result. No subscription needed.
 
 
 **answer_sie_de:**
-talent.yoga ist für Jobsuchende kostenlos nutzbar. Sie können Stellen suchen, Ihr Profil anlegen und Matches sehen — ohne zu bezahlen.
+Stellen suchen, mit mir chatten, Ihr Profil pflegen, den Bewerbungsprotokoll führen — das ist alles kostenlos und bleibt es auch.
 
-Wer mehr möchte (unbegrenzte Matches, Recherche durch Doug, Coaching durch Adele), kann ein Standard- oder Sustainer-Abo wählen. Die genauen Preise finden Sie unter "Finanzen" — dort zeigen wir auch, wohin jeder Euro geht.
+Wenn Sie einen konkreten Mehrwert möchten — z.B. ein Anschreiben, einen Match-Report oder eine Arbeitgeber-Recherche — kostet das ein paar Cent bis einen Euro. Sie laden Guthaben auf (€5, €10 oder €20) und zahlen pro Ergebnis. Kein Abo nötig.
 
 ---
 
@@ -70,31 +70,33 @@ Wer mehr möchte (unbegrenzte Matches, Recherche durch Doug, Coaching durch Adel
 **question_variants:**
 - Was ist der Unterschied zwischen den Tarifen?
 - What's the difference between tiers?
-- Free vs Standard vs Sustainer?
+- Free vs paid?
 - Was bekomme ich für mein Geld?
 - What do I get for my money?
+- Guthaben?
+- Credits?
 
 **answer_de:**
-**Kostenlos:** Stellen suchen, Profil anlegen, 10 Matches pro Monat.
+**Kostenlos (immer):** Stellen suchen, Profil pflegen, mit mir chatten, Bewerbungsprotokoll — alles ohne Limit.
 
-**Standard (€5/Monat):** Unbegrenzte Matches, Recherche durch Doug, volles Dashboard.
+**Guthaben (pay-per-use):** Lade €5, €10 oder €20 auf und zahle pro Ergebnis — Match-Report, Anschreiben, Arbeitgeber-Recherche. Kein Abo, Guthaben verfällt nie.
 
-**Sustainer (€10+/Monat):** Alles von Standard — plus du finanzierst einen kostenlosen Nutzer mit. Dein Name erscheint auf der Unterstützer-Seite, wenn du möchtest.
+**Sustainer (€10+/Monat, freiwillig):** Unbegrenzte AI-Ergebnisse + du finanzierst jemand anderem den Einstieg mit.
 
 **answer_en:**
-**Free:** Search jobs, create profile, 10 matches per month.
+**Free (always):** Search jobs, manage profile, chat with me, activity log — all unlimited.
 
-**Standard (€5/month):** Unlimited matches, research by Doug, full dashboard.
+**Credits (pay-per-use):** Top up €5, €10, or €20 and pay per result — match report, cover letter, employer research. No subscription, credits never expire.
 
-**Sustainer (€10+/month):** Everything in Standard — plus you fund a free user. Your name appears on the supporters page if you want.
+**Sustainer (€10+/month, voluntary):** Unlimited AI results + you fund someone else's start.
 
 
 **answer_sie_de:**
-**Kostenlos:** Stellen suchen, Profil anlegen, 10 Matches pro Monat.
+**Kostenlos (immer):** Stellen suchen, Profil pflegen, mit mir chatten, Bewerbungsprotokoll — alles ohne Limit.
 
-**Standard (€5/Monat):** Unbegrenzte Matches, Recherche durch Doug, volles Dashboard.
+**Guthaben (pay-per-use):** Laden Sie €5, €10 oder €20 auf und zahlen Sie pro Ergebnis — Match-Report, Anschreiben, Arbeitgeber-Recherche. Kein Abo, Guthaben verfällt nie.
 
-**Sustainer (€10+/Monat):** Alles von Standard — plus Sie finanzierst einen kostenlosen Nutzer mit. Ihr Name erscheint auf der Unterstützer-Seite, wenn Sie möchten.
+**Sustainer (€10+/Monat, freiwillig):** Unbegrenzte AI-Ergebnisse + Sie finanzieren jemand anderem den Einstieg mit.
 
 ---
 
@@ -105,22 +107,24 @@ Wer mehr möchte (unbegrenzte Matches, Recherche durch Doug, Coaching durch Adel
 - Why should I pay if it's free?
 - Was bringt mir das Bezahlen?
 - Why pay?
+- Was kostet ein Anschreiben?
+- What does a cover letter cost?
 
 **answer_de:**
-Du musst nicht. Die kostenlose Version funktioniert.
+Du zahlst nur, wenn du ein konkretes Ergebnis willst — z.B. ein Anschreiben oder einen Match-Report. Die Grundfunktionen (Suche, Chat, Profil) kosten nichts.
 
-Aber wenn talent.yoga dir hilft, ermöglicht dein Beitrag, dass andere in der gleichen Situation auch Hilfe bekommen. Und es hält uns unabhängig — keine Investoren, keine Werbung, keine verkauften Daten.
+Und dein Beitrag hält uns unabhängig — keine Investoren, keine Werbung, keine verkauften Daten.
 
 **answer_en:**
-You don't have to. The free version works.
+You only pay when you want a concrete result — like a cover letter or match report. The basics (search, chat, profile) cost nothing.
 
-But if talent.yoga helps you, your contribution enables others in the same situation to get help too. And it keeps us independent — no investors, no ads, no sold data.
+And your contribution keeps us independent — no investors, no ads, no sold data.
 
 
 **answer_sie_de:**
-Sie müssen nicht. Die kostenlose Version funktioniert.
+Sie zahlen nur, wenn Sie ein konkretes Ergebnis möchten — z.B. ein Anschreiben oder einen Match-Report. Die Grundfunktionen (Suche, Chat, Profil) kosten nichts.
 
-Aber wenn talent.yoga Ihnen hilft, ermöglicht Ihr Beitrag, dass andere in der gleichen Situation auch Hilfe bekommen. Und es hält uns unabhängig — keine Investoren, keine Werbung, keine verkauften Daten.
+Und Ihr Beitrag hält uns unabhängig — keine Investoren, keine Werbung, keine verkauften Daten.
 
 ---
 
@@ -133,22 +137,24 @@ Aber wenn talent.yoga Ihnen hilft, ermöglicht Ihr Beitrag, dass andere in der g
 - What do you do with the money?
 - Transparent?
 - Transparenz?
+- Verfällt mein Guthaben?
+- Do credits expire?
 
 **answer_de:**
-Alles ist öffentlich. Unter "Finanzen" siehst du genau, was wir einnehmen und ausgeben — jeden Monat.
+Dein Guthaben verfällt nie. Wenn du einen Job findest und ein Jahr nicht reinschaust — dein Guthaben ist noch da.
 
-Dein Geld geht in: Serverkosten, Entwicklung, und (solange wir noch nicht gemeinnützig sind) die Rückzahlung der Gründer-Investition. Keine versteckten Kosten, keine Geheimnisse.
+Unser Geld geht in: Serverkosten, Entwicklung, und (solange wir noch nicht gemeinnützig sind) die Rückzahlung der Gründer-Investition. Unter "Finanzen" siehst du genau, wohin jeder Euro geht.
 
 **answer_en:**
-Everything is public. Under "Finances" you can see exactly what we receive and spend — every month.
+Your credits never expire. If you find a job and don't check in for a year — your balance is still there.
 
-Your money goes to: server costs, development, and (while we're not yet non-profit) repaying the founder investment. No hidden costs, no secrets.
+Our money goes to: server costs, development, and (while we're not yet non-profit) repaying the founder investment. Under "Finances" you can see exactly where every euro goes.
 
 
 **answer_sie_de:**
-Alles ist öffentlich. Unter "Finanzen" sehen Sie genau, was wir einnehmen und ausgeben — jeden Monat.
+Ihr Guthaben verfällt nie. Wenn Sie einen Job finden und ein Jahr nicht reinschauen — Ihr Guthaben ist noch da.
 
-Ihr Geld geht in: Serverkosten, Entwicklung, und (solange wir noch nicht gemeinnützig sind) die Rückzahlung der Gründer-Investition. Keine versteckten Kosten, keine Geheimnisse.
+Unser Geld geht in: Serverkosten, Entwicklung, und (solange wir noch nicht gemeinnützig sind) die Rückzahlung der Gründer-Investition. Unter "Finanzen" sehen Sie genau, wohin jeder Euro geht.
 
 ---
 
@@ -211,9 +217,9 @@ For messages, we use in-app notifications (when you're logged in) or browser pus
 
 
 **answer_sie_de:**
-Sie loggst Sie mit Google ein — das gibt uns einen Token, aber wir speichern weder Ihren Namen noch Ihre E-Mail.
+Sie loggen sich mit Google ein — das gibt uns einen Token, aber wir speichern weder Ihren Namen noch Ihre E-Mail.
 
-Für Nachrichten nutzen wir In-App-Benachrichtigungen (wenn Sie eingeloggt sind) oder Browser-Push (wenn Sie es erlaubst). Funktioniert ohne E-Mail.
+Für Nachrichten nutzen wir In-App-Benachrichtigungen (wenn Sie eingeloggt sind) oder Browser-Push (wenn Sie es erlauben). Funktioniert ohne E-Mail.
 
 ---
 
@@ -805,24 +811,18 @@ Das dauert eine Weile — Doug ist gründlich.
 - Wait time?
 
 **answer_de:**
-Kommt auf deinen Tarif an:
-- Premium: Priorität — ca. 2 Stunden
-- Standard: Normal — ca. 24 Stunden
+Normalerweise ein paar Minuten. Doug durchsucht mehrere Quellen und fasst zusammen — das braucht seine Zeit.
 
 Du bekommst eine Nachricht, sobald Doug fertig ist.
 
 **answer_en:**
-Depends on your tier:
-- Premium: Priority — about 2 hours
-- Standard: Normal — about 24 hours
+Usually a few minutes. Doug searches multiple sources and summarizes — that takes a moment.
 
 You'll get a message when Doug is done.
 
 
 **answer_sie_de:**
-Kommt auf Ihren Tarif an:
-- Premium: Priorität — ca. 2 Stunden
-- Standard: Normal — ca. 24 Stunden
+Normalerweise ein paar Minuten. Doug durchsucht mehrere Quellen und fasst zusammen — das braucht seine Zeit.
 
 Sie bekommen eine Nachricht, sobald Doug fertig ist.
 
@@ -839,67 +839,24 @@ Sie bekommen eine Nachricht, sobald Doug fertig ist.
 - What does Adele do?
 - Interview-Coaching?
 - Interview coaching?
+- Profil-Interview?
+- Profile interview?
 
 **answer_de:**
-Adele ist unsere Interview-Coachin. Sie hilft dir, dich auf Gespräche vorzubereiten:
-- Typische Fragen für die Stelle
-- Feedback zu deinen Antworten
-- Was du über das Unternehmen wissen solltest
+Adele ist mein Interview-Modus — gleiche Mira, tieferer Fokus. Wenn du ein neues Profil anlegst, führe ich dich Schritt für Schritt durch: Berufserfahrung, Skills, Präferenzen.
 
-Nach dem Gespräch will sie wissen, wie es gelaufen ist — sie verfolgt deine Reise mit.
+Ich stelle Fragen, du antwortest — und am Ende hast du ein vollständiges Profil, ohne irgendwas in Formulare tippen zu müssen.
 
 **answer_en:**
-Adele is our interview coach. She helps you prepare for conversations:
-- Typical questions for the position
-- Feedback on your answers
-- What you should know about the company
+Adele is my interview mode — same Mira, deeper focus. When you create a new profile, I walk you through it step by step: work experience, skills, preferences.
 
-After the interview, she wants to know how it went — she follows your journey.
+I ask questions, you answer — and at the end you have a complete profile without typing anything into forms.
 
 
 **answer_sie_de:**
-Adele ist unsere Interview-Coachin. Sie hilft Ihnen, Sie auf Gespräche vorzubereiten:
-- Typische Fragen für die Stelle
-- Feedback zu Ihren Antworten
-- Was Sie über das Unternehmen wissen solltest
+Adele ist mein Interview-Modus — gleiche Mira, tieferer Fokus. Wenn Sie ein neues Profil anlegen, führe ich Sie Schritt für Schritt durch: Berufserfahrung, Skills, Präferenzen.
 
-Nach dem Gespräch will sie wissen, wie es gelaufen ist — sie verfolgt Ihre Reise mit.
-
----
-
-### faq_adele_002
-**category:** adele  
-**question_variants:**
-- Wie funktioniert das Coaching?
-- How does coaching work?
-- Wie bereite ich mich vor?
-- How do I prepare?
-- Interview üben?
-- Practice interview?
-
-**answer_de:**
-Geh zu einer Stelle, auf die du dich beworben hast, und klick auf "Coaching mit Adele".
-
-Adele stellt dir Fragen, wie sie im echten Gespräch kommen könnten. Du antwortest. Sie gibt dir Feedback.
-
-Es ist wie ein Probelauf — nur ohne die Nervosität.
-
-**answer_en:**
-Go to a job you've applied to and click "Coaching with Adele".
-
-Adele asks you questions like they might come up in the real interview. You answer. She gives feedback.
-
-It's like a trial run — just without the nerves.
-
-
-**answer_sie_de:**
-Geh zu einer Stelle, auf die Sie Sie beworben haben, und klick auf "Coaching mit Adele".
-
-Adele stellt Ihnen Fragen, wie sie im echten Gespräch kommen könnten. Sie antwortest. Sie gibt Ihnen Feedback.
-
-Es ist wie ein Probelauf — nur ohne die Nervosität.
-
----
+Ich stelle Fragen, Sie antworten — und am Ende haben Sie ein vollständiges Profil, ohne irgendwas in Formulare tippen zu müssen.
 
 ## JOURNEY
 
@@ -916,32 +873,20 @@ Es ist wie ein Probelauf — nur ohne die Nervosität.
 - Reise?
 
 **answer_de:**
-Unter "Meine Reise" siehst du, wo du stehst:
-- Wie viele Stellen du angeschaut hast
-- Wo du dich beworben hast
-- Was noch offen ist
-- Wie es bei vergangenen Bewerbungen gelaufen ist
+Unter „Überblick" siehst du deinen aktuellen Stand: wo du in deiner Jobsuche stehst, wie viele Stellen du angesehen, gespeichert oder beworben hast — und was als nächstes sinnvoll ist.
 
-Jobsuche fühlt sich oft an wie ins Leere zu schreien. Hier siehst du: Du machst Fortschritte.
+Der Fortschritt wird als Flussdiagramm oben auf der Seite angezeigt. Jobsuche fühlt sich oft an wie ins Leere zu schreien. Hier siehst du: Du machst Fortschritte.
 
 **answer_en:**
-Under "My Journey" you can see where you stand:
-- How many jobs you've looked at
-- Where you've applied
-- What's still open
-- How past applications went
+Under "Overview" you can see where you stand: how many jobs you've viewed, saved, or applied to — and what makes sense next.
 
-Job searching often feels like screaming into the void. Here you see: you're making progress.
+Your progress is shown as a flowchart at the top of the page. Job searching often feels like screaming into the void. Here you see: you're making progress.
 
 
 **answer_sie_de:**
-Unter "Meine Reise" sehen Sie, wo Sie stehst:
-- Wie viele Stellen Sie angeschaut haben
-- Wo Sie Sie beworben haben
-- Was noch offen ist
-- Wie es bei vergangenen Bewerbungen gelaufen ist
+Unter „Überblick" sehen Sie Ihren aktuellen Stand: wo Sie in Ihrer Jobsuche stehen, wie viele Stellen Sie angesehen, gespeichert oder beworben haben — und was als nächstes sinnvoll ist.
 
-Jobsuche fühlt sich oft an wie ins Leere zu schreien. Hier sehen Sie: Sie machst Fortschritte.
+Der Fortschritt wird als Flussdiagramm oben auf der Seite angezeigt. Jobsuche fühlt sich oft an wie ins Leere zu schreien. Hier sehen Sie: Sie machen Fortschritte.
 
 ---
 
@@ -959,9 +904,9 @@ Jobsuche fühlt sich oft an wie ins Leere zu schreien. Hier sehen Sie: Sie machs
 Das hängt davon ab, wo du gerade stehst.
 
 Wenn du neu bist: Profil vervollständigen.
-Wenn du Matches hast: Durchschauen, Favoriten markieren.
-Wenn du Favoriten hast: Bei interessanten Stellen Doug beauftragen.
-Wenn du dich beworben hast: Warten — und vielleicht mit Adele üben.
+Wenn du Stellen siehst: Durchschauen, interessante speichern.
+Wenn du gespeicherte Stellen hast: Doug mit der Recherche beauftragen.
+Wenn du dich beworben hast: Warten — und vielleicht ein Probegespräch mit mir üben.
 
 Ich sage dir immer, was als nächstes sinnvoll wäre.
 
@@ -969,20 +914,20 @@ Ich sage dir immer, was als nächstes sinnvoll wäre.
 That depends on where you are.
 
 If you're new: Complete your profile.
-If you have matches: Review them, mark favorites.
-If you have favorites: Send Doug to research interesting ones.
-If you've applied: Wait — and maybe practice with Adele.
+If you see postings: Review them, save the interesting ones.
+If you have saved postings: Send Doug to research them.
+If you've applied: Wait — and maybe practice an interview with me.
 
 I'll always tell you what makes sense next.
 
 
 **answer_sie_de:**
-Das hängt davon ab, wo Sie gerade stehst.
+Das hängt davon ab, wo Sie gerade stehen.
 
 Wenn Sie neu sind: Profil vervollständigen.
-Wenn Sie Matches haben: Durchschauen, Favoriten markieren.
-Wenn Sie Favoriten haben: Bei interessanten Stellen Doug beauftragen.
-Wenn Sie Sie beworben haben: Warten — und vielleicht mit Adele üben.
+Wenn Sie Stellen sehen: Durchschauen, interessante speichern.
+Wenn Sie gespeicherte Stellen haben: Doug mit der Recherche beauftragen.
+Wenn Sie sich beworben haben: Warten — und vielleicht ein Probegespräch mit mir üben.
 
 Ich sage Ihnen immer, was als nächstes sinnvoll wäre.
 
@@ -1264,11 +1209,471 @@ Oder per Mail an feedback@talent.yoga.
 
 ---
 
-## END OF CORPUS
+## SEARCH
 
-**Total Q&A pairs:** 35  
-**Categories covered:** pricing (4), privacy (4), how_it_works (3), profile (3), matches (3), market (3), mira (3), doug (2), adele (2), journey (2), contact (2), boundaries (4), misc (3)
+### faq_search_001
+**category:** search  
+**question_variants:**
+- Was bedeuten die Karten?
+- What do the cards mean?
+- Focus? Field? Plan?
+- Was ist Focus?
+- What is Focus?
+- Was ist Field?
+- Was ist Plan?
+
+**answer_de:**
+Die drei Karten helfen mir, deine Suche zu verstehen:
+
+**Focus** — Wie eng suchst du? Von "nur mein Fachgebiet" bis "ich bin offen für alles".
+**Field** — Willst du in deinem Bereich bleiben oder wechseln?
+**Plan** — Suchst du aktiv oder orientierst du dich erstmal?
+
+Du kannst sie jederzeit ändern. Keine falsche Antwort.
+
+**answer_en:**
+The three cards help me understand your search:
+
+**Focus** — How narrow are you searching? From "only my field" to "I'm open to anything".
+**Field** — Do you want to stay in your area or switch?
+**Plan** — Are you actively searching or just exploring?
+
+You can change them anytime. No wrong answer.
+
+
+**answer_sie_de:**
+Die drei Karten helfen mir, Ihre Suche zu verstehen:
+
+**Focus** — Wie eng suchen Sie? Von "nur mein Fachgebiet" bis "ich bin offen für alles".
+**Field** — Wollen Sie in Ihrem Bereich bleiben oder wechseln?
+**Plan** — Suchen Sie aktiv oder orientieren Sie sich erstmal?
+
+Sie können sie jederzeit ändern. Keine falsche Antwort.
 
 ---
 
-*— Sage, 2026-02-02*
+### faq_search_002
+**category:** search  
+**question_variants:**
+- Wie funktioniert die Suche?
+- How does search work?
+- Kann ich filtern?
+- Can I filter?
+- Berufsfeld?
+- Qualifikation?
+- Standort?
+
+**answer_de:**
+Du kannst nach Berufsfeld, Qualifikation und Standort filtern. Die Filter wirken zusammen — je mehr du eingrenzt, desto gezielter die Ergebnisse.
+
+Wenn du wenig Ergebnisse bekommst, lockere einen Filter. Wenn du zu viele bekommst, grenz weiter ein.
+
+**answer_en:**
+You can filter by field, qualification, and location. Filters work together — the more you narrow down, the more targeted the results.
+
+If you get few results, loosen a filter. If you get too many, narrow further.
+
+
+**answer_sie_de:**
+Sie können nach Berufsfeld, Qualifikation und Standort filtern. Die Filter wirken zusammen — je mehr Sie eingrenzen, desto gezielter die Ergebnisse.
+
+Wenn Sie wenig Ergebnisse bekommen, lockern Sie einen Filter. Wenn Sie zu viele bekommen, grenzen Sie weiter ein.
+
+---
+
+### faq_search_003
+**category:** search  
+**question_variants:**
+- Was ist das Kanban-Board?
+- What is the Kanban board?
+- Spalten?
+- Columns?
+- Favoriten? Gespeichert?
+- Favorites? Saved?
+
+**answer_de:**
+Das Kanban-Board zeigt deine Stellen in Spalten: Neu, Gespeichert, Beworben, Gespräch, Ergebnis.
+
+Du verschiebst Stellen per Drag & Drop — so behältst du den Überblick, wo du überall stehst.
+
+**answer_en:**
+The Kanban board shows your jobs in columns: New, Saved, Applied, Interview, Result.
+
+You move jobs by drag & drop — so you keep track of where you stand everywhere.
+
+
+**answer_sie_de:**
+Das Kanban-Board zeigt Ihre Stellen in Spalten: Neu, Gespeichert, Beworben, Gespräch, Ergebnis.
+
+Sie verschieben Stellen per Drag & Drop — so behalten Sie den Überblick, wo Sie überall stehen.
+
+---
+
+## POSTING STATUS
+
+### faq_status_001
+**category:** status  
+**question_variants:**
+- Was bedeutet gespeichert?
+- What does saved mean?
+- Was bedeutet abgelehnt?
+- What does dismissed mean?
+- Stellen-Status?
+- Posting status?
+- Wie markiere ich eine Stelle?
+- How do I mark a posting?
+
+**answer_de:**
+Jede Stelle hat einen Status:
+- **Neu** — du hast sie noch nicht angeschaut
+- **Gespeichert** — du findest sie interessant
+- **Abgelehnt** — nicht für dich (verschwindet aus der Liste)
+- **Beworben** — du hast dich beworben
+- **Gespräch** — du wurdest eingeladen
+
+Du kannst den Status jederzeit ändern.
+
+**answer_en:**
+Every posting has a status:
+- **New** — you haven't looked at it yet
+- **Saved** — you find it interesting
+- **Dismissed** — not for you (disappears from the list)
+- **Applied** — you've applied
+- **Interview** — you got invited
+
+You can change the status anytime.
+
+
+**answer_sie_de:**
+Jede Stelle hat einen Status:
+- **Neu** — Sie haben sie noch nicht angeschaut
+- **Gespeichert** — Sie finden sie interessant
+- **Abgelehnt** — nicht für Sie (verschwindet aus der Liste)
+- **Beworben** — Sie haben sich beworben
+- **Gespräch** — Sie wurden eingeladen
+
+Sie können den Status jederzeit ändern.
+
+---
+
+### faq_status_002
+**category:** status  
+**question_variants:**
+- Kann ich eine abgelehnte Stelle zurückholen?
+- Can I undo dismiss?
+- Stelle wiederherstellen?
+- Restore posting?
+- Versehentlich abgelehnt
+- Accidentally dismissed
+
+**answer_de:**
+Ja. Unter "Abgelehnte Stellen" kannst du jede Stelle zurückholen. Einmal klicken — sie ist wieder da.
+
+Nichts ist endgültig.
+
+**answer_en:**
+Yes. Under "Dismissed Postings" you can restore any job. One click — it's back.
+
+Nothing is permanent.
+
+
+**answer_sie_de:**
+Ja. Unter "Abgelehnte Stellen" können Sie jede Stelle zurückholen. Einmal klicken — sie ist wieder da.
+
+Nichts ist endgültig.
+
+---
+
+## ACTIVITY LOG
+
+### faq_log_001
+**category:** log  
+**question_variants:**
+- Was ist der Bewerbungsprotokoll?
+- What is the activity log?
+- Protokoll?
+- Log?
+- Bewerbungsnachweis?
+- Application record?
+
+**answer_de:**
+Der Bewerbungsprotokoll dokumentiert deine Jobsuche: welche Stellen du angeschaut, gespeichert, beworben oder abgelehnt hast — mit Datum und Uhrzeit.
+
+Das hilft dir, den Überblick zu behalten. Und es kann auch als Nachweis gegenüber dem Jobcenter dienen.
+
+**answer_en:**
+The activity log documents your job search: which jobs you viewed, saved, applied to, or dismissed — with date and time.
+
+It helps you keep track. And it can serve as proof of effort for the employment office.
+
+
+**answer_sie_de:**
+Der Bewerbungsprotokoll dokumentiert Ihre Jobsuche: welche Stellen Sie angeschaut, gespeichert, beworben oder abgelehnt haben — mit Datum und Uhrzeit.
+
+Das hilft Ihnen, den Überblick zu behalten. Und es kann auch als Nachweis gegenüber dem Jobcenter dienen.
+
+---
+
+### faq_log_002
+**category:** log  
+**question_variants:**
+- Kann ich das dem Jobcenter zeigen?
+- Can I show this to the job center?
+- Sachbearbeiter?
+- Nachweis für ALG II?
+- Proof for unemployment benefits?
+- Bürgergeld Nachweis?
+- Kann ich das exportieren?
+- Can I export it?
+
+**answer_de:**
+Ja, du kannst den Bewerbungsprotokoll als PDF exportieren und ausdrucken. Er zeigt Datum, Stelle, Unternehmen und Status.
+
+**Wichtig:** Das ist Dokumentation, keine Rechtsberatung. Ob dein Sachbearbeiter das akzeptiert, hängt von ihm ab. Aber es ist besser als nichts.
+
+**answer_en:**
+Yes, you can export the activity log as PDF and print it. It shows date, position, company, and status.
+
+**Important:** This is documentation, not legal advice. Whether your case worker accepts it depends on them. But it's better than nothing.
+
+
+**answer_sie_de:**
+Ja, Sie können den Bewerbungsprotokoll als PDF exportieren und ausdrucken. Er zeigt Datum, Stelle, Unternehmen und Status.
+
+**Wichtig:** Das ist Dokumentation, keine Rechtsberatung. Ob Ihr Sachbearbeiter das akzeptiert, hängt von ihm ab. Aber es ist besser als nichts.
+
+---
+
+## APPLICATIONS
+
+### faq_apply_001
+**category:** applications  
+**question_variants:**
+- Wie schreibe ich ein Anschreiben?
+- How do I write a cover letter?
+- Anschreiben?
+- Cover letter?
+- Bewerbungsschreiben?
+- Application letter?
+- Hilfe beim Anschreiben?
+- Help with cover letter?
+
+**answer_de:**
+Wenn du Guthaben hast, kann ich dir ein Anschreiben entwerfen — abgestimmt auf die Stelle und dein Profil.
+
+Klick bei einer Stelle auf "Anschreiben erstellen". Du bekommst einen Entwurf, den du anpassen und verwenden kannst. Es ist ein Startpunkt, kein Endprodukt — deine Stimme muss rein.
+
+**answer_en:**
+If you have credits, I can draft a cover letter — tailored to the position and your profile.
+
+Click "Create Cover Letter" on a posting. You'll get a draft you can adjust and use. It's a starting point, not a finished product — your voice needs to be in it.
+
+
+**answer_sie_de:**
+Wenn Sie Guthaben haben, kann ich Ihnen ein Anschreiben entwerfen — abgestimmt auf die Stelle und Ihr Profil.
+
+Klicken Sie bei einer Stelle auf "Anschreiben erstellen". Sie bekommen einen Entwurf, den Sie anpassen und verwenden können. Es ist ein Startpunkt, kein Endprodukt — Ihre Stimme muss rein.
+
+---
+
+### faq_apply_002
+**category:** applications  
+**question_variants:**
+- Wie lange soll ich warten nach der Bewerbung?
+- How long should I wait after applying?
+- Keine Antwort bekommen?
+- No response?
+- Wann nachfragen?
+- When to follow up?
+- Ghosting?
+
+**answer_de:**
+Zwei bis drei Wochen sind normal. Viele Unternehmen brauchen Zeit.
+
+Wenn nach drei Wochen nichts kommt, ist eine freundliche Nachfrage völlig okay. Ich kann dir auch helfen, eine zu formulieren.
+
+Und manchmal kommt einfach keine Antwort. Das ist frustrierend, aber leider üblich.
+
+**answer_en:**
+Two to three weeks is normal. Many companies need time.
+
+If nothing comes after three weeks, a friendly follow-up is perfectly fine. I can help you write one.
+
+And sometimes there's just no response. That's frustrating, but unfortunately common.
+
+
+**answer_sie_de:**
+Zwei bis drei Wochen sind normal. Viele Unternehmen brauchen Zeit.
+
+Wenn nach drei Wochen nichts kommt, ist eine freundliche Nachfrage völlig okay. Ich kann Ihnen auch helfen, eine zu formulieren.
+
+Und manchmal kommt einfach keine Antwort. Das ist frustrierend, aber leider üblich.
+
+---
+
+### faq_apply_003
+**category:** applications  
+**question_variants:**
+- Kann ich mich auf mehrere Stellen gleichzeitig bewerben?
+- Can I apply to multiple jobs at once?
+- Wie viele Bewerbungen?
+- How many applications?
+- Parallel bewerben?
+- Apply in parallel?
+
+**answer_de:**
+Ja, unbedingt. Leg nicht alle Eier in einen Korb.
+
+Eine gute Faustregel: 5-10 aktive Bewerbungen gleichzeitig. Weniger ist zu wenig, mehr wird unübersichtlich. Das Kanban-Board hilft dir, den Überblick zu behalten.
+
+**answer_en:**
+Yes, absolutely. Don't put all your eggs in one basket.
+
+A good rule of thumb: 5-10 active applications at a time. Fewer is too few, more gets unmanageable. The Kanban board helps you keep track.
+
+
+**answer_sie_de:**
+Ja, unbedingt. Legen Sie nicht alle Eier in einen Korb.
+
+Eine gute Faustregel: 5-10 aktive Bewerbungen gleichzeitig. Weniger ist zu wenig, mehr wird unübersichtlich. Das Kanban-Board hilft Ihnen, den Überblick zu behalten.
+
+---
+
+## CAREER
+
+### faq_career_001
+**category:** career  
+**question_variants:**
+- Kann ich den Beruf wechseln?
+- Can I change careers?
+- Quereinstieg?
+- Career change?
+- Branchenwechsel?
+- Industry change?
+- Ich will was anderes machen
+- I want to do something different
+
+**answer_de:**
+Klar. Viele Skills sind übertragbar — Projektmanagement, Kommunikation, analytisches Denken funktionieren überall.
+
+Sag mir, wohin du willst, und ich zeige dir, welche deiner Skills dort gefragt sind und was du noch mitbringen müsstest. Der Match-Report hilft genau dabei.
+
+**answer_en:**
+Sure. Many skills are transferable — project management, communication, analytical thinking work everywhere.
+
+Tell me where you want to go, and I'll show you which of your skills are in demand there and what you'd still need. The match report helps exactly with that.
+
+
+**answer_sie_de:**
+Klar. Viele Skills sind übertragbar — Projektmanagement, Kommunikation, analytisches Denken funktionieren überall.
+
+Sagen Sie mir, wohin Sie wollen, und ich zeige Ihnen, welche Ihrer Skills dort gefragt sind und was Sie noch mitbringen müssten. Der Match-Report hilft genau dabei.
+
+---
+
+### faq_career_002
+**category:** career  
+**question_variants:**
+- Lücken im Lebenslauf?
+- Gaps in CV?
+- Wie erkläre ich eine Lücke?
+- How do I explain a gap?
+- Arbeitslos gewesen?
+- Was unemployed?
+- Elternzeit? Krankheit?
+- Parental leave? Illness?
+
+**answer_de:**
+Lücken sind normal. Elternzeit, Weiterbildung, gesundheitliche Pause, Sabbatical — das kennt jeder Personaler.
+
+Wichtig ist: Ehrlich sein, kurz erklären, nach vorne schauen. "Von 2023 bis 2024 habe ich mich umorientiert und Weiterbildungen gemacht" — das reicht.
+
+**answer_en:**
+Gaps are normal. Parental leave, training, health break, sabbatical — every HR person knows these.
+
+What matters: Be honest, explain briefly, look forward. "From 2023 to 2024, I reoriented and did further training" — that's enough.
+
+
+**answer_sie_de:**
+Lücken sind normal. Elternzeit, Weiterbildung, gesundheitliche Pause, Sabbatical — das kennt jeder Personaler.
+
+Wichtig ist: Ehrlich sein, kurz erklären, nach vorne schauen. "Von 2023 bis 2024 habe ich mich umorientiert und Weiterbildungen gemacht" — das reicht.
+
+---
+
+### faq_career_003
+**category:** career  
+**question_variants:**
+- Mir fehlen Qualifikationen
+- I'm missing qualifications
+- Nicht genug Erfahrung?
+- Not enough experience?
+- Soll ich mich trotzdem bewerben?
+- Should I apply anyway?
+- Anforderungen nicht erfüllt?
+- Don't meet requirements?
+
+**answer_de:**
+Wenn du 60-70% der Anforderungen erfüllst — bewirb dich. Stellenanzeigen sind Wunschlisten, keine Checklisten.
+
+Der Match-Report zeigt dir, was passt und was fehlt. Das "was fehlt" ist meistens kein K.O.-Kriterium.
+
+**answer_en:**
+If you meet 60-70% of the requirements — apply. Job listings are wish lists, not checklists.
+
+The match report shows you what fits and what's missing. The "what's missing" is usually not a dealbreaker.
+
+
+**answer_sie_de:**
+Wenn Sie 60-70% der Anforderungen erfüllen — bewerben Sie sich. Stellenanzeigen sind Wunschlisten, keine Checklisten.
+
+Der Match-Report zeigt Ihnen, was passt und was fehlt. Das "was fehlt" ist meistens kein K.O.-Kriterium.
+
+---
+
+## WORK TYPES
+
+### faq_work_001
+**category:** work_types  
+**question_variants:**
+- Homeoffice?
+- Remote?
+- Kann ich von zu Hause arbeiten?
+- Can I work from home?
+- Remote Jobs?
+- Teilzeit?
+- Part-time?
+- Minijob?
+- Befristet?
+- Temporary?
+
+**answer_de:**
+Du kannst in der Suche nach Arbeitsmodell filtern — Remote, Hybrid, Vor-Ort. Teilzeit und Vollzeit ebenso.
+
+Ob eine Stelle befristet oder unbefristet ist, steht in den Details. Nicht alle Stellenanzeigen machen das deutlich — wenn's unklar ist, frag beim Unternehmen nach.
+
+**answer_en:**
+You can filter by work model in search — remote, hybrid, on-site. Part-time and full-time too.
+
+Whether a position is temporary or permanent is in the details. Not all listings make this clear — if it's unclear, ask the company.
+
+
+**answer_sie_de:**
+Sie können in der Suche nach Arbeitsmodell filtern — Remote, Hybrid, Vor-Ort. Teilzeit und Vollzeit ebenso.
+
+Ob eine Stelle befristet oder unbefristet ist, steht in den Details. Nicht alle Stellenanzeigen machen das deutlich — wenn's unklar ist, fragen Sie beim Unternehmen nach.
+
+---
+
+## END OF CORPUS
+
+**Total Q&A pairs:** 51  
+**Categories covered:** pricing (4), privacy (4), how_it_works (3), profile (3), matches (3), market (3), mira (3), doug (2), adele (1), journey (2), contact (2), boundaries (4), misc (3), search (3), status (2), log (2), applications (3), career (3), work_types (1)
+
+**Changelog:**
+- 2026-02-02: Initial corpus (35 entries) — Sage
+- 2026-03-29: Updated pricing_001-004 for credit model (was subscription), updated adele_001-002 (Adele → Mira interview mode), updated doug_002 (removed tier-based wait times). Added 12 entries: search (3), status (2), log (2), applications (3), career (3), work_types (1) — Arden
+
+---
+
+*— Sage, 2026-02-02. Updated by Arden, 2026-03-29*
