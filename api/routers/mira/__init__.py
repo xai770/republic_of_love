@@ -16,6 +16,7 @@ from api.routers.mira.greeting import router as greeting_router
 from api.routers.mira.tour import router as tour_router
 from api.routers.mira.proactive import router as proactive_router
 from api.routers.mira.chat import router as chat_router
+from api.routers.mira.faq_admin import router as faq_admin_router
 
 router = APIRouter(prefix="/mira", tags=["mira"])
 
@@ -23,6 +24,7 @@ router.include_router(greeting_router)
 router.include_router(tour_router)
 router.include_router(proactive_router)
 router.include_router(chat_router)
+router.include_router(faq_admin_router)
 
 # Re-export for any external code that imports from api.routers.mira directly
 from api.routers.mira.models import *  # noqa: F401, F403

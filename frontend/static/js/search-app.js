@@ -236,10 +236,26 @@
         // Slide pill highlight
         positionPillHighlight(true);
 
-        // Fix Leaflet when map becomes visible (location or power tab)
+        // Move the Leaflet map element between location and power tab containers
         if ((tabName === 'location' || tabName === 'power') && typeof map !== 'undefined' && map) {
+            const mapEl = document.getElementById('search-map');
+            if (mapEl) {
+                if (tabName === 'power') {
+                    const powerTarget = document.getElementById('search-map-power');
+                    if (powerTarget && powerTarget.parentNode) {
+                        powerTarget.parentNode.insertBefore(mapEl, powerTarget);
+                        powerTarget.style.display = 'none';
+                    }
+                } else {
+                    const locationPanel = document.querySelector('.location-map-panel');
+                    const powerTarget = document.getElementById('search-map-power');
+                    if (locationPanel) {
+                        locationPanel.insertBefore(mapEl, locationPanel.firstChild);
+                    }
+                    if (powerTarget) powerTarget.style.display = '';
+                }
+            }
             setTimeout(() => {
-                const mapEl = document.getElementById('search-map');
                 if (!mapEl || mapEl.offsetWidth === 0) return;
                 map.invalidateSize();
                 map.setView(map.getCenter());
@@ -250,7 +266,6 @@
                 }
             }, 100);
             setTimeout(() => {
-                const mapEl = document.getElementById('search-map');
                 if (mapEl && mapEl.offsetWidth > 0) map.invalidateSize();
             }, 500);
             mapNeedsInvalidate = false;
@@ -3338,6 +3353,9 @@
                 panel.classList.add('maximized');
                 panels.classList.add('has-maximized');
                 this.textContent = '⊗';
+                this.title = 'Restore';
+                trackPostingEvent('maximized', { panel: panelId });
+            }
                 this.title = 'Restore';
             }
 

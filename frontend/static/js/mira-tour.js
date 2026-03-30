@@ -81,7 +81,7 @@
         element: '#power-search-layout, .power-layout',
         popover: {
           title: '⚡ Power-Suche',
-          description: 'Alle Filter auf einem Bildschirm. Klick auf Kategorien, um sie an- oder abzuwählen.',
+          description: 'Alle Filter auf einem Bildschirm — Berufsfelder links, Karte in der Mitte, Standorte rechts. Klick auf Kategorien, um sie an- oder abzuwählen. Wenn du lieber Schritt für Schritt vorgehst, nutze die anderen Tabs.',
           side: 'right',
           align: 'start'
         }
@@ -122,12 +122,29 @@
     ],
     '/account': [
       {
-        element: '.account-container',
         popover: {
-          title: '⚙️ Einstellungen',
+          title: '⚙️ Dein Konto',
           description: 'Hier verwaltest du dein Konto — Sprache, E-Mail-Einstellungen, Datenschutz. Nichts Dringendes, aber gut zu wissen.',
-          side: 'right',
-          align: 'start'
+          side: 'center',
+          align: 'center'
+        }
+      },
+      {
+        element: '#credits',
+        popover: {
+          title: '🌿 Credits & Plan',
+          description: 'Hier siehst du dein Guthaben, kannst Credits aufladen oder Sustainer werden. Sustainers nutzen alle KI-Funktionen unbegrenzt.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '.account-danger-zone',
+        popover: {
+          title: '🔒 Deine Daten',
+          description: 'Hier kannst du deine Daten exportieren oder dein Konto vollständig löschen — alles DSGVO-konform.',
+          side: 'top',
+          align: 'center'
         }
       }
     ]

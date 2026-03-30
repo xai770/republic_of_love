@@ -237,10 +237,13 @@ async def get_screen_context(
     tab: str | None = None,
     lang: str = "de",
     user: dict = Depends(require_user),
+    conn=Depends(get_db),
 ):
     """
     Return Mira context (greeting, quick-action pills, illustration)
     for the given screen path and optional tab.
+
+    Includes promoted FAQ quick actions from the pipeline.
     """
     from core.mira_contexts import get_context
 
@@ -260,6 +263,22 @@ async def get_screen_context(
         {"label": qa.get(label_key, qa.get("label_en", "")), "message": qa["message"]}
         for qa in ctx.get("quick_actions", [])
     ]
+
+    # Append promoted FAQ quick actions for this page
+    page_key = f"{path}:{tab}" if tab else path
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT label_en, label_de, faq_id
+                FROM mira_faq_promoted
+                WHERE page_key = %s
+                ORDER BY created_at
+            """, (page_key,))
+            for row in cur.fetchall():
+                label = row['label_en'] if lang == 'en' else row['label_de']
+                pills.append({"label": label, "message": row['faq_id']})
+    except Exception:
+        pass  # Don't break context if promoted table is missing
 
     return {
         "found": True,
