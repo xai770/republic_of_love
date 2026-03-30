@@ -55,8 +55,7 @@ The complete end-to-end flow a yogi experiences, from first visit to job outcome
 │     └─→ Landing page (public, no auth required)                        │
 │                                                                         │
 │  2. ONBOARD                                                             │
-│     Google Sign-in → 11 steps (EN) or 12 steps (DE, +Du/Sie)           │
-│     + 1 new Mira introduction step (UX v3)                             │
+│     Google Sign-in → 12 steps (EN) or 13 steps (DE, +Du/Sie)           │
 │     Key moments: language, auth, data consent, yogi name, CV upload    │
 │     └─→ Redirect to /search                                           │
 │                                                                         │
@@ -112,7 +111,7 @@ We introduce Mira as a unified AI guide across every screen. Mira bridges the ga
 
 ### Key changes 
 
-- Onboarding: currently 11 steps (EN) / 12 steps (DE, +Du/Sie), plus Google Sign-in auth. UX v3 adds a Mira introduction screen → 12 EN / 13 DE + auth.
+- Onboarding: 12 steps (EN) / 13 steps (DE, +Du/Sie), plus Google Sign-in auth. Includes Mira introduction screen added in UX v3.
 - Auth step documented: Google OAuth between language selection and step 2
 - Adele persona removed from profile page — Mira is the sole user-facing guide
 - Every screen gets a Mira tour, a Mira avatar widget, and (where applicable) a player widget
@@ -318,9 +317,11 @@ Clicking anywhere outside the speech bubble or its navigation buttons (Next/Back
 | `mira_speech_bubbles.png` | Messages | Mira with speech bubbles floating above open palm |
 | `mira_gear.png` | Account/Settings | Mira holding a gear/cog icon |
 | `mira_postings.png` | Search/Postings | Mira holding fanned-out cards, pulling one forward |
-| `mira_map.png` | Search/Location + Onboarding Language Confirmation (Step 10 EN / Step 11 DE) | Mira pointing at world map with location pin |
+| `mira_map.png` | Search/Location + Onboarding Language Confirmation (Step 10 EN / Step 11 DE)¹ | Mira pointing at world map with location pin |
 
-**Total: 21 illustrations** (11 existing + 9 new screen-specific + 1 glasses variant for profile interview, all generated and approved)
+**Total: 20 unique illustration files** (11 existing + 8 new screen-specific + 1 glasses variant for profile interview, all generated and approved)
+
+¹ `mira_map.png` serves double duty — onboarding Language Confirmation AND Search/Location guided tour. It is one asset, listed in both tables for clarity.
 
 | `mira_glasses.png` | Profile (interview mode) | Mira wearing glasses, attentive expression — signals profile interview mode |
 
