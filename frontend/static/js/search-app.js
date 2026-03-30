@@ -70,6 +70,8 @@
         cardGameChoices: {},
         // Domain codes from profile-scope (to mark "from your profile")
         profileDomainCodes: [],
+        // Selected individual professions per sector: { sectorName: [profName, ...] }
+        selectedProfessions: {},
     };
 
     /** Persist filter-relevant parts of state to localStorage. */
@@ -265,6 +267,17 @@
         // Update scroll fade indicators when direction tab becomes visible
         if (tabName === 'direction') {
             requestAnimationFrame(fkUpdateScrollFades);
+        }
+
+        // Reload Mira context & tour for new tab
+        if (window.miraWidget && window.miraWidget.loadScreenContext) {
+            window.miraWidget.loadScreenContext();
+        }
+        if (window.miraTour) {
+            var pageId = '/search:' + tabName;
+            if (!localStorage.getItem('mira_tour_completed__search_' + tabName)) {
+                setTimeout(function() { window.miraTour.run(pageId); }, 2000);
+            }
         }
     }
 
@@ -849,17 +862,28 @@
     // ============================================================
     const QL_COLORS = { 1: '#95a5a6', 2: '#3498db', 3: '#e67e22', 4: '#e74c3c', 0: '#999' };
 
+    // QL card labels (spec: 4-card layout)
+    var QL_CARD_LABELS = {
+        1: { de: 'Helfer/in', en: 'Skilled Worker', icon: '🔧' },
+        2: { de: 'Fachkraft', en: 'Professional', icon: '⚙️' },
+        3: { de: 'Spezialist/in', en: 'Specialist', icon: '🎯' },
+        4: { de: 'Experte/Expertin', en: 'Expert', icon: '⭐' }
+    };
+
     function renderQLStrip(levels) {
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
-        const html = (!levels || levels.length === 0) ? '' : levels.filter(l => l.level > 0).map(l => {
-            const selected = state.ql.length === 0 || state.ql.includes(l.level);
-            const dimmed = state.ql.length > 0 && !selected;
+        const html = (!levels || levels.length === 0) ? '' : levels.filter(l => l.level > 0 && l.level <= 4).map(l => {
+            const selected = state.ql.includes(l.level);
+            const noneSelected = state.ql.length === 0;
             const color = QL_COLORS[l.level] || '#999';
-            return `<button class="ql-chip ${dimmed ? 'dimmed' : ''} ${selected && state.ql.length > 0 ? 'selected' : ''}"
+            const labels = QL_CARD_LABELS[l.level] || {};
+            const label = LANG === 'de' ? labels.de : labels.en;
+            const icon = labels.icon || '';
+            return `<button class="ql-card ${selected ? 'selected' : ''} ${!noneSelected && !selected ? 'dimmed' : ''}"
                      data-level="${l.level}" style="--ql-color:${color}">
-                <span class="ql-chip-dot" style="background:${color}"></span>
-                <span class="ql-chip-label">${tQL(l.level)}</span>
-                <span class="ql-chip-count">${l.count.toLocaleString(locale)}</span>
+                <span class="ql-card-icon">${icon}</span>
+                <span class="ql-card-label">${label || tQL(l.level)}</span>
+                <span class="ql-card-count">${l.count.toLocaleString(locale)} Stellen</span>
             </button>`;
         }).join('');
         // Render to both primary (tab 3) and power (tab 6) QL strips
@@ -869,11 +893,11 @@
         });
     }
 
-    // QL chip click handler — shared by both strips (event delegation)
+    // QL card click handler — shared by both strips (event delegation)
     function handleQLClick(e) {
-        const chip = e.target.closest('.ql-chip');
-        if (!chip) return;
-        const level = parseInt(chip.dataset.level);
+        const card = e.target.closest('.ql-card');
+        if (!card) return;
+        const level = parseInt(card.dataset.level);
         const idx = state.ql.indexOf(level);
         if (idx >= 0) { state.ql.splice(idx, 1); } else { state.ql.push(level); }
         doSearch();
@@ -1211,6 +1235,7 @@
         const sector = data.sectors.find(s => s.name === sectorName);
         if (!sector) return;
         fkCurrentSector = sectorName;
+        fkShowAllProfs = false;
 
         const overlay = document.getElementById('fk-modal-overlay');
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
@@ -1237,9 +1262,13 @@
         overlay.classList.add('open');
     }
 
+    var fkShowAllProfs = false;
+    var FK_PROF_LIMIT = 10;
+
     function fkRenderProfessions(sector) {
         const list = document.getElementById('fk-prof-list');
-        if (!list || !sector.professions) { list.innerHTML = ''; return; }
+        const showAllBtn = document.getElementById('fk-show-all-btn');
+        if (!list || !sector.professions) { list.innerHTML = ''; if (showAllBtn) showAllBtn.style.display = 'none'; return; }
         const locale = LANG === 'de' ? 'de-DE' : 'en-US';
         const sorted = [...sector.professions].sort((a, b) => {
             if (fkProfSort.field === 'name') {
@@ -1249,12 +1278,27 @@
             }
             return fkProfSort.dir === 'asc' ? (a.count || 0) - (b.count || 0) : (b.count || 0) - (a.count || 0);
         });
-        list.innerHTML = sorted.map(p =>
-            `<div class="fk-prof-row">
+        const visible = fkShowAllProfs ? sorted : sorted.slice(0, FK_PROF_LIMIT);
+        const selectedProfs = (state.selectedProfessions && state.selectedProfessions[sector.name]) || [];
+        list.innerHTML = visible.map(p => {
+            const checked = selectedProfs.includes(p.name) ? 'checked' : '';
+            return `<div class="fk-prof-row">
+                <label class="fk-prof-check"><input type="checkbox" data-prof="${p.name}" ${checked}></label>
                 <span class="fk-prof-name">${p.name}</span>
                 <span class="fk-prof-count">${(p.count || 0).toLocaleString(locale)}</span>
-            </div>`
-        ).join('');
+            </div>`;
+        }).join('');
+        // Show all / collapse toggle
+        if (showAllBtn) {
+            if (sorted.length > FK_PROF_LIMIT) {
+                showAllBtn.style.display = '';
+                showAllBtn.textContent = fkShowAllProfs
+                    ? (I18N.fk_show_less || 'Weniger anzeigen') + ' ▴'
+                    : (I18N.fk_show_all || 'Alle anzeigen') + ' (' + sorted.length + ') ▾';
+            } else {
+                showAllBtn.style.display = 'none';
+            }
+        }
     }
 
     function fkCloseModal() {
@@ -1561,6 +1605,32 @@
             const sector = state.sectorTree.sectors.find(s => s.name === fkCurrentSector);
             if (sector) fkRenderProfessions(sector);
         }
+    });
+
+    // Show all / collapse professions toggle
+    document.getElementById('fk-show-all-btn').addEventListener('click', function() {
+        fkShowAllProfs = !fkShowAllProfs;
+        if (fkCurrentSector) {
+            const sector = state.sectorTree.sectors.find(s => s.name === fkCurrentSector);
+            if (sector) fkRenderProfessions(sector);
+        }
+    });
+
+    // Profession checkbox selection
+    document.getElementById('fk-prof-list').addEventListener('change', function(e) {
+        if (e.target.type !== 'checkbox') return;
+        const profName = e.target.dataset.prof;
+        if (!profName || !fkCurrentSector) return;
+        if (!state.selectedProfessions[fkCurrentSector]) state.selectedProfessions[fkCurrentSector] = [];
+        const arr = state.selectedProfessions[fkCurrentSector];
+        if (e.target.checked) {
+            if (!arr.includes(profName)) arr.push(profName);
+        } else {
+            const idx = arr.indexOf(profName);
+            if (idx >= 0) arr.splice(idx, 1);
+        }
+        if (!arr.length) delete state.selectedProfessions[fkCurrentSector];
+        saveState();
     });
 
     // ============================================================
@@ -2312,6 +2382,12 @@
             renderGroup('fg-ql', g2label, g2),
             renderGroup('fg-location', g3label, g3),
         ].filter(Boolean).join('');
+
+        // Mirror active filters into postings tab pills
+        const postingsPills = document.getElementById('postings-filter-pills');
+        if (postingsPills) {
+            postingsPills.innerHTML = container.innerHTML;
+        }
     }
 
     document.getElementById('active-filters').addEventListener('click', async function(e) {
@@ -3001,10 +3077,52 @@
     }
 
     // ============================================================
+    // POSTING DETAIL MODAL — Engagement tracking
+    // ============================================================
+    var postingEngagement = { openedAt: null, maxScroll: 0, postingId: null };
+
+    function trackPostingEvent(event, data) {
+        if (!postingEngagement.postingId) return;
+        try {
+            fetch('/api/search/posting-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ posting_id: postingEngagement.postingId, event: event, data: data || {} })
+            }).catch(function() {});
+        } catch (_) {}
+    }
+
+    function startEngagementTracking(postingId) {
+        postingEngagement.postingId = postingId;
+        postingEngagement.openedAt = Date.now();
+        postingEngagement.maxScroll = 0;
+        trackPostingEvent('viewed');
+
+        // Track scroll depth
+        var body = document.getElementById('posting-modal-body');
+        if (body) {
+            body.onscroll = function() {
+                var pct = Math.round((body.scrollTop / (body.scrollHeight - body.clientHeight)) * 100) || 0;
+                if (pct > postingEngagement.maxScroll) postingEngagement.maxScroll = pct;
+            };
+        }
+    }
+
+    function endEngagementTracking() {
+        if (!postingEngagement.openedAt) return;
+        var elapsed = Math.round((Date.now() - postingEngagement.openedAt) / 1000);
+        trackPostingEvent('time_in_modal', { seconds: elapsed });
+        trackPostingEvent('scroll_depth', { percent: postingEngagement.maxScroll });
+        postingEngagement.openedAt = null;
+        postingEngagement.postingId = null;
+    }
+
+    // ============================================================
     // POSTING DETAIL MODAL
     // ============================================================
     async function openPostingDetail(postingId) {
         currentPostingId = postingId;
+        startEngagementTracking(postingId);
         const overlay = document.getElementById('posting-modal-overlay');
         const body = document.getElementById('posting-modal-body');
         const interestBar = document.getElementById('posting-interest-bar');
@@ -3075,7 +3193,7 @@
             // External link
             if (p.external_url) {
                 html += `<div class="detail-actions">
-                    <a href="${p.external_url}" target="_blank" rel="noopener" class="btn-external-link">${I18N.results_external} ↗</a>
+                    <a href="${p.external_url}" target="_blank" rel="noopener" class="btn-external-link" onclick="if(window.trackPostingEvent)trackPostingEvent('external_click')">${I18N.results_external} ↗</a>
                 </div>`;
             }
 
@@ -3093,6 +3211,7 @@
     }
 
     function closePostingModal() {
+        endEngagementTracking();
         const overlay = document.getElementById('posting-modal-overlay');
         overlay.classList.remove('open');
         document.body.style.overflow = '';
@@ -3777,6 +3896,9 @@
     // Expose for sidebar toggle
     window.toggleMiraChat = toggleMiraChat;
 
+    // Expose engagement tracking for inline onclick
+    window.trackPostingEvent = trackPostingEvent;
+
     // ============================================================
     // MIRA FILTER ACTIONS — exposed for chat response handling
     // ============================================================
@@ -3831,4 +3953,56 @@
             setTimeout(() => { const m = document.getElementById('search-map'); if (m && m.offsetWidth > 0) map.invalidateSize(); }, 200);
         }
     };
+
+    // ============================================================
+    // POSTINGS SESSION FRAMEWORK
+    // ============================================================
+    var postingsSession = { active: false, duration: 0, startedAt: 0, timer: null, viewed: 0, saved: 0 };
+
+    function startPostingsSession(durationMs) {
+        postingsSession.active = true;
+        postingsSession.duration = durationMs;
+        postingsSession.startedAt = Date.now();
+        postingsSession.viewed = 0;
+        postingsSession.saved = 0;
+        var bar = document.getElementById('postings-session-bar');
+        if (bar) bar.style.display = '';
+        var endBanner = document.getElementById('postings-session-end');
+        if (endBanner) endBanner.style.display = 'none';
+        postingsSession.timer = setInterval(updateSessionBar, 500);
+    }
+
+    function updateSessionBar() {
+        if (!postingsSession.active) return;
+        var elapsed = Date.now() - postingsSession.startedAt;
+        var pct = Math.min(100, (elapsed / postingsSession.duration) * 100);
+        var fill = document.getElementById('session-bar-fill');
+        if (fill) fill.style.width = pct + '%';
+        if (pct >= 100) endPostingsSession();
+    }
+
+    function endPostingsSession() {
+        postingsSession.active = false;
+        clearInterval(postingsSession.timer);
+        var msg = document.getElementById('session-end-msg');
+        var banner = document.getElementById('postings-session-end');
+        if (msg) {
+            msg.textContent = LANG === 'de'
+                ? 'Deine Sitzung ist vorbei. Du hast heute ' + postingsSession.viewed + ' Stellen angesehen und ' + postingsSession.saved + ' gespeichert. Gut gemacht!'
+                : 'Session complete. You viewed ' + postingsSession.viewed + ' postings and saved ' + postingsSession.saved + '. Well done!';
+        }
+        if (banner) banner.style.display = '';
+    }
+
+    // Session continue / done buttons
+    var continueBtn = document.getElementById('session-continue-btn');
+    if (continueBtn) continueBtn.addEventListener('click', function() {
+        startPostingsSession(postingsSession.duration || 600000);
+    });
+    var doneBtn = document.getElementById('session-done-btn');
+    if (doneBtn) doneBtn.addEventListener('click', function() {
+        document.getElementById('postings-session-end').style.display = 'none';
+        document.getElementById('postings-session-bar').style.display = 'none';
+    });
+
 })();

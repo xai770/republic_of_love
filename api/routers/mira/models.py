@@ -14,6 +14,7 @@ class ChatRequest(BaseModel):
     message: str
     uses_du: Optional[bool] = None  # None = unknown, True = du, False = Sie
     history: Optional[List[ChatMessage]] = None  # Conversation history
+    context: Optional[str] = None  # 'profile' = Adele system prompt mode
 
 
 class GreetingResponse(BaseModel):

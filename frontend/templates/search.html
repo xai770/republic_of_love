@@ -231,15 +231,8 @@
                             <div class="fk-modal-name" id="fk-modal-name"></div>
                             <div class="fk-modal-stats" id="fk-modal-stats"></div>
                             <div class="fk-modal-fresh" id="fk-modal-fresh"></div>
-                            <div class="fk-modal-desc" id="fk-modal-desc"></div>
                         </div>
-                        <div class="fk-modal-profs" id="fk-modal-profs">
-                            <div class="fk-prof-sort-row">
-                                <button class="fk-sort-btn fk-sort-name active" id="fk-prof-sort-name">{{ t('search.fk_profession') }} ↕</button>
-                                <button class="fk-sort-btn fk-sort-count" id="fk-prof-sort-count">{{ t('search.fk_positions') }} ↕</button>
-                            </div>
-                            <div id="fk-prof-list"></div>
-                        </div>
+                        <!-- Smiley rating: decision first, detail second -->
                         <div class="fk-modal-actions">
                             <button class="fk-smiley-btn btn-strong" data-choice="strong">
                                 <span class="fk-smiley-icon">😊</span>
@@ -253,6 +246,15 @@
                                 <span class="fk-smiley-icon">😟</span>
                                 <span class="fk-smiley-label">{{ t('search.fk_none') }}</span>
                             </button>
+                        </div>
+                        <div class="fk-modal-desc" id="fk-modal-desc"></div>
+                        <div class="fk-modal-profs" id="fk-modal-profs">
+                            <div class="fk-prof-sort-row">
+                                <button class="fk-sort-btn fk-sort-name active" id="fk-prof-sort-name">{{ t('search.fk_profession') }} ↕</button>
+                                <button class="fk-sort-btn fk-sort-count" id="fk-prof-sort-count">{{ t('search.fk_positions') }} ↕</button>
+                            </div>
+                            <div id="fk-prof-list"></div>
+                            <button class="fk-show-all-btn" id="fk-show-all-btn" style="display:none;">{{ t('search.fk_show_all') or 'Alle anzeigen' }} ▾</button>
                         </div>
                     </div>
                 </div>
@@ -286,15 +288,15 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- TAB 4: Location — map(left) + state/city tree(right)      -->
+        <!-- TAB 4: Location — sidebar(left) + map(right)             -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="tab-content" data-tab="location" id="tab-location">
             <div class="location-container">
                 <h2 class="tab-section-title">{{ t('search.location_title') }}</h2>
                 <p class="tab-section-subtitle">{{ t('search.location_subtitle') }}</p>
                 <div class="location-panels">
-                    <div class="location-map-panel">
-                        <div class="map-controls">
+                    <div class="location-tree-panel">
+                        <div class="location-sidebar-controls">
                             <input type="text" id="city-search" placeholder="{{ t('search.city_placeholder') }}" autocomplete="off">
                             <select id="radius-select">
                                 <option value="">{{ t('search.no_radius') }}</option>
@@ -304,6 +306,16 @@
                                 <option value="100">100 km</option>
                             </select>
                         </div>
+                        <input type="text" class="tree-search" id="location-search" placeholder="🔍 {{ t('search.filter_locations') }}" autocomplete="off">
+                        <div class="tree-header">
+                            <span class="tree-col-name tree-sortable" data-panel="location" data-sort="name">{{ t('search.location_col') }} <span class="sort-arrow">↕</span></span>
+                            <span class="tree-col-count tree-sortable" data-panel="location" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
+                        </div>
+                        <div class="tree-body" id="location-tree">
+                            <div class="panel-loading">{{ t('search.loading') }}</div>
+                        </div>
+                    </div>
+                    <div class="location-map-panel">
                         <div id="search-map"></div>
                         <div class="map-stats" id="map-stats">
                             <div class="search-total" id="search-total">
@@ -316,16 +328,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="location-tree-panel">
-                        <input type="text" class="tree-search" id="location-search" placeholder="🔍 {{ t('search.filter_locations') }}" autocomplete="off">
-                        <div class="tree-header">
-                            <span class="tree-col-name tree-sortable" data-panel="location" data-sort="name">{{ t('search.location_col') }} <span class="sort-arrow">↕</span></span>
-                            <span class="tree-col-count tree-sortable" data-panel="location" data-sort="count">{{ t('search.posts_col') }} <span class="sort-arrow">↕</span></span>
-                        </div>
-                        <div class="tree-body" id="location-tree">
-                            <div class="panel-loading">{{ t('search.loading') }}</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -335,6 +337,14 @@
         <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="tab-content" data-tab="opportunities" id="tab-opportunities">
             <div class="opportunities-container">
+                <!-- Active filter pills -->
+                <div class="postings-filter-pills" id="postings-filter-pills"></div>
+
+                <!-- Session progress bar -->
+                <div class="postings-session-bar" id="postings-session-bar" style="display:none;">
+                    <div class="session-bar-fill" id="session-bar-fill"></div>
+                </div>
+
                 <!-- Sparkline at top -->
                 <div class="intel-spark" id="intel-activity">
                     <canvas id="sparkline-canvas" width="320" height="80" style="width:100%;height:80px;"></canvas>
@@ -350,6 +360,13 @@
                     <div class="results-show-more" id="results-show-more" style="display:none;">
                         <button class="btn-show-more" id="btn-show-more"></button>
                     </div>
+                </div>
+
+                <!-- Session end banner -->
+                <div class="postings-session-end" id="postings-session-end" style="display:none;">
+                    <span class="session-end-msg" id="session-end-msg"></span>
+                    <button class="session-end-btn" id="session-continue-btn">Weiter machen</button>
+                    <button class="session-end-btn session-done" id="session-done-btn">Fertig für heute</button>
                 </div>
             </div>
         </div>

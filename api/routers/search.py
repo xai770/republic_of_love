@@ -4,7 +4,7 @@ Search routes — Mira Search: interactive three-panel job search.
 Panels: Domain (Berufsfeld) | Map (Leaflet heatmap) | Qualification Level
 Cross-filtering: any panel change → single API call → all panels update.
 """
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
@@ -1088,6 +1088,37 @@ def record_interest(
         result = cur.fetchone()
         conn.commit()
         return {"status": "recorded", "interest_id": result['interest_id']}
+
+
+# ============================================================
+# Posting engagement events
+# ============================================================
+
+VALID_POSTING_EVENTS = {'viewed', 'time_in_modal', 'scroll_depth', 'maximized', 'external_click'}
+
+class PostingEventRequest(BaseModel):
+    posting_id: int
+    event: str
+    data: Optional[dict] = None
+
+@router.post("/search/posting-event")
+def record_posting_event(
+    req: PostingEventRequest,
+    user: dict = Depends(require_user),
+    conn=Depends(get_db),
+):
+    """Track engagement events when a user interacts with a posting detail modal."""
+    if req.event not in VALID_POSTING_EVENTS:
+        raise HTTPException(status_code=400, detail="Invalid event type")
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO yogi_posting_events (profile_id, posting_id, event_type, event_data)
+            SELECT p.profile_id, %s, %s, %s
+            FROM profiles p WHERE p.user_id = %s
+            LIMIT 1
+        """, (req.posting_id, req.event, json.dumps(req.data or {}), user['user_id']))
+        conn.commit()
+    return {"status": "ok"}
 
 
 # ============================================================

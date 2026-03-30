@@ -22,7 +22,55 @@
         usesDu: null,
         history: [],
         idleTimer: null,
+        screenContext: null,
     };
+
+    // ── Screen context (quick-action pills) ─────────────────────
+    function detectLang() {
+        try { return document.documentElement.lang || 'de'; } catch(_) { return 'de'; }
+    }
+
+    function loadScreenContext() {
+        var path = window.location.pathname.replace(/\/$/, '') || '/';
+        var lang = detectLang();
+        var url = '/api/mira/screen-context?path=' + encodeURIComponent(path) + '&lang=' + encodeURIComponent(lang);
+        fetch(url)
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (data && data.found) {
+                    miraState.screenContext = data;
+                    renderQuickActions(data.quick_actions || []);
+                    // Use context greeting if no messages yet
+                    if (data.illustration) {
+                        updateIllustration(data.illustration);
+                    }
+                }
+            })
+            .catch(function() {});
+    }
+
+    function renderQuickActions(actions) {
+        var container = document.getElementById('mira-quick-actions');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!actions.length) { container.style.display = 'none'; return; }
+        container.style.display = '';
+        actions.forEach(function(a) {
+            var btn = document.createElement('button');
+            btn.className = 'mira-pill';
+            btn.textContent = a.label;
+            btn.addEventListener('click', function() {
+                addMessage(a.label, true);
+                sendMessageText(a.message);
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    function updateIllustration(filename) {
+        var img = widget.querySelector('.mira-avatar-img');
+        if (img) img.src = '/static/images/Mira/' + filename;
+    }
 
     // ── Core open/close ─────────────────────────────────────────
     function openMiraChat() {
@@ -101,6 +149,11 @@
     }
 
     function loadGreeting() {
+        // Use screen context greeting if available
+        if (miraState.screenContext && miraState.screenContext.greeting) {
+            addMessage(miraState.screenContext.greeting, false);
+            return;
+        }
         fetch('/api/mira/greeting')
             .then(r => r.ok ? r.json() : null)
             .then(data => {
@@ -110,23 +163,9 @@
             .catch(() => addMessage('Hi! I\'m Mira — ask me anything about your job search.', false));
     }
 
-    async function sendMessage() {
-        const input = document.getElementById('mira-input');
-        if (!input) return;
-        const text = input.value.trim();
-        if (!text) return;
-        addMessage(text, true);
-        input.value = ''; input.style.height = 'auto';
-
-        // Detect Du/Sie
-        if (miraState.usesDu === null) {
-            if (/\b(du|dein|dich|dir)\b/i.test(text)) miraState.usesDu = true;
-            else if (/\b(Sie|Ihr|Ihnen|Ihre)\b/.test(text)) miraState.usesDu = false;
-        }
-
+    async function sendMessageText(text) {
         showTyping();
         miraState.history.push({ role: 'user', content: text });
-
         try {
             const response = await fetch('/api/mira/chat', {
                 method: 'POST',
@@ -152,6 +191,23 @@
             addMessage('I seem to be offline right now. Please try again later.', false);
             miraState.history.pop();
         }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('mira-input');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        addMessage(text, true);
+        input.value = ''; input.style.height = 'auto';
+
+        // Detect Du/Sie
+        if (miraState.usesDu === null) {
+            if (/\b(du|dein|dich|dir)\b/i.test(text)) miraState.usesDu = true;
+            else if (/\b(Sie|Ihr|Ihnen|Ihre)\b/.test(text)) miraState.usesDu = false;
+        }
+
+        await sendMessageText(text);
     }
 
     // ── Wire handlers ───────────────────────────────────────────
@@ -182,11 +238,13 @@
         close: closeMiraChat,
         toggle: toggleMiraChat,
         addMessage: addMessage,
+        loadScreenContext: loadScreenContext,
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', wire);
+        document.addEventListener('DOMContentLoaded', function() { wire(); loadScreenContext(); });
     } else {
         wire();
+        loadScreenContext();
     }
 })();

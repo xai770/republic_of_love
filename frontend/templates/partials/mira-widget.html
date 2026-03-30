@@ -1,21 +1,27 @@
 <!-- Mira Chat Widget (global — included via base.html) -->
 <div id="mira-widget" class="mira-widget">
-    <button class="mira-fab" id="mira-fab-btn" title="{{ t('search.mira_chat_title') }}">
+    <button class="mira-fab" id="mira-fab-btn" title="{{ t('search.mira_chat_title') }}"
+            aria-label="Open Mira assistant" aria-expanded="false" aria-controls="mira-chat-window">
         <span class="mira-fab-icon">💬</span>
         <span class="mira-fab-close">✕</span>
     </button>
-    <div class="mira-chat-window">
+    <div class="mira-chat-window" role="dialog" aria-label="Mira assistant chat">
         <div class="mira-header">
-            <div class="mira-avatar">🧘</div>
+            <img src="/static/images/Mira/mira_avatar.png" alt="Mira" class="mira-avatar-img">
             <div class="mira-title">
                 <span class="mira-name">Mira</span>
                 <span class="mira-status">{{ t('search.mira_status') }}</span>
             </div>
+            <button class="mira-tour-btn" id="mira-tour-btn" title="Guided tour" onclick="if(window.miraTour)miraTour.run()">🗺️</button>
             <button class="mira-minimize" id="mira-minimize-btn">−</button>
         </div>
-        <div class="mira-messages" id="mira-messages"></div>
+        <div class="mira-quick-actions" id="mira-quick-actions">
+            <!-- Populated dynamically per page by mira-widget.js -->
+        </div>
+        <div class="mira-messages" id="mira-messages" role="log" aria-live="polite"></div>
         <div class="mira-input-area">
-            <textarea id="mira-input" placeholder="{{ t('search.mira_placeholder') }}" rows="1"></textarea>
+            <textarea id="mira-input" placeholder="{{ t('search.mira_placeholder') }}" rows="1"
+                      aria-label="Message to Mira"></textarea>
             <button class="mira-send" id="mira-send-btn"><span>➤</span></button>
         </div>
     </div>

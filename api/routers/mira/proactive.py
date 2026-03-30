@@ -229,3 +229,41 @@ async def submit_consent(
             "status": "ok",
             "consent_given": row['notification_consent_at'] is not None
         }
+
+
+@router.get("/screen-context")
+async def get_screen_context(
+    path: str,
+    tab: str | None = None,
+    lang: str = "de",
+    user: dict = Depends(require_user),
+):
+    """
+    Return Mira context (greeting, quick-action pills, illustration)
+    for the given screen path and optional tab.
+    """
+    from core.mira_contexts import get_context
+
+    ctx = get_context(path, tab)
+    if not ctx:
+        return {"found": False}
+
+    # Pick greeting for language
+    if lang == "en":
+        greeting = ctx.get("greeting_en", "")
+    else:
+        greeting = ctx.get("greeting_de_du", "")
+
+    # Pick label key for quick actions
+    label_key = "label_en" if lang == "en" else "label_de"
+    pills = [
+        {"label": qa.get(label_key, qa.get("label_en", "")), "message": qa["message"]}
+        for qa in ctx.get("quick_actions", [])
+    ]
+
+    return {
+        "found": True,
+        "greeting": greeting,
+        "illustration": ctx.get("illustration", ""),
+        "quick_actions": pills,
+    }

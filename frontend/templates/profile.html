@@ -110,9 +110,10 @@
     border-bottom-left-radius: 0.15rem;
 }
 
+.pb-log-entry.mira .mira-label,
 .pb-log-entry.adele .adele-label {
     font-weight: 600;
-    color: var(--primary);
+    color: #1a7a6d;
     font-size: 0.8rem;
     margin-bottom: 0.2rem;
 }
@@ -1019,7 +1020,8 @@
 }
 
 /* ── Dark mode ─────────────────────────────────────────── */
-[data-theme="dark"] .pb-log-entry.adele { background: var(--bg); }
+[data-theme="dark"] .pb-log-entry.adele,
+[data-theme="dark"] .pb-log-entry.mira { background: var(--bg); }
 [data-theme="dark"] .pb-preview-content blockquote { background: rgba(37, 99, 235, 0.08); }
 [data-theme="dark"] .pb-dropzone:hover,
 [data-theme="dark"] .pb-dropzone.drag-over { background: rgba(37, 99, 235, 0.08); }
@@ -1104,7 +1106,7 @@
     <main class="main-content" style="padding:0; padding-bottom:0; max-width:none; overflow:hidden;">
     <div class="profile-builder">
         
-        <!-- ═══ LEFT PANE — Adele always ═══ -->
+        <!-- ═══ LEFT PANE — Mira chat (profile interview) ═══ -->
         <div class="pb-left">
 
             <!-- Activity log -->
@@ -1122,10 +1124,10 @@
             <div class="pb-input-area">
                 <div class="pb-chat-input" id="pb-input-chat">
                     <textarea id="pb-chat-text" rows="1" placeholder="{{ t('profile.chat_placeholder') }}"
-                              onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendToAdele()}"
+                              onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendToMira()}"
                               oninput="autoResize(this)"
                               onfocus="_cancelIntro()"></textarea>
-                    <button class="pb-send-btn" onclick="sendToAdele()" id="pb-send-btn" title="Senden">
+                    <button class="pb-send-btn" onclick="sendToMira()" id="pb-send-btn" title="Senden">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                         </svg>
@@ -1871,8 +1873,9 @@ function addLogEntry(type, text, sender) {
     const entry = document.createElement('div');
     entry.className = 'pb-log-entry ' + type;
 
-    if (type === 'adele') {
-        entry.innerHTML = '<div class="adele-label">Adele</div>' + formatLogText(text);
+    if (type === 'adele' || type === 'mira') {
+        entry.className = 'pb-log-entry mira';
+        entry.innerHTML = '<div class="mira-label">Mira</div>' + formatLogText(text);
     } else if (type === 'system') {
         const icon = sender === 'cv_upload' ? '📄' : sender === 'form_edit' ? '📝' : sender === 'cv_import' ? '📥' : 'ℹ️';
         entry.innerHTML = '<span class="sys-icon">' + icon + '</span>' + text;
@@ -1905,8 +1908,8 @@ async function loadActivityLog() {
         entries.forEach(e => {
             if (e.sender === 'yogi') {
                 addLogEntry('yogi', e.body);
-            } else if (e.sender === 'adele') {
-                addLogEntry('adele', e.body);
+            } else if (e.sender === 'adele' || e.sender === 'mira') {
+                addLogEntry('mira', e.body);
             } else if (e.sender === 'system') {
                 addLogEntry('system', e.body, e.type);
             }
@@ -2005,9 +2008,9 @@ async function loadTranslationStatus() {
     }
 }
 
-// ── ADELE CHAT ─────────────────────────────────────────────
+// ── MIRA PROFILE CHAT ──────────────────────────────────────
 
-async function sendToAdele() {
+async function sendToMira() {
     const input = document.getElementById('pb-chat-text');
     const text = input.value.trim();
     if (!text) return;
@@ -2021,14 +2024,14 @@ async function sendToAdele() {
     btn.disabled = true;
 
     try {
-        const res = await fetch('/api/adele/chat', {
+        const res = await fetch('/api/mira/chat', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ message: text })
+            body: JSON.stringify({ message: text, context: 'profile' })
         });
         if (!res.ok) throw new Error('Chat failed');
         const data = await res.json();
-        addLogEntry('adele', data.reply);
+        addLogEntry('mira', data.reply);
         setTimeout(refreshProfile, 500);
     } catch (err) {
         addLogEntry('system', I.adele_error, 'error');
@@ -2232,7 +2235,7 @@ async function _onCVJobDone(data, filename, partial) {
     } else {
         _showCVJobBar('✅ "' + filename + '" imported!', '', 'done');
     }
-    addLogEntry('adele', partial
+    addLogEntry('mira', partial
         ? ('⚠ Partial CV import: ' + nRoles + ' roles (analysis timed out)')
         : I.cv_extracted.replace('{parts}',
             [data.current_title, nRoles + ' ' + I.cv_positions,
@@ -2549,17 +2552,17 @@ async function addSkill() {
 
 // ── INIT ───────────────────────────────────────────────────
 
-async function _adeleAutoGreet() {
-    // If the chat log is empty → session is new → trigger Adele's opening greeting
+async function _miraProfileGreet() {
+    // If the chat log is empty → session is new → trigger Mira's opening greeting
     const log = document.getElementById('pb-log');
     if (log && log.querySelectorAll('.pb-log-entry').length > 0) return;
     try {
-        const res = await fetch('/api/adele/greet'); // lang resolved server-side from cookie
+        const res = await fetch('/api/adele/greet'); // uses Adele system prompt for profile interview
         if (!res.ok) return;
         const data = await res.json();
         if (data.reply) {
-            // Slight delay so the page feels like Adele 'arrived' naturally
-            setTimeout(() => addLogEntry('adele', data.reply), 800);
+            // Slight delay so the page feels like Mira 'arrived' naturally
+            setTimeout(() => addLogEntry('mira', data.reply), 800);
         }
     } catch (e) { /* silent — non-critical */ }
 }
@@ -2568,7 +2571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     await loadActivityLog();
     loadTranslationStatus();   // non-blocking
-    await _adeleAutoGreet();  // greet if fresh session
+    await _miraProfileGreet();  // greet if fresh session
     _initMira();
     runIntroAnimation();  // schedules 5 s inactivity trigger
     _initDevLog();

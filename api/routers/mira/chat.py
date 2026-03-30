@@ -82,8 +82,16 @@ async def chat(
                 previous_exchange = (history_list[i-1]['content'], history_list[i]['content'])
                 break
 
-    # Use the LLM-first module
-    response = await mira_chat(message, user['user_id'], conn, history=history_list)
+    # Use the LLM-first module (profile interview uses Adele system prompt)
+    if request.context == 'profile':
+        try:
+            from core.adele import adele_chat
+            response = await adele_chat(message, user['user_id'], conn, language='de')
+        except Exception as e:
+            logger.warning(f"Adele fallback failed, using Mira: {e}")
+            response = await mira_chat(message, user['user_id'], conn, history=history_list)
+    else:
+        response = await mira_chat(message, user['user_id'], conn, history=history_list)
 
     # --- FAQ CANDIDATE DETECTION ---
     try:

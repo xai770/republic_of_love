@@ -261,8 +261,8 @@ function spotlightTourButton() {
 
 // Check if should auto-start tour
 function checkAutoStartTour() {
-    // Only on dashboard (home page)
-    if (!window.location.pathname.includes('/dashboard')) {
+    // Only on overview page (was dashboard)
+    if (!window.location.pathname.includes('/overview')) {
         return;
     }
     
