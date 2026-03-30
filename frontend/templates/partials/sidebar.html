@@ -6,12 +6,12 @@
     <button class="sidebar-close" onclick="toggleSidebar()">×</button>
     
     <nav class="sidebar-nav">
-        {# 1. Home #}
-        <a href="/home" class="nav-item {{ 'active' if active_page == 'home' else '' }}" data-tooltip="{{ t('nav.start') }}">
+        {# 1. Overview #}
+        <a href="/overview" class="nav-item {{ 'active' if active_page == 'overview' else '' }}" data-tooltip="{{ t('nav.overview') }}">
             <span class="nav-icon-wrap" style="background: #fff3e0;">
                 <img src="/static/images/icons/icon-home.png" alt="" class="nav-icon-img">
             </span>
-            <span class="nav-label">{{ t('nav.start') }}</span>
+            <span class="nav-label">{{ t('nav.overview') }}</span>
         </a>
         
         {# 2. My Resume #}

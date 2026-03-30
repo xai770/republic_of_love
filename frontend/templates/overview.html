@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.overview') }} — talent.yoga{% endblock %}
+
+{% block extra_head %}
+<style>
+@keyframes ty-page-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.app-layout { animation: ty-page-in 0.45s ease both; }
+
+/* ── Zone 1: Journey Flowchart ────────────────────────────────────── */
+.journey-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 1.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.journey-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+}
+.journey-node-circle {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    border: 2.5px solid var(--border, rgba(255,255,255,0.15));
+    background: var(--surface2, #1e1e2e);
+    transition: all 0.3s;
+    color: var(--text-muted, #888);
+}
+.journey-node.completed .journey-node-circle {
+    background: #0d9488;
+    border-color: #0d9488;
+    color: #fff;
+}
+.journey-node.current .journey-node-circle {
+    border-color: #0d9488;
+    animation: node-pulse 2s ease-in-out infinite;
+    color: #0d9488;
+}
+@keyframes node-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(13,148,136,0.4); }
+    50%      { box-shadow: 0 0 0 8px rgba(13,148,136,0); }
+}
+.journey-node.future .journey-node-circle {
+    border-color: var(--border, rgba(255,255,255,0.15));
+    color: var(--text-muted, #666);
+}
+.journey-node-label {
+    font-size: 0.72rem;
+    margin-top: 0.4rem;
+    color: var(--text-muted, #aaa);
+    text-align: center;
+    max-width: 72px;
+    line-height: 1.3;
+}
+.journey-node.completed .journey-node-label { color: #0d9488; }
+.journey-node.current   .journey-node-label { color: var(--text, #e0e0f0); font-weight: 600; }
+.journey-arrow {
+    flex-shrink: 0;
+    width: 32px;
+    height: 2px;
+    background: var(--border, rgba(255,255,255,0.12));
+    position: relative;
+}
+.journey-arrow.done { background: #0d9488; }
+.journey-arrow::after {
+    content: '';
+    position: absolute; right: -2px; top: -3px;
+    border: 4px solid transparent;
+    border-left-color: inherit;
+}
+
+/* ── Zone 2: Yogi-Meter Pills ─────────────────────────────────────── */
+.yogimeter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 1.25rem 1.5rem;
+}
+.yogi-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 2rem;
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    font-size: 0.82rem;
+    color: var(--text-muted, #888);
+    transition: all 0.3s;
+}
+.yogi-pill.active {
+    border-color: rgba(13,148,136,0.35);
+    color: #0d9488;
+}
+.yogi-pill-count {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 1.2em;
+    text-align: center;
+}
+.yogi-pill.active .yogi-pill-count { color: #0d9488; }
+
+/* ── Zone 3: Activity Log ─────────────────────────────────────────── */
+.protokoll-panel {
+    margin: 0 1.5rem 1.5rem;
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.protokoll-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.25rem 0.85rem;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.07));
+    flex-wrap: wrap;
+}
+.protokoll-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text, #e0e0f0);
+    margin: 0;
+}
+.protokoll-badge {
+    font-size: 0.7rem;
+    color: #10b981;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 0.9rem;
+    padding: 0.15rem 0.65rem;
+    white-space: nowrap;
+}
+.protokoll-actions {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+}
+.protokoll-filter-toggle {
+    font-size: 0.74rem;
+    color: var(--text-muted, #888);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.protokoll-filter-toggle.active,
+.protokoll-filter-toggle:hover {
+    color: var(--accent, #6c6fe4);
+    border-color: var(--accent, #6c6fe4);
+    background: rgba(108,111,228,0.08);
+}
+.protokoll-download-btn {
+    font-size: 0.74rem;
+    color: var(--text-muted, #888);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 0.4rem;
+    padding: 0.25rem 0.7rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.3rem;
+}
+.protokoll-download-btn:hover {
+    color: #10b981; border-color: #10b981;
+    background: rgba(16,185,129,0.08);
+}
+.protokoll-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.protokoll-table th {
+    text-align: left; padding: 0.55rem 1.25rem;
+    font-size: 0.73rem; font-weight: 500;
+    color: var(--text-muted, #888); text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.protokoll-table td {
+    padding: 0.65rem 1.25rem; vertical-align: top;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text, #e0e0f0);
+}
+.protokoll-table tr:last-child td { border-bottom: none; }
+.protokoll-table tr:hover td { background: rgba(255,255,255,0.02); }
+.protokoll-date { white-space: nowrap; color: var(--text-muted, #aaa); font-size: 0.78rem; width: 90px; }
+.protokoll-stelle { font-weight: 500; }
+.protokoll-stelle a { color: inherit; text-decoration: none; }
+.protokoll-stelle a:hover { text-decoration: underline; }
+.protokoll-city { font-size: 0.75rem; color: var(--text-muted, #888); margin-top: 0.1rem; }
+.protokoll-action-chip {
+    display: inline-block; padding: 0.15rem 0.55rem; border-radius: 0.9rem;
+    font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+}
+.chip-applied          { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+.chip-dismissed        { background: rgba(107,114,128,0.15); color: #9ca3af; }
+.chip-not_applied      { background: rgba(239,68,68,0.12);   color: #f87171; }
+.chip-apply_intent     { background: rgba(245,158,11,0.12);  color: #fbbf24; }
+.chip-outcome_received { background: rgba(139,92,246,0.15);  color: #a78bfa; }
+.chip-saved            { background: rgba(16,185,129,0.12);  color: #34d399; }
+.chip-viewed           { background: rgba(108,111,228,0.12); color: #818cf8; }
+.protokoll-reason {
+    font-size: 0.78rem; color: var(--text-muted, #bbb);
+    margin-top: 0.2rem; font-style: italic; line-height: 1.4;
+}
+.protokoll-empty, .protokoll-loading {
+    text-align: center; padding: 2rem 1.25rem;
+    color: var(--text-muted, #888); font-size: 0.85rem;
+}
+.protokoll-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 1.25rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.75rem; color: var(--text-muted, #888);
+}
+.protokoll-load-more {
+    background: none; border: none; color: var(--accent, #6c6fe4);
+    cursor: pointer; font-size: 0.8rem; padding: 0; text-decoration: underline;
+}
+
+/* ── Section headings ─────────────────────────────────────────────── */
+.overview-section {
+    margin: 0 1.5rem 1.25rem;
+    background: var(--surface2, #1e1e2e);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.overview-section-header {
+    display: flex; align-items: center; gap: 0.55rem;
+    padding: 1rem 1.25rem 0.85rem;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.07));
+}
+.overview-section-icon { font-size: 1.1rem; }
+.overview-section-title {
+    font-size: 0.95rem; font-weight: 600; color: var(--text, #e0e0f0); margin: 0;
+}
+
+/* ── Daily quote ──────────────────────────────────────────────────── */
+.daily-quote {
+    text-align: center; padding: 1.5rem; margin: 0 1.5rem 1.5rem;
+    font-size: 0.82rem; color: var(--text-muted, #666);
+    font-style: italic;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+    {% include "partials/header.html" %}
+
+    {% set active_page = 'overview' %}
+    {% include "partials/sidebar.html" %}
+
+    <main class="main-content">
+
+        <!-- Zone 1: Journey Flowchart -->
+        <section class="overview-section">
+            <div class="overview-section-header">
+                <span class="overview-section-icon">🗺️</span>
+                <h2 class="overview-section-title">{{ t('home.journey_title') }}</h2>
+            </div>
+            <div class="journey-flow" id="journey-flow">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+
+        <!-- Zone 2: Yogi-Meter -->
+        <section class="overview-section">
+            <div class="overview-section-header">
+                <span class="overview-section-icon">📊</span>
+                <h2 class="overview-section-title">{{ t('home.yogimeter_title') }}</h2>
+            </div>
+            <div class="yogimeter-pills" id="yogimeter-pills">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+
+        <!-- Zone 3: Bewerbungsprotokoll -->
+        <div class="protokoll-panel" id="protokoll-panel">
+            <div class="protokoll-header">
+                <span style="font-size:1.1rem">📋</span>
+                <h2 class="protokoll-title">{{ t('home.protokoll_title') }}</h2>
+                <span class="protokoll-badge">{{ t('home.protokoll_badge') }}</span>
+                <div class="protokoll-actions">
+                    <button class="protokoll-filter-toggle active" id="protokoll-filter-btn"
+                            onclick="toggleProtokollFilter()">
+                        {{ t('home.protokoll_filter_decisions') }}
+                    </button>
+                    <a class="protokoll-download-btn"
+                       href="/api/home/protokoll/download" download>
+                        ⬇ {{ t('home.protokoll_download') }}
+                    </a>
+                </div>
+            </div>
+            <div id="protokoll-content">
+                <div class="protokoll-loading">{{ t('home.protokoll_loading') }}</div>
+            </div>
+            <div class="protokoll-footer" id="protokoll-footer" style="display:none">
+                <span id="protokoll-count-label"></span>
+                <button class="protokoll-load-more" id="protokoll-load-more"
+                        onclick="loadAllProtokoll()" style="display:none">
+                    {{ t('home.protokoll_show_all') }}
+                </button>
+            </div>
+        </div>
+
+        <footer class="daily-quote">
+            <p id="daily-quote">„{{ t('dashboard.quote_default') }}"</p>
+        </footer>
+    </main>
+</div>
+
+<!-- i18n data for overview JS -->
+<script>
+const LANG = '{{ lang }}';
+const I18N = {
+    common: {
+        loading: {{ t("common.loading") | tojson }},
+        error:   {{ t("common.error") | tojson }}
+    },
+    home: {
+        protokoll_loading:       {{ t("home.protokoll_loading") | tojson }},
+        protokoll_empty:         {{ t("home.protokoll_empty") | tojson }},
+        protokoll_empty_filter:  {{ t("home.protokoll_empty_filter") | tojson }},
+        protokoll_col_date:      {{ t("home.protokoll_col_date") | tojson }},
+        protokoll_col_job:       {{ t("home.protokoll_col_job") | tojson }},
+        protokoll_col_action:    {{ t("home.protokoll_col_action") | tojson }},
+        protokoll_col_reason:    {{ t("home.protokoll_col_reason") | tojson }},
+        protokoll_show_all:      {{ t("home.protokoll_show_all") | tojson }},
+        action_viewed:           {{ t("home.action_viewed") | tojson }},
+        action_saved:            {{ t("home.action_saved") | tojson }},
+        action_dismissed:        {{ t("home.action_dismissed") | tojson }},
+        action_apply_intent:     {{ t("home.action_apply_intent") | tojson }},
+        action_applied:          {{ t("home.action_applied") | tojson }},
+        action_not_applied:      {{ t("home.action_not_applied") | tojson }},
+        action_outcome_received: {{ t("home.action_outcome_received") | tojson }}
+    }
+};
+</script>
+
+<script>
+(function() {
+    'use strict';
+
+    // ── Journey Flowchart (Zone 1) ──────────────────────────────────
+    const JOURNEY_NODES = [
+        { key: 'profile',    icon: '👤', label: LANG === 'de' ? 'Profil'         : 'Profile',        href: '/profile' },
+        { key: 'situation',  icon: '🧭', label: LANG === 'de' ? 'Situation'      : 'Situation',      href: '/search#situation' },
+        { key: 'fields',     icon: '🃏', label: LANG === 'de' ? 'Berufsfelder'   : 'Fields',         href: '/search#fields' },
+        { key: 'qualifications', icon: '🎓', label: LANG === 'de' ? 'Qualifikation' : 'Qualifications', href: '/search#ql' },
+        { key: 'location',  icon: '📍', label: LANG === 'de' ? 'Standort'       : 'Location',       href: '/search#location' },
+        { key: 'postings',  icon: '📋', label: LANG === 'de' ? 'Stellensuche'   : 'Postings',       href: '/matches' },
+        { key: 'apply',     icon: '✉️', label: LANG === 'de' ? 'Bewerben'       : 'Apply',          href: '/matches' },
+        { key: 'outcome',   icon: '🏁', label: LANG === 'de' ? 'Ergebnis'       : 'Outcome',        href: '/overview' },
+    ];
+
+    async function loadJourneyFlow() {
+        const container = document.getElementById('journey-flow');
+        if (!container) return;
+
+        let journeyData = null;
+        try {
+            const res = await fetch('/api/home/journey');
+            if (res.ok) journeyData = await res.json();
+        } catch (e) { /* render with all future */ }
+
+        // Map journey API data to node states
+        const states = {};
+        if (journeyData) {
+            // Profile column
+            const r = journeyData.resume || {};
+            if (r.upload_create && r.upload_create.status === 'complete') states.profile = 'completed';
+            else if (r.upload_create && r.upload_create.status === 'in_progress') states.profile = 'current';
+
+            // Search column → maps to situation, fields, qualifications, location
+            const s = journeyData.search || {};
+            if (s.define_search && s.define_search.status === 'complete') {
+                states.situation = 'completed';
+                states.fields = 'completed';
+                states.qualifications = 'completed';
+                states.location = 'completed';
+            } else if (s.define_search && s.define_search.status === 'in_progress') {
+                states.situation = 'completed';
+                states.fields = 'current';
+            }
+
+            // Apply column
+            const a = journeyData.apply || {};
+            if (s.review_matches && s.review_matches.status !== 'not_started') states.postings = 'completed';
+            if (s.select_favorites && s.select_favorites.status === 'complete') states.postings = 'completed';
+            if (a.ship_documents && a.ship_documents.status !== 'not_started') states.apply = 'current';
+            if (a.ship_documents && a.ship_documents.status === 'complete') states.apply = 'completed';
+            if (a.await_reply && a.await_reply.status !== 'not_started') states.outcome = 'current';
+            if (a.interview && a.interview.status === 'complete') states.outcome = 'completed';
+        }
+
+        // Find first non-completed node = current (if not already set)
+        let foundCurrent = Object.values(states).includes('current');
+        JOURNEY_NODES.forEach(n => {
+            if (!states[n.key]) {
+                if (!foundCurrent) {
+                    states[n.key] = 'current';
+                    foundCurrent = true;
+                } else {
+                    states[n.key] = 'future';
+                }
+            }
+        });
+
+        // Render
+        let html = '';
+        JOURNEY_NODES.forEach((node, i) => {
+            const state = states[node.key] || 'future';
+            const checkmark = state === 'completed' ? '✓' : node.icon;
+            html += `<a href="${node.href}" class="journey-node ${state}">
+                <div class="journey-node-circle">${checkmark}</div>
+                <span class="journey-node-label">${node.label}</span>
+            </a>`;
+            if (i < JOURNEY_NODES.length - 1) {
+                const arrowDone = state === 'completed' ? 'done' : '';
+                html += `<div class="journey-arrow ${arrowDone}"></div>`;
+            }
+        });
+        container.innerHTML = html;
+    }
+
+    // ── Yogi-Meter Pills (Zone 2) ───────────────────────────────────
+    const YOGI_LABELS = {
+        received:         LANG === 'de' ? 'Erhalten'       : 'Received',
+        viewed:           I18N.home.action_viewed,
+        saved:            I18N.home.action_saved,
+        dismissed:        I18N.home.action_dismissed,
+        apply_intent:     I18N.home.action_apply_intent,
+        applied:          I18N.home.action_applied,
+        outcome_received: I18N.home.action_outcome_received,
+    };
+
+    async function loadYogiPills() {
+        const container = document.getElementById('yogimeter-pills');
+        if (!container) return;
+
+        try {
+            const res = await fetch('/api/home/yogimeter?period=all');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // Build lookup from stages array
+            const counts = {};
+            (data.stages || []).forEach(s => { counts[s.key] = s.count || 0; });
+
+            // Total matches as "Received"
+            counts.received = data.total_matches || 0;
+
+            const pills = ['received', 'viewed', 'saved', 'dismissed', 'apply_intent', 'applied', 'outcome_received'];
+            container.innerHTML = pills.map(key => {
+                const c = counts[key] || 0;
+                const active = c > 0 ? 'active' : '';
+                const label = YOGI_LABELS[key] || key;
+                return `<div class="yogi-pill ${active}">
+                    <span class="yogi-pill-count">${c}</span>
+                    <span>${label}</span>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = `<span style="color:var(--text-muted);font-size:0.8rem">${I18N.common.error}</span>`;
+        }
+    }
+
+    // ── Bewerbungsprotokoll (Zone 3) ────────────────────────────────
+    const PROTOKOLL_PAGE = 20;
+    let _pDecisionsOnly = true;
+    let _pAllLoaded     = false;
+    let _pData          = null;
+
+    const ACTION_CHIP = {
+        applied:          'chip-applied',
+        dismissed:        'chip-dismissed',
+        not_applied:      'chip-not_applied',
+        apply_intent:     'chip-apply_intent',
+        outcome_received: 'chip-outcome_received',
+        saved:            'chip-saved',
+        viewed:           'chip-viewed',
+    };
+
+    function renderProtokollTable(entries) {
+        if (!entries.length) {
+            return '<div class="protokoll-empty">' + I18N.home.protokoll_empty + '</div>';
+        }
+        const rows = entries.map(function(e) {
+            const chip   = ACTION_CHIP[e.event_type] || 'chip-viewed';
+            const title  = e.external_url
+                ? '<a href="' + e.external_url + '" target="_blank" rel="noopener">' + esc(e.job_title) + '</a>'
+                : esc(e.job_title);
+            const city   = e.location_city ? '<div class="protokoll-city">' + esc(e.location_city) + '</div>' : '';
+            const reason = e.rationale ? '<div class="protokoll-reason">\u201e' + esc(e.rationale) + '\u201c</div>' : '';
+            return '<tr>' +
+                '<td class="protokoll-date">' + esc(e.created_date) + '<br><span style="font-size:0.7rem;color:var(--text-muted)">' + esc(e.created_time) + '</span></td>' +
+                '<td class="protokoll-stelle">' + title + city + '</td>' +
+                '<td><span class="protokoll-action-chip ' + chip + '">' + esc(e.action_label) + '</span></td>' +
+                '<td>' + reason + '</td>' +
+                '</tr>';
+        }).join('');
+        return '<table class="protokoll-table"><thead><tr>' +
+            '<th>' + I18N.home.protokoll_col_date + '</th>' +
+            '<th>' + I18N.home.protokoll_col_job + '</th>' +
+            '<th>' + I18N.home.protokoll_col_action + '</th>' +
+            '<th>' + I18N.home.protokoll_col_reason + '</th>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    async function loadProtokoll(decisionsOnly) {
+        const content  = document.getElementById('protokoll-content');
+        const footer   = document.getElementById('protokoll-footer');
+        const countLbl = document.getElementById('protokoll-count-label');
+        const moreBtn  = document.getElementById('protokoll-load-more');
+        if (!content) return;
+
+        try {
+            const res  = await fetch('/api/home/protokoll?decisions_only=' + decisionsOnly);
+            const data = await res.json();
+            _pData = data;
+
+            if (!data.has_profile || !data.entries || !data.entries.length) {
+                content.innerHTML = '<div class="protokoll-empty">' + I18N.home.protokoll_empty + '</div>';
+                if (footer) footer.style.display = 'none';
+                return;
+            }
+
+            var all     = data.entries;
+            var showing = _pAllLoaded ? all : all.slice(0, PROTOKOLL_PAGE);
+            content.innerHTML = renderProtokollTable(showing);
+
+            if (footer) {
+                footer.style.display = 'flex';
+                var appStr = data.total_applications
+                    ? ' \u00b7 ' + data.total_applications + ' Bewerbung' + (data.total_applications !== 1 ? 'en' : '')
+                    : '';
+                countLbl.textContent = all.length + ' Eintr\u00e4ge' + appStr;
+                if (!_pAllLoaded && all.length > PROTOKOLL_PAGE) {
+                    moreBtn.style.display = 'inline';
+                    moreBtn.textContent   = I18N.home.protokoll_show_all.replace('{n}', all.length);
+                } else {
+                    moreBtn.style.display = 'none';
+                }
+            }
+        } catch (_) {
+            content.innerHTML = '<div class="protokoll-empty">' + I18N.common.error + '</div>';
+        }
+    }
+
+    window.toggleProtokollFilter = function() {
+        _pDecisionsOnly = !_pDecisionsOnly;
+        _pAllLoaded     = false;
+        var btn = document.getElementById('protokoll-filter-btn');
+        if (btn) btn.classList.toggle('active', _pDecisionsOnly);
+        loadProtokoll(_pDecisionsOnly);
+    };
+
+    window.loadAllProtokoll = function() {
+        _pAllLoaded = true;
+        if (_pData) {
+            document.getElementById('protokoll-content').innerHTML =
+                renderProtokollTable(_pData.entries);
+            var btn = document.getElementById('protokoll-load-more');
+            if (btn) btn.style.display = 'none';
+        }
+    };
+
+    // ── Daily Quote Easter Egg ──────────────────────────────────────
+    function loadDailyQuote() {
+        var quotes = [
+            '\u201eDer Weg entsteht beim Gehen.\u201c \u2014 Antonio Machado',
+            '\u201eJeder Tag ist ein neuer Anfang.\u201c \u2014 T.S. Eliot',
+            '\u201eDu bist genug, genau so wie du bist.\u201c',
+            '\u201eGeduld ist auch eine Form von Handeln.\u201c \u2014 Auguste Rodin',
+            '\u201eDer beste Zeitpunkt ist jetzt.\u201c',
+            '\u201eKleine Schritte f\u00fchren zu gro\u00dfen Ver\u00e4nderungen.\u201c',
+            '\u201eVertraue dem Prozess.\u201c',
+            '\u201eWas du suchst, sucht auch dich.\u201c \u2014 Rumi',
+        ];
+        var day = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+        var el  = document.getElementById('daily-quote');
+        if (el) el.textContent = quotes[day % quotes.length];
+    }
+
+    // ── Escape HTML ─────────────────────────────────────────────────
+    function esc(str) {
+        if (!str) return '';
+        var d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // ── Init ────────────────────────────────────────────────────────
+    loadJourneyFlow();
+    loadYogiPills();
+    loadProtokoll(true);
+    loadDailyQuote();
+})();
+</script>
+{% endblock %}

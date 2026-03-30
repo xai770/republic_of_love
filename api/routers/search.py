@@ -235,6 +235,7 @@ def _build_posting_where(
     geo_sql:     Optional[str]        = None,
     geo_params:  Optional[list]       = None,
     require_berufenet: bool           = False,
+    search_mode: Optional[int]        = None,
 ) -> tuple[str, list]:
     """
     Build (WHERE sql, params) for any postings query.
@@ -250,10 +251,12 @@ def _build_posting_where(
     filters so banking/IT roles without Berufenet mappings remain visible.
     Set require_berufenet=True to restore the hard gate where needed.
 
-    Cross-filter pattern (used in preview):
-      • Domain bars  — omit subject             → pass domains/professions/profile_ids=None
-      • QL bars      — omit ql                  → pass ql=None
-      • Landscape    — omit professions/profile → pass professions/profile_ids=None
+    search_mode (Focus card, 1–5):
+      5 = strict — only declared domains/professions
+      4 = near — same behaviour as 5 (domain expansion handled client-side)
+      3 = balanced (default) — same as 5
+      2 = exploring — domain filter relaxed (unclassified pass through)
+      1 = very open — domain/profession filters dropped entirely
     """
     wheres: list[str] = [
         "p.enabled = true",
@@ -265,13 +268,17 @@ def _build_posting_where(
 
     # ── Subject group (domains OR professions OR profile_ids) ─────────────────
     # Unclassified postings (no berufenet_id) pass through domain filters.
+    # search_mode=1 (very open) drops domain/profession filters entirely.
+    _sm = search_mode or 3
     subj: list[str] = []
-    if domains:
-        subj.append("(SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s) OR b.berufenet_id IS NULL)")
-        params.append(domains)
-    if professions:
-        subj.append("p.berufenet_name = ANY(%s)")
-        params.append(professions)
+    if _sm >= 2:
+        if domains:
+            subj.append("(SUBSTRING(b.kldb FROM 3 FOR 2) = ANY(%s) OR b.berufenet_id IS NULL)")
+            params.append(domains)
+        if professions:
+            subj.append("p.berufenet_name = ANY(%s)")
+            params.append(professions)
+    # profile_ids always respected regardless of search_mode
     if profile_ids:
         subj.append("p.posting_id = ANY(%s)")
         params.append(profile_ids)
@@ -343,6 +350,12 @@ def search_preview(
       • Total        uses all filters
     """
     with conn.cursor() as cur:
+        # ── Fetch situation context (Focus/Field/Plan cards) ──────────────────
+        cur.execute("SELECT situation_context FROM users WHERE user_id = %s", (user['user_id'],))
+        _sc_row = cur.fetchone()
+        _sc = (_sc_row['situation_context'] if _sc_row and _sc_row['situation_context'] else {}) or {}
+        _search_mode = _sc.get('search_mode')  # 1–5, Focus card
+
         # Resolve location once — shared by all sub-queries
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
@@ -352,7 +365,7 @@ def search_preview(
         # ── 1. Total (all filters) ────────────────────────────────────────────
         where_sql, params = _build_posting_where(
             domains=req.domains, professions=req.professions, profile_ids=req.profile_ids,
-            ql=req.ql, **loc
+            ql=req.ql, search_mode=_search_mode, **loc
         )
         cur.execute(f"""
             SELECT COUNT(*) AS total
@@ -367,7 +380,7 @@ def search_preview(
         landscape_total = None
         if req.professions and not req.profile_ids:
             ls_where, ls_params = _build_posting_where(
-                domains=req.domains, ql=req.ql, **loc
+                domains=req.domains, ql=req.ql, search_mode=_search_mode, **loc
             )
             cur.execute(f"""
                 SELECT COUNT(*) AS total
@@ -416,7 +429,7 @@ def search_preview(
         # ── 4. QL bars (cross-filter: subject + location only, no ql filter) ──
         ql_where, ql_params = _build_posting_where(
             domains=req.domains, professions=req.professions, profile_ids=req.profile_ids,
-            **loc
+            search_mode=_search_mode, **loc
         )
         cur.execute(f"""
             SELECT CAST(SUBSTRING(b.kldb FROM 7 FOR 1) AS INTEGER) AS level,
@@ -838,12 +851,19 @@ def search_results(
     next-best matches, not the next-newest.
     """
     with conn.cursor() as cur:
+        # Fetch situation context for search_mode
+        cur.execute("SELECT situation_context FROM users WHERE user_id = %s", (user['user_id'],))
+        _sc_row = cur.fetchone()
+        _sc = (_sc_row['situation_context'] if _sc_row and _sc_row['situation_context'] else {}) or {}
+        _search_mode = _sc.get('search_mode')
+
         geo_sql, geo_params = _build_geo_where(
             req.geo_locations, req.lat, req.lon, req.radius_km
         )
         where_sql, params = _build_posting_where(
             domains=req.domains, professions=req.professions, profile_ids=req.profile_ids,
             ql=req.ql, states=req.states, geo_sql=geo_sql, geo_params=geo_params,
+            search_mode=_search_mode,
         )
 
         # ── Score-ranked mode ─────────────────────────────────────────────
@@ -1666,6 +1686,11 @@ def sector_tree(
             domain_counts[name]["codes"].append(code)
             domain_counts[name]["total"] += row['total']
             domain_counts[name]["fresh"] += row['fresh']
+
+        # Ensure all 17 sectors always appear (even with 0 postings)
+        for name, codes in DOMAIN_NAMES.items():
+            if name not in domain_counts:
+                domain_counts[name] = {"codes": list(codes), "total": 0, "fresh": 0}
 
         # ── Profession-level counts ──────────────────────────────────────
         cur.execute(f"""

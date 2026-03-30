@@ -63,34 +63,35 @@
         </div>
         
         <div class="pricing-grid">
-            <!-- Basis -->
+            <!-- Free -->
             <div class="tier-card">
-                <div class="tier-name">Basis</div>
+                <div class="tier-name">Free</div>
                 <div class="tier-price">€0 <span>/Monat</span></div>
                 <p class="tier-desc">Zum Kennenlernen</p>
                 <ul class="tier-features">
-                    <li>10 Matches pro Monat</li>
-                    <li>Kompetenz-Extraktion</li>
-                    <li>Match-Dashboard</li>
-                    <li class="disabled">Anschreiben</li>
-                    <li class="disabled">Unbegrenzte Matches</li>
+                    <li>Suche & Entdecken</li>
+                    <li>Mira Chat</li>
+                    <li>Profil & Lebenslauf</li>
+                    <li>Bewerbungsprotokoll</li>
+                    <li class="disabled">Clara Matchberichte</li>
+                    <li class="disabled">Doug Firmenrecherchen</li>
                 </ul>
                 <a href="/login" class="tier-btn secondary">Kostenlos starten</a>
             </div>
             
-            <!-- Standard -->
+            <!-- Credits -->
             <div class="tier-card featured">
-                <div class="tier-name">Standard</div>
-                <div class="tier-price">€5 <span>/Monat</span></div>
+                <div class="tier-name">Credits</div>
+                <div class="tier-price">nach Verbrauch</div>
                 <p class="tier-desc">Für aktive Jobsuchende</p>
                 <ul class="tier-features">
-                    <li>Unbegrenzte Matches</li>
-                    <li>Kompetenz-Extraktion</li>
-                    <li>Match-Dashboard</li>
-                    <li>5 Anschreiben/Monat <small>(bald)</small></li>
-                    <li>Volle Reports</li>
+                    <li>Alles aus Free</li>
+                    <li>Clara Matchberichte</li>
+                    <li>Doug Firmenrecherchen</li>
+                    <li>Aufladen: €5 / €10 / €20</li>
+                    <li>Credits verfallen nie</li>
                 </ul>
-                <a href="/login?tier=standard" class="tier-btn primary">Standard wählen</a>
+                <button class="tier-btn primary" onclick="showPlaceholderDialog('top_up','Credit-Aufladungen kommen bald. Während der Vorschau sind alle Funktionen kostenlos.',{emoji:'💳'})">Credits kaufen</button>
             </div>
             
             <!-- Sustainer -->
@@ -99,13 +100,12 @@
                 <div class="tier-price">€10+ <span>/Monat</span></div>
                 <p class="tier-desc">Für Unterstützer der Mission</p>
                 <ul class="tier-features">
-                    <li>Alles aus Standard</li>
-                    <li>Unbegrenzte Anschreiben</li>
-                    <li>Interview-Vorbereitung <small>(bald)</small></li>
+                    <li>Alles aus Credits</li>
+                    <li>Unbegrenzte Reports</li>
+                    <li>Du finanzierst andere</li>
                     <li>Name auf Supporter-Seite</li>
-                    <li>Du finanzierst einen Basis-Nutzer</li>
                 </ul>
-                <a href="/login?tier=sustainer" class="tier-btn secondary">Sustainer werden</a>
+                <button class="tier-btn secondary" onclick="showPlaceholderDialog('sustainer','Sustainer-Abonnements kommen bald. Danke für dein Interesse!',{emoji:'🌳'})">Sustainer werden</button>
             </div>
         </div>
     </section>
@@ -130,5 +130,6 @@
         </div>
         <p class="footer-copy">© 2026 talent.yoga — Made with 🧘 in Germany</p>
     </footer>
+    <script src="/static/js/placeholder-dialog.js?v=20260330a"></script>
 </body>
 </html>

@@ -107,6 +107,33 @@
                 </div>
             </section>
             
+            <!-- Credits & Plan -->
+            <section class="account-section">
+                <h2>💳 {{ t('account.credits_plan') if t('account.credits_plan') else 'Credits & Plan' }}</h2>
+
+                <div class="account-field">
+                    <label>{{ t('account.current_balance') if t('account.current_balance') else 'Credit Balance' }}</label>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+                        <span style="font-size:1.5rem;font-weight:600;color:var(--teal,#2d9f8f);"
+                              title="{{ t('account.balance_tooltip') if t('account.balance_tooltip') else 'Payment system coming soon — all features free during preview' }}">€0.00</span>
+                        <span style="font-size:0.85rem;color:var(--text-muted,#888);font-style:italic;">
+                            {{ t('account.preview_free') if t('account.preview_free') else 'All features free during preview' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="account-field" style="margin-top:12px;">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-secondary" onclick="showPlaceholderDialog('top_up', '{{ t('account.placeholder_topup') if t('account.placeholder_topup') else 'Credit top-ups are coming soon. During the preview period, all features are free.' }}', {emoji:'💳'})">
+                            💳 {{ t('account.top_up') if t('account.top_up') else 'Top Up Credits' }}
+                        </button>
+                        <button class="btn-secondary" onclick="showPlaceholderDialog('sustainer', '{{ t('account.placeholder_sustainer') if t('account.placeholder_sustainer') else 'Sustainer subscriptions are coming soon. Thank you for your interest!' }}', {emoji:'🌳'})">
+                            🌳 {{ t('account.become_sustainer') if t('account.become_sustainer') else 'Become a Sustainer' }}
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- AI & Privacy -->
             <section class="account-section">
                 <h2>🔐 {{ t('account.ai_privacy') if t('account.ai_privacy') else 'AI &amp; Privacy' }}</h2>

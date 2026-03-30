@@ -42,10 +42,13 @@ class MiraResponse:
 # Condensed FAQ knowledge (fits in ~2000 tokens)
 FAQ_KNOWLEDGE_DE = """
 **Preise:**
-- Kostenlos für Jobsuchende
-- Standard: €5/Monat (unbegrenzte Matches, Doug-Recherche)
-- Sustainer: €10+/Monat (Standard + finanziert andere)
-- Alles transparent unter "Finanzen"
+- Mira-Chat, Suche, Profil, Bewerbungsprotokoll: immer kostenlos
+- Clara-Matchberichte und Doug-Firmenrecherchen kosten Credits
+- Neue Yogis bekommen €5 Startguthaben + 2 Wochen kostenlos
+- Credits zum Nachkaufen: €5, €10 oder €20 (kein Abo nötig)
+- Credits verfallen nie
+- Sustainer: €10+/Monat — unbegrenzte KI-Aktionen + du finanzierst einen anderen Yogi
+- Zahlungssystem kommt bald — bis dahin ist alles kostenlos
 
 **Datenschutz:**
 - Nur Skills, Präferenzen, Bewerbungshistorie gespeichert
@@ -67,9 +70,9 @@ FAQ_KNOWLEDGE_DE = """
 - Änderungen wirken sofort auf Matches
 
 **Team:**
-- Mira (ich) = deine Begleiterin
-- Doug = Web-Recherche über Firmen
-- Adele = Interview-Coaching
+- Mira (ich) = deine Begleiterin und Chat-Assistentin
+- Doug = Web-Recherche über Firmen (Credit-basiert)
+- Clara = Matchberichte mit Bewerbungsempfehlungen (Credit-basiert)
 
 **Fokus:**
 - Deutschland (34K+ Stellen von Arbeitsagentur)
@@ -87,10 +90,13 @@ FAQ_KNOWLEDGE_DE = """
 
 FAQ_KNOWLEDGE_EN = """
 **Pricing:**
-- Free for job seekers
-- Standard: €5/month (unlimited matches, Doug research)
-- Sustainer: €10+/month (Standard + sponsors others)
-- Everything transparent under "Finances"
+- Mira chat, search, profile, activity log: always free
+- Clara match reports and Doug company research cost credits
+- New yogis get €5 starting credits + 2 weeks free
+- Top-up packs: €5, €10, or €20 (no subscription needed)
+- Credits never expire
+- Sustainer: €10+/month — unlimited AI actions + you fund another yogi
+- Payment system coming soon — until then everything is free
 
 **Privacy:**
 - Only skills, preferences, application history stored
@@ -112,9 +118,9 @@ FAQ_KNOWLEDGE_EN = """
 - Changes affect matches immediately
 
 **Team:**
-- Mira (me) = your companion
-- Doug = web research about companies
-- Adele = interview coaching
+- Mira (me) = your companion and chat assistant
+- Doug = web research about companies (credit-based)
+- Clara = match reports with application recommendations (credit-based)
 
 **Focus:**
 - Germany (34K+ jobs from Arbeitsagentur)

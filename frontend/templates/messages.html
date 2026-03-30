@@ -73,7 +73,6 @@
 const ACTORS = {
     doug: { name: 'Doug', role: 'Research Assistant', emoji: '🔍' },
     mira: { name: 'Mira', role: 'Your Guide', emoji: '🧘' },
-    adele: { name: 'Adele', role: 'Interview Coach', emoji: '🎯' },
     sage: { name: 'Sage', role: 'Skills Advisor', emoji: '📚' },
     sandy: { name: 'Sandy', role: 'Market Analyst', emoji: '📊' },
     mysti: { name: 'Mysti', role: 'Encouragement', emoji: '✨' },
@@ -89,7 +88,7 @@ let messagesBySender = {};
 let unreadCounts = {};
 
 // Actors that should always appear in the chat list (even with no messages yet)
-const ALWAYS_SHOW = ['mira', 'adele'];
+const ALWAYS_SHOW = ['mira'];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {

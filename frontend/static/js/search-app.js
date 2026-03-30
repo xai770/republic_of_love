@@ -66,6 +66,10 @@
         situationContext: {},
         // Direction tile zoom state: null = all sectors, sectorName = zoomed in
         directionZoom: null,
+        // Field kanban choices: { sectorName: 'strong' | 'some' | 'none' }
+        cardGameChoices: {},
+        // Domain codes from profile-scope (to mark "from your profile")
+        profileDomainCodes: [],
     };
 
     /** Persist filter-relevant parts of state to localStorage. */
@@ -79,6 +83,7 @@
                 states: state.states,
                 cities: state.cities,
                 activeTab: state.activeTab,
+                cardGameChoices: state.cardGameChoices,
                 _ts: Date.now(),
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
@@ -107,6 +112,9 @@
             if (snap.states && snap.states.length)         { state.states = snap.states; restored = true; }
             if (snap.cities && snap.cities.length)         { state.cities = snap.cities; restored = true; }
             if (snap.activeTab) state.activeTab = snap.activeTab;
+            if (snap.cardGameChoices && Object.keys(snap.cardGameChoices).length) {
+                state.cardGameChoices = snap.cardGameChoices;
+            }
             return restored;
         } catch(e) { return false; }
     }
@@ -183,6 +191,26 @@
         const badge = document.getElementById('power-search-badge');
         if (tabName === 'power' && badge && badge.classList.contains('disabled')) return;
 
+        const oldPanel = document.querySelector('.tab-content.active');
+        const newPanel = document.querySelector('.tab-content[data-tab="' + tabName + '"]');
+
+        // If same tab or no old panel, just switch immediately
+        if (!oldPanel || oldPanel === newPanel) {
+            _applyTabSwitch(tabName);
+            return;
+        }
+
+        // Fade out old, then switch
+        oldPanel.classList.add('fade-out');
+        oldPanel.classList.remove('active');
+        // After fade-out transition completes, show new tab
+        setTimeout(function() {
+            oldPanel.classList.remove('fade-out');
+            _applyTabSwitch(tabName);
+        }, 250);
+    }
+
+    function _applyTabSwitch(tabName) {
         state.activeTab = tabName;
 
         // Update pill buttons (guided tabs only)
@@ -229,6 +257,15 @@
         saveState();
         updatePillProgress();
         updatePlayerState();
+
+        // Hide player on Direction tab (modal replaces step-through)
+        const player = document.querySelector('.search-player');
+        if (player) player.style.display = tabName === 'direction' ? 'none' : '';
+
+        // Update scroll fade indicators when direction tab becomes visible
+        if (tabName === 'direction') {
+            requestAnimationFrame(fkUpdateScrollFades);
+        }
     }
 
     // Wire pill bar clicks (event delegation)
@@ -269,6 +306,14 @@
         state.situationContext[question] = value;
         renderFlipCards();
         updatePillProgress();
+        // field_change affects which kanban columns feed domains — re-sync
+        if (question === 'field_change') {
+            fkSyncDomains();
+        }
+        // search_mode affects backend query scope — re-search
+        if (question === 'search_mode') {
+            doSearch();
+        }
         try {
             await fetch('/api/search/situation', {
                 method: 'POST',
@@ -560,22 +605,6 @@
             switchTab(this.dataset.tab);
         });
     });
-
-    // Profile gate — show if no profile
-    function applyProfileGate() {
-        const gate = document.getElementById('profile-gate');
-        const cardsRow = document.getElementById('flip-cards-row');
-        if (!gate || !cardsRow) return;
-        if (!window.SearchConfig.hasProfile) {
-            gate.style.display = '';
-            cardsRow.style.opacity = '0.35';
-            cardsRow.style.pointerEvents = 'none';
-        } else {
-            gate.style.display = 'none';
-            cardsRow.style.opacity = '';
-            cardsRow.style.pointerEvents = '';
-        }
-    }
 
     // Wire flip-card interactions (event delegation on the container)
     const situationContainer = document.querySelector('.situation-container');
@@ -986,7 +1015,556 @@
     });
 
     // ============================================================
-    // DIRECTION TILES (Tab 2 — two-level sector → profession grid)
+    // FIELD KANBAN (Tab 2 — 4-column kanban + dealing modal)
+    // ============================================================
+    const FIELD_DESCRIPTIONS = {
+        'Gesundheit & Medizin': { en: 'Nursing, medical care, therapy, pharmacy', de: 'Pflege, Medizin, Therapie, Pharmazie' },
+        'IT & Technologie': { en: 'Software, data, networks, cybersecurity', de: 'Software, Daten, Netzwerke, IT-Sicherheit' },
+        'Fertigung & Technik': { en: 'Manufacturing, production, quality, engineering', de: 'Fertigung, Produktion, Qualität, Ingenieurwesen' },
+        'Maschinen & Elektro': { en: 'Machinery, electrical, maintenance, automation', de: 'Maschinenbau, Elektro, Wartung, Automatisierung' },
+        'Bau & Handwerk': { en: 'Construction, trades, carpentry, plumbing', de: 'Bau, Handwerk, Zimmerei, Sanitär' },
+        'Finanzen & Banken': { en: 'Banking, insurance, accounting, finance', de: 'Banken, Versicherungen, Buchhaltung, Finanzen' },
+        'Handel & Vertrieb': { en: 'Sales, retail, wholesale, distribution', de: 'Verkauf, Einzelhandel, Großhandel, Vertrieb' },
+        'Transport & Logistik': { en: 'Driving, warehousing, shipping, supply chain', de: 'Fahren, Lager, Versand, Lieferkette' },
+        'Bildung & Soziales': { en: 'Teaching, social work, childcare, counseling', de: 'Lehre, Sozialarbeit, Kinderbetreuung, Beratung' },
+        'Wissenschaft & Forschung': { en: 'Research, lab work, academia, science', de: 'Forschung, Labor, Wissenschaft, Akademie' },
+        'Gastgewerbe & Tourismus': { en: 'Hotels, travel, events, hospitality', de: 'Hotels, Reise, Veranstaltungen, Gastgewerbe' },
+        'Gastgewerbe & Lebensmittel': { en: 'Cooking, food production, catering', de: 'Kochen, Lebensmittelproduktion, Catering' },
+        'Verwaltung & Recht': { en: 'Public admin, law, compliance, office', de: 'Verwaltung, Recht, Compliance, Büro' },
+        'Wirtschaft & Management': { en: 'Business, management, consulting, HR', de: 'Wirtschaft, Management, Beratung, Personal' },
+        'Land- & Forstwirtschaft': { en: 'Agriculture, forestry, gardening, animals', de: 'Landwirtschaft, Forstwirtschaft, Gartenbau, Tiere' },
+        'Sicherheit & Verteidigung': { en: 'Security, defense, police, fire services', de: 'Sicherheit, Verteidigung, Polizei, Feuerwehr' },
+        'Kultur & Medien': { en: 'Media, design, journalism, arts', de: 'Medien, Design, Journalismus, Kunst' },
+    };
+
+    function getFieldDesc(sectorName) {
+        const d = FIELD_DESCRIPTIONS[sectorName];
+        return d ? (LANG === 'de' ? d.de : d.en) : '';
+    }
+
+    function isProfileSector(sector) {
+        if (!sector || !sector.codes || !state.profileDomainCodes.length) return false;
+        return sector.codes.some(c => state.profileDomainCodes.includes(c));
+    }
+
+    // Column sort state: { unsorted: {field:'name',dir:'asc'}, strong: ..., some: ..., none: ... }
+    const fkColSort = {
+        unsorted: { field: 'name', dir: 'asc' },
+        strong:   { field: 'name', dir: 'asc' },
+        some:     { field: 'name', dir: 'asc' },
+        none:     { field: 'name', dir: 'asc' },
+    };
+    // Profession sort in modal
+    let fkProfSort = { field: 'name', dir: 'asc' };
+    // Dealing state
+    let fkDealQueue = [];
+    let fkDealIndex = 0;
+
+    function fkGetBuckets() {
+        const data = state.sectorTree;
+        if (!data) return { unsorted: [], strong: [], some: [], none: [] };
+        const buckets = { unsorted: [], strong: [], some: [], none: [] };
+        data.sectors.forEach(s => {
+            const choice = state.cardGameChoices[s.name];
+            if (!choice) buckets.unsorted.push(s);
+            else if (choice === 'strong') buckets.strong.push(s);
+            else if (choice === 'some') buckets.some.push(s);
+            else if (choice === 'none') buckets.none.push(s);
+            else buckets.unsorted.push(s);  // fallback for invalid stored values
+        });
+        const total = buckets.unsorted.length + buckets.strong.length + buckets.some.length + buckets.none.length;
+        if (total !== data.sectors.length) {
+            console.warn('[field-kanban] bucket mismatch:', total, 'vs', data.sectors.length, 'sectors from API');
+        }
+        return buckets;
+    }
+
+    function fkSortList(list, colKey) {
+        const sort = fkColSort[colKey];
+        const sorted = [...list];
+        sorted.sort((a, b) => {
+            if (sort.field === 'name') {
+                const na = tDomain(a.name).toLowerCase();
+                const nb = tDomain(b.name).toLowerCase();
+                return sort.dir === 'asc' ? na.localeCompare(nb) : nb.localeCompare(na);
+            } else {
+                return sort.dir === 'asc' ? a.count - b.count : b.count - a.count;
+            }
+        });
+        return sorted;
+    }
+
+    function fkRenderColumn(colKey, sectors) {
+        const body = document.getElementById('fk-body-' + colKey);
+        const countEl = document.getElementById('fk-count-' + colKey);
+        if (!body) return;
+
+        const searchVal = (document.getElementById('fk-search') || {}).value || '';
+        const searchLower = searchVal.toLowerCase();
+        const sorted = fkSortList(sectors, colKey);
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+
+        if (countEl) countEl.textContent = sectors.length;
+
+        body.innerHTML = sorted.map(s => {
+            const name = tDomain(s.name);
+            const hidden = searchLower && !name.toLowerCase().includes(searchLower) ? ' fk-hidden' : '';
+            const profileTag = isProfileSector(s) ? '<span class="fk-row-profile">👤</span>' : '';
+            const posLabel = I18N.fk_positions || 'positions';
+            return `<div class="fk-row${hidden}" data-sector="${s.name}" draggable="true">
+                <span class="fk-row-name">${name}</span>
+                <span class="fk-row-meta">${profileTag}<span class="fk-row-count">${s.count.toLocaleString(locale)} ${posLabel}</span></span>
+            </div>`;
+        }).join('');
+    }
+
+    function fkRenderProgressBars() {
+        const data = state.sectorTree;
+        if (!data) return;
+        const total = data.sectors.length;
+        if (total === 0) return;
+        const buckets = fkGetBuckets();
+        const cols = ['unsorted', 'strong', 'some', 'none'];
+        cols.forEach(c => {
+            const bar = document.getElementById('fk-bar-' + c);
+            if (bar) bar.style.width = (buckets[c].length / total * 100) + '%';
+        });
+    }
+
+    function fkUpdateStartButton() {
+        // Static label — nothing dynamic to update
+    }
+
+    function renderFieldKanban() {
+        const data = state.sectorTree;
+        if (!data) return;
+        const buckets = fkGetBuckets();
+        ['unsorted', 'strong', 'some', 'none'].forEach(c => fkRenderColumn(c, buckets[c]));
+        fkRenderProgressBars();
+        fkUpdateStartButton();
+        requestAnimationFrame(fkUpdateScrollFades);
+    }
+
+    function fkUpdateScrollFades() {
+        ['unsorted', 'strong', 'some', 'none'].forEach(function(c) {
+            var body = document.getElementById('fk-body-' + c);
+            var col = body && body.closest('.fk-col');
+            if (!body || !col) return;
+            var canUp = body.scrollTop > 4;
+            var canDown = body.scrollHeight > body.clientHeight + 4 &&
+                          (body.scrollHeight - body.scrollTop - body.clientHeight) > 4;
+            col.classList.toggle('has-overflow-top', canUp);
+            col.classList.toggle('has-overflow-bottom', canDown);
+        });
+    }
+
+    function fkSyncDomains() {
+        const data = state.sectorTree;
+        if (!data) return;
+        const fc = (state.situationContext && state.situationContext.field_change) || 5;
+        const newDomains = [];
+        data.sectors.forEach(s => {
+            const choice = state.cardGameChoices[s.name];
+            // field_change controls which kanban columns feed domains:
+            //   5 = strict: only strong + some
+            //   4 = same as 5
+            //   3 = strong + some + unsorted (not explicitly 'none')
+            //   2 = strong + some + unsorted
+            //   1 = all domains (ignore kanban, include 'none' too)
+            let include = false;
+            if (choice === 'strong' || choice === 'some') {
+                include = true;
+            } else if (fc <= 3 && !choice) {
+                // unsorted (no choice yet) — include when field_change <= 3
+                include = true;
+            } else if (fc <= 1 && choice === 'none') {
+                // explicitly rejected — only include at fc=1 (very open)
+                include = true;
+            }
+            if (include) {
+                s.codes.forEach(c => { if (!newDomains.includes(c)) newDomains.push(c); });
+            }
+        });
+        state.domains = newDomains;
+        saveState();
+        doSearch();
+    }
+
+    function fkClassify(sectorName, choice) {
+        if (choice === state.cardGameChoices[sectorName]) {
+            // Toggle off — back to unsorted
+            delete state.cardGameChoices[sectorName];
+        } else {
+            state.cardGameChoices[sectorName] = choice;
+        }
+        fkSyncDomains();
+        renderFieldKanban();
+        updatePillProgress();
+    }
+
+    // --- Dealing modal ---
+    let fkCurrentSector = null;  // name of sector shown in modal (null = closed)
+
+    function fkOpenModal(sectorName) {
+        const data = state.sectorTree;
+        if (!data) return;
+        const sector = data.sectors.find(s => s.name === sectorName);
+        if (!sector) return;
+        fkCurrentSector = sectorName;
+
+        const overlay = document.getElementById('fk-modal-overlay');
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+
+        // Fill top section
+        const badge = document.getElementById('fk-modal-badge');
+        if (badge) badge.innerHTML = isProfileSector(sector) ? '👤 ' + (I18N.fk_from_profile || 'From your profile') : '';
+        if (badge) badge.style.display = isProfileSector(sector) ? '' : 'none';
+
+        document.getElementById('fk-modal-name').textContent = tDomain(sector.name);
+        document.getElementById('fk-modal-stats').textContent = sector.count.toLocaleString(locale) + ' ' + (I18N.fk_positions || 'positions');
+        const freshEl = document.getElementById('fk-modal-fresh');
+        freshEl.textContent = sector.fresh ? '+' + sector.fresh.toLocaleString(locale) + ' ' + (I18N.fk_new_this_week || 'new this week') : '';
+        document.getElementById('fk-modal-desc').textContent = getFieldDesc(sector.name);
+
+        // Render professions
+        fkRenderProfessions(sector);
+
+        // Highlight current choice
+        overlay.querySelectorAll('.fk-smiley-btn').forEach(btn => {
+            btn.classList.toggle('current', btn.dataset.choice === state.cardGameChoices[sectorName]);
+        });
+
+        overlay.classList.add('open');
+    }
+
+    function fkRenderProfessions(sector) {
+        const list = document.getElementById('fk-prof-list');
+        if (!list || !sector.professions) { list.innerHTML = ''; return; }
+        const locale = LANG === 'de' ? 'de-DE' : 'en-US';
+        const sorted = [...sector.professions].sort((a, b) => {
+            if (fkProfSort.field === 'name') {
+                const na = (a.name || '').toLowerCase();
+                const nb = (b.name || '').toLowerCase();
+                return fkProfSort.dir === 'asc' ? na.localeCompare(nb) : nb.localeCompare(na);
+            }
+            return fkProfSort.dir === 'asc' ? (a.count || 0) - (b.count || 0) : (b.count || 0) - (a.count || 0);
+        });
+        list.innerHTML = sorted.map(p =>
+            `<div class="fk-prof-row">
+                <span class="fk-prof-name">${p.name}</span>
+                <span class="fk-prof-count">${(p.count || 0).toLocaleString(locale)}</span>
+            </div>`
+        ).join('');
+    }
+
+    function fkCloseModal() {
+        fkCurrentSector = null;
+        document.getElementById('fk-modal-overlay').classList.remove('open');
+    }
+
+    function fkUpdateGuidedBtn(active) {
+        const btn = document.getElementById('fk-start-btn');
+        const label = document.getElementById('fk-start-label');
+        const cfg = window.SearchConfig || {};
+        if (active) {
+            if (btn) btn.classList.add('guided-active');
+            if (label) label.textContent = cfg.fk_guided_on || 'Guided mode: On';
+        } else {
+            if (btn) btn.classList.remove('guided-active');
+            if (label) label.textContent = cfg.fk_to_review || 'Guided mode: Off';
+        }
+    }
+
+    // --- Dealing flow ---
+    function fkStartDealing() {
+        // Toggle: if already dealing, stop
+        if (fkDealQueue.length > 0 && fkDealIndex < fkDealQueue.length) {
+            fkDealQueue = [];
+            fkCloseModal();
+            fkUpdateGuidedBtn(false);
+            return;
+        }
+        const buckets = fkGetBuckets();
+        if (buckets.unsorted.length === 0) return;
+        fkUpdateGuidedBtn(true);
+        // Profile sectors first, then by count descending
+        const profile = buckets.unsorted.filter(s => isProfileSector(s));
+        const other = buckets.unsorted.filter(s => !isProfileSector(s)).sort((a, b) => b.count - a.count);
+        fkDealQueue = [...profile, ...other].map(s => s.name);
+        fkDealIndex = 0;
+        fkDealNext();
+    }
+
+    function fkDealNext() {
+        if (fkDealIndex >= fkDealQueue.length) {
+            fkCloseModal();
+            fkUpdateGuidedBtn(false);
+            return;
+        }
+        fkOpenModal(fkDealQueue[fkDealIndex]);
+    }
+
+    function fkDealChoose(choice) {
+        if (!fkCurrentSector) return;
+        const dealing = fkDealQueue.length > 0 && fkDealIndex < fkDealQueue.length;
+        fkClassify(fkCurrentSector, choice);
+
+        if (dealing) {
+            fkDealIndex++;
+            fkDealNext();
+        } else {
+            // Single reclassify — close modal
+            fkCloseModal();
+        }
+    }
+
+    // --- Event wiring ---
+    // Row clicks → open modal
+    document.getElementById('field-kanban').addEventListener('click', function(e) {
+        const row = e.target.closest('.fk-row');
+        if (row) { fkOpenModal(row.dataset.sector); return; }
+        const sortBtn = e.target.closest('.fk-sort-btn');
+        if (sortBtn && sortBtn.dataset.col) {
+            const colKey = sortBtn.dataset.col;
+            const field = sortBtn.dataset.field;
+            const sort = fkColSort[colKey];
+            if (sort.field === field) {
+                sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sort.field = field;
+                sort.dir = field === 'count' ? 'desc' : 'asc';
+            }
+            // Update active class
+            const sortRow = sortBtn.closest('.fk-sort-row');
+            if (sortRow) sortRow.querySelectorAll('.fk-sort-btn').forEach(b => b.classList.toggle('active', b === sortBtn));
+            renderFieldKanban();
+        }
+    });
+
+    // Start / Continue button
+    document.getElementById('fk-start-btn').addEventListener('click', fkStartDealing);
+
+    // Search box
+    document.getElementById('fk-search').addEventListener('input', function() {
+        renderFieldKanban();
+    });
+
+    // Column scroll listeners
+    ['unsorted', 'strong', 'some', 'none'].forEach(function(c) {
+        var body = document.getElementById('fk-body-' + c);
+        if (body) body.addEventListener('scroll', fkUpdateScrollFades);
+    });
+
+    // --- Drag & Drop between kanban columns ---
+    const COL_TO_CHOICE = { strong: 'strong', some: 'some', none: 'none' };
+    let fkDragSector = null;
+
+    // Delegate dragstart on the kanban container
+    document.getElementById('field-kanban').addEventListener('dragstart', function(e) {
+        const row = e.target.closest('.fk-row');
+        if (!row) return;
+        fkDragSector = row.dataset.sector;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', fkDragSector);
+        row.classList.add('fk-dragging');
+        // Highlight all columns after a short delay so drag image isn't affected
+        requestAnimationFrame(function() {
+            document.querySelectorAll('.fk-col').forEach(function(col) { col.classList.add('fk-drop-ready'); });
+        });
+    });
+
+    document.getElementById('field-kanban').addEventListener('dragend', function(e) {
+        fkDragSector = null;
+        document.querySelectorAll('.fk-dragging').forEach(function(el) { el.classList.remove('fk-dragging'); });
+        document.querySelectorAll('.fk-col').forEach(function(col) {
+            col.classList.remove('fk-drop-ready', 'fk-drag-over');
+        });
+    });
+
+    // Dragover / dragenter / dragleave / drop on columns
+    document.querySelectorAll('.fk-col').forEach(function(col) {
+        col.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+        col.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            col.classList.add('fk-drag-over');
+        });
+        col.addEventListener('dragleave', function(e) {
+            // Only remove if leaving the column itself (not its children)
+            if (!col.contains(e.relatedTarget)) {
+                col.classList.remove('fk-drag-over');
+            }
+        });
+        col.addEventListener('drop', function(e) {
+            e.preventDefault();
+            col.classList.remove('fk-drag-over');
+            var sector = e.dataTransfer.getData('text/plain');
+            if (!sector) return;
+            var colKey = col.dataset.col;
+            if (!colKey) return;
+            var choice = COL_TO_CHOICE[colKey];
+            if (choice) {
+                // Dropping on strong/some/none — classify
+                state.cardGameChoices[sector] = choice;
+            } else {
+                // Dropping on unsorted — unclassify
+                delete state.cardGameChoices[sector];
+            }
+            fkSyncDomains();
+            renderFieldKanban();
+            updatePillProgress();
+        });
+    });
+
+    // --- Touch drag polyfill for mobile ---
+    (function() {
+        var touchRow = null;
+        var touchSector = null;
+        var touchGhost = null;
+        var touchStartY = 0;
+        var touchStartX = 0;
+        var isDragging = false;
+
+        var kanban = document.getElementById('field-kanban');
+        if (!kanban) return;
+
+        kanban.addEventListener('touchstart', function(e) {
+            var row = e.target.closest('.fk-row');
+            if (!row) return;
+            touchRow = row;
+            touchSector = row.dataset.sector;
+            var touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isDragging = false;
+        }, { passive: true });
+
+        kanban.addEventListener('touchmove', function(e) {
+            if (!touchRow || !touchSector) return;
+            var touch = e.touches[0];
+
+            // Require minimum 10px movement to start drag
+            if (!isDragging) {
+                var dx = Math.abs(touch.clientX - touchStartX);
+                var dy = Math.abs(touch.clientY - touchStartY);
+                if (dx < 10 && dy < 10) return;
+                isDragging = true;
+                touchRow.classList.add('fk-dragging');
+                document.querySelectorAll('.fk-col').forEach(function(col) { col.classList.add('fk-drop-ready'); });
+                // Create ghost
+                touchGhost = document.createElement('div');
+                touchGhost.className = 'fk-touch-ghost';
+                touchGhost.textContent = touchRow.querySelector('.fk-row-name').textContent;
+                document.body.appendChild(touchGhost);
+            }
+
+            e.preventDefault();
+
+            // Position ghost
+            if (touchGhost) {
+                touchGhost.style.left = (touch.clientX - 40) + 'px';
+                touchGhost.style.top = (touch.clientY - 20) + 'px';
+            }
+
+            // Highlight column under finger
+            var target = document.elementFromPoint(touch.clientX, touch.clientY);
+            var targetCol = target && target.closest('.fk-col');
+            document.querySelectorAll('.fk-col').forEach(function(col) {
+                col.classList.toggle('fk-drag-over', col === targetCol);
+            });
+        }, { passive: false });
+
+        kanban.addEventListener('touchend', function(e) {
+            if (!isDragging || !touchSector) {
+                cleanup();
+                return;
+            }
+
+            // Find column under last touch position
+            var touch = e.changedTouches[0];
+            var target = document.elementFromPoint(touch.clientX, touch.clientY);
+            var targetCol = target && target.closest('.fk-col');
+
+            if (targetCol && targetCol.dataset.col) {
+                var colKey = targetCol.dataset.col;
+                var choice = COL_TO_CHOICE[colKey];
+                if (choice) {
+                    state.cardGameChoices[touchSector] = choice;
+                } else {
+                    delete state.cardGameChoices[touchSector];
+                }
+                fkSyncDomains();
+                renderFieldKanban();
+                updatePillProgress();
+            }
+            cleanup();
+        });
+
+        kanban.addEventListener('touchcancel', cleanup);
+
+        function cleanup() {
+            if (touchRow) touchRow.classList.remove('fk-dragging');
+            if (touchGhost && touchGhost.parentNode) touchGhost.parentNode.removeChild(touchGhost);
+            document.querySelectorAll('.fk-col').forEach(function(col) {
+                col.classList.remove('fk-drop-ready', 'fk-drag-over');
+            });
+            touchRow = null;
+            touchSector = null;
+            touchGhost = null;
+            isDragging = false;
+        }
+    })();
+
+    // Smiley buttons in modal
+    document.querySelector('.fk-modal-actions').addEventListener('click', function(e) {
+        const btn = e.target.closest('.fk-smiley-btn');
+        if (!btn) return;
+        fkDealChoose(btn.dataset.choice);
+    });
+
+    // Modal close
+    document.getElementById('fk-modal-close').addEventListener('click', function() {
+        fkDealQueue = [];
+        fkCloseModal();
+        fkUpdateGuidedBtn(false);
+    });
+    document.getElementById('fk-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            fkDealQueue = [];
+            fkCloseModal();
+            fkUpdateGuidedBtn(false);
+        }
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && fkCurrentSector) {
+            fkDealQueue = [];
+            fkCloseModal();
+            fkUpdateGuidedBtn(false);
+        }
+    });
+
+    // Profession sort in modal
+    document.getElementById('fk-prof-sort-name').addEventListener('click', function() {
+        if (fkProfSort.field === 'name') fkProfSort.dir = fkProfSort.dir === 'asc' ? 'desc' : 'asc';
+        else { fkProfSort.field = 'name'; fkProfSort.dir = 'asc'; }
+        if (fkCurrentSector) {
+            const sector = state.sectorTree.sectors.find(s => s.name === fkCurrentSector);
+            if (sector) fkRenderProfessions(sector);
+        }
+    });
+    document.getElementById('fk-prof-sort-count').addEventListener('click', function() {
+        if (fkProfSort.field === 'count') fkProfSort.dir = fkProfSort.dir === 'asc' ? 'desc' : 'asc';
+        else { fkProfSort.field = 'count'; fkProfSort.dir = 'desc'; }
+        if (fkCurrentSector) {
+            const sector = state.sectorTree.sectors.find(s => s.name === fkCurrentSector);
+            if (sector) fkRenderProfessions(sector);
+        }
+    });
+
+    // ============================================================
+    // DIRECTION TILES (kept for Power Search compatibility)
     // ============================================================
     function renderDirectionTiles() {
         const data = state.sectorTree;
@@ -2081,6 +2659,7 @@
                 data.sectors.forEach(s => { window._domainMap[s.name] = s.codes; });
                 renderSectorTree(data);
                 renderDirectionTiles();
+                renderFieldKanban();
                 // Re-render pills now that _domainMap is available
                 // (first doSearch renders pills before this async call completes)
                 renderFilterPills();
@@ -2379,8 +2958,11 @@
             state.profileId = data.profile_id || null;
 
             // Pre-select domains inferred from title / desired_roles
-            if (data.domains && data.domains.length > 0 && state.domains.length === 0) {
-                state.domains = data.domains;
+            if (data.domains && data.domains.length > 0) {
+                state.profileDomainCodes = [...data.domains];
+                if (state.domains.length === 0) {
+                    state.domains = data.domains;
+                }
             }
 
             // Pre-select QL range from experience_level
@@ -2788,7 +3370,10 @@
 
     // ============================================================
     // MIRA CHAT WIDGET — Smart FAB pattern
+    // (sets flag so standalone mira-widget.js skips init on search page)
     // ============================================================
+    window._miraWidgetActive = true;
+
     const miraState = {
         isOpen: false,
         hasGreeted: false,
@@ -3078,8 +3663,6 @@
         // Load situation questionnaire answers from API
         loadSituationContext();
 
-        // Profile gate
-        applyProfileGate();
         updateCardNav();
         updatePlayerState();
 
@@ -3171,6 +3754,7 @@
             _zoomTimer = setTimeout(() => {
                 const m = document.getElementById('search-map');
                 if (m && m.offsetWidth > 0) { map.invalidateSize(); map.setView(map.getCenter()); }
+                fkUpdateScrollFades();
             }, 150);
         });
         // Vibrate + open Mira
@@ -3183,9 +3767,11 @@
         init();
     }
 
-    // Sidebar toggle
+    // Sidebar toggle (with overlay for tablet/mobile)
     window.toggleSidebar = function() {
         document.getElementById('sidebar').classList.toggle('open');
+        var ov = document.querySelector('.sidebar-overlay');
+        if (ov) ov.classList.toggle('show');
     };
 
     // Expose for sidebar toggle

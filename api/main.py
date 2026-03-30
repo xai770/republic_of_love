@@ -160,7 +160,7 @@ def landing_page(request: Request, conn=Depends(get_db)):
     if user:
         if not user.get("onboarding_completed_at"):
             return RedirectResponse(url="/onboarding", status_code=302)
-        return RedirectResponse(url="/home", status_code=302)
+        return RedirectResponse(url="/overview", status_code=302)
     
     # Unauthenticated: show onboarding (step 1 + auth step only)
     resp = templates.TemplateResponse("onboarding.html", {
@@ -178,7 +178,7 @@ def login_page(request: Request, conn=Depends(get_db)):
     
     user = get_current_user(request, conn)
     if user:
-        return RedirectResponse(url="/home", status_code=302)
+        return RedirectResponse(url="/overview", status_code=302)
     
     error = request.query_params.get("error")
     return templates.TemplateResponse("login.html", {
@@ -198,9 +198,9 @@ def onboarding_page(request: Request, conn=Depends(get_db)):
     if not user:
         return RedirectResponse(url="/", status_code=302)
 
-    # Already onboarded → skip to home
+    # Already onboarded → skip to overview
     if user.get("onboarding_completed_at"):
-        return RedirectResponse(url="/home", status_code=302)
+        return RedirectResponse(url="/overview", status_code=302)
 
     resp = templates.TemplateResponse("onboarding.html", {
         "request": request,
@@ -210,29 +210,35 @@ def onboarding_page(request: Request, conn=Depends(get_db)):
     return resp
 
 
-@app.get("/home")
-def home_page(request: Request, conn=Depends(get_db)):
-    """Home page — requires authentication."""
+@app.get("/overview")
+def overview_page(request: Request, conn=Depends(get_db)):
+    """Overview page — requires authentication."""
     if not templates:
         return {"error": "Frontend not configured"}
-    
+
     user = get_current_user(request, conn)
     if not user:
         return RedirectResponse(url="/", status_code=302)
     if needs_onboarding(user):
         return RedirectResponse(url="/onboarding", status_code=302)
-    
-    return templates.TemplateResponse("dashboard.html", {
+
+    return templates.TemplateResponse("overview.html", {
         "request": request,
         "user": user,
         **get_i18n_context(request)
     })
 
 
+@app.get("/home")
+def home_page(request: Request):
+    """Legacy /home — redirect to /overview."""
+    return RedirectResponse(url="/overview", status_code=301)
+
+
 @app.get("/dashboard")
 def dashboard_redirect(request: Request):
-    """Legacy /dashboard — permanent redirect to /home."""
-    return RedirectResponse(url="/home", status_code=301)
+    """Legacy /dashboard — permanent redirect to /overview."""
+    return RedirectResponse(url="/overview", status_code=301)
 
 
 @app.get("/bi")
@@ -268,12 +274,14 @@ def search_page(request: Request, conn=Depends(get_db)):
     except Exception:
         pass
     
-    return templates.TemplateResponse("search.html", {
+    resp = templates.TemplateResponse("search.html", {
         "request": request,
         "user": user,
         "has_profile": has_profile,
         **get_i18n_context(request)
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return resp
 
 
 @app.get("/documents")
@@ -567,7 +575,7 @@ def lobby_page(request: Request, conn=Depends(get_db)):
     
     user = get_current_user(request, conn)
     if user:
-        return RedirectResponse(url="/home", status_code=302)
+        return RedirectResponse(url="/overview", status_code=302)
     
     return templates.TemplateResponse("lobby.html", {
         "request": request,

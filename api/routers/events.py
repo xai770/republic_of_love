@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
-VALID_EVENT_TYPES = {'login', 'page_view', 'search_filter', 'posting_view', 'match_action'}
+VALID_EVENT_TYPES = {'login', 'page_view', 'search_filter', 'posting_view', 'match_action', 'placeholder_click'}
 
 
 class TrackEventRequest(BaseModel):

@@ -59,13 +59,6 @@
                     <p class="situation-subtitle">{{ t('search.situation_subtitle_2') }}</p>
                 </div>
 
-                <!-- Profile gate overlay (hidden by default, shown by JS if no profile) -->
-                <div class="profile-gate" id="profile-gate" style="display:none;">
-                    <div class="profile-gate-icon">🔒</div>
-                    <p class="profile-gate-text">{{ t('search.sq_profile_gate_title') }}</p>
-                    <a href="/profile" class="profile-gate-cta">{{ t('search.sq_profile_gate_cta') }}</a>
-                </div>
-
                 <div class="flip-cards-row" id="flip-cards-row">
                     <!-- Card 1: My Focus -->
                     <div class="flip-card" data-question="search_mode" id="fc-search_mode">
@@ -147,22 +140,131 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- TAB 2: Direction — sector/profession tree (full width)    -->
+        <!-- TAB 2: Direction — Card Game field selector               -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="tab-content" data-tab="direction" id="tab-direction">
             <div class="direction-container">
-                <h2 class="tab-section-title">{{ t('search.direction_title') }}</h2>
-                <p class="tab-section-subtitle">{{ t('search.direction_subtitle') }}</p>
-                <input type="text" class="tree-search" id="sector-search" placeholder="🔍 {{ t('search.filter_sectors') }}" autocomplete="off">
+                <!-- Field Kanban (V2) -->
+                <div class="fk-intro">
+                    <h2 class="tab-section-title">{{ t('search.fk_title') }}</h2>
+                    <p class="tab-section-subtitle">{{ t('search.fk_subtitle') }}</p>
+                </div>
+
+                <div class="fk-search-wrap">
+                    <input type="text" class="fk-search" id="fk-search" placeholder="{{ t('search.fk_search_placeholder') }}">
+                </div>
+
+                <div class="field-kanban" id="field-kanban">
+                    <!-- Column 1: To review -->
+                    <div class="fk-col col-unsorted" data-col="unsorted">
+                        <div class="fk-col-header">
+                            <span class="fk-col-emoji">📋</span>
+                            <div class="fk-col-title">{{ t('search.fk_unsorted') }}</div>
+                            <div class="fk-col-count" id="fk-count-unsorted">0</div>
+                        </div>
+                        <div class="fk-col-bar" id="fk-bar-unsorted"></div>
+                        <div class="fk-sort-row">
+                            <button class="fk-sort-btn fk-sort-name active" data-col="unsorted" data-field="name">{{ t('search.fk_field') }} ↕</button>
+                            <button class="fk-sort-btn fk-sort-count" data-col="unsorted" data-field="count">{{ t('search.fk_positions') }} ↕</button>
+                        </div>
+                        <div class="fk-col-body" id="fk-body-unsorted"></div>
+                    </div>
+
+                    <!-- Start / Continue button column -->
+                    <div class="fk-start-col">
+                        <button class="fk-start-btn" id="fk-start-btn" aria-label="{{ t('search.fk_to_review') }}"></button>
+                        <span class="fk-start-label" id="fk-start-label">{{ t('search.fk_to_review') }}</span>
+                    </div>
+
+                    <!-- Column 2: Very interesting -->
+                    <div class="fk-col col-strong" data-col="strong">
+                        <div class="fk-col-header">
+                            <span class="fk-col-emoji">😊</span>
+                            <div class="fk-col-title">{{ t('search.fk_strong') }}</div>
+                            <div class="fk-col-count" id="fk-count-strong">0</div>
+                        </div>
+                        <div class="fk-col-bar" id="fk-bar-strong"></div>
+                        <div class="fk-sort-row">
+                            <button class="fk-sort-btn fk-sort-name active" data-col="strong" data-field="name">{{ t('search.fk_field') }} ↕</button>
+                            <button class="fk-sort-btn fk-sort-count" data-col="strong" data-field="count">{{ t('search.fk_positions') }} ↕</button>
+                        </div>
+                        <div class="fk-col-body" id="fk-body-strong"></div>
+                    </div>
+
+                    <!-- Column 3: Interesting -->
+                    <div class="fk-col col-some" data-col="some">
+                        <div class="fk-col-header">
+                            <span class="fk-col-emoji">😐</span>
+                            <div class="fk-col-title">{{ t('search.fk_some') }}</div>
+                            <div class="fk-col-count" id="fk-count-some">0</div>
+                        </div>
+                        <div class="fk-col-bar" id="fk-bar-some"></div>
+                        <div class="fk-sort-row">
+                            <button class="fk-sort-btn fk-sort-name active" data-col="some" data-field="name">{{ t('search.fk_field') }} ↕</button>
+                            <button class="fk-sort-btn fk-sort-count" data-col="some" data-field="count">{{ t('search.fk_positions') }} ↕</button>
+                        </div>
+                        <div class="fk-col-body" id="fk-body-some"></div>
+                    </div>
+
+                    <!-- Column 4: Not interesting -->
+                    <div class="fk-col col-none" data-col="none">
+                        <div class="fk-col-header">
+                            <span class="fk-col-emoji">😟</span>
+                            <div class="fk-col-title">{{ t('search.fk_none') }}</div>
+                            <div class="fk-col-count" id="fk-count-none">0</div>
+                        </div>
+                        <div class="fk-col-bar" id="fk-bar-none"></div>
+                        <div class="fk-sort-row">
+                            <button class="fk-sort-btn fk-sort-name active" data-col="none" data-field="name">{{ t('search.fk_field') }} ↕</button>
+                            <button class="fk-sort-btn fk-sort-count" data-col="none" data-field="count">{{ t('search.fk_positions') }} ↕</button>
+                        </div>
+                        <div class="fk-col-body" id="fk-body-none"></div>
+                    </div>
+                </div>
+
+                <!-- Field detail / dealing modal -->
+                <div class="fk-modal-overlay" id="fk-modal-overlay">
+                    <div class="fk-modal" id="fk-modal">
+                        <button class="fk-modal-close" id="fk-modal-close">✕</button>
+                        <div class="fk-modal-top">
+                            <div class="fk-modal-badge" id="fk-modal-badge"></div>
+                            <div class="fk-modal-name" id="fk-modal-name"></div>
+                            <div class="fk-modal-stats" id="fk-modal-stats"></div>
+                            <div class="fk-modal-fresh" id="fk-modal-fresh"></div>
+                            <div class="fk-modal-desc" id="fk-modal-desc"></div>
+                        </div>
+                        <div class="fk-modal-profs" id="fk-modal-profs">
+                            <div class="fk-prof-sort-row">
+                                <button class="fk-sort-btn fk-sort-name active" id="fk-prof-sort-name">{{ t('search.fk_profession') }} ↕</button>
+                                <button class="fk-sort-btn fk-sort-count" id="fk-prof-sort-count">{{ t('search.fk_positions') }} ↕</button>
+                            </div>
+                            <div id="fk-prof-list"></div>
+                        </div>
+                        <div class="fk-modal-actions">
+                            <button class="fk-smiley-btn btn-strong" data-choice="strong">
+                                <span class="fk-smiley-icon">😊</span>
+                                <span class="fk-smiley-label">{{ t('search.fk_strong') }}</span>
+                            </button>
+                            <button class="fk-smiley-btn btn-some" data-choice="some">
+                                <span class="fk-smiley-icon">😐</span>
+                                <span class="fk-smiley-label">{{ t('search.fk_some') }}</span>
+                            </button>
+                            <button class="fk-smiley-btn btn-none" data-choice="none">
+                                <span class="fk-smiley-icon">😟</span>
+                                <span class="fk-smiley-label">{{ t('search.fk_none') }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden: original direction tiles (kept for Power Search) -->
+                <div class="direction-tiles" id="direction-tiles" style="display:none"></div>
+                <input type="hidden" class="tree-search" id="sector-search" autocomplete="off">
                 <nav class="direction-breadcrumb" id="direction-breadcrumb" style="display:none;">
                     <a href="#" class="direction-back" id="direction-back">{{ t('search.direction_back') }}</a>
                     <span class="direction-crumb-sep">›</span>
                     <span class="direction-crumb-current" id="direction-crumb-current"></span>
                 </nav>
-                <div class="direction-tiles" id="direction-tiles">
-                    <div class="panel-loading">{{ t('search.loading') }}</div>
-                </div>
-                <!-- Hidden sector tree kept for Power Search tab -->
                 <div class="tree-body direction-tree" id="sector-tree" style="display:none;"></div>
             </div>
         </div>
@@ -407,28 +509,7 @@
 
     </main>
 
-    <!-- Mira Chat Widget -->
-    <div id="mira-widget" class="mira-widget">
-        <button class="mira-fab" id="mira-fab-btn" title="{{ t('search.mira_chat_title') }}">
-            <span class="mira-fab-icon">💬</span>
-            <span class="mira-fab-close">✕</span>
-        </button>
-        <div class="mira-chat-window">
-            <div class="mira-header">
-                <div class="mira-avatar">🧘</div>
-                <div class="mira-title">
-                    <span class="mira-name">Mira</span>
-                    <span class="mira-status">{{ t('search.mira_status') }}</span>
-                </div>
-                <button class="mira-minimize" id="mira-minimize-btn">−</button>
-            </div>
-            <div class="mira-messages" id="mira-messages"></div>
-            <div class="mira-input-area">
-                <textarea id="mira-input" placeholder="{{ t('search.mira_placeholder') }}" rows="1"></textarea>
-                <button class="mira-send" id="mira-send-btn"><span>➤</span></button>
-            </div>
-        </div>
-    </div>
+    <!-- Mira Chat Widget is now in base.html via partials/mira-widget.html -->
 </div>
 
 <!-- Search tour i18n + script -->
@@ -540,6 +621,18 @@ window.SearchConfig = {
         direction_select_all: {{ t("search.direction_select_all") | tojson }},
         direction_positions: {{ t("search.direction_positions") | tojson }},
         direction_new_this_week: {{ t("search.direction_new_this_week") | tojson }},
+        fk_unsorted: {{ t("search.fk_unsorted") | tojson }},
+        fk_strong: {{ t("search.fk_strong") | tojson }},
+        fk_some: {{ t("search.fk_some") | tojson }},
+        fk_none: {{ t("search.fk_none") | tojson }},
+        fk_field: {{ t("search.fk_field") | tojson }},
+        fk_positions: {{ t("search.fk_positions") | tojson }},
+        fk_profession: {{ t("search.fk_profession") | tojson }},
+        fk_search_placeholder: {{ t("search.fk_search_placeholder") | tojson }},
+        fk_to_review: {{ t("search.fk_to_review") | tojson }},
+        fk_guided_on: {{ t("search.fk_guided_on") | tojson }},
+        fk_from_profile: {{ t("search.fk_from_profile") | tojson }},
+        fk_new_this_week: {{ t("search.fk_new_this_week") | tojson }},
         player_hint_1: {{ t("search.player_hint_1") | tojson }},
         player_hint_2: {{ t("search.player_hint_2") | tojson }},
         player_hint_3: {{ t("search.player_hint_3") | tojson }},
@@ -548,5 +641,5 @@ window.SearchConfig = {
 };
 </script>
 <!-- Search application -->
-<script src="/static/js/search-app.js?v=20260305i"></script>
+<script src="/static/js/search-app.js?v=20260308m"></script>
 {% endblock %}

@@ -121,6 +121,7 @@ const I18N = {
     time_d_ago:           '{{ t("matches.time_d_ago") }}',
     failed_update:        '{{ t("matches.failed_update") }}',
     failed_rate:          '{{ t("matches.failed_rate") }}',
+    placeholder_doug:     '{{ t("matches.placeholder_doug") }}',
 };
 // ─────────────────────────────────────────────────
 
@@ -494,6 +495,14 @@ function renderResearchButton(m) {
 async function requestResearch(postingId) {
     const match = allMatches.find(m => m.posting_id === postingId);
     if (!match) return;
+    
+    // Stripe placeholder — Doug research not yet paid
+    if (typeof showPlaceholderDialog === 'function') {
+        showPlaceholderDialog('doug_research',
+            I18N.placeholder_doug || 'Doug research reports will be available soon. We\'re setting up payments — check back shortly.',
+            { emoji: '🔍' });
+        return;
+    }
     
     try {
         const res = await fetch(`/api/interactions/research/${postingId}`, {
